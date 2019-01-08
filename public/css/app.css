@@ -1,0 +1,148 @@
+body {
+  display: grid;
+  grid-template-columns: 165px auto 165px;
+  grid-template-areas:
+    "tools tools tools"
+    "shape-list canvas inspector";
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  font-family: Lato;
+  background-color: white;
+}
+
+#tools {
+  grid-area: tools;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  background-color: #ededed;
+  z-index: 5;
+}
+
+#shape-list, #inspector {
+  background-color: #f6f6f6;
+  height: 100vh;
+  z-index: 5;
+}
+
+#canvas {
+  grid-area: canvas;
+  position: relative;
+}
+
+#shape-list {
+  grid-area: shape-list;
+}
+
+#inspector {
+  grid-area: inspector;
+}
+
+#buttons {
+  padding-left: 10px;
+  margin: 0;
+}
+
+#buttons li {
+  display: inline;
+}
+
+.shape {
+  position: absolute;
+  background-color: red;
+  box-sizing: content-box;
+  z-index: 1;
+}
+
+.frame {
+  position: absolute;
+  cursor: grab;
+  border: 1px solid #d3d3d3;
+  box-sizing: content-box;
+  z-index: 1;
+}
+
+.counter {
+  position: absolute;
+  top: -20px;
+  left: 10px;
+  font-size: 11px;
+  color: #a9a9a9;
+}
+
+.deleteLink {
+  position: absolute;
+  top: -23px;
+  right: 10px;
+  font-size: 15px;
+  text-decoration: none;
+  color: red;
+
+}
+
+.deleteLink:hover {
+  text-decoration: none;
+  color: #d3d3d3;
+}
+
+.shape.selected .frame,
+.shape.selected .corner {
+  border: 1px solid blue;
+}
+
+.shape.selected .frame.selected,
+.shape.selected .frame.selected .corner {
+  border: 1px solid red;
+}
+
+.frame.selected .counter {
+  color: red;
+}
+
+.shape:not(.selected) .corner,
+.frame:not(.selected) .deleteLink,
+.frame:not(.selected) .corner {
+  display: none;
+}
+
+.corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background-color: white;
+  border: 1px solid #d3d3d3;
+}
+
+.top-left {
+  cursor: nwse-resize;
+  top: -4px;
+  left: -4px;
+}
+
+.top-right {
+  cursor: nesw-resize;
+  top: -4px;
+  right: -4px;
+}
+
+.bottom-left {
+  cursor: nesw-resize;
+  bottom: -4px;
+  left: -4px;
+}
+
+.bottom-right {
+  cursor: nwse-resize;
+  bottom: -4px;
+  right: -4px;
+}
+
+.center {
+  height: 1px;
+  width: 1px;
+  background-color: red;
+}
