@@ -11,6 +11,10 @@ const actions = {
     this.model.appendShape();
   },
 
+  createProject(event) {
+    this.model.init();
+  },
+
   setFrameOrigin(event) {
     this.model.insertFrameInPlace();
     this.aux.originX = event.clientX;
@@ -56,8 +60,10 @@ const actions = {
   },
 
   grabFrame(event) {
-    const id = Number(event.target.dataset.id);
+    const id = event.target.dataset.id;
+    console.log('id', id);
     this.model.selected.frame = this.model.selectFrame(id);
+    console.log('this.model.selected.frame', this.model.selected.frame);
 
     this.aux.originX = event.clientX;
     this.aux.originY = event.clientY;

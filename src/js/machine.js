@@ -1,36 +1,37 @@
 const machine = {
-  addObserver(observer) {
-    this.observers.push(observer);
+  addSubscriber(subscriber) {
+    this.subscribers.push(subscriber);
   },
 
-  notifyObservers(data, message) {
-    for (let observer of this.observers) {
-      observer.update(data, message);
+  publish(data, messages) {
+    for (let subscriber of this.subscribers) {
+      subscriber.receive(data, messages);
     }
+  },
+
+  make(transition) {
+    this.actions[transition.action](event);
+    this.state = transition.nextState;
+    this.publish(this.model.data, transition.messages || {});
   },
 
   dispatch(event) {
     const eventType = event.type;
-    const nodeType  = event.target.dataset && event.target.dataset.type;
-
+    const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
     const transition = this.blueprint[this.state].find(t => {
-      return t.eventType === eventType &&
-        (t.nodeType === nodeType || t.nodeType === undefined);
-    });
+        return t.eventType === eventType &&
+          (t.nodeType === nodeType || t.nodeType === undefined);
+      });
 
-    if (transition) {
-      this.actions[transition.action](event);
-      this.state = transition.nextState;
-      this.notifyObservers(this.model.data, transition.message);
-    }
+    if (transition) { this.make(transition); }
   },
 
   init(model, actions, blueprint) {
     this.model     = model;
     this.actions   = actions;
     this.blueprint = blueprint;
-    this.observers = [];
-    this.state     = 'start';
+    this.subscribers = [];
+    this.state     = 'idle';
 
     return this;
   },

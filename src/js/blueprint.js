@@ -1,17 +1,17 @@
 // eventType: type of event that occured (e.g., 'click')
-// nodeType:  type of node on which the event was fired (e.g., 'frame')
-// action:    name of model-changing action that should be invoked (e.g.,'skip')
-// message:   message that should be sent to the view (e.g., 'animate')
-// nextState: state that the machine will transition to (e.g., 'idle')
+// nodeType:  type of node on which the event occured, if any (e.g., 'frame')
+// action:    name of state-changing action that should be invoked (e.g.,'skip')
+// messages:  messages to be sent to machine subscribers
+// nextState: state label that the machine will transition to (e.g., 'idle')
 
 const blueprint = {
-  start: [
-    {
-      eventType: 'DOMContentLoaded',
-      action: 'skip',
-      nextState: 'idle',
-    }
-  ],
+  // start: [
+  //   {
+  //     eventType: 'DOMContentLoaded',
+  //     action: 'skip',
+  //     nextState: 'idle',
+  //   }
+  // ],
 
   idle: [
     {
@@ -22,15 +22,38 @@ const blueprint = {
     },
     {
       eventType: 'click',
+      nodeType: 'newProjectButton',
+      action: 'createProject',
+      messages: {
+        db: 'saveNewProject',
+        ui: 'renderFrames',
+      },
+      nextState: 'idle',
+    },
+    {
+      eventType: 'click',
       nodeType: 'animateButton',
       action: 'skip',
-      message: 'animate',
+      messages: {
+        ui: 'animateShapes',
+      },
       nextState: 'animating',
+    },
+    {
+      eventType: 'projectSaved',
+      action: 'skip',
+      messages: {
+        ui: 'displaySavedFlash',
+      },
+      nextState: 'idle',
     },
     {
       eventType: 'mousedown',
       nodeType: 'frame',
       action: 'grabFrame',
+      messages: {
+        ui: 'renderFrames',
+      },
       nextState: 'draggingFrame',
     },
     {
@@ -49,6 +72,9 @@ const blueprint = {
       eventType: 'click',
       nodeType: 'deleteLink',
       action: 'deleteFrame',
+      messages: {
+        ui: 'renderFrames',
+      },
       nextState: 'idle',
     }
   ],
@@ -57,6 +83,9 @@ const blueprint = {
     {
       eventType: 'mousemove',
       action: 'sizeFrame',
+      messages: {
+        ui: 'renderFrames',
+      },
       nextState: 'drawingFrame',
     },
     {
@@ -70,6 +99,9 @@ const blueprint = {
     {
       eventType: 'mousemove',
       action: 'moveFrame',
+      messages: {
+        ui: 'renderFrames',
+      },
       nextState: 'draggingFrame',
     },
     {
@@ -83,6 +115,9 @@ const blueprint = {
     {
       eventType: 'mousemove',
       action: 'sizeFrame',
+      messages: {
+        ui: 'renderFrames',
+      },
       nextState: 'resizingFrame',
     },
     {
@@ -103,7 +138,9 @@ const blueprint = {
       eventType: 'click',
       nodeType: 'animateButton',
       action: 'skip',
-      message: 'animate',
+      messages: {
+        ui: 'animateShapes',
+      },
       nextState: 'animating',
     },
   ]

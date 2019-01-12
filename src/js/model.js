@@ -1,4 +1,4 @@
-import { getNextId } from './utils.js'
+import { createId } from './utils.js'
 
 const Frame = {
   get coordinates() {
@@ -22,7 +22,7 @@ const Frame = {
     this.top    = coordinates.top || 0;
     this.width  = coordinates.width || 0;
     this.height = coordinates.height || 0;
-    this.id     = getNextId();
+    this._id    = createId();
     return this;
   },
 };
@@ -39,6 +39,7 @@ const findIndexOf = function(selectedFrame) {
 const model = {
   get data() {
     return {
+      _id: this._id,
       shapes: this.shapes,
       selected: this.selected,
     };
@@ -46,7 +47,7 @@ const model = {
 
   appendShape() {
     const shape = {
-      id: getNextId(),
+      _id: createId(),
       frames: [],
     };
     this.shapes.push(shape);
@@ -85,7 +86,8 @@ const model = {
   selectFrame(id) {
     for (let shape of this.shapes) {
       for (let frame of shape.frames) {
-        if (frame.id === id) {
+        if (frame._id === id) {
+          console.log('found match');
           this.selected.frame = frame;
           this.selected.shape = shape;
           return frame;
@@ -94,35 +96,38 @@ const model = {
     }
   },
 
-  setupShapes(data) {
-    this.shapes = [];
+  createProjectSkeleton() {
+    const projectId = createId();
+    const shapeId = createId();
+    const shape = {
+      _id: shapeId,
+      frames: [],
+    };
 
-    for (let shapeData of data) {
-      let frames = [];
-      this.shapes.push({
-        id: getNextId(),
-        frames: frames
-      });
-      for (let frameData of shapeData) {
-        let frame = Object.create(Frame).init(frameData);
-        frames.push(frame);
+    return {
+      _id: projectId,
+      shapes: [shape],
+      selected: {
+        shape: shape,
+        frame: null,
       }
-    }
-
-    const lastShape = this.shapes[this.shapes.length - 1];
-    const lastFrame = lastShape.frames[lastShape.frames.length - 1];
-
-    this.selected = {
-      shape: lastShape,
-      frame: lastFrame,
     };
   },
 
-  init(json) {
+  // in a world of many projects, it seems that it would make sense to have many models (each one representing a project). but let's see about that later.
+  init() {
+    // TODO: this is awkward, fix.
+    const project = this.createProjectSkeleton();
+    this._id = project._id;
+    this.shapes = project.shapes;
+    this.selected = project.selected;
+
+    console.log(this._id);
+
       // case where we did not get data:
 
       // const shape = {
-      //   id: getNextId(),
+      //   id: createId(),
       //   frames: [],
       // };
       //
@@ -133,7 +138,7 @@ const model = {
       //   frame: null,
       // };
 
-    this.setupShapes(JSON.parse(json));
+    // this.setupShapes(JSON.parse(json));
     return this;
   },
 };

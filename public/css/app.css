@@ -17,7 +17,6 @@ body {
   align-items: center;
   height: 50px;
   background-color: #ededed;
-  z-index: 5;
 }
 
 #shape-list, #inspector {
@@ -145,4 +144,10 @@ body {
   height: 1px;
   width: 1px;
   background-color: red;
+}
+
+.flash {
+  position: fixed;
+  right: 20px;
+  color: #8e8e8e;
 }

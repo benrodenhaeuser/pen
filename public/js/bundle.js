@@ -1,10 +1,18 @@
 (function () {
   'use strict';
 
-  let id = 0;
-  const getNextId = () => {
-    return id++;
+  const createId = () => {
+    const randomString = Math.random().toString(36).substring(2);
+    const timestamp    = (new Date()).getTime().toString(36);
+
+    return randomString + timestamp;
   };
+
+  // need globally unique ids across sessions.
+  // solution: instead of incrementing, generate
+  // something that is more or less guaranteed to be unique:
+
+  // let uniqueId = Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);
 
   const Frame = {
     get coordinates() {
@@ -28,7 +36,7 @@
       this.top    = coordinates.top || 0;
       this.width  = coordinates.width || 0;
       this.height = coordinates.height || 0;
-      this.id     = getNextId();
+      this._id    = createId();
       return this;
     },
   };
@@ -45,6 +53,7 @@
   const model = {
     get data() {
       return {
+        _id: this._id,
         shapes: this.shapes,
         selected: this.selected,
       };
@@ -52,7 +61,7 @@
 
     appendShape() {
       const shape = {
-        id: getNextId(),
+        _id: createId(),
         frames: [],
       };
       this.shapes.push(shape);
@@ -91,7 +100,8 @@
     selectFrame(id) {
       for (let shape of this.shapes) {
         for (let frame of shape.frames) {
-          if (frame.id === id) {
+          if (frame._id === id) {
+            console.log('found match');
             this.selected.frame = frame;
             this.selected.shape = shape;
             return frame;
@@ -100,35 +110,38 @@
       }
     },
 
-    setupShapes(data) {
-      this.shapes = [];
+    createProjectSkeleton() {
+      const projectId = createId();
+      const shapeId = createId();
+      const shape = {
+        _id: shapeId,
+        frames: [],
+      };
 
-      for (let shapeData of data) {
-        let frames = [];
-        this.shapes.push({
-          id: getNextId(),
-          frames: frames
-        });
-        for (let frameData of shapeData) {
-          let frame = Object.create(Frame).init(frameData);
-          frames.push(frame);
+      return {
+        _id: projectId,
+        shapes: [shape],
+        selected: {
+          shape: shape,
+          frame: null,
         }
-      }
-
-      const lastShape = this.shapes[this.shapes.length - 1];
-      const lastFrame = lastShape.frames[lastShape.frames.length - 1];
-
-      this.selected = {
-        shape: lastShape,
-        frame: lastFrame,
       };
     },
 
-    init(json) {
+    // in a world of many projects, it seems that it would make sense to have many models (each one representing a project). but let's see about that later.
+    init() {
+      // TODO: this is awkward, fix.
+      const project = this.createProjectSkeleton();
+      this._id = project._id;
+      this.shapes = project.shapes;
+      this.selected = project.selected;
+
+      console.log(this._id);
+
         // case where we did not get data:
 
         // const shape = {
-        //   id: getNextId(),
+        //   id: createId(),
         //   frames: [],
         // };
         //
@@ -139,7 +152,7 @@
         //   frame: null,
         // };
 
-      this.setupShapes(JSON.parse(json));
+      // this.setupShapes(JSON.parse(json));
       return this;
     },
   };
@@ -155,6 +168,10 @@
 
     createShape(event) {
       this.model.appendShape();
+    },
+
+    createProject(event) {
+      this.model.init();
     },
 
     setFrameOrigin(event) {
@@ -202,8 +219,10 @@
     },
 
     grabFrame(event) {
-      const id = Number(event.target.dataset.id);
+      const id = event.target.dataset.id;
+      console.log('id', id);
       this.model.selected.frame = this.model.selectFrame(id);
+      console.log('this.model.selected.frame', this.model.selected.frame);
 
       this.aux.originX = event.clientX;
       this.aux.originY = event.clientY;
@@ -229,19 +248,19 @@
   };
 
   // eventType: type of event that occured (e.g., 'click')
-  // nodeType:  type of node on which the event was fired (e.g., 'frame')
-  // action:    name of model-changing action that should be invoked (e.g.,'skip')
-  // message:   message that should be sent to the view (e.g., 'animate')
-  // nextState: state that the machine will transition to (e.g., 'idle')
+  // nodeType:  type of node on which the event occured, if any (e.g., 'frame')
+  // action:    name of state-changing action that should be invoked (e.g.,'skip')
+  // messages:  messages to be sent to machine subscribers
+  // nextState: state label that the machine will transition to (e.g., 'idle')
 
   const blueprint = {
-    start: [
-      {
-        eventType: 'DOMContentLoaded',
-        action: 'skip',
-        nextState: 'idle',
-      }
-    ],
+    // start: [
+    //   {
+    //     eventType: 'DOMContentLoaded',
+    //     action: 'skip',
+    //     nextState: 'idle',
+    //   }
+    // ],
 
     idle: [
       {
@@ -252,15 +271,38 @@
       },
       {
         eventType: 'click',
+        nodeType: 'newProjectButton',
+        action: 'createProject',
+        messages: {
+          db: 'saveNewProject',
+          ui: 'renderFrames',
+        },
+        nextState: 'idle',
+      },
+      {
+        eventType: 'click',
         nodeType: 'animateButton',
         action: 'skip',
-        message: 'animate',
+        messages: {
+          ui: 'animateShapes',
+        },
         nextState: 'animating',
+      },
+      {
+        eventType: 'projectSaved',
+        action: 'skip',
+        messages: {
+          ui: 'displaySavedFlash',
+        },
+        nextState: 'idle',
       },
       {
         eventType: 'mousedown',
         nodeType: 'frame',
         action: 'grabFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
         nextState: 'draggingFrame',
       },
       {
@@ -279,6 +321,9 @@
         eventType: 'click',
         nodeType: 'deleteLink',
         action: 'deleteFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
         nextState: 'idle',
       }
     ],
@@ -287,6 +332,9 @@
       {
         eventType: 'mousemove',
         action: 'sizeFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
         nextState: 'drawingFrame',
       },
       {
@@ -300,6 +348,9 @@
       {
         eventType: 'mousemove',
         action: 'moveFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
         nextState: 'draggingFrame',
       },
       {
@@ -313,6 +364,9 @@
       {
         eventType: 'mousemove',
         action: 'sizeFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
         nextState: 'resizingFrame',
       },
       {
@@ -333,155 +387,12 @@
         eventType: 'click',
         nodeType: 'animateButton',
         action: 'skip',
-        message: 'animate',
+        messages: {
+          ui: 'animateShapes',
+        },
         nextState: 'animating',
       },
     ]
-  };
-
-  const machine = {
-    addObserver(observer) {
-      this.observers.push(observer);
-    },
-
-    notifyObservers(data, message) {
-      for (let observer of this.observers) {
-        observer.update(data, message);
-      }
-    },
-
-    dispatch(event) {
-      const eventType = event.type;
-      const nodeType  = event.target.dataset && event.target.dataset.type;
-
-      const transition = this.blueprint[this.state].find(t => {
-        return t.eventType === eventType &&
-          (t.nodeType === nodeType || t.nodeType === undefined);
-      });
-
-      if (transition) {
-        this.actions[transition.action](event);
-        this.state = transition.nextState;
-        this.notifyObservers(this.model.data, transition.message);
-      }
-    },
-
-    init(model, actions, blueprint) {
-      this.model     = model;
-      this.actions   = actions;
-      this.blueprint = blueprint;
-      this.observers = [];
-      this.state     = 'start';
-
-      return this;
-    },
-  };
-
-  const bindEvents = function(handler) {
-    canvas.canvasNode.addEventListener('mousedown', handler);
-    canvas.canvasNode.addEventListener('mousemove', handler);
-    canvas.canvasNode.addEventListener('mouseup', handler);
-    canvas.canvasNode.addEventListener('click', handler);
-
-    canvas.newShapeButton.addEventListener('click', handler);
-    canvas.animateButton.addEventListener('click', handler);
-  };
-
-  const renderFrames = function(data) {
-    canvas.canvasNode.innerHTML = '';
-
-    for (let shape of data.shapes) {
-      const shapeNode = canvas.nodeFactory.makeShapeNode(shape.id);
-      if (data.selected.shape === shape) {
-        shapeNode.classList.add('selected');
-      }
-
-      for (var i = 0; i < shape.frames.length; i += 1) {
-        const frameNode = canvas.nodeFactory.makeFrameNode(i, shape.frames[i].id);
-        place(frameNode, shape.frames[i].coordinates);
-        if (shape.frames[i] === data.selected.frame) {
-          frameNode.classList.add('selected');
-        }
-
-        shapeNode.appendChild(frameNode);
-      }
-
-      canvas.canvasNode.appendChild(shapeNode);
-    }
-  };
-
-  const animateShapes = function(data) {
-    canvas.canvasNode.innerHTML = '';
-
-    for (let shape of data.shapes) {
-      const timeline = new TimelineMax();
-      const shapeNode = canvas.nodeFactory.makeShapeNode();
-
-      for (let i = 0; i < shape.frames.length - 1; i += 1) {
-        let source = shape.frames[i];
-        let target = shape.frames[i + 1];
-
-        timeline.fromTo(
-          shapeNode,
-          0.3,
-          adjust(source.coordinates),
-          adjust(target.coordinates)
-        );
-      }
-
-      canvas.canvasNode.appendChild(shapeNode);
-    }
-  };
-
-  const adjust = function(coordinates) {
-    return {
-      top:    coordinates.top - canvas.canvasNode.offsetTop,
-      left:   coordinates.left - canvas.canvasNode.offsetLeft,
-      width:  coordinates.width,
-      height: coordinates.height,
-    };
-  };
-
-  const place = function(node, coordinates) {
-    node.style.top    = String(adjust(coordinates).top) + 'px';
-    node.style.left   = String(adjust(coordinates).left) + 'px';
-    node.style.width  = String(coordinates.width)  + 'px';
-    node.style.height = String(coordinates.height) + 'px';
-  };
-
-  const canvas = {
-    observeChanges(observable) {
-      observable.addObserver(this);
-    },
-
-    update(data, message) {
-      // TODO: what we would like to have here is simply:
-
-      // this[message](data);
-
-      // (in other words, the message should be 'animate' or 'render')
-      // the subscribe mechanism should make sure that other messages are already
-      // filtered out at this point.
-
-      if (message === 'animate') {
-        animateShapes(data);
-        return;
-      }
-
-      renderFrames(data);
-    },
-
-    init(machine, nodeFactory) {
-      this.nodeFactory = nodeFactory;
-
-      this.canvasNode     = document.querySelector('#canvas');
-      this.newShapeButton = document.querySelector('#new');
-      this.animateButton  = document.querySelector('#animate');
-
-      const handler = machine.dispatch.bind(machine);
-      bindEvents(handler);
-      this.observeChanges(machine);
-    },
   };
 
   const frameTemplate = (index) => {
@@ -524,21 +435,239 @@
     },
   };
 
-  // sample data - to be read from db
-  const json = '[[{"top":200,"left":200,"width":100,"height":100},{"top":320,"left":320,"width":100,"height":100}]]';
+  const machine = {
+    addSubscriber(subscriber) {
+      this.subscribers.push(subscriber);
+    },
 
-  const editor = {
-    init(event) {
-      model.init(json);
-      actions.init(model);
-      machine.init(model, actions, blueprint);
-      canvas.init(machine, nodeFactory);
+    publish(data, messages) {
+      for (let subscriber of this.subscribers) {
+        subscriber.receive(data, messages);
+      }
+    },
 
-      machine.dispatch(event);
+    make(transition) {
+      this.actions[transition.action](event);
+      this.state = transition.nextState;
+      this.publish(this.model.data, transition.messages || {});
+    },
+
+    dispatch(event) {
+      const eventType = event.type;
+      const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
+      const transition = this.blueprint[this.state].find(t => {
+          return t.eventType === eventType &&
+            (t.nodeType === nodeType || t.nodeType === undefined);
+        });
+
+      if (transition) { this.make(transition); }
+    },
+
+    init(model, actions, blueprint) {
+      this.model     = model;
+      this.actions   = actions;
+      this.blueprint = blueprint;
+      this.subscribers = [];
+      this.state     = 'idle';
+
+      return this;
     },
   };
 
-  document.addEventListener('DOMContentLoaded', editor.init);
+  const bindEvents = function(handler) {
+    ui.canvasNode.addEventListener('mousedown', handler);
+    ui.canvasNode.addEventListener('mousemove', handler);
+    ui.canvasNode.addEventListener('mouseup', handler);
+    ui.canvasNode.addEventListener('click', handler);
+
+    ui.newShapeButton.addEventListener('click', handler);
+    ui.newProjectButton.addEventListener('click', handler);
+    ui.animateButton.addEventListener('click', handler);
+  };
+
+  const adjust = function(coordinates) {
+    return {
+      top:    coordinates.top - ui.canvasNode.offsetTop,
+      left:   coordinates.left - ui.canvasNode.offsetLeft,
+      width:  coordinates.width,
+      height: coordinates.height,
+    };
+  };
+
+  const place = function(node, coordinates) {
+    node.style.top    = String(adjust(coordinates).top) + 'px';
+    node.style.left   = String(adjust(coordinates).left) + 'px';
+    node.style.width  = String(coordinates.width)  + 'px';
+    node.style.height = String(coordinates.height) + 'px';
+  };
+
+  const ui = {
+    subscribeTo(publisher) {
+      publisher.addSubscriber(this);
+    },
+
+    receive(data, messages) {
+      messages['ui'] && this[messages['ui']](data);
+    },
+
+    renderFrames(data) {
+      this.canvasNode.innerHTML = '';
+
+      for (let shape of data.shapes) {
+        const shapeNode = this.nodeFactory.makeShapeNode(shape._id);
+        if (data.selected.shape === shape) {
+          shapeNode.classList.add('selected');
+        }
+
+        for (var i = 0; i < shape.frames.length; i += 1) {
+          const frameNode = this.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
+          place(frameNode, shape.frames[i].coordinates);
+          if (shape.frames[i] === data.selected.frame) {
+            frameNode.classList.add('selected');
+          }
+
+          shapeNode.appendChild(frameNode);
+        }
+
+        this.canvasNode.appendChild(shapeNode);
+      }
+    },
+
+    animateShapes(data) {
+      this.canvasNode.innerHTML = '';
+
+      for (let shape of data.shapes) {
+        const timeline = new TimelineMax();
+        const shapeNode = this.nodeFactory.makeShapeNode();
+
+        for (let i = 0; i < shape.frames.length - 1; i += 1) {
+          let source = shape.frames[i];
+          let target = shape.frames[i + 1];
+
+          timeline.fromTo(
+            shapeNode,
+            0.3,
+            adjust(source.coordinates),
+            adjust(target.coordinates)
+          );
+        }
+
+        this.canvasNode.appendChild(shapeNode);
+      }
+    },
+
+    displaySavedFlash() {
+      const flash = document.createElement('p');
+      flash.innerHTML = 'File saved';
+      flash.classList.add('flash');
+      window.setTimeout(() => document.body.appendChild(flash), 1000);
+      window.setTimeout(() => flash.remove(), 2000);
+    },
+
+    init(machine, nodeFactory) {
+      this.nodeFactory      = nodeFactory;
+      this.canvasNode       = document.querySelector('#canvas');
+      this.newShapeButton   = document.querySelector('#new-shape');
+      this.newProjectButton = document.querySelector('#new-project');
+      this.animateButton    = document.querySelector('#animate');
+
+      bindEvents(machine.dispatch.bind(machine));
+      this.subscribeTo(machine);
+    },
+  };
+
+  const bindEvents$1 = (handler) => {
+    window.addEventListener('saveNewProject', function(event) {
+      const request = new XMLHttpRequest;
+
+      request.addEventListener('load', function() {
+        handler(new Event('projectSaved'));
+      });
+
+      request.open('POST', "/projects/");
+      request.responseType = 'json';
+      request.send(event.detail);
+    });
+
+    // window.addEventListener('loadProject', function(event) {
+    //
+    // });
+
+    // window.addEventListener('deleteProject', function(event) {
+    //
+    // });
+
+    // window.addEventListener('updateProject', function(event) {
+    //
+    // });
+  };
+
+  const convertToDb = (data) => {
+    const frameId = data.selected.frame && data.selected.frame._id || null;
+
+    return {
+      _id: data._id,
+      shapes: data.shapes,
+      selected: {
+        shape: data.selected.shape._id,
+        frame: frameId,
+      },
+    };
+  };
+
+  const db = {
+    subscribeTo(publisher) {
+      publisher.addSubscriber(this);
+    },
+
+    receive(data, messages) {
+      if (messages['db'] === 'saveNewProject') {
+        this.saveNewProject(data);
+      }
+    },
+
+    saveNewProject(data) {
+      data = convertToDb(data);
+      var event = new CustomEvent(
+        'saveNewProject',
+        { detail: JSON.stringify(data) }
+      );
+      window.dispatchEvent(event);
+    },
+
+    init(machine) {
+      bindEvents$1(machine.dispatch.bind(machine));
+      this.subscribeTo(machine);
+    },
+  };
+
+  const app = {
+    init() {
+      model.init(); // creates "empty" project
+      actions.init(model);
+      machine.init(model, actions, blueprint);
+      ui.init(machine, nodeFactory);
+      db.init(machine);
+    },
+  };
+
+  document.addEventListener('DOMContentLoaded', app.init);
+
+  // TODO
+
+  // Notes on object structure:
+
+  // machine:
+  // - state
+  // - actions (transform the state)
+
+  // machine.state:
+  // - label ('idle' etc)
+  // - project (an instance of the model)
+  // - aux (for more temporary data)
+
+  // the ui needs the nodeFactory, but I am not sure we should pass it in here.
+  // we can import it in the ui file
 
 }());
 //# sourceMappingURL=bundle.js.map
