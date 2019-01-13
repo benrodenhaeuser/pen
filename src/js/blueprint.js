@@ -2,23 +2,26 @@
 // nodeType:  type of node on which the event occured, if any (e.g., 'frame')
 // action:    name of state-changing action that should be invoked (e.g.,'skip')
 // messages:  messages to be sent to machine subscribers
-// nextState: state label that the machine will transition to (e.g., 'idle')
+// nextLabel: state label that the machine will transition to (e.g., 'idle')
 
 const blueprint = {
-  // start: [
-  //   {
-  //     eventType: 'DOMContentLoaded',
-  //     action: 'skip',
-  //     nextState: 'idle',
-  //   }
-  // ],
+  start: [
+    {
+      eventType: 'kickoff',
+      action: 'skip',
+      messages: {
+        db: 'loadProjectIds',
+      },
+      nextLabel: 'idle',
+    }
+  ],
 
   idle: [
     {
       eventType: 'click',
       nodeType: 'newShapeButton',
       action: 'createShape',
-      nextState: 'idle',
+      nextLabel: 'idle',
     },
     {
       eventType: 'click',
@@ -28,7 +31,7 @@ const blueprint = {
         db: 'saveNewProject',
         ui: 'renderFrames',
       },
-      nextState: 'idle',
+      nextLabel: 'idle',
     },
     {
       eventType: 'click',
@@ -37,15 +40,23 @@ const blueprint = {
       messages: {
         ui: 'animateShapes',
       },
-      nextState: 'animating',
+      nextLabel: 'animating',
     },
     {
       eventType: 'projectSaved',
       action: 'skip',
       messages: {
-        ui: 'displaySavedFlash',
+        ui: 'displaySavedNewFlash',
       },
-      nextState: 'idle',
+      nextLabel: 'idle',
+    },
+    {
+      eventType: 'projectIdsLoaded',
+      action: 'processProjectIds',
+      messages: {
+        ui: 'renderProjectIds',
+      },
+      nextLabel: 'idle',
     },
     {
       eventType: 'mousedown',
@@ -54,19 +65,19 @@ const blueprint = {
       messages: {
         ui: 'renderFrames',
       },
-      nextState: 'draggingFrame',
+      nextLabel: 'draggingFrame',
     },
     {
       eventType: 'mousedown',
       nodeType: 'corner',
       action: 'grabCorner',
-      nextState: 'resizingFrame',
+      nextLabel: 'resizingFrame',
     },
     {
       eventType: 'mousedown',
       nodeType: 'canvas',
       action: 'setFrameOrigin',
-      nextState: 'drawingFrame',
+      nextLabel: 'drawingFrame',
     },
     {
       eventType: 'click',
@@ -75,7 +86,7 @@ const blueprint = {
       messages: {
         ui: 'renderFrames',
       },
-      nextState: 'idle',
+      nextLabel: 'idle',
     }
   ],
 
@@ -86,12 +97,12 @@ const blueprint = {
       messages: {
         ui: 'renderFrames',
       },
-      nextState: 'drawingFrame',
+      nextLabel: 'drawingFrame',
     },
     {
       eventType: 'mouseup',
       action: 'clear',
-      nextState: 'idle',
+      nextLabel: 'idle',
     }
   ],
 
@@ -102,12 +113,12 @@ const blueprint = {
       messages: {
         ui: 'renderFrames',
       },
-      nextState: 'draggingFrame',
+      nextLabel: 'draggingFrame',
     },
     {
       eventType: 'mouseup',
       action: 'clear',
-      nextState: 'idle',
+      nextLabel: 'idle',
     }
   ],
 
@@ -118,12 +129,12 @@ const blueprint = {
       messages: {
         ui: 'renderFrames',
       },
-      nextState: 'resizingFrame',
+      nextLabel: 'resizingFrame',
     },
     {
       eventType: 'mouseup',
       action: 'clear',
-      nextState: 'idle',
+      nextLabel: 'idle',
     }
   ],
 
@@ -132,7 +143,10 @@ const blueprint = {
       eventType: 'click',
       nodeType: 'canvas',
       action: 'skip',
-      nextState: 'idle',
+      messages: {
+        ui: 'renderFrames',
+      },
+      nextLabel: 'idle',
     },
     {
       eventType: 'click',
@@ -141,7 +155,7 @@ const blueprint = {
       messages: {
         ui: 'animateShapes',
       },
-      nextState: 'animating',
+      nextLabel: 'animating',
     },
   ]
 };

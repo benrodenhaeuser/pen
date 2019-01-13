@@ -1,3 +1,5 @@
+import { nodeFactory } from './nodeFactory.js';
+
 const bindEvents = function(handler) {
   ui.canvasNode.addEventListener('mousedown', handler);
   ui.canvasNode.addEventListener('mousemove', handler);
@@ -30,23 +32,23 @@ const ui = {
     publisher.addSubscriber(this);
   },
 
-  receive(data, messages) {
-    messages['ui'] && this[messages['ui']](data);
+  receive(state) {
+    state.messages['ui'] && this[state.messages['ui']](state);
   },
 
-  renderFrames(data) {
+  renderFrames(state) {
     this.canvasNode.innerHTML = '';
 
-    for (let shape of data.shapes) {
+    for (let shape of state.doc.shapes) {
       const shapeNode = this.nodeFactory.makeShapeNode(shape._id);
-      if (data.selected.shape === shape) {
+      if (state.doc.selected.shape === shape) {
         shapeNode.classList.add('selected');
       }
 
       for (var i = 0; i < shape.frames.length; i += 1) {
         const frameNode = this.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
         place(frameNode, shape.frames[i].coordinates);
-        if (shape.frames[i] === data.selected.frame) {
+        if (shape.frames[i] === state.doc.selected.frame) {
           frameNode.classList.add('selected');
         }
 
@@ -57,10 +59,10 @@ const ui = {
     }
   },
 
-  animateShapes(data) {
+  animateShapes(state) {
     this.canvasNode.innerHTML = '';
 
-    for (let shape of data.shapes) {
+    for (let shape of state.doc.shapes) {
       const timeline = new TimelineMax();
       const shapeNode = this.nodeFactory.makeShapeNode();
 
@@ -80,22 +82,36 @@ const ui = {
     }
   },
 
-  displaySavedFlash() {
+  renderProjectIds(state) {
+    // TODO: implement
+    // need to access state.docIds here (or whatever it's called).
+    this.displayLoadedFlash();
+  },
+
+  displayLoadedFlash() {
     const flash = document.createElement('p');
-    flash.innerHTML = 'File saved';
+    flash.innerHTML = 'Document list loaded';
     flash.classList.add('flash');
     window.setTimeout(() => document.body.appendChild(flash), 1000);
     window.setTimeout(() => flash.remove(), 2000);
   },
 
-  init(machine, nodeFactory) {
+  displaySavedNewFlash() {
+    const flash = document.createElement('p');
+    flash.innerHTML = 'New document saved';
+    flash.classList.add('flash');
+    window.setTimeout(() => document.body.appendChild(flash), 1000);
+    window.setTimeout(() => flash.remove(), 2000);
+  },
+
+  init(machine) {
     this.nodeFactory      = nodeFactory;
     this.canvasNode       = document.querySelector('#canvas');
     this.newShapeButton   = document.querySelector('#new-shape');
     this.newProjectButton = document.querySelector('#new-project');
     this.animateButton    = document.querySelector('#animate');
 
-    bindEvents(machine.dispatch.bind(machine));
+    bindEvents(machine.handle.bind(machine));
     this.subscribeTo(machine);
   },
 };

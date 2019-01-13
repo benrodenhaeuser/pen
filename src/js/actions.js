@@ -3,88 +3,87 @@ const actions = {
     return;
   },
 
-  clear() {
-    this.aux = {};
+  clear(state, event) {
+    state.aux = {};
   },
 
-  createShape(event) {
-    this.model.appendShape();
+  createShape(state, event) {
+    state.doc.appendShape();
   },
 
-  createProject(event) {
-    this.model.init();
+  createProject(state, event) {
+    state.doc.init();
   },
 
-  setFrameOrigin(event) {
-    this.model.insertFrameInPlace();
-    this.aux.originX = event.clientX;
-    this.aux.originY = event.clientY;
+  setFrameOrigin(state, event) {
+    state.doc.insertFrameInPlace();
+    state.aux.originX = event.clientX;
+    state.aux.originY = event.clientY;
   },
 
-  grabCorner(event) {
-    const frame = this.model.selected.frame;
+  grabCorner(state, event) {
+    const frame = state.doc.selected.frame;
 
     // store coordinates of opposite corner
+    // to the one that was clicked:
     switch (event.target.dataset.corner) {
       case 'top-left':
-        this.aux.originX = frame.left + frame.width;
-        this.aux.originY = frame.top + frame.height;
+        state.aux.originX = frame.left + frame.width;
+        state.aux.originY = frame.top + frame.height;
         break;
       case 'top-right':
-        this.aux.originX = frame.left;
-        this.aux.originY = frame.top + frame.height;
+        state.aux.originX = frame.left;
+        state.aux.originY = frame.top + frame.height;
         break;
       case 'bottom-right':
-        this.aux.originX = frame.left;
-        this.aux.originY = frame.top;
+        state.aux.originX = frame.left;
+        state.aux.originY = frame.top;
         break;
       case 'bottom-left':
-        this.aux.originX = frame.left + frame.width;
-        this.aux.originY = frame.top;
+        state.aux.originX = frame.left + frame.width;
+        state.aux.originY = frame.top;
         break;
     }
   },
 
-  sizeFrame(event) {
-    this.model.selected.frame.set({
-      top:    Math.min(this.aux.originY, event.clientY),
-      left:   Math.min(this.aux.originX, event.clientX),
-      width:  Math.abs(this.aux.originX - event.clientX),
-      height: Math.abs(this.aux.originY - event.clientY),
+  sizeFrame(state, event) {
+    state.doc.selected.frame.set({
+      top:    Math.min(state.aux.originY, event.clientY),
+      left:   Math.min(state.aux.originX, event.clientX),
+      width:  Math.abs(state.aux.originX - event.clientX),
+      height: Math.abs(state.aux.originY - event.clientY),
     });
   },
 
-  deleteFrame(event) {
-    event.preventDefault(); // => it's an anchor!
-    this.model.deleteSelectedFrame();
+  deleteFrame(state, event) {
+    event.preventDefault();
+    state.doc.deleteSelectedFrame();
   },
 
-  grabFrame(event) {
+  grabFrame(state, event) {
     const id = event.target.dataset.id;
-    console.log('id', id);
-    this.model.selected.frame = this.model.selectFrame(id);
-    console.log('this.model.selected.frame', this.model.selected.frame);
+    state.doc.selected.frame = state.doc.selectFrame(id);
 
-    this.aux.originX = event.clientX;
-    this.aux.originY = event.clientY;
+    state.aux.originX = event.clientX;
+    state.aux.originY = event.clientY;
   },
 
-  moveFrame(event) {
-    const frame = this.model.selected.frame;
+  moveFrame(state, event) {
+    const frame = state.doc.selected.frame;
 
     frame.set({
-      top:  frame.top  + (event.clientY - this.aux.originY),
-      left: frame.left + (event.clientX - this.aux.originX),
+      top:  frame.top  + (event.clientY - state.aux.originY),
+      left: frame.left + (event.clientX - state.aux.originX),
     });
 
-    this.aux.originX = event.clientX;
-    this.aux.originY = event.clientY;
+    state.aux.originX = event.clientX;
+    state.aux.originY = event.clientY;
   },
 
-  init(model) {
-    this.model = model;
-    this.aux = {};
-    return this;
+  processProjectIds(state, event) {
+    // TODO: implement
+    // event.detail holds the response.
+    // need to add the array with project ids to state
   },
 };
 

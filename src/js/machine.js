@@ -1,37 +1,45 @@
+import { blueprint } from './blueprint.js';
+import { doc } from './doc.js';
+import { actions } from './actions.js';
+
 const machine = {
   addSubscriber(subscriber) {
     this.subscribers.push(subscriber);
   },
 
-  publish(data, messages) {
+  publish(data) {
     for (let subscriber of this.subscribers) {
-      subscriber.receive(data, messages);
+      subscriber.receive(data);
     }
   },
 
-  make(transition) {
-    this.actions[transition.action](event);
-    this.state = transition.nextState;
-    this.publish(this.model.data, transition.messages || {});
-  },
-
-  dispatch(event) {
+  handle(event) {
     const eventType = event.type;
     const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
-    const transition = this.blueprint[this.state].find(t => {
+    const transition = this.blueprint[this.state.label].find(t => {
         return t.eventType === eventType &&
           (t.nodeType === nodeType || t.nodeType === undefined);
       });
 
-    if (transition) { this.make(transition); }
+    if (transition) {
+      this.actions[transition.action](this.state, event);
+      this.state.label = transition.nextLabel;
+      this.state.messages = transition.messages || {};
+      this.publish(this.state);
+    }
   },
 
-  init(model, actions, blueprint) {
-    this.model     = model;
-    this.actions   = actions;
-    this.blueprint = blueprint;
+  init() {
+    this.state = {
+      doc: doc.init(),
+      label: 'start',
+      docIds: null,
+      aux: {},
+    };
+
+    this.actions     = actions;
+    this.blueprint   = blueprint;
     this.subscribers = [];
-    this.state     = 'idle';
 
     return this;
   },

@@ -1,6 +1,168 @@
 (function () {
   'use strict';
 
+  // eventType: type of event that occured (e.g., 'click')
+  // nodeType:  type of node on which the event occured, if any (e.g., 'frame')
+  // action:    name of state-changing action that should be invoked (e.g.,'skip')
+  // messages:  messages to be sent to machine subscribers
+  // nextLabel: state label that the machine will transition to (e.g., 'idle')
+
+  const blueprint = {
+    start: [
+      {
+        eventType: 'kickoff',
+        action: 'skip',
+        messages: {
+          db: 'loadProjectIds',
+        },
+        nextLabel: 'idle',
+      }
+    ],
+
+    idle: [
+      {
+        eventType: 'click',
+        nodeType: 'newShapeButton',
+        action: 'createShape',
+        nextLabel: 'idle',
+      },
+      {
+        eventType: 'click',
+        nodeType: 'newProjectButton',
+        action: 'createProject',
+        messages: {
+          db: 'saveNewProject',
+          ui: 'renderFrames',
+        },
+        nextLabel: 'idle',
+      },
+      {
+        eventType: 'click',
+        nodeType: 'animateButton',
+        action: 'skip',
+        messages: {
+          ui: 'animateShapes',
+        },
+        nextLabel: 'animating',
+      },
+      {
+        eventType: 'projectSaved',
+        action: 'skip',
+        messages: {
+          ui: 'displaySavedNewFlash',
+        },
+        nextLabel: 'idle',
+      },
+      {
+        eventType: 'projectIdsLoaded',
+        action: 'processProjectIds',
+        messages: {
+          ui: 'renderProjectIds',
+        },
+        nextLabel: 'idle',
+      },
+      {
+        eventType: 'mousedown',
+        nodeType: 'frame',
+        action: 'grabFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
+        nextLabel: 'draggingFrame',
+      },
+      {
+        eventType: 'mousedown',
+        nodeType: 'corner',
+        action: 'grabCorner',
+        nextLabel: 'resizingFrame',
+      },
+      {
+        eventType: 'mousedown',
+        nodeType: 'canvas',
+        action: 'setFrameOrigin',
+        nextLabel: 'drawingFrame',
+      },
+      {
+        eventType: 'click',
+        nodeType: 'deleteLink',
+        action: 'deleteFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
+        nextLabel: 'idle',
+      }
+    ],
+
+    drawingFrame: [
+      {
+        eventType: 'mousemove',
+        action: 'sizeFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
+        nextLabel: 'drawingFrame',
+      },
+      {
+        eventType: 'mouseup',
+        action: 'clear',
+        nextLabel: 'idle',
+      }
+    ],
+
+    draggingFrame: [
+      {
+        eventType: 'mousemove',
+        action: 'moveFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
+        nextLabel: 'draggingFrame',
+      },
+      {
+        eventType: 'mouseup',
+        action: 'clear',
+        nextLabel: 'idle',
+      }
+    ],
+
+    resizingFrame: [
+      {
+        eventType: 'mousemove',
+        action: 'sizeFrame',
+        messages: {
+          ui: 'renderFrames',
+        },
+        nextLabel: 'resizingFrame',
+      },
+      {
+        eventType: 'mouseup',
+        action: 'clear',
+        nextLabel: 'idle',
+      }
+    ],
+
+    animating: [
+      {
+        eventType: 'click',
+        nodeType: 'canvas',
+        action: 'skip',
+        messages: {
+          ui: 'renderFrames',
+        },
+        nextLabel: 'idle',
+      },
+      {
+        eventType: 'click',
+        nodeType: 'animateButton',
+        action: 'skip',
+        messages: {
+          ui: 'animateShapes',
+        },
+        nextLabel: 'animating',
+      },
+    ]
+  };
+
   const createId = () => {
     const randomString = Math.random().toString(36).substring(2);
     const timestamp    = (new Date()).getTime().toString(36);
@@ -42,7 +204,7 @@
   };
 
   const findIndexOf = function(selectedFrame) {
-    const frames = model.selected.shape.frames;
+    const frames = doc.selected.shape.frames;
     for (let i = 0; i < frames.length; i += 1) {
       if (frames[i] === selectedFrame) {
         return i;
@@ -50,7 +212,7 @@
     }
   };
 
-  const model = {
+  const doc = {
     get data() {
       return {
         _id: this._id,
@@ -101,7 +263,6 @@
       for (let shape of this.shapes) {
         for (let frame of shape.frames) {
           if (frame._id === id) {
-            console.log('found match');
             this.selected.frame = frame;
             this.selected.shape = shape;
             return frame;
@@ -128,31 +289,13 @@
       };
     },
 
-    // in a world of many projects, it seems that it would make sense to have many models (each one representing a project). but let's see about that later.
     init() {
-      // TODO: this is awkward, fix.
+      // TODO: fix
       const project = this.createProjectSkeleton();
       this._id = project._id;
       this.shapes = project.shapes;
       this.selected = project.selected;
 
-      console.log(this._id);
-
-        // case where we did not get data:
-
-        // const shape = {
-        //   id: createId(),
-        //   frames: [],
-        // };
-        //
-        // this.shapes = [shape];
-        //
-        // this.selected = {
-        //   shape: shape,
-        //   frame: null,
-        // };
-
-      // this.setupShapes(JSON.parse(json));
       return this;
     },
   };
@@ -162,237 +305,131 @@
       return;
     },
 
-    clear() {
-      this.aux = {};
+    clear(state, event) {
+      state.aux = {};
     },
 
-    createShape(event) {
-      this.model.appendShape();
+    createShape(state, event) {
+      state.doc.appendShape();
     },
 
-    createProject(event) {
-      this.model.init();
+    createProject(state, event) {
+      state.doc.init();
     },
 
-    setFrameOrigin(event) {
-      this.model.insertFrameInPlace();
-      this.aux.originX = event.clientX;
-      this.aux.originY = event.clientY;
+    setFrameOrigin(state, event) {
+      state.doc.insertFrameInPlace();
+      state.aux.originX = event.clientX;
+      state.aux.originY = event.clientY;
     },
 
-    grabCorner(event) {
-      const frame = this.model.selected.frame;
+    grabCorner(state, event) {
+      const frame = state.doc.selected.frame;
 
       // store coordinates of opposite corner
+      // to the one that was clicked:
       switch (event.target.dataset.corner) {
         case 'top-left':
-          this.aux.originX = frame.left + frame.width;
-          this.aux.originY = frame.top + frame.height;
+          state.aux.originX = frame.left + frame.width;
+          state.aux.originY = frame.top + frame.height;
           break;
         case 'top-right':
-          this.aux.originX = frame.left;
-          this.aux.originY = frame.top + frame.height;
+          state.aux.originX = frame.left;
+          state.aux.originY = frame.top + frame.height;
           break;
         case 'bottom-right':
-          this.aux.originX = frame.left;
-          this.aux.originY = frame.top;
+          state.aux.originX = frame.left;
+          state.aux.originY = frame.top;
           break;
         case 'bottom-left':
-          this.aux.originX = frame.left + frame.width;
-          this.aux.originY = frame.top;
+          state.aux.originX = frame.left + frame.width;
+          state.aux.originY = frame.top;
           break;
       }
     },
 
-    sizeFrame(event) {
-      this.model.selected.frame.set({
-        top:    Math.min(this.aux.originY, event.clientY),
-        left:   Math.min(this.aux.originX, event.clientX),
-        width:  Math.abs(this.aux.originX - event.clientX),
-        height: Math.abs(this.aux.originY - event.clientY),
+    sizeFrame(state, event) {
+      state.doc.selected.frame.set({
+        top:    Math.min(state.aux.originY, event.clientY),
+        left:   Math.min(state.aux.originX, event.clientX),
+        width:  Math.abs(state.aux.originX - event.clientX),
+        height: Math.abs(state.aux.originY - event.clientY),
       });
     },
 
-    deleteFrame(event) {
-      event.preventDefault(); // => it's an anchor!
-      this.model.deleteSelectedFrame();
+    deleteFrame(state, event) {
+      event.preventDefault();
+      state.doc.deleteSelectedFrame();
     },
 
-    grabFrame(event) {
+    grabFrame(state, event) {
       const id = event.target.dataset.id;
-      console.log('id', id);
-      this.model.selected.frame = this.model.selectFrame(id);
-      console.log('this.model.selected.frame', this.model.selected.frame);
+      state.doc.selected.frame = state.doc.selectFrame(id);
 
-      this.aux.originX = event.clientX;
-      this.aux.originY = event.clientY;
+      state.aux.originX = event.clientX;
+      state.aux.originY = event.clientY;
     },
 
-    moveFrame(event) {
-      const frame = this.model.selected.frame;
+    moveFrame(state, event) {
+      const frame = state.doc.selected.frame;
 
       frame.set({
-        top:  frame.top  + (event.clientY - this.aux.originY),
-        left: frame.left + (event.clientX - this.aux.originX),
+        top:  frame.top  + (event.clientY - state.aux.originY),
+        left: frame.left + (event.clientX - state.aux.originX),
       });
 
-      this.aux.originX = event.clientX;
-      this.aux.originY = event.clientY;
+      state.aux.originX = event.clientX;
+      state.aux.originY = event.clientY;
     },
 
-    init(model) {
-      this.model = model;
-      this.aux = {};
-      return this;
+    processProjectIds(state, event) {
+      // TODO: implement
+      // event.detail holds the response.
+      // need to add the array with project ids to state
     },
   };
 
-  // eventType: type of event that occured (e.g., 'click')
-  // nodeType:  type of node on which the event occured, if any (e.g., 'frame')
-  // action:    name of state-changing action that should be invoked (e.g.,'skip')
-  // messages:  messages to be sent to machine subscribers
-  // nextState: state label that the machine will transition to (e.g., 'idle')
+  const machine = {
+    addSubscriber(subscriber) {
+      this.subscribers.push(subscriber);
+    },
 
-  const blueprint = {
-    // start: [
-    //   {
-    //     eventType: 'DOMContentLoaded',
-    //     action: 'skip',
-    //     nextState: 'idle',
-    //   }
-    // ],
-
-    idle: [
-      {
-        eventType: 'click',
-        nodeType: 'newShapeButton',
-        action: 'createShape',
-        nextState: 'idle',
-      },
-      {
-        eventType: 'click',
-        nodeType: 'newProjectButton',
-        action: 'createProject',
-        messages: {
-          db: 'saveNewProject',
-          ui: 'renderFrames',
-        },
-        nextState: 'idle',
-      },
-      {
-        eventType: 'click',
-        nodeType: 'animateButton',
-        action: 'skip',
-        messages: {
-          ui: 'animateShapes',
-        },
-        nextState: 'animating',
-      },
-      {
-        eventType: 'projectSaved',
-        action: 'skip',
-        messages: {
-          ui: 'displaySavedFlash',
-        },
-        nextState: 'idle',
-      },
-      {
-        eventType: 'mousedown',
-        nodeType: 'frame',
-        action: 'grabFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextState: 'draggingFrame',
-      },
-      {
-        eventType: 'mousedown',
-        nodeType: 'corner',
-        action: 'grabCorner',
-        nextState: 'resizingFrame',
-      },
-      {
-        eventType: 'mousedown',
-        nodeType: 'canvas',
-        action: 'setFrameOrigin',
-        nextState: 'drawingFrame',
-      },
-      {
-        eventType: 'click',
-        nodeType: 'deleteLink',
-        action: 'deleteFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextState: 'idle',
+    publish(data) {
+      for (let subscriber of this.subscribers) {
+        subscriber.receive(data);
       }
-    ],
+    },
 
-    drawingFrame: [
-      {
-        eventType: 'mousemove',
-        action: 'sizeFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextState: 'drawingFrame',
-      },
-      {
-        eventType: 'mouseup',
-        action: 'clear',
-        nextState: 'idle',
+    handle(event) {
+      const eventType = event.type;
+      const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
+      const transition = this.blueprint[this.state.label].find(t => {
+          return t.eventType === eventType &&
+            (t.nodeType === nodeType || t.nodeType === undefined);
+        });
+
+      if (transition) {
+        this.actions[transition.action](this.state, event);
+        this.state.label = transition.nextLabel;
+        this.state.messages = transition.messages || {};
+        this.publish(this.state);
       }
-    ],
+    },
 
-    draggingFrame: [
-      {
-        eventType: 'mousemove',
-        action: 'moveFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextState: 'draggingFrame',
-      },
-      {
-        eventType: 'mouseup',
-        action: 'clear',
-        nextState: 'idle',
-      }
-    ],
+    init() {
+      this.state = {
+        doc: doc.init(),
+        label: 'start',
+        docIds: null,
+        aux: {},
+      };
 
-    resizingFrame: [
-      {
-        eventType: 'mousemove',
-        action: 'sizeFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextState: 'resizingFrame',
-      },
-      {
-        eventType: 'mouseup',
-        action: 'clear',
-        nextState: 'idle',
-      }
-    ],
+      this.actions     = actions;
+      this.blueprint   = blueprint;
+      this.subscribers = [];
 
-    animating: [
-      {
-        eventType: 'click',
-        nodeType: 'canvas',
-        action: 'skip',
-        nextState: 'idle',
-      },
-      {
-        eventType: 'click',
-        nodeType: 'animateButton',
-        action: 'skip',
-        messages: {
-          ui: 'animateShapes',
-        },
-        nextState: 'animating',
-      },
-    ]
+      return this;
+    },
   };
 
   const frameTemplate = (index) => {
@@ -435,45 +472,6 @@
     },
   };
 
-  const machine = {
-    addSubscriber(subscriber) {
-      this.subscribers.push(subscriber);
-    },
-
-    publish(data, messages) {
-      for (let subscriber of this.subscribers) {
-        subscriber.receive(data, messages);
-      }
-    },
-
-    make(transition) {
-      this.actions[transition.action](event);
-      this.state = transition.nextState;
-      this.publish(this.model.data, transition.messages || {});
-    },
-
-    dispatch(event) {
-      const eventType = event.type;
-      const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
-      const transition = this.blueprint[this.state].find(t => {
-          return t.eventType === eventType &&
-            (t.nodeType === nodeType || t.nodeType === undefined);
-        });
-
-      if (transition) { this.make(transition); }
-    },
-
-    init(model, actions, blueprint) {
-      this.model     = model;
-      this.actions   = actions;
-      this.blueprint = blueprint;
-      this.subscribers = [];
-      this.state     = 'idle';
-
-      return this;
-    },
-  };
-
   const bindEvents = function(handler) {
     ui.canvasNode.addEventListener('mousedown', handler);
     ui.canvasNode.addEventListener('mousemove', handler);
@@ -506,23 +504,23 @@
       publisher.addSubscriber(this);
     },
 
-    receive(data, messages) {
-      messages['ui'] && this[messages['ui']](data);
+    receive(state) {
+      state.messages['ui'] && this[state.messages['ui']](state);
     },
 
-    renderFrames(data) {
+    renderFrames(state) {
       this.canvasNode.innerHTML = '';
 
-      for (let shape of data.shapes) {
+      for (let shape of state.doc.shapes) {
         const shapeNode = this.nodeFactory.makeShapeNode(shape._id);
-        if (data.selected.shape === shape) {
+        if (state.doc.selected.shape === shape) {
           shapeNode.classList.add('selected');
         }
 
         for (var i = 0; i < shape.frames.length; i += 1) {
           const frameNode = this.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
           place(frameNode, shape.frames[i].coordinates);
-          if (shape.frames[i] === data.selected.frame) {
+          if (shape.frames[i] === state.doc.selected.frame) {
             frameNode.classList.add('selected');
           }
 
@@ -533,10 +531,10 @@
       }
     },
 
-    animateShapes(data) {
+    animateShapes(state) {
       this.canvasNode.innerHTML = '';
 
-      for (let shape of data.shapes) {
+      for (let shape of state.doc.shapes) {
         const timeline = new TimelineMax();
         const shapeNode = this.nodeFactory.makeShapeNode();
 
@@ -556,22 +554,36 @@
       }
     },
 
-    displaySavedFlash() {
+    renderProjectIds(state) {
+      // TODO: implement
+      // need to access state.docIds here (or whatever it's called).
+      this.displayLoadedFlash();
+    },
+
+    displayLoadedFlash() {
       const flash = document.createElement('p');
-      flash.innerHTML = 'File saved';
+      flash.innerHTML = 'Document list loaded';
       flash.classList.add('flash');
       window.setTimeout(() => document.body.appendChild(flash), 1000);
       window.setTimeout(() => flash.remove(), 2000);
     },
 
-    init(machine, nodeFactory) {
+    displaySavedNewFlash() {
+      const flash = document.createElement('p');
+      flash.innerHTML = 'New document saved';
+      flash.classList.add('flash');
+      window.setTimeout(() => document.body.appendChild(flash), 1000);
+      window.setTimeout(() => flash.remove(), 2000);
+    },
+
+    init(machine) {
       this.nodeFactory      = nodeFactory;
       this.canvasNode       = document.querySelector('#canvas');
       this.newShapeButton   = document.querySelector('#new-shape');
       this.newProjectButton = document.querySelector('#new-project');
       this.animateButton    = document.querySelector('#animate');
 
-      bindEvents(machine.dispatch.bind(machine));
+      bindEvents(machine.handle.bind(machine));
       this.subscribeTo(machine);
     },
   };
@@ -589,16 +601,46 @@
       request.send(event.detail);
     });
 
+    window.addEventListener('loadProjectIds', function(event) {
+      const request = new XMLHttpRequest;
+
+      request.addEventListener('load', function() {
+        handler(new CustomEvent(
+          'projectIdsLoaded',
+          request.response
+          // ^ pass the array with project ids to the handler
+        ));
+      });
+
+      request.open('GET', "/projects/ids");
+      request.responseType = 'json';
+      request.send();
+    });
+
     // window.addEventListener('loadProject', function(event) {
-    //
+    // // TODO: implement
+    // // load an existing project from the db
+    // // note: here, the corresponding action needs access to
+    // // the response body. so we need to dispatch a custom event
+    // // to the handler method:
+    // //
+    // // assuming the project is stored in `theProject`:
+    // // handler(new CustomEvent('projectLoaded', detail: theProject))
+    // });
+
+    // window.addEventListener('loadProjectIds', function(event) {
+    // // TODO: implement
+    // // load the ids of all projects from db
     // });
 
     // window.addEventListener('deleteProject', function(event) {
-    //
+    // // TODO: implement
+    // // delete a project
     // });
 
     // window.addEventListener('updateProject', function(event) {
-    //
+    // // TODO: implement
+    // // save a project to the db that has been changed
     // });
   };
 
@@ -615,59 +657,57 @@
     };
   };
 
+  // const convertFromDb = (data) => {
+  //   // TODO: implement
+  //   // convert data.selected ids into references
+  // };
+
   const db = {
     subscribeTo(publisher) {
       publisher.addSubscriber(this);
     },
 
-    receive(data, messages) {
-      if (messages['db'] === 'saveNewProject') {
-        this.saveNewProject(data);
+    receive(state) {
+      if (state.messages['db'] === 'saveNewProject') {
+        this.saveNewProject(state.doc);
+      }
+
+      if (state.messages['db'] === 'loadProjectIds') {
+        this.loadProjectIds();
       }
     },
 
-    saveNewProject(data) {
-      data = convertToDb(data);
-      var event = new CustomEvent(
+    loadProjectIds() {
+      const event = new Event('loadProjectIds');
+      window.dispatchEvent(event);
+    },
+
+    saveNewProject(doc) {
+      doc = convertToDb(doc);
+      const event = new CustomEvent(
         'saveNewProject',
-        { detail: JSON.stringify(data) }
+        { detail: JSON.stringify(doc) }
       );
       window.dispatchEvent(event);
     },
 
     init(machine) {
-      bindEvents$1(machine.dispatch.bind(machine));
+      bindEvents$1(machine.handle.bind(machine));
       this.subscribeTo(machine);
     },
   };
 
   const app = {
     init() {
-      model.init(); // creates "empty" project
-      actions.init(model);
-      machine.init(model, actions, blueprint);
-      ui.init(machine, nodeFactory);
+      machine.init();
+      ui.init(machine);
       db.init(machine);
+
+      machine.handle(new Event('kickoff'));
     },
   };
 
   document.addEventListener('DOMContentLoaded', app.init);
-
-  // TODO
-
-  // Notes on object structure:
-
-  // machine:
-  // - state
-  // - actions (transform the state)
-
-  // machine.state:
-  // - label ('idle' etc)
-  // - project (an instance of the model)
-  // - aux (for more temporary data)
-
-  // the ui needs the nodeFactory, but I am not sure we should pass it in here.
-  // we can import it in the ui file
 
 }());
 //# sourceMappingURL=bundle.js.map

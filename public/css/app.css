@@ -22,7 +22,7 @@ body {
 #shape-list, #inspector {
   background-color: #f6f6f6;
   height: 100vh;
-  z-index: 5;
+  /* z-index: 5; */
 }
 
 #canvas {
@@ -39,12 +39,17 @@ body {
 }
 
 #buttons {
+  display: flex;
   padding-left: 10px;
   margin: 0;
 }
 
 #buttons li {
   display: inline;
+}
+
+#buttons li button {
+  margin: 0 5px;
 }
 
 .shape {
@@ -150,4 +155,16 @@ body {
   position: fixed;
   right: 20px;
   color: #8e8e8e;
+}
+
+.pure-menu-horizontal {
+  display: inline;
+}
+
+.pure-menu-list {
+  background-color: #E6E6E6;
+}
+
+.pure-menu-link {
+  color: #2E2E2E;
 }

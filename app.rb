@@ -28,6 +28,11 @@ get '/projects' do
   settings.db[:projects].find.to_a.to_json
 end
 
+get '/projects/ids' do
+  projects = settings.db[:projects].find.to_a
+  projects.map { |project| project['_id'] }.to_json
+end
+
 # CREATE
 post '/projects/' do
   project = JSON.parse(request.body.read)
@@ -50,5 +55,5 @@ end
 
 # DELETE
 delete '/projects/:id' do
-
+  # TODO
 end

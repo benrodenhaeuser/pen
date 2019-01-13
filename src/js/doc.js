@@ -28,7 +28,7 @@ const Frame = {
 };
 
 const findIndexOf = function(selectedFrame) {
-  const frames = model.selected.shape.frames;
+  const frames = doc.selected.shape.frames;
   for (let i = 0; i < frames.length; i += 1) {
     if (frames[i] === selectedFrame) {
       return i;
@@ -36,7 +36,7 @@ const findIndexOf = function(selectedFrame) {
   }
 };
 
-const model = {
+const doc = {
   get data() {
     return {
       _id: this._id,
@@ -87,7 +87,6 @@ const model = {
     for (let shape of this.shapes) {
       for (let frame of shape.frames) {
         if (frame._id === id) {
-          console.log('found match');
           this.selected.frame = frame;
           this.selected.shape = shape;
           return frame;
@@ -114,33 +113,15 @@ const model = {
     };
   },
 
-  // in a world of many projects, it seems that it would make sense to have many models (each one representing a project). but let's see about that later.
   init() {
-    // TODO: this is awkward, fix.
+    // TODO: fix
     const project = this.createProjectSkeleton();
     this._id = project._id;
     this.shapes = project.shapes;
     this.selected = project.selected;
 
-    console.log(this._id);
-
-      // case where we did not get data:
-
-      // const shape = {
-      //   id: createId(),
-      //   frames: [],
-      // };
-      //
-      // this.shapes = [shape];
-      //
-      // this.selected = {
-      //   shape: shape,
-      //   frame: null,
-      // };
-
-    // this.setupShapes(JSON.parse(json));
     return this;
   },
 };
 
-export { model };
+export { doc };

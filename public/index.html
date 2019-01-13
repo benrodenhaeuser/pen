@@ -21,8 +21,22 @@
     <div id="tools">
       <ul id="buttons">
         <li>
+          <div class="pure-menu pure-menu-horizontal">
+            <ul class="pure-menu-list">
+              <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                <a href="#" id="menuLink1" class="pure-menu-link">Documents</a>
+                <ul class="pure-menu-children">
+                    <li class="pure-menu-item"><a href="#" class="pure-menu-link">Document 1</a></li>
+                    <li class="pure-menu-item"><a href="#" class="pure-menu-link">Document 2</a></li>
+                    <li class="pure-menu-item"><a href="#" class="pure-menu-link">Document 3</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <li>
           <button class="pure-button" type="button" data-type="newProjectButton" id="new-project">
-            New File
+            New Document
           </button>
         </li>
         <li>
@@ -32,7 +46,7 @@
         </li>
         <li>
           <button class="pure-button" type="button" data-type="animateButton" id="animate">
-            Play
+            Play Animation
           </button>
         </li>
       </ul>
