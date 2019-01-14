@@ -62,7 +62,7 @@ const actions = {
 
   grabFrame(state, event) {
     const id = event.target.dataset.id;
-    state.doc.selected.frame = state.doc.selectFrame(id);
+    state.doc.selected.frame = state.doc.selectFrameAndShape(id);
 
     state.aux.originX = event.clientX;
     state.aux.originY = event.clientY;

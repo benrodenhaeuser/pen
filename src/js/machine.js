@@ -7,25 +7,29 @@ const machine = {
     this.subscribers.push(subscriber);
   },
 
-  publish(data) {
+  publishState() {
     for (let subscriber of this.subscribers) {
-      subscriber.receive(data);
+      subscriber.receive(this.state);
     }
   },
 
   handle(event) {
     const eventType = event.type;
     const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
-    const transition = this.blueprint[this.state.label].find(t => {
-        return t.eventType === eventType &&
-          (t.nodeType === nodeType || t.nodeType === undefined);
-      });
+
+    const match = (t) => {
+      return t.eventType === eventType &&
+        (t.nodeType === nodeType ||
+          t.nodeType === undefined);
+    };
+
+    const transition = this.blueprint[this.state.label].find(match);
 
     if (transition) {
       this.actions[transition.action](this.state, event);
       this.state.label = transition.nextLabel;
       this.state.messages = transition.messages || {};
-      this.publish(this.state);
+      this.publishState();
     }
   },
 

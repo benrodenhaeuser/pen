@@ -37,14 +37,6 @@ const findIndexOf = function(selectedFrame) {
 };
 
 const doc = {
-  get data() {
-    return {
-      _id: this._id,
-      shapes: this.shapes,
-      selected: this.selected,
-    };
-  },
-
   appendShape() {
     const shape = {
       _id: createId(),
@@ -83,42 +75,62 @@ const doc = {
     }
   },
 
-  selectFrame(id) {
+  selectFrameAndShape(frameId) {
+    for (let shape of this.shapes) {
+      for (let frame of shape.frames) {
+        if (frame._id === frameId) {
+          this.selected.frame = frame;
+          this.selected.shape = shape;
+          return frame; // TODO: unexpected given method name
+        }
+      }
+    }
+  },
+
+  findFrame(id) {
     for (let shape of this.shapes) {
       for (let frame of shape.frames) {
         if (frame._id === id) {
-          this.selected.frame = frame;
-          this.selected.shape = shape;
           return frame;
         }
       }
     }
   },
 
-  createProjectSkeleton() {
-    const projectId = createId();
+  findShape(id) {
+    for (let shape of this.shapes) {
+      if (shape._id === id) {
+        return shape;
+      }
+    }
+  },
+
+  empty() {
+    const docId = createId();
     const shapeId = createId();
     const shape = {
       _id: shapeId,
       frames: [],
     };
 
-    return {
-      _id: projectId,
-      shapes: [shape],
-      selected: {
-        shape: shape,
-        frame: null,
-      }
+    this._id = docId;
+    this.shapes = [shape];
+    this.selected = {
+      shape: shape,
+      frame: null,
     };
   },
 
-  init() {
-    // TODO: fix
-    const project = this.createProjectSkeleton();
-    this._id = project._id;
-    this.shapes = project.shapes;
-    this.selected = project.selected;
+  import(docData) {
+    // TODO
+  },
+
+  init(docData) {
+    if (docData === undefined) {
+      this.empty();
+    } else {
+      this.import(docData);
+    }
 
     return this;
   },

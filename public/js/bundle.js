@@ -213,14 +213,6 @@
   };
 
   const doc = {
-    get data() {
-      return {
-        _id: this._id,
-        shapes: this.shapes,
-        selected: this.selected,
-      };
-    },
-
     appendShape() {
       const shape = {
         _id: createId(),
@@ -259,42 +251,62 @@
       }
     },
 
-    selectFrame(id) {
+    selectFrameAndShape(frameId) {
+      for (let shape of this.shapes) {
+        for (let frame of shape.frames) {
+          if (frame._id === frameId) {
+            this.selected.frame = frame;
+            this.selected.shape = shape;
+            return frame; // TODO: unexpected given method name
+          }
+        }
+      }
+    },
+
+    findFrame(id) {
       for (let shape of this.shapes) {
         for (let frame of shape.frames) {
           if (frame._id === id) {
-            this.selected.frame = frame;
-            this.selected.shape = shape;
             return frame;
           }
         }
       }
     },
 
-    createProjectSkeleton() {
-      const projectId = createId();
+    findShape(id) {
+      for (let shape of this.shapes) {
+        if (shape._id === id) {
+          return shape;
+        }
+      }
+    },
+
+    empty() {
+      const docId = createId();
       const shapeId = createId();
       const shape = {
         _id: shapeId,
         frames: [],
       };
 
-      return {
-        _id: projectId,
-        shapes: [shape],
-        selected: {
-          shape: shape,
-          frame: null,
-        }
+      this._id = docId;
+      this.shapes = [shape];
+      this.selected = {
+        shape: shape,
+        frame: null,
       };
     },
 
-    init() {
-      // TODO: fix
-      const project = this.createProjectSkeleton();
-      this._id = project._id;
-      this.shapes = project.shapes;
-      this.selected = project.selected;
+    import(docData) {
+      // TODO
+    },
+
+    init(docData) {
+      if (docData === undefined) {
+        this.empty();
+      } else {
+        this.import(docData);
+      }
 
       return this;
     },
@@ -364,7 +376,7 @@
 
     grabFrame(state, event) {
       const id = event.target.dataset.id;
-      state.doc.selected.frame = state.doc.selectFrame(id);
+      state.doc.selected.frame = state.doc.selectFrameAndShape(id);
 
       state.aux.originX = event.clientX;
       state.aux.originY = event.clientY;
@@ -394,25 +406,29 @@
       this.subscribers.push(subscriber);
     },
 
-    publish(data) {
+    publishState() {
       for (let subscriber of this.subscribers) {
-        subscriber.receive(data);
+        subscriber.receive(this.state);
       }
     },
 
     handle(event) {
       const eventType = event.type;
       const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
-      const transition = this.blueprint[this.state.label].find(t => {
-          return t.eventType === eventType &&
-            (t.nodeType === nodeType || t.nodeType === undefined);
-        });
+
+      const match = (t) => {
+        return t.eventType === eventType &&
+          (t.nodeType === nodeType ||
+            t.nodeType === undefined);
+      };
+
+      const transition = this.blueprint[this.state.label].find(match);
 
       if (transition) {
         this.actions[transition.action](this.state, event);
         this.state.label = transition.nextLabel;
         this.state.messages = transition.messages || {};
-        this.publish(this.state);
+        this.publishState();
       }
     },
 
@@ -477,26 +493,25 @@
     ui.canvasNode.addEventListener('mousemove', handler);
     ui.canvasNode.addEventListener('mouseup', handler);
     ui.canvasNode.addEventListener('click', handler);
-
     ui.newShapeButton.addEventListener('click', handler);
     ui.newProjectButton.addEventListener('click', handler);
     ui.animateButton.addEventListener('click', handler);
   };
 
-  const adjust = function(coordinates) {
+  const adjust = function(frame) {
     return {
-      top:    coordinates.top - ui.canvasNode.offsetTop,
-      left:   coordinates.left - ui.canvasNode.offsetLeft,
-      width:  coordinates.width,
-      height: coordinates.height,
+      top:    frame.top - ui.canvasNode.offsetTop,
+      left:   frame.left - ui.canvasNode.offsetLeft,
+      width:  frame.width,
+      height: frame.height,
     };
   };
 
-  const place = function(node, coordinates) {
-    node.style.top    = String(adjust(coordinates).top) + 'px';
-    node.style.left   = String(adjust(coordinates).left) + 'px';
-    node.style.width  = String(coordinates.width)  + 'px';
-    node.style.height = String(coordinates.height) + 'px';
+  const place = function(node, frame) {
+    node.style.top    = String(adjust(frame).top) + 'px';
+    node.style.left   = String(adjust(frame).left) + 'px';
+    node.style.width  = String(frame.width)  + 'px';
+    node.style.height = String(frame.height) + 'px';
   };
 
   const ui = {
@@ -519,7 +534,7 @@
 
         for (var i = 0; i < shape.frames.length; i += 1) {
           const frameNode = this.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
-          place(frameNode, shape.frames[i].coordinates);
+          place(frameNode, shape.frames[i]);
           if (shape.frames[i] === state.doc.selected.frame) {
             frameNode.classList.add('selected');
           }
@@ -545,8 +560,8 @@
           timeline.fromTo(
             shapeNode,
             0.3,
-            adjust(source.coordinates),
-            adjust(target.coordinates)
+            adjust(source),
+            adjust(target)
           );
         }
 
@@ -609,6 +624,7 @@
           'projectIdsLoaded',
           request.response
           // ^ pass the array with project ids to the handler
+          //   maybe we should do the json conversion ourselves?
         ));
       });
 
@@ -644,14 +660,15 @@
     // });
   };
 
-  const convertToDb = (data) => {
-    const frameId = data.selected.frame && data.selected.frame._id || null;
+  const serializable = (doc) => {
+    const shapeId = doc.selected.shape && doc.selected.shape._id || null;
+    const frameId = doc.selected.frame && doc.selected.frame._id || null;
 
     return {
-      _id: data._id,
-      shapes: data.shapes,
+      _id: doc._id,
+      shapes: doc.shapes,
       selected: {
-        shape: data.selected.shape._id,
+        shape: shapeId,
         frame: frameId,
       },
     };
@@ -660,6 +677,7 @@
   // const convertFromDb = (data) => {
   //   // TODO: implement
   //   // convert data.selected ids into references
+  //   // who is responsible for this? presumably, `doc`.
   // };
 
   const db = {
@@ -683,10 +701,9 @@
     },
 
     saveNewProject(doc) {
-      doc = convertToDb(doc);
       const event = new CustomEvent(
         'saveNewProject',
-        { detail: JSON.stringify(doc) }
+        { detail: JSON.stringify(serializable(doc)) }
       );
       window.dispatchEvent(event);
     },

@@ -5,26 +5,25 @@ const bindEvents = function(handler) {
   ui.canvasNode.addEventListener('mousemove', handler);
   ui.canvasNode.addEventListener('mouseup', handler);
   ui.canvasNode.addEventListener('click', handler);
-
   ui.newShapeButton.addEventListener('click', handler);
   ui.newProjectButton.addEventListener('click', handler);
   ui.animateButton.addEventListener('click', handler);
 };
 
-const adjust = function(coordinates) {
+const adjust = function(frame) {
   return {
-    top:    coordinates.top - ui.canvasNode.offsetTop,
-    left:   coordinates.left - ui.canvasNode.offsetLeft,
-    width:  coordinates.width,
-    height: coordinates.height,
+    top:    frame.top - ui.canvasNode.offsetTop,
+    left:   frame.left - ui.canvasNode.offsetLeft,
+    width:  frame.width,
+    height: frame.height,
   };
 };
 
-const place = function(node, coordinates) {
-  node.style.top    = String(adjust(coordinates).top) + 'px';
-  node.style.left   = String(adjust(coordinates).left) + 'px';
-  node.style.width  = String(coordinates.width)  + 'px';
-  node.style.height = String(coordinates.height) + 'px';
+const place = function(node, frame) {
+  node.style.top    = String(adjust(frame).top) + 'px';
+  node.style.left   = String(adjust(frame).left) + 'px';
+  node.style.width  = String(frame.width)  + 'px';
+  node.style.height = String(frame.height) + 'px';
 };
 
 const ui = {
@@ -47,7 +46,7 @@ const ui = {
 
       for (var i = 0; i < shape.frames.length; i += 1) {
         const frameNode = this.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
-        place(frameNode, shape.frames[i].coordinates);
+        place(frameNode, shape.frames[i]);
         if (shape.frames[i] === state.doc.selected.frame) {
           frameNode.classList.add('selected');
         }
@@ -73,8 +72,8 @@ const ui = {
         timeline.fromTo(
           shapeNode,
           0.3,
-          adjust(source.coordinates),
-          adjust(target.coordinates)
+          adjust(source),
+          adjust(target)
         );
       }
 

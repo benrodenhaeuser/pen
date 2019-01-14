@@ -19,6 +19,7 @@ const bindEvents = (handler) => {
         'projectIdsLoaded',
         request.response
         // ^ pass the array with project ids to the handler
+        //   maybe we should do the json conversion ourselves?
       ));
     });
 
@@ -54,14 +55,15 @@ const bindEvents = (handler) => {
   // });
 };
 
-const convertToDb = (data) => {
-  const frameId = data.selected.frame && data.selected.frame._id || null;
+const serializable = (doc) => {
+  const shapeId = doc.selected.shape && doc.selected.shape._id || null;
+  const frameId = doc.selected.frame && doc.selected.frame._id || null;
 
   return {
-    _id: data._id,
-    shapes: data.shapes,
+    _id: doc._id,
+    shapes: doc.shapes,
     selected: {
-      shape: data.selected.shape._id,
+      shape: shapeId,
       frame: frameId,
     },
   };
@@ -70,6 +72,7 @@ const convertToDb = (data) => {
 // const convertFromDb = (data) => {
 //   // TODO: implement
 //   // convert data.selected ids into references
+//   // who is responsible for this? presumably, `doc`.
 // };
 
 const db = {
@@ -93,10 +96,9 @@ const db = {
   },
 
   saveNewProject(doc) {
-    doc = convertToDb(doc);
     const event = new CustomEvent(
       'saveNewProject',
-      { detail: JSON.stringify(doc) }
+      { detail: JSON.stringify(serializable(doc)) }
     );
     window.dispatchEvent(event);
   },
