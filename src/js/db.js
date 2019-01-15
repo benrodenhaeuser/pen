@@ -1,9 +1,12 @@
-const bindEvents = (handler) => {
+const bindEvents = (controller) => {
   window.addEventListener('saveNewProject', function(event) {
     const request = new XMLHttpRequest;
 
     request.addEventListener('load', function() {
-      handler(new Event('projectSaved'));
+      controller({
+        label: 'projectSaved',
+        detail: {}
+      });
     });
 
     request.open('POST', "/projects/");
@@ -15,15 +18,15 @@ const bindEvents = (handler) => {
     const request = new XMLHttpRequest;
 
     request.addEventListener('load', function() {
-      handler(new CustomEvent(
-        'projectIdsLoaded',
-        request.response
-        // ^ pass the array with project ids to the handler
-        //   maybe we should do the json conversion ourselves?
-      ));
+      controller({
+        label: 'projectIdsLoaded',
+        detail: {
+          docIds: request.response
+        }
+      });
     });
 
-    request.open('GET', "/projects/ids");
+    request.open('GET', "/ids");
     request.responseType = 'json';
     request.send();
   });
@@ -55,20 +58,6 @@ const bindEvents = (handler) => {
   // });
 };
 
-const serializable = (doc) => {
-  const shapeId = doc.selected.shape && doc.selected.shape._id || null;
-  const frameId = doc.selected.frame && doc.selected.frame._id || null;
-
-  return {
-    _id: doc._id,
-    shapes: doc.shapes,
-    selected: {
-      shape: shapeId,
-      frame: frameId,
-    },
-  };
-};
-
 // const convertFromDb = (data) => {
 //   // TODO: implement
 //   // convert data.selected ids into references
@@ -81,13 +70,7 @@ const db = {
   },
 
   receive(state) {
-    if (state.messages['db'] === 'saveNewProject') {
-      this.saveNewProject(state.doc);
-    }
-
-    if (state.messages['db'] === 'loadProjectIds') {
-      this.loadProjectIds();
-    }
+    state.messages['db'] && this[state.messages['db']](state);
   },
 
   loadProjectIds() {
@@ -95,16 +78,16 @@ const db = {
     window.dispatchEvent(event);
   },
 
-  saveNewProject(doc) {
+  saveNewProject(state) {
     const event = new CustomEvent(
       'saveNewProject',
-      { detail: JSON.stringify(serializable(doc)) }
+      { detail: JSON.stringify(state.doc) }
     );
     window.dispatchEvent(event);
   },
 
   init(machine) {
-    bindEvents(machine.handle.bind(machine));
+    bindEvents(machine.controller.bind(machine));
     this.subscribeTo(machine);
   },
 };

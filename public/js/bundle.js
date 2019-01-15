@@ -1,166 +1,169 @@
 (function () {
   'use strict';
 
-  // eventType: type of event that occured (e.g., 'click')
-  // nodeType:  type of node on which the event occured, if any (e.g., 'frame')
-  // action:    name of state-changing action that should be invoked (e.g.,'skip')
-  // messages:  messages to be sent to machine subscribers
-  // nextLabel: state label that the machine will transition to (e.g., 'idle')
-
-  const blueprint = {
-    start: [
-      {
-        eventType: 'kickoff',
-        action: 'skip',
-        messages: {
-          db: 'loadProjectIds',
-        },
-        nextLabel: 'idle',
-      }
+  const transitionMap = [
+    [
+      { stateLabel: 'start', input: 'kickoff' },
+      { action: 'skip', messages: { db: 'loadProjectIds' }, nextLabel: 'idle' }
     ],
-
-    idle: [
+    [
+      { stateLabel: 'idle', input: 'createShape' },
+      { action: 'createShape', nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'idle', input: 'createProject' },
       {
-        eventType: 'click',
-        nodeType: 'newShapeButton',
-        action: 'createShape',
-        nextLabel: 'idle',
-      },
-      {
-        eventType: 'click',
-        nodeType: 'newProjectButton',
         action: 'createProject',
-        messages: {
-          db: 'saveNewProject',
-          ui: 'renderFrames',
-        },
-        nextLabel: 'idle',
-      },
+        messages: { db: 'saveNewProject', ui: 'renderFrames' },
+        nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'idle', input: 'projectSaved' },
       {
-        eventType: 'click',
-        nodeType: 'animateButton',
         action: 'skip',
-        messages: {
-          ui: 'animateShapes',
-        },
-        nextLabel: 'animating',
-      },
+        messages: { ui: 'displaySavedNewFlash' },
+        nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'idle', input: 'startAnimation' },
+      { action: 'skip', messages: { ui: 'animateShapes' }, nextLabel: 'animating' }
+    ],
+    [
+      { stateLabel: 'idle', input: 'modifyPosition' },
       {
-        eventType: 'projectSaved',
-        action: 'skip',
-        messages: {
-          ui: 'displaySavedNewFlash',
-        },
-        nextLabel: 'idle',
-      },
-      {
-        eventType: 'projectIdsLoaded',
-        action: 'processProjectIds',
-        messages: {
-          ui: 'renderProjectIds',
-        },
-        nextLabel: 'idle',
-      },
-      {
-        eventType: 'mousedown',
-        nodeType: 'frame',
         action: 'grabFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextLabel: 'draggingFrame',
-      },
-      {
-        eventType: 'mousedown',
-        nodeType: 'corner',
-        action: 'grabCorner',
-        nextLabel: 'resizingFrame',
-      },
-      {
-        eventType: 'mousedown',
-        nodeType: 'canvas',
-        action: 'setFrameOrigin',
-        nextLabel: 'drawingFrame',
-      },
-      {
-        eventType: 'click',
-        nodeType: 'deleteLink',
-        action: 'deleteFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextLabel: 'idle',
+        messages: { ui: 'renderFrames' },
+        nextLabel: 'draggingFrame'
       }
     ],
-
-    drawingFrame: [
+    [
+      { stateLabel: 'idle', input: 'resizeFrame' },
+      { action: 'grabCorner', nextLabel: 'resizingFrame' }
+    ],
+    [
+      { stateLabel: 'idle', input: 'createFrame' },
+      { action: 'setFrameOrigin', nextLabel: 'drawingFrame' }
+    ],
+    [
+      { stateLabel: 'idle', input: 'deleteFrame' },
+      { action: 'deleteFrame', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'idle', input: 'projecSaved' },
       {
-        eventType: 'mousemove',
+        action: 'skip',
+        messages: { ui: 'displaySavedNewFlash' },
+        nextLabel: 'idle'
+      }
+    ],
+    [
+      { stateLabel: 'idle', input: 'projectIdsLoaded' },
+      {
+        action: 'processProjectIds',
+        messages: { ui: 'renderProjectIds' },
+        nextLabel: 'idle'
+      }
+    ],
+    [
+      { stateLabel: 'drawingFrame', input: 'changeCoordinates' },
+      {
         action: 'sizeFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextLabel: 'drawingFrame',
-      },
-      {
-        eventType: 'mouseup',
-        action: 'clear',
-        nextLabel: 'idle',
+        messages: { ui: 'renderFrames' },
+        nextLabel: 'drawingFrame'
       }
     ],
-
-    draggingFrame: [
+    [
+      { stateLabel: 'drawingFrame', input: 'releaseFrame' },
+      { action: 'clear', nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'draggingFrame', input: 'changeCoordinates' },
       {
-        eventType: 'mousemove',
         action: 'moveFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextLabel: 'draggingFrame',
-      },
-      {
-        eventType: 'mouseup',
-        action: 'clear',
-        nextLabel: 'idle',
+        messages: { ui: 'renderFrames' },
+        nextLabel: 'draggingFrame'
       }
     ],
-
-    resizingFrame: [
+    [
+      { stateLabel: 'draggingFrame', input: 'releaseFrame' },
+      { action: 'clear', nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'resizingFrame', input: 'changeCoordinates' },
       {
-        eventType: 'mousemove',
         action: 'sizeFrame',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextLabel: 'resizingFrame',
-      },
-      {
-        eventType: 'mouseup',
-        action: 'clear',
-        nextLabel: 'idle',
+        messages: { ui: 'renderFrames' },
+        nextLabel: 'resizingFrame'
       }
     ],
+    [
+      { stateLabel: 'resizingFrame', input: 'releaseFrame' },
+      { action: 'clear', nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'animating', input: 'startAnimation' },
+      { action: 'skip', messages: { ui: 'animateShapes' }, nextLabel: 'animating' }
+    ],
+    [
+      { stateLabel: 'animating', input: 'toIdle' },
+      { action: 'skip', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+    ],
+  ];
 
-    animating: [
-      {
-        eventType: 'click',
-        nodeType: 'canvas',
-        action: 'skip',
-        messages: {
-          ui: 'renderFrames',
-        },
-        nextLabel: 'idle',
-      },
-      {
-        eventType: 'click',
-        nodeType: 'animateButton',
-        action: 'skip',
-        messages: {
-          ui: 'animateShapes',
-        },
-        nextLabel: 'animating',
-      },
-    ]
+  transitionMap.get = function(key) {
+    const match = (pair) => {
+      return pair[0].stateLabel === key[0] &&
+        pair[0].input === key[1];
+    };
+
+    const pair = transitionMap.find(match);
+
+    if (pair) {
+      console.log('action: ' + pair[1].action + ',', 'messages:' + pair[1].messages );
+      return pair[1]; // returns an object
+    } else {
+      console.log('core: no transition');
+    }
+  };
+
+  const frameTemplate = (index) => {
+    const template = document.createElement('template');
+    template.innerHTML = `
+    <div class="corner top-left" data-type="top-left-corner">
+      <div class="center"></div>
+    </div>
+    <div class="corner top-right" data-type="top-right-corner">
+      <div class="center"></div>
+    </div>
+    <div class="corner bottom-left" data-type="bot-left-corner">
+      <div class="center"></div>
+    </div>
+    <div class="corner bottom-right" data-type="bot-right-corner">
+      <div class="center"></div>
+    </div>
+    <div class="counter" data-type="counter">${index}</div>
+    <a class="deleteLink" href="#" data-type="deleteLink">&times;</a>
+  `;
+    return template;
+  };
+
+  const nodeFactory = {
+    makeShapeNode(id) {
+      const node = document.createElement('div');
+      node.classList.add('shape');
+      node.dataset.id = id;
+      node.dataset.type = 'shape';
+      return node;
+    },
+
+    makeFrameNode(index, id) {
+      const node = document.createElement('div');
+      node.classList.add('frame');
+      node.dataset.type = 'frame';
+      node.dataset.id = id;
+      node.appendChild(frameTemplate(index).content.cloneNode(true));
+      return node;
+    },
   };
 
   const createId = () => {
@@ -170,22 +173,7 @@
     return randomString + timestamp;
   };
 
-  // need globally unique ids across sessions.
-  // solution: instead of incrementing, generate
-  // something that is more or less guaranteed to be unique:
-
-  // let uniqueId = Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);
-
   const Frame = {
-    get coordinates() {
-      return {
-        top:    this.top,
-        left:   this.left,
-        width:  this.width,
-        height: this.height,
-      };
-    },
-
     set(coordinates) {
       this.left   = coordinates.left || this.left;
       this.top    = coordinates.top || this.top;
@@ -203,16 +191,16 @@
     },
   };
 
-  const findIndexOf = function(selectedFrame) {
-    const frames = doc.selected.shape.frames;
-    for (let i = 0; i < frames.length; i += 1) {
-      if (frames[i] === selectedFrame) {
-        return i;
-      }
-    }
-  };
-
   const doc = {
+    findIndexOf(selectedFrame) {
+      const frames = doc.selected.shape.frames;
+      for (let i = 0; i < frames.length; i += 1) {
+        if (frames[i] === selectedFrame) {
+          return i;
+        }
+      }
+    },
+
     appendShape() {
       const shape = {
         _id: createId(),
@@ -228,7 +216,7 @@
       const frames = this.selected.shape.frames;
 
       if (this.selected.frame) {
-        const index = findIndexOf(this.selected.frame);
+        const index = this.findIndexOf(this.selected.frame);
         frames.splice(index + 1, 0, frame);
       } else {
         frames.push(frame);
@@ -239,7 +227,7 @@
 
     deleteSelectedFrame() {
       const frames = this.selected.shape.frames;
-      const index = findIndexOf(this.selected.frame);
+      const index = this.findIndexOf(this.selected.frame);
       frames.splice(index, 1);
 
       if (frames[index] !== undefined) {
@@ -281,10 +269,21 @@
       }
     },
 
-    empty() {
-      const docId = createId();
+    toJSON() {
+      return {
+        _id: this._id,
+        shapes: this.shapes,
+        selected: {
+          frameID: this.selected.frame && this.selected.frame._id || null,
+          shapeID: this.selected.shape._id,
+        },
+      };
+    },
+
+    init() {
+      const docId   = createId();
       const shapeId = createId();
-      const shape = {
+      const shape   = {
         _id: shapeId,
         frames: [],
       };
@@ -295,18 +294,6 @@
         shape: shape,
         frame: null,
       };
-    },
-
-    import(docData) {
-      // TODO
-    },
-
-    init(docData) {
-      if (docData === undefined) {
-        this.empty();
-      } else {
-        this.import(docData);
-      }
 
       return this;
     },
@@ -317,118 +304,108 @@
       return;
     },
 
-    clear(state, event) {
+    clear(state, input) {
       state.aux = {};
     },
 
-    createShape(state, event) {
+    createShape(state, input) {
       state.doc.appendShape();
     },
 
-    createProject(state, event) {
+    createProject(state, input) {
       state.doc.init();
     },
 
-    setFrameOrigin(state, event) {
+    setFrameOrigin(state, input) {
       state.doc.insertFrameInPlace();
-      state.aux.originX = event.clientX;
-      state.aux.originY = event.clientY;
+      state.aux.originX = input.detail.inputX;
+      state.aux.originY = input.detail.inputY;
     },
 
-    grabCorner(state, event) {
+    grabCorner(state, input) {
       const frame = state.doc.selected.frame;
 
-      // store coordinates of opposite corner
-      // to the one that was clicked:
-      switch (event.target.dataset.corner) {
-        case 'top-left':
+      // store coordinates of *opposite* corner
+      switch (input.detail.target) {
+        case 'top-left-corner':
           state.aux.originX = frame.left + frame.width;
           state.aux.originY = frame.top + frame.height;
           break;
-        case 'top-right':
+        case 'top-right-corner':
           state.aux.originX = frame.left;
           state.aux.originY = frame.top + frame.height;
           break;
-        case 'bottom-right':
+        case 'bot-right-corner':
           state.aux.originX = frame.left;
           state.aux.originY = frame.top;
           break;
-        case 'bottom-left':
+        case 'bot-left-corner':
           state.aux.originX = frame.left + frame.width;
           state.aux.originY = frame.top;
           break;
       }
     },
 
-    sizeFrame(state, event) {
+    sizeFrame(state, input) {
       state.doc.selected.frame.set({
-        top:    Math.min(state.aux.originY, event.clientY),
-        left:   Math.min(state.aux.originX, event.clientX),
-        width:  Math.abs(state.aux.originX - event.clientX),
-        height: Math.abs(state.aux.originY - event.clientY),
+        top:    Math.min(state.aux.originY, input.detail.inputY),
+        left:   Math.min(state.aux.originX, input.detail.inputX),
+        width:  Math.abs(state.aux.originX - input.detail.inputX),
+        height: Math.abs(state.aux.originY - input.detail.inputY),
       });
     },
 
-    deleteFrame(state, event) {
-      event.preventDefault();
+    deleteFrame(state, input) {
       state.doc.deleteSelectedFrame();
     },
 
-    grabFrame(state, event) {
-      const id = event.target.dataset.id;
+    grabFrame(state, input) {
+      const id = input.detail.id;
       state.doc.selected.frame = state.doc.selectFrameAndShape(id);
 
-      state.aux.originX = event.clientX;
-      state.aux.originY = event.clientY;
+      state.aux.originX = input.detail.inputX;
+      state.aux.originY = input.detail.inputY;
     },
 
-    moveFrame(state, event) {
+    moveFrame(state, input) {
       const frame = state.doc.selected.frame;
 
       frame.set({
-        top:  frame.top  + (event.clientY - state.aux.originY),
-        left: frame.left + (event.clientX - state.aux.originX),
+        top:  frame.top  + (input.detail.inputY - state.aux.originY),
+        left: frame.left + (input.detail.inputX - state.aux.originX),
       });
 
-      state.aux.originX = event.clientX;
-      state.aux.originY = event.clientY;
+      state.aux.originX = input.detail.inputX;
+      state.aux.originY = input.detail.inputY;
     },
 
-    processProjectIds(state, event) {
-      // TODO: implement
-      // event.detail holds the response.
-      // need to add the array with project ids to state
+    processProjectIds(state, input) {
+      state.docIds = input.detail.docIds;
     },
   };
 
-  const machine = {
+  const core = {
     addSubscriber(subscriber) {
       this.subscribers.push(subscriber);
     },
 
     publishState() {
       for (let subscriber of this.subscribers) {
-        subscriber.receive(this.state);
+        subscriber.receive(JSON.parse(JSON.stringify(this.state)));
       }
+      this.state.messages = {};
     },
 
-    handle(event) {
-      const eventType = event.type;
-      const nodeType  = event.target && event.target.dataset && event.target.dataset.type;
-
-      const match = (t) => {
-        return t.eventType === eventType &&
-          (t.nodeType === nodeType ||
-            t.nodeType === undefined);
-      };
-
-      const transition = this.blueprint[this.state.label].find(match);
+    controller(input) {
+      const transition = transitionMap.get([this.state.label, input.label]);
 
       if (transition) {
-        this.actions[transition.action](this.state, event);
+        actions[transition.action](this.state, input);
         this.state.label = transition.nextLabel;
         this.state.messages = transition.messages || {};
         this.publishState();
+
+        console.log("input: " + input.label + ',',"new state: " + this.state.label);
       }
     },
 
@@ -437,65 +414,86 @@
         doc: doc.init(),
         label: 'start',
         docIds: null,
+        messages: {},
         aux: {},
       };
 
-      this.actions     = actions;
-      this.blueprint   = blueprint;
       this.subscribers = [];
 
       return this;
     },
   };
 
-  const frameTemplate = (index) => {
-    const template = document.createElement('template');
-    template.innerHTML = `
-    <div class="corner top-left" data-type="corner" data-corner="top-left">
-      <div class="center"></div>
-    </div>
-    <div class="corner top-right" data-type="corner" data-corner="top-right">
-      <div class="center"></div>
-    </div>
-    <div class="corner bottom-left" data-type="corner" data-corner="bottom-left">
-      <div class="center"></div>
-    </div>
-    <div class="corner bottom-right" data-type="corner" data-corner="bottom-right">
-      <div class="center"></div>
-    </div>
-    <div class="counter" data-type="counter">${index}</div>
-    <a class="deleteLink" href="#" data-type="deleteLink">&times;</a>
-  `;
-    return template;
+  const inputMap = [
+    // event type   target type           input
+    [['click',     'newShapeButton'   ], 'createShape'       ],
+    [['click',     'newProjectButton' ], 'createProject'     ],
+    [['click',     'animateButton'    ], 'startAnimation'    ],
+    [['click',     'deleteLink'       ], 'deleteFrame'       ],
+    [['click',     'canvas'           ], 'toIdle'            ],
+    [['click',     'canvas'           ], 'toIdle'            ],
+    [['mousedown', 'frame'            ], 'modifyPosition'    ],
+    [['mousedown', 'top-left-corner'  ], 'resizeFrame'       ],
+    [['mousedown', 'top-right-corner' ], 'resizeFrame'       ],
+    [['mousedown', 'bot-left-corner'  ], 'resizeFrame'       ],
+    [['mousedown', 'bot-right-corner' ], 'resizeFrame'       ],
+    [['mousedown', 'canvas'           ], 'createFrame'       ],
+    [['mousemove'                     ], 'changeCoordinates' ],
+    [['mouseup'                       ], 'releaseFrame'      ],
+  ];
+
+  inputMap.get = function(key) {
+    const match = (pair) => {
+      return pair[0][0] === key[0] &&
+        pair[0][1] === key[1];
+    };
+
+    const pair = inputMap.find(match);
+
+    if (pair) {
+      return pair[1];
+    } else {
+      console.log('ui: no proper input');
+    }
   };
 
-  const nodeFactory = {
-    makeShapeNode(id) {
-      const node = document.createElement('div');
-      node.classList.add('shape');
-      node.dataset.id = id;
-      node.dataset.type = 'shape';
-      return node;
-    },
+  const bindEvents = function(controller) {
+    ui.canvasNode.addEventListener('mousedown', (event) => {
+      controller({
+        label:  inputMap.get(['mousedown', event.target.dataset.type]),
+        detail: mouseEventDetails(event)
+      });
+    });
 
-    makeFrameNode(index, id) {
-      const node = document.createElement('div');
-      node.classList.add('frame');
-      node.dataset.type = 'frame';
-      node.dataset.id = id;
-      node.appendChild(frameTemplate(index).content.cloneNode(true));
-      return node;
-    },
+    ui.canvasNode.addEventListener('mousemove', (event) => {
+      controller({
+        label:  inputMap.get(['mousemove']),
+        detail: mouseEventDetails(event)
+      });
+    });
+
+    ui.canvasNode.addEventListener('mouseup', (event) => {
+      controller({
+        label:  inputMap.get(['mouseup']),
+        detail: mouseEventDetails(event)
+      });
+    });
+
+    document.addEventListener('click', (event) => {
+      controller({
+        label: inputMap.get(['click', event.target.dataset.type]),
+        detail: mouseEventDetails(event)
+      });
+    });
   };
 
-  const bindEvents = function(handler) {
-    ui.canvasNode.addEventListener('mousedown', handler);
-    ui.canvasNode.addEventListener('mousemove', handler);
-    ui.canvasNode.addEventListener('mouseup', handler);
-    ui.canvasNode.addEventListener('click', handler);
-    ui.newShapeButton.addEventListener('click', handler);
-    ui.newProjectButton.addEventListener('click', handler);
-    ui.animateButton.addEventListener('click', handler);
+  const mouseEventDetails = (event) => {
+    return {
+      inputX:     event.clientX,
+      inputY:     event.clientY,
+      target:     event.target.dataset.type,
+      id:         event.target.dataset.id, // frame and shape nodes have it
+    };
   };
 
   const adjust = function(frame) {
@@ -508,10 +506,10 @@
   };
 
   const place = function(node, frame) {
-    node.style.top    = String(adjust(frame).top) + 'px';
+    node.style.top    = String(adjust(frame).top)  + 'px';
     node.style.left   = String(adjust(frame).left) + 'px';
-    node.style.width  = String(frame.width)  + 'px';
-    node.style.height = String(frame.height) + 'px';
+    node.style.width  = String(frame.width)        + 'px';
+    node.style.height = String(frame.height)       + 'px';
   };
 
   const ui = {
@@ -528,14 +526,14 @@
 
       for (let shape of state.doc.shapes) {
         const shapeNode = this.nodeFactory.makeShapeNode(shape._id);
-        if (state.doc.selected.shape === shape) {
+        if (state.doc.selected.shapeID === shape._id) {
           shapeNode.classList.add('selected');
         }
 
         for (var i = 0; i < shape.frames.length; i += 1) {
           const frameNode = this.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
           place(frameNode, shape.frames[i]);
-          if (shape.frames[i] === state.doc.selected.frame) {
+          if (shape.frames[i]._id === state.doc.selected.frameID) {
             frameNode.classList.add('selected');
           }
 
@@ -570,8 +568,7 @@
     },
 
     renderProjectIds(state) {
-      // TODO: implement
-      // need to access state.docIds here (or whatever it's called).
+      // TODO: implement the rendering
       this.displayLoadedFlash();
     },
 
@@ -579,16 +576,16 @@
       const flash = document.createElement('p');
       flash.innerHTML = 'Document list loaded';
       flash.classList.add('flash');
-      window.setTimeout(() => document.body.appendChild(flash), 1000);
-      window.setTimeout(() => flash.remove(), 2000);
+      window.setTimeout(() => document.body.appendChild(flash), 500);
+      window.setTimeout(() => flash.remove(), 1500);
     },
 
     displaySavedNewFlash() {
       const flash = document.createElement('p');
       flash.innerHTML = 'New document saved';
       flash.classList.add('flash');
-      window.setTimeout(() => document.body.appendChild(flash), 1000);
-      window.setTimeout(() => flash.remove(), 2000);
+      window.setTimeout(() => document.body.appendChild(flash), 500);
+      window.setTimeout(() => flash.remove(), 1500);
     },
 
     init(machine) {
@@ -598,17 +595,20 @@
       this.newProjectButton = document.querySelector('#new-project');
       this.animateButton    = document.querySelector('#animate');
 
-      bindEvents(machine.handle.bind(machine));
+      bindEvents(machine.controller.bind(machine));
       this.subscribeTo(machine);
     },
   };
 
-  const bindEvents$1 = (handler) => {
+  const bindEvents$1 = (controller) => {
     window.addEventListener('saveNewProject', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        handler(new Event('projectSaved'));
+        controller({
+          label: 'projectSaved',
+          detail: {}
+        });
       });
 
       request.open('POST', "/projects/");
@@ -620,15 +620,15 @@
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        handler(new CustomEvent(
-          'projectIdsLoaded',
-          request.response
-          // ^ pass the array with project ids to the handler
-          //   maybe we should do the json conversion ourselves?
-        ));
+        controller({
+          label: 'projectIdsLoaded',
+          detail: {
+            docIds: request.response
+          }
+        });
       });
 
-      request.open('GET', "/projects/ids");
+      request.open('GET', "/ids");
       request.responseType = 'json';
       request.send();
     });
@@ -660,20 +660,6 @@
     // });
   };
 
-  const serializable = (doc) => {
-    const shapeId = doc.selected.shape && doc.selected.shape._id || null;
-    const frameId = doc.selected.frame && doc.selected.frame._id || null;
-
-    return {
-      _id: doc._id,
-      shapes: doc.shapes,
-      selected: {
-        shape: shapeId,
-        frame: frameId,
-      },
-    };
-  };
-
   // const convertFromDb = (data) => {
   //   // TODO: implement
   //   // convert data.selected ids into references
@@ -686,13 +672,7 @@
     },
 
     receive(state) {
-      if (state.messages['db'] === 'saveNewProject') {
-        this.saveNewProject(state.doc);
-      }
-
-      if (state.messages['db'] === 'loadProjectIds') {
-        this.loadProjectIds();
-      }
+      state.messages['db'] && this[state.messages['db']](state);
     },
 
     loadProjectIds() {
@@ -700,27 +680,27 @@
       window.dispatchEvent(event);
     },
 
-    saveNewProject(doc) {
+    saveNewProject(state) {
       const event = new CustomEvent(
         'saveNewProject',
-        { detail: JSON.stringify(serializable(doc)) }
+        { detail: JSON.stringify(state.doc) }
       );
       window.dispatchEvent(event);
     },
 
     init(machine) {
-      bindEvents$1(machine.handle.bind(machine));
+      bindEvents$1(machine.controller.bind(machine));
       this.subscribeTo(machine);
     },
   };
 
   const app = {
     init() {
-      machine.init();
-      ui.init(machine);
-      db.init(machine);
+      core.init();
+      ui.init(core);
+      db.init(core);
 
-      machine.handle(new Event('kickoff'));
+      core.controller({ label: 'kickoff' });
     },
   };
 

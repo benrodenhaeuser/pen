@@ -3,87 +3,83 @@ const actions = {
     return;
   },
 
-  clear(state, event) {
+  clear(state, input) {
     state.aux = {};
   },
 
-  createShape(state, event) {
+  createShape(state, input) {
     state.doc.appendShape();
   },
 
-  createProject(state, event) {
+  createProject(state, input) {
     state.doc.init();
   },
 
-  setFrameOrigin(state, event) {
+  setFrameOrigin(state, input) {
     state.doc.insertFrameInPlace();
-    state.aux.originX = event.clientX;
-    state.aux.originY = event.clientY;
+    state.aux.originX = input.detail.inputX;
+    state.aux.originY = input.detail.inputY;
   },
 
-  grabCorner(state, event) {
+  grabCorner(state, input) {
     const frame = state.doc.selected.frame;
 
-    // store coordinates of opposite corner
-    // to the one that was clicked:
-    switch (event.target.dataset.corner) {
-      case 'top-left':
+    // store coordinates of *opposite* corner
+    switch (input.detail.target) {
+      case 'top-left-corner':
         state.aux.originX = frame.left + frame.width;
         state.aux.originY = frame.top + frame.height;
         break;
-      case 'top-right':
+      case 'top-right-corner':
         state.aux.originX = frame.left;
         state.aux.originY = frame.top + frame.height;
         break;
-      case 'bottom-right':
+      case 'bot-right-corner':
         state.aux.originX = frame.left;
         state.aux.originY = frame.top;
         break;
-      case 'bottom-left':
+      case 'bot-left-corner':
         state.aux.originX = frame.left + frame.width;
         state.aux.originY = frame.top;
         break;
     }
   },
 
-  sizeFrame(state, event) {
+  sizeFrame(state, input) {
     state.doc.selected.frame.set({
-      top:    Math.min(state.aux.originY, event.clientY),
-      left:   Math.min(state.aux.originX, event.clientX),
-      width:  Math.abs(state.aux.originX - event.clientX),
-      height: Math.abs(state.aux.originY - event.clientY),
+      top:    Math.min(state.aux.originY, input.detail.inputY),
+      left:   Math.min(state.aux.originX, input.detail.inputX),
+      width:  Math.abs(state.aux.originX - input.detail.inputX),
+      height: Math.abs(state.aux.originY - input.detail.inputY),
     });
   },
 
-  deleteFrame(state, event) {
-    event.preventDefault();
+  deleteFrame(state, input) {
     state.doc.deleteSelectedFrame();
   },
 
-  grabFrame(state, event) {
-    const id = event.target.dataset.id;
+  grabFrame(state, input) {
+    const id = input.detail.id;
     state.doc.selected.frame = state.doc.selectFrameAndShape(id);
 
-    state.aux.originX = event.clientX;
-    state.aux.originY = event.clientY;
+    state.aux.originX = input.detail.inputX;
+    state.aux.originY = input.detail.inputY;
   },
 
-  moveFrame(state, event) {
+  moveFrame(state, input) {
     const frame = state.doc.selected.frame;
 
     frame.set({
-      top:  frame.top  + (event.clientY - state.aux.originY),
-      left: frame.left + (event.clientX - state.aux.originX),
+      top:  frame.top  + (input.detail.inputY - state.aux.originY),
+      left: frame.left + (input.detail.inputX - state.aux.originX),
     });
 
-    state.aux.originX = event.clientX;
-    state.aux.originY = event.clientY;
+    state.aux.originX = input.detail.inputX;
+    state.aux.originY = input.detail.inputY;
   },
 
-  processProjectIds(state, event) {
-    // TODO: implement
-    // event.detail holds the response.
-    // need to add the array with project ids to state
+  processProjectIds(state, input) {
+    state.docIds = input.detail.docIds;
   },
 };
 

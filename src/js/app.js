@@ -1,14 +1,14 @@
-import { machine } from './machine.js';
+import { core } from './core.js';
 import { ui } from './ui.js';
 import { db } from './db.js';
 
 const app = {
   init() {
-    machine.init();
-    ui.init(machine);
-    db.init(machine);
+    core.init();
+    ui.init(core);
+    db.init(core);
 
-    machine.handle(new Event('kickoff'));
+    core.controller({ label: 'kickoff' });
   },
 };
 

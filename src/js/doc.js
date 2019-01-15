@@ -1,15 +1,6 @@
 import { createId } from './utils.js'
 
 const Frame = {
-  get coordinates() {
-    return {
-      top:    this.top,
-      left:   this.left,
-      width:  this.width,
-      height: this.height,
-    };
-  },
-
   set(coordinates) {
     this.left   = coordinates.left || this.left;
     this.top    = coordinates.top || this.top;
@@ -27,16 +18,16 @@ const Frame = {
   },
 };
 
-const findIndexOf = function(selectedFrame) {
-  const frames = doc.selected.shape.frames;
-  for (let i = 0; i < frames.length; i += 1) {
-    if (frames[i] === selectedFrame) {
-      return i;
-    }
-  }
-};
-
 const doc = {
+  findIndexOf(selectedFrame) {
+    const frames = doc.selected.shape.frames;
+    for (let i = 0; i < frames.length; i += 1) {
+      if (frames[i] === selectedFrame) {
+        return i;
+      }
+    }
+  },
+
   appendShape() {
     const shape = {
       _id: createId(),
@@ -52,7 +43,7 @@ const doc = {
     const frames = this.selected.shape.frames;
 
     if (this.selected.frame) {
-      const index = findIndexOf(this.selected.frame);
+      const index = this.findIndexOf(this.selected.frame);
       frames.splice(index + 1, 0, frame);
     } else {
       frames.push(frame);
@@ -63,7 +54,7 @@ const doc = {
 
   deleteSelectedFrame() {
     const frames = this.selected.shape.frames;
-    const index = findIndexOf(this.selected.frame);
+    const index = this.findIndexOf(this.selected.frame);
     frames.splice(index, 1);
 
     if (frames[index] !== undefined) {
@@ -105,10 +96,21 @@ const doc = {
     }
   },
 
-  empty() {
-    const docId = createId();
+  toJSON() {
+    return {
+      _id: this._id,
+      shapes: this.shapes,
+      selected: {
+        frameID: this.selected.frame && this.selected.frame._id || null,
+        shapeID: this.selected.shape._id,
+      },
+    };
+  },
+
+  init() {
+    const docId   = createId();
     const shapeId = createId();
-    const shape = {
+    const shape   = {
       _id: shapeId,
       frames: [],
     };
@@ -119,18 +121,6 @@ const doc = {
       shape: shape,
       frame: null,
     };
-  },
-
-  import(docData) {
-    // TODO
-  },
-
-  init(docData) {
-    if (docData === undefined) {
-      this.empty();
-    } else {
-      this.import(docData);
-    }
 
     return this;
   },

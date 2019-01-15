@@ -1,13 +1,43 @@
-import { nodeFactory } from './nodeFactory.js';
+import { nodeFactory } from './utils.js';
+import { inputMap } from './inputMap.js';
 
-const bindEvents = function(handler) {
-  ui.canvasNode.addEventListener('mousedown', handler);
-  ui.canvasNode.addEventListener('mousemove', handler);
-  ui.canvasNode.addEventListener('mouseup', handler);
-  ui.canvasNode.addEventListener('click', handler);
-  ui.newShapeButton.addEventListener('click', handler);
-  ui.newProjectButton.addEventListener('click', handler);
-  ui.animateButton.addEventListener('click', handler);
+const bindEvents = function(controller) {
+  ui.canvasNode.addEventListener('mousedown', (event) => {
+    controller({
+      label:  inputMap.get(['mousedown', event.target.dataset.type]),
+      detail: mouseEventDetails(event)
+    });
+  });
+
+  ui.canvasNode.addEventListener('mousemove', (event) => {
+    controller({
+      label:  inputMap.get(['mousemove']),
+      detail: mouseEventDetails(event)
+    });
+  });
+
+  ui.canvasNode.addEventListener('mouseup', (event) => {
+    controller({
+      label:  inputMap.get(['mouseup']),
+      detail: mouseEventDetails(event)
+    });
+  });
+
+  document.addEventListener('click', (event) => {
+    controller({
+      label: inputMap.get(['click', event.target.dataset.type]),
+      detail: mouseEventDetails(event)
+    });
+  });
+};
+
+const mouseEventDetails = (event) => {
+  return {
+    inputX:     event.clientX,
+    inputY:     event.clientY,
+    target:     event.target.dataset.type,
+    id:         event.target.dataset.id, // frame and shape nodes have it
+  };
 };
 
 const adjust = function(frame) {
@@ -20,10 +50,10 @@ const adjust = function(frame) {
 };
 
 const place = function(node, frame) {
-  node.style.top    = String(adjust(frame).top) + 'px';
+  node.style.top    = String(adjust(frame).top)  + 'px';
   node.style.left   = String(adjust(frame).left) + 'px';
-  node.style.width  = String(frame.width)  + 'px';
-  node.style.height = String(frame.height) + 'px';
+  node.style.width  = String(frame.width)        + 'px';
+  node.style.height = String(frame.height)       + 'px';
 };
 
 const ui = {
@@ -40,14 +70,14 @@ const ui = {
 
     for (let shape of state.doc.shapes) {
       const shapeNode = this.nodeFactory.makeShapeNode(shape._id);
-      if (state.doc.selected.shape === shape) {
+      if (state.doc.selected.shapeID === shape._id) {
         shapeNode.classList.add('selected');
       }
 
       for (var i = 0; i < shape.frames.length; i += 1) {
         const frameNode = this.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
         place(frameNode, shape.frames[i]);
-        if (shape.frames[i] === state.doc.selected.frame) {
+        if (shape.frames[i]._id === state.doc.selected.frameID) {
           frameNode.classList.add('selected');
         }
 
@@ -82,8 +112,7 @@ const ui = {
   },
 
   renderProjectIds(state) {
-    // TODO: implement
-    // need to access state.docIds here (or whatever it's called).
+    // TODO: implement the rendering
     this.displayLoadedFlash();
   },
 
@@ -91,16 +120,16 @@ const ui = {
     const flash = document.createElement('p');
     flash.innerHTML = 'Document list loaded';
     flash.classList.add('flash');
-    window.setTimeout(() => document.body.appendChild(flash), 1000);
-    window.setTimeout(() => flash.remove(), 2000);
+    window.setTimeout(() => document.body.appendChild(flash), 500);
+    window.setTimeout(() => flash.remove(), 1500);
   },
 
   displaySavedNewFlash() {
     const flash = document.createElement('p');
     flash.innerHTML = 'New document saved';
     flash.classList.add('flash');
-    window.setTimeout(() => document.body.appendChild(flash), 1000);
-    window.setTimeout(() => flash.remove(), 2000);
+    window.setTimeout(() => document.body.appendChild(flash), 500);
+    window.setTimeout(() => flash.remove(), 1500);
   },
 
   init(machine) {
@@ -110,7 +139,7 @@ const ui = {
     this.newProjectButton = document.querySelector('#new-project');
     this.animateButton    = document.querySelector('#animate');
 
-    bindEvents(machine.handle.bind(machine));
+    bindEvents(machine.controller.bind(machine));
     this.subscribeTo(machine);
   },
 };
