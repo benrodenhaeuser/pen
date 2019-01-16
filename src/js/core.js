@@ -23,7 +23,7 @@ const core = {
       this.state.messages = transition.messages || {};
       this.publishState();
 
-      console.log("input: " + input.label + ',',"new state: " + this.state.label);
+      // console.log("input: " + input.label + ',',"new state: " + this.state.label);
     }
   },
 
@@ -32,8 +32,8 @@ const core = {
       doc: doc.init(),
       label: 'start',
       docIds: null,
-      messages: {},
-      aux: {},
+      messages: {}, // TODO: don't want this.
+      aux: {}, // TODO: don't want this. maybe store this stuff in actions object?
     };
 
     this.subscribers = [];

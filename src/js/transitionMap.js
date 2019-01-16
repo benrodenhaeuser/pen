@@ -5,33 +5,26 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'idle', input: 'createShape' },
-    { action: 'createShape', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+    { action: 'createShape', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'createProject' },
     {
       action: 'createProject',
-      messages: { db: 'saveNewProject', ui: 'renderFrames' },
+      messages: { db: 'saveNewProject' },
       nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'projectSaved' },
-    {
-      action: 'skip',
-      messages: { ui: 'displaySavedNewFlash' },
-      nextLabel: 'idle' }
+    { action: 'skip', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'startAnimation' },
-    { action: 'skip', messages: { ui: 'animateShapes' }, nextLabel: 'animating' }
+    { action: 'skip', nextLabel: 'animating' }
   ],
   [
     { stateLabel: 'idle', input: 'modifyPosition' },
-    {
-      action: 'grabFrame',
-      messages: { ui: 'renderFrames' },
-      nextLabel: 'draggingFrame'
-    }
+    { action: 'grabFrame', nextLabel: 'draggingFrame' }
   ],
   [
     { stateLabel: 'idle', input: 'resizeFrame' },
@@ -43,31 +36,19 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'idle', input: 'deleteFrame' },
-    { action: 'deleteFrame', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+    { action: 'deleteFrame', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'projecSaved' },
-    {
-      action: 'skip',
-      messages: { ui: 'displaySavedNewFlash' },
-      nextLabel: 'idle'
-    }
+    { action: 'skip', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'projectIdsLoaded' },
-    {
-      action: 'processProjectIds',
-      messages: { ui: 'renderProjectIds' },
-      nextLabel: 'idle'
-    }
+    { action: 'processProjectIds', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'drawingFrame', input: 'changeCoordinates' },
-    {
-      action: 'sizeFrame',
-      messages: { ui: 'renderFrames' },
-      nextLabel: 'drawingFrame'
-    }
+    { action: 'sizeFrame', nextLabel: 'drawingFrame' }
   ],
   [
     { stateLabel: 'drawingFrame', input: 'releaseFrame' },
@@ -75,11 +56,7 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'draggingFrame', input: 'changeCoordinates' },
-    {
-      action: 'moveFrame',
-      messages: { ui: 'renderFrames' },
-      nextLabel: 'draggingFrame'
-    }
+    { action: 'moveFrame', nextLabel: 'draggingFrame' }
   ],
   [
     { stateLabel: 'draggingFrame', input: 'releaseFrame' },
@@ -87,11 +64,7 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'resizingFrame', input: 'changeCoordinates' },
-    {
-      action: 'sizeFrame',
-      messages: { ui: 'renderFrames' },
-      nextLabel: 'resizingFrame'
-    }
+    { action: 'sizeFrame', nextLabel: 'resizingFrame' }
   ],
   [
     { stateLabel: 'resizingFrame', input: 'releaseFrame' },
@@ -99,22 +72,22 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'animating', input: 'startAnimation' },
-    { action: 'skip', messages: { ui: 'animateShapes' }, nextLabel: 'animating' }
+    { action: 'skip', nextLabel: 'animating' }
   ],
   [
     { stateLabel: 'animating', input: 'toIdle' },
-    { action: 'skip', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+    { action: 'skip', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'animating', input: 'createProject' },
     {
       action: 'createProject',
-      messages: { db: 'saveNewProject', ui: 'renderFrames' },
+      messages: { db: 'saveNewProject' },
       nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'animating', input: 'createShape' },
-    { action: 'createShape', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+    { action: 'createShape', nextLabel: 'idle' }
   ]
 ];
 
@@ -129,7 +102,7 @@ transitionMap.get = function(key) {
   const pair = transitionMap.find(match);
 
   if (pair) {
-    console.log('action: ' + pair[1].action + ',', 'messages:' + pair[1].messages );
+    // console.log('action: ' + pair[1].action + ',', 'messages:' + pair[1].messages );
     return pair[1]; // returns an object
   } else {
     console.log('core: no transition');
