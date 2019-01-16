@@ -1,4 +1,4 @@
-import { nodeFactory } from './utils.js';
+import { nodeFactory } from './nodeFactory.js';
 import { inputMap } from './inputMap.js';
 
 const ui = {
