@@ -485,7 +485,7 @@
       }
 
       for (let changed of this.changes(state, this.previousState)) {
-        this.render[changed] && this.render[changed].bind(this)(state);
+        this.render[changed] && this.render[changed](state);
       }
       this.previousState = state;
     },
