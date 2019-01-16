@@ -3,15 +3,14 @@ import { doc } from './doc.js';
 import { actions } from './actions.js';
 
 const core = {
-  addSubscriber(subscriber) {
-    this.subscribers.push(subscriber);
+  attach(peripheral) {
+    this.periphery.push(peripheral);
   },
 
-  publishState() {
-    for (let subscriber of this.subscribers) {
-      subscriber.receive(JSON.parse(JSON.stringify(this.state)));
+  syncPeriphery() {
+    for (let peripheral of this.periphery) {
+      peripheral.sync(JSON.parse(JSON.stringify(this.state)));
     }
-    this.state.messages = {}; // be sure to never send a message twice!
   },
 
   controller(input) {
@@ -20,25 +19,25 @@ const core = {
     if (transition) {
       actions[transition.action](this.state, input);
       this.state.label = transition.nextLabel;
-      this.state.messages = transition.messages || {};
-      this.publishState();
-
-      // console.log("input: " + input.label + ',',"new state: " + this.state.label);
+      this.syncPeriphery();
     }
   },
 
   init() {
     this.state = {
-      doc: doc.init(),
+      doc: doc.init(), // TODO: just initializing an empty doc is
       label: 'start',
       docIds: null,
-      messages: {}, // TODO: don't want this.
-      aux: {}, // TODO: don't want this. maybe store this stuff in actions object?
     };
 
-    this.subscribers = [];
-
+    actions.init();
+    this.periphery = [];
     return this;
+  },
+
+  kickoff() {
+    this.syncPeriphery();
+    this.controller({ label: 'kickoff' });
   },
 };
 

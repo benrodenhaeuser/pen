@@ -3,8 +3,8 @@
 
   const transitionMap = [
     [
-      { stateLabel: 'start', input: 'kickoff' },
-      { action: 'skip', messages: { db: 'loadProjectIds' }, nextLabel: 'idle' }
+      { stateLabel: 'start', input: 'kickoff' }, 
+      { action: 'skip', nextLabel: 'idle' }
     ],
     [
       { stateLabel: 'idle', input: 'createShape' },
@@ -12,10 +12,7 @@
     ],
     [
       { stateLabel: 'idle', input: 'createProject' },
-      {
-        action: 'createProject',
-        messages: { db: 'saveNewProject' },
-        nextLabel: 'idle' }
+      { action: 'createProject', nextLabel: 'idle' }
     ],
     [
       { stateLabel: 'idle', input: 'projectSaved' },
@@ -83,10 +80,7 @@
     ],
     [
       { stateLabel: 'animating', input: 'createProject' },
-      {
-        action: 'createProject',
-        messages: { db: 'saveNewProject' },
-        nextLabel: 'idle' }
+      { action: 'createProject', nextLabel: 'idle' }
     ],
     [
       { stateLabel: 'animating', input: 'createShape' },
@@ -94,8 +88,6 @@
     ]
   ];
 
-  // notice that we "get" an object from the map by passing in an array as the "key".
-  // the above format with an object literal as the "key" is meant for readability.
   transitionMap.get = function(key) {
     const match = (pair) => {
       return pair[0].stateLabel === key[0] &&
@@ -105,10 +97,7 @@
     const pair = transitionMap.find(match);
 
     if (pair) {
-      // console.log('action: ' + pair[1].action + ',', 'messages:' + pair[1].messages );
       return pair[1]; // returns an object
-    } else {
-      console.log('core: no transition');
     }
   };
 
@@ -290,8 +279,8 @@
       return;
     },
 
-    clear(state, input) {
-      state.aux = {};
+    clear() {
+      this.aux = {};
     },
 
     createShape(state, input) {
@@ -304,8 +293,8 @@
 
     setFrameOrigin(state, input) {
       state.doc.insertFrameInPlace();
-      state.aux.originX = input.detail.inputX;
-      state.aux.originY = input.detail.inputY;
+      this.aux.originX = input.detail.inputX;
+      this.aux.originY = input.detail.inputY;
     },
 
     grabCorner(state, input) {
@@ -314,30 +303,30 @@
       // store coordinates of *opposite* corner
       switch (input.detail.target) {
         case 'top-left-corner':
-          state.aux.originX = frame.left + frame.width;
-          state.aux.originY = frame.top + frame.height;
+          this.aux.originX = frame.left + frame.width;
+          this.aux.originY = frame.top + frame.height;
           break;
         case 'top-right-corner':
-          state.aux.originX = frame.left;
-          state.aux.originY = frame.top + frame.height;
+          this.aux.originX = frame.left;
+          this.aux.originY = frame.top + frame.height;
           break;
         case 'bot-right-corner':
-          state.aux.originX = frame.left;
-          state.aux.originY = frame.top;
+          this.aux.originX = frame.left;
+          this.aux.originY = frame.top;
           break;
         case 'bot-left-corner':
-          state.aux.originX = frame.left + frame.width;
-          state.aux.originY = frame.top;
+          this.aux.originX = frame.left + frame.width;
+          this.aux.originY = frame.top;
           break;
       }
     },
 
     sizeFrame(state, input) {
       state.doc.selected.frame.set({
-        top:    Math.min(state.aux.originY, input.detail.inputY),
-        left:   Math.min(state.aux.originX, input.detail.inputX),
-        width:  Math.abs(state.aux.originX - input.detail.inputX),
-        height: Math.abs(state.aux.originY - input.detail.inputY),
+        top:    Math.min(this.aux.originY, input.detail.inputY),
+        left:   Math.min(this.aux.originX, input.detail.inputX),
+        width:  Math.abs(this.aux.originX - input.detail.inputX),
+        height: Math.abs(this.aux.originY - input.detail.inputY),
       });
     },
 
@@ -349,37 +338,40 @@
       const id = input.detail.id;
       state.doc.selected.frame = state.doc.selectFrameAndShape(id);
 
-      state.aux.originX = input.detail.inputX;
-      state.aux.originY = input.detail.inputY;
+      this.aux.originX = input.detail.inputX;
+      this.aux.originY = input.detail.inputY;
     },
 
     moveFrame(state, input) {
       const frame = state.doc.selected.frame;
 
       frame.set({
-        top:  frame.top  + (input.detail.inputY - state.aux.originY),
-        left: frame.left + (input.detail.inputX - state.aux.originX),
+        top:  frame.top  + (input.detail.inputY - this.aux.originY),
+        left: frame.left + (input.detail.inputX - this.aux.originX),
       });
 
-      state.aux.originX = input.detail.inputX;
-      state.aux.originY = input.detail.inputY;
+      this.aux.originX = input.detail.inputX;
+      this.aux.originY = input.detail.inputY;
     },
 
     processProjectIds(state, input) {
       state.docIds = input.detail.docIds;
     },
+
+    init() {
+      this.aux = {};
+    }
   };
 
   const core = {
-    addSubscriber(subscriber) {
-      this.subscribers.push(subscriber);
+    attach(peripheral) {
+      this.periphery.push(peripheral);
     },
 
-    publishState() {
-      for (let subscriber of this.subscribers) {
-        subscriber.receive(JSON.parse(JSON.stringify(this.state)));
+    syncPeriphery() {
+      for (let peripheral of this.periphery) {
+        peripheral.sync(JSON.parse(JSON.stringify(this.state)));
       }
-      this.state.messages = {}; // be sure to never send a message twice!
     },
 
     controller(input) {
@@ -388,25 +380,25 @@
       if (transition) {
         actions[transition.action](this.state, input);
         this.state.label = transition.nextLabel;
-        this.state.messages = transition.messages || {};
-        this.publishState();
-
-        // console.log("input: " + input.label + ',',"new state: " + this.state.label);
+        this.syncPeriphery();
       }
     },
 
     init() {
       this.state = {
-        doc: doc.init(),
+        doc: doc.init(), // TODO: just initializing an empty doc is
         label: 'start',
         docIds: null,
-        messages: {}, // TODO: don't want this.
-        aux: {}, // TODO: don't want this. maybe store this stuff in actions object?
       };
 
-      this.subscribers = [];
-
+      actions.init();
+      this.periphery = [];
       return this;
+    },
+
+    kickoff() {
+      this.syncPeriphery();
+      this.controller({ label: 'kickoff' });
     },
   };
 
@@ -443,54 +435,57 @@
     }
   };
 
-  const bindEvents = function(controller) {
-    const mouseEventDetails = (event) => {
-      return {
-        inputX:     event.clientX,
-        inputY:     event.clientY,
-        target:     event.target.dataset.type,
-        id:         event.target.dataset.id,
-      };
-    };
-
-    ui.canvasNode.addEventListener('mousedown', (event) => {
-      controller({
-        label:  inputMap.get(['mousedown', event.target.dataset.type]),
-        detail: mouseEventDetails(event)
-      });
-    });
-
-    ui.canvasNode.addEventListener('mousemove', (event) => {
-      controller({
-        label:  inputMap.get(['mousemove']),
-        detail: mouseEventDetails(event)
-      });
-    });
-
-    ui.canvasNode.addEventListener('mouseup', (event) => {
-      controller({
-        label:  inputMap.get(['mouseup']),
-        detail: mouseEventDetails(event)
-      });
-    });
-
-    document.addEventListener('click', (event) => {
-      controller({
-        label: inputMap.get(['click', event.target.dataset.type]),
-        detail: mouseEventDetails(event)
-      });
-    });
-  };
-
   const ui = {
-    subscribeTo(publisher) {
-      publisher.addSubscriber(this);
+    bindEvents(controller) {
+      this.canvasNode = document.querySelector('#canvas');
+
+      const mouseEventDetails = (event) => {
+        return {
+          inputX:     event.clientX,
+          inputY:     event.clientY,
+          target:     event.target.dataset.type,
+          id:         event.target.dataset.id,
+        };
+      };
+
+      this.canvasNode.addEventListener('mousedown', (event) => {
+        controller({
+          label:  inputMap.get(['mousedown', event.target.dataset.type]),
+          detail: mouseEventDetails(event)
+        });
+      });
+
+      this.canvasNode.addEventListener('mousemove', (event) => {
+        controller({
+          label:  inputMap.get(['mousemove']),
+          detail: mouseEventDetails(event)
+        });
+      });
+
+      this.canvasNode.addEventListener('mouseup', (event) => {
+        controller({
+          label:  inputMap.get(['mouseup']),
+          detail: mouseEventDetails(event)
+        });
+      });
+
+      document.addEventListener('click', (event) => {
+        controller({
+          label: inputMap.get(['click', event.target.dataset.type]),
+          detail: mouseEventDetails(event)
+        });
+      });
     },
 
-    receive(state) {
-      console.log(this.changes(state, this.previousState));
+    sync(state) {
+      if (state.label === 'start') {
+        this.start(state);
+        this.previousState = state;
+        return;
+      }
+
       for (let changed of this.changes(state, this.previousState)) {
-        this.sync[changed](state);
+        this.render[changed] && this.render[changed].bind(this)(state);
       }
       this.previousState = state;
     },
@@ -498,12 +493,6 @@
     changes(state1, state2) {
       const keys = Object.keys(state1);
       const changed = keys.filter(key => !this.equal(state1[key], state2[key]));
-
-      if (state2.doc && state1.doc._id !== state2.doc._id) {
-        changed.push('docId');
-      }
-      // ^ TODO: this special case is awkward.
-
       return changed;
     },
 
@@ -511,18 +500,23 @@
       return JSON.stringify(obj1) === JSON.stringify(obj2);
     },
 
-    sync: {
+    // API
+    render: {
       doc(state) {
+        if (ui.previousState.doc && state.doc._id !== ui.previousState.doc._id) {
+          ui.flash('New document saved');
+        }
+
         ui.canvasNode.innerHTML = '';
 
         for (let shape of state.doc.shapes) {
-          const shapeNode = ui.nodeFactory.makeShapeNode(shape._id);
+          const shapeNode = nodeFactory.makeShapeNode(shape._id);
           if (state.doc.selected.shapeID === shape._id) {
             shapeNode.classList.add('selected');
           }
 
           for (var i = 0; i < shape.frames.length; i += 1) {
-            const frameNode = ui.nodeFactory.makeFrameNode(i, shape.frames[i]._id);
+            const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
             ui.place(frameNode, shape.frames[i]);
             if (shape.frames[i]._id === state.doc.selected.frameID) {
               frameNode.classList.add('selected');
@@ -541,7 +535,7 @@
 
           for (let shape of state.doc.shapes) {
             const timeline = new TimelineMax();
-            const shapeNode = ui.nodeFactory.makeShapeNode();
+            const shapeNode = nodeFactory.makeShapeNode();
 
             for (let i = 0; i < shape.frames.length - 1; i += 1) {
               let source = shape.frames[i];
@@ -567,18 +561,6 @@
         // append a list entry for each project id
         // the list entry needs a data-id
         // Since projects don't have a name, we don't quite know what to write there.
-      },
-
-      docId(state) {
-        ui.flash('New document saved');
-      },
-
-      messages(state) {
-        // TODO ==> eliminate this
-      },
-
-      aux(state) {
-        // TODO ==> eliminate this
       },
     },
 
@@ -606,98 +588,92 @@
       node.style.height = String(frame.height)       + 'px';
     },
 
-    init(machine) {
-      this.nodeFactory      = nodeFactory;
-      this.canvasNode       = document.querySelector('#canvas');
-      this.newShapeButton   = document.querySelector('#new-shape');
-      this.newProjectButton = document.querySelector('#new-project');
-      this.animateButton    = document.querySelector('#animate');
+    start(state) {
+      return;
+    },
 
-      this.previousState = {};
-
-      bindEvents(machine.controller.bind(machine));
-      this.subscribeTo(machine);
+    init(core) {
+      this.bindEvents(core.controller.bind(core));
+      core.attach(this);
     },
   };
-
-  const bindEvents$1 = (controller) => {
-    window.addEventListener('saveNewProject', function(event) {
-      const request = new XMLHttpRequest;
-
-      request.addEventListener('load', function() {
-        controller({
-          label: 'projectSaved',
-          detail: {}
-        });
-      });
-
-      request.open('POST', "/projects/");
-      request.responseType = 'json';
-      request.send(event.detail);
-    });
-
-    window.addEventListener('loadProjectIds', function(event) {
-      const request = new XMLHttpRequest;
-
-      request.addEventListener('load', function() {
-        controller({
-          label: 'projectIdsLoaded',
-          detail: {
-            docIds: request.response
-          }
-        });
-      });
-
-      request.open('GET', "/ids");
-      request.responseType = 'json';
-      request.send();
-    });
-
-    // window.addEventListener('loadProject', function(event) {
-    // // TODO: implement
-    // // load an existing project from the db
-    // // note: here, the corresponding action needs access to
-    // // the response body. so we need to dispatch a custom event
-    // // to the handler method:
-    // //
-    // // assuming the project is stored in `theProject`:
-    // // handler(new CustomEvent('projectLoaded', detail: theProject))
-    // });
-
-    // window.addEventListener('loadProjectIds', function(event) {
-    // // TODO: implement
-    // // load the ids of all projects from db
-    // });
-
-    // window.addEventListener('deleteProject', function(event) {
-    // // TODO: implement
-    // // delete a project
-    // });
-
-    // window.addEventListener('updateProject', function(event) {
-    // // TODO: implement
-    // // save a project to the db that has been changed
-    // });
-  };
-
-  // const convertFromDb = (data) => {
-  //   // TODO: implement
-  //   // convert data.selected ids into references
-  //   // who is responsible for this? presumably, `doc`.
-  // };
 
   const db = {
-    subscribeTo(publisher) {
-      publisher.addSubscriber(this);
+    bindEvents(controller) {
+      window.addEventListener('saveNewProject', function(event) {
+        const request = new XMLHttpRequest;
+
+        request.addEventListener('load', function() {
+          controller({
+            label: 'projectSaved',
+            detail: {}
+          });
+        });
+
+        request.open('POST', "/projects/");
+        request.responseType = 'json';
+        request.send(event.detail);
+      });
+
+      window.addEventListener('loadProjectIds', function(event) {
+        const request = new XMLHttpRequest;
+
+        request.addEventListener('load', function() {
+          controller({
+            label: 'projectIdsLoaded',
+            detail: {
+              docIds: request.response
+            }
+          });
+        });
+
+        request.open('GET', "/ids");
+        request.responseType = 'json';
+        request.send();
+      });
     },
 
-    receive(state) {
-      state.messages['db'] && this[state.messages['db']](state);
-      // TODO: this is not so different from carrying out a method call!
-      //       the db should analyze the state and figure out what it needs to do.
+    sync(state) {
+      if (state.label === 'start') {
+        this.start(state);
+        this.previousState = state;
+        return;
+      }
+
+      for (let changed of this.changes(state, this.previousState)) {
+        this.process[changed] && this.process[changed](state);
+      }
+      this.previousState = state;
     },
 
-    loadProjectIds(state) {
+    changes(state1, state2) {
+      const keys = Object.keys(state1);
+      const changed = keys.filter(key => !this.equal(state1[key], state2[key]));
+      return changed;
+    },
+
+    equal(obj1, obj2) {
+      return JSON.stringify(obj1) === JSON.stringify(obj2);
+    },
+
+    process: {
+      doc(state) {
+         if (db.previousState.doc && state.doc._id != db.previousState.doc._id) {
+           db.saveNewProject(state);
+         }
+      },
+
+      label(state) {
+        // TODO
+      },
+
+      docIds(state) {
+        // TODO
+      },
+    },
+
+    // OK
+    loadProjectIds() {
       const event = new Event('loadProjectIds');
       window.dispatchEvent(event);
     },
@@ -710,9 +686,13 @@
       window.dispatchEvent(event);
     },
 
-    init(machine) {
-      bindEvents$1(machine.controller.bind(machine));
-      this.subscribeTo(machine);
+    start(state) {
+      this.loadProjectIds();
+    },
+
+    init(core) {
+      this.bindEvents(core.controller.bind(core));
+      core.attach(this);
     },
   };
 
@@ -722,7 +702,7 @@
       ui.init(core);
       db.init(core);
 
-      core.controller({ label: 'kickoff' });
+      core.kickoff();
     },
   };
 

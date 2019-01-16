@@ -8,7 +8,7 @@ const app = {
     ui.init(core);
     db.init(core);
 
-    core.controller({ label: 'kickoff' });
+    core.kickoff();
   },
 };
 

@@ -1,7 +1,7 @@
 const transitionMap = [
   [
-    { stateLabel: 'start', input: 'kickoff' },
-    { action: 'skip', messages: { db: 'loadProjectIds' }, nextLabel: 'idle' }
+    { stateLabel: 'start', input: 'kickoff' }, 
+    { action: 'skip', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'createShape' },
@@ -9,10 +9,7 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'idle', input: 'createProject' },
-    {
-      action: 'createProject',
-      messages: { db: 'saveNewProject' },
-      nextLabel: 'idle' }
+    { action: 'createProject', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'projectSaved' },
@@ -80,10 +77,7 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'animating', input: 'createProject' },
-    {
-      action: 'createProject',
-      messages: { db: 'saveNewProject' },
-      nextLabel: 'idle' }
+    { action: 'createProject', nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'animating', input: 'createShape' },
@@ -91,8 +85,6 @@ const transitionMap = [
   ]
 ];
 
-// notice that we "get" an object from the map by passing in an array as the "key".
-// the above format with an object literal as the "key" is meant for readability.
 transitionMap.get = function(key) {
   const match = (pair) => {
     return pair[0].stateLabel === key[0] &&
@@ -102,10 +94,7 @@ transitionMap.get = function(key) {
   const pair = transitionMap.find(match);
 
   if (pair) {
-    // console.log('action: ' + pair[1].action + ',', 'messages:' + pair[1].messages );
     return pair[1]; // returns an object
-  } else {
-    console.log('core: no transition');
   }
 };
 
