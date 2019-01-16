@@ -8,7 +8,7 @@
     ],
     [
       { stateLabel: 'idle', input: 'createShape' },
-      { action: 'createShape', nextLabel: 'idle' }
+      { action: 'createShape', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
     ],
     [
       { stateLabel: 'idle', input: 'createProject' },
@@ -108,8 +108,21 @@
       { stateLabel: 'animating', input: 'toIdle' },
       { action: 'skip', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
     ],
+    [
+      { stateLabel: 'animating', input: 'createProject' },
+      {
+        action: 'createProject',
+        messages: { db: 'saveNewProject', ui: 'renderFrames' },
+        nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'animating', input: 'createShape' },
+      { action: 'createShape', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+    ]
   ];
 
+  // notice that we "get" an object from the map by passing in an array as the "key".
+  // the above format with an object literal as the "key" is meant for readability.
   transitionMap.get = function(key) {
     const match = (pair) => {
       return pair[0].stateLabel === key[0] &&
@@ -393,7 +406,7 @@
       for (let subscriber of this.subscribers) {
         subscriber.receive(JSON.parse(JSON.stringify(this.state)));
       }
-      this.state.messages = {};
+      this.state.messages = {}; // be sure to never send a message twice!
     },
 
     controller(input) {
@@ -458,6 +471,15 @@
   };
 
   const bindEvents = function(controller) {
+    const mouseEventDetails = (event) => {
+      return {
+        inputX:     event.clientX,
+        inputY:     event.clientY,
+        target:     event.target.dataset.type,
+        id:         event.target.dataset.id,
+      };
+    };
+
     ui.canvasNode.addEventListener('mousedown', (event) => {
       controller({
         label:  inputMap.get(['mousedown', event.target.dataset.type]),
@@ -487,15 +509,6 @@
     });
   };
 
-  const mouseEventDetails = (event) => {
-    return {
-      inputX:     event.clientX,
-      inputY:     event.clientY,
-      target:     event.target.dataset.type,
-      id:         event.target.dataset.id, // frame and shape nodes have it
-    };
-  };
-
   const adjust = function(frame) {
     return {
       top:    frame.top - ui.canvasNode.offsetTop,
@@ -519,6 +532,16 @@
 
     receive(state) {
       state.messages['ui'] && this[state.messages['ui']](state);
+      // TODO: this is not so different from carrying out a method call!
+      //       the ui should analyze the state and figure out what it needs to do.
+    },
+
+    diffs(state) {
+      // find out what has changed since the last tick.
+    },
+
+    sync(state) {
+      // render changes based on the results of `diff`.
     },
 
     renderFrames(state) {
@@ -568,9 +591,14 @@
     },
 
     renderProjectIds(state) {
-      // TODO: implement the rendering
+      console.log("doc ids: " + state.docIds); // fine
       this.displayLoadedFlash();
+      // append a list entry for each project id
+      // the list entry needs a data-id
+      // Since projects don't have a name, we don't quite know what to write there.
     },
+
+    // TODO: one method for flash messages.
 
     displayLoadedFlash() {
       const flash = document.createElement('p');
@@ -673,9 +701,11 @@
 
     receive(state) {
       state.messages['db'] && this[state.messages['db']](state);
+      // TODO: this is not so different from carrying out a method call!
+      //       the db should analyze the state and figure out what it needs to do.
     },
 
-    loadProjectIds() {
+    loadProjectIds(state) {
       const event = new Event('loadProjectIds');
       window.dispatchEvent(event);
     },

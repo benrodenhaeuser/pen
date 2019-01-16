@@ -5,7 +5,7 @@ const transitionMap = [
   ],
   [
     { stateLabel: 'idle', input: 'createShape' },
-    { action: 'createShape', nextLabel: 'idle' }
+    { action: 'createShape', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
   ],
   [
     { stateLabel: 'idle', input: 'createProject' },
@@ -105,8 +105,21 @@ const transitionMap = [
     { stateLabel: 'animating', input: 'toIdle' },
     { action: 'skip', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
   ],
+  [
+    { stateLabel: 'animating', input: 'createProject' },
+    {
+      action: 'createProject',
+      messages: { db: 'saveNewProject', ui: 'renderFrames' },
+      nextLabel: 'idle' }
+  ],
+  [
+    { stateLabel: 'animating', input: 'createShape' },
+    { action: 'createShape', messages: { ui: 'renderFrames' }, nextLabel: 'idle' }
+  ]
 ];
 
+// notice that we "get" an object from the map by passing in an array as the "key".
+// the above format with an object literal as the "key" is meant for readability.
 transitionMap.get = function(key) {
   const match = (pair) => {
     return pair[0].stateLabel === key[0] &&
@@ -122,153 +135,5 @@ transitionMap.get = function(key) {
     console.log('core: no transition');
   }
 };
-
-// const transitionMap = {
-//   start: [
-//     { // copied
-//       input: 'kickoff',
-//       action: 'skip',
-//       messages: {
-//         db: 'loadProjectIds',
-//       },
-//       nextLabel: 'idle',
-//     }
-//   ],
-//
-//   idle: [
-//     { // copied
-//       input: 'createShape',
-//       action: 'createShape',
-//       nextLabel: 'idle',
-//     },
-//     { // copied
-//       input: 'createProject',
-//       action: 'createProject',
-//       messages: {
-//         db: 'saveNewProject',
-//         ui: 'renderFrames',
-//       },
-//       nextLabel: 'idle',
-//     },
-//     { // copied
-//       input: 'startAnimation',
-//       action: 'skip',
-//       messages: {
-//         ui: 'animateShapes',
-//       },
-//       nextLabel: 'animating',
-//     },
-//     { // copied
-//       input: 'modifyPosition',
-//       action: 'grabFrame',
-//       messages: {
-//         ui: 'renderFrames',
-//       },
-//       nextLabel: 'draggingFrame',
-//     },
-//     { // copied
-//       input: 'resizeFrame',
-//       action: 'grabCorner',
-//       nextLabel: 'resizingFrame',
-//     },
-//     { // copied
-//       input: 'createFrame',
-//       action: 'setFrameOrigin',
-//       nextLabel: 'drawingFrame',
-//     },
-//     { // copied
-//       input: 'deleteFrame',
-//       action: 'deleteFrame',
-//       messages: {
-//         ui: 'renderFrames',
-//       },
-//       nextLabel: 'idle',
-//     },
-//     { // copied
-//       input: 'projectSaved',
-//       action: 'skip',
-//       messages: {
-//         ui: 'displaySavedNewFlash',
-//       },
-//       nextLabel: 'idle',
-//     },
-//     { // copied
-//       input: 'projectIdsLoaded',
-//       action: 'processProjectIds',
-//       messages: {
-//         ui: 'renderProjectIds',
-//       },
-//       nextLabel: 'idle',
-//     },
-//   ],
-//
-//   drawingFrame: [
-//     { // copied
-//       input: 'changeCoordinates',
-//       action: 'sizeFrame',
-//       messages: {
-//         ui: 'renderFrames',
-//       },
-//       nextLabel: 'drawingFrame',
-//     },
-//     { // copied
-//       input: 'releaseFrame',
-//       action: 'clear',
-//       nextLabel: 'idle',
-//     }
-//   ],
-//
-//   draggingFrame: [
-//     { // copied
-//       input: 'changeCoordinates',
-//       action: 'moveFrame',
-//       messages: {
-//         ui: 'renderFrames',
-//       },
-//       nextLabel: 'draggingFrame',
-//     },
-//     { // copied
-//       input: 'releaseFrame',
-//       action: 'clear',
-//       nextLabel: 'idle',
-//     }
-//   ],
-//
-//   resizingFrame: [
-//     { // copied
-//       input: 'changeCoordinates',
-//       action: 'sizeFrame',
-//       messages: {
-//         ui: 'renderFrames',
-//       },
-//       nextLabel: 'resizingFrame',
-//     },
-//     { // copied
-//       input: 'releaseFrame',
-//       action: 'clear',
-//       nextLabel: 'idle',
-//     }
-//   ],
-//
-//   animating: [
-//     {
-//       input: 'toIdle',
-//       target: 'canvas',
-//       action: 'skip',
-//       messages: {
-//         ui: 'renderFrames',
-//       },
-//       nextLabel: 'idle',
-//     },
-//     {
-//       input: 'startAnimation',
-//       action: 'skip',
-//       messages: {
-//         ui: 'animateShapes',
-//       },
-//       nextLabel: 'animating',
-//     },
-//   ]
-// };
 
 export { transitionMap };

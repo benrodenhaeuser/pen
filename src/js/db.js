@@ -71,9 +71,11 @@ const db = {
 
   receive(state) {
     state.messages['db'] && this[state.messages['db']](state);
+    // TODO: this is not so different from carrying out a method call!
+    //       the db should analyze the state and figure out what it needs to do.
   },
 
-  loadProjectIds() {
+  loadProjectIds(state) {
     const event = new Event('loadProjectIds');
     window.dispatchEvent(event);
   },

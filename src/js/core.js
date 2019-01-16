@@ -11,7 +11,7 @@ const core = {
     for (let subscriber of this.subscribers) {
       subscriber.receive(JSON.parse(JSON.stringify(this.state)));
     }
-    this.state.messages = {};
+    this.state.messages = {}; // be sure to never send a message twice!
   },
 
   controller(input) {
