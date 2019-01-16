@@ -3,13 +3,13 @@ import { doc } from './doc.js';
 import { actions } from './actions.js';
 
 const core = {
-  attach(peripheral) {
-    this.periphery.push(peripheral);
+  attach(component) {
+    this.periphery.push(component);
   },
 
   syncPeriphery() {
-    for (let peripheral of this.periphery) {
-      peripheral.sync(JSON.parse(JSON.stringify(this.state)));
+    for (let component of this.periphery) {
+      component.sync(JSON.parse(JSON.stringify(this.state)));
     }
   },
 
@@ -25,7 +25,7 @@ const core = {
 
   init() {
     this.state = {
-      doc: doc.init(), // TODO: just initializing an empty doc is
+      doc: doc.init(), // TODO: just initializing an empty doc is odd
       label: 'start',
       docIds: null,
     };
