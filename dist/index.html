@@ -14,7 +14,10 @@
   </head>
 
   <body>
-    <div id="canvas" data-type="canvas"></div>
+    <div id="canvas" data-type="canvas">
+      <!-- dynamically inserted -->
+    </div>
+
     <div id="shape-list"></div>
     <div id="inspector"></div>
 
@@ -25,10 +28,8 @@
             <ul class="pure-menu-list">
               <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
                 <a href="#" id="menuLink1" class="pure-menu-link">Documents</a>
-                <ul class="pure-menu-children">
-                    <li class="pure-menu-item"><a href="#" class="pure-menu-link">Document 1</a></li>
-                    <li class="pure-menu-item"><a href="#" class="pure-menu-link">Document 2</a></li>
-                    <li class="pure-menu-item"><a href="#" class="pure-menu-link">Document 3</a></li>
+                <ul class="pure-menu-children doc-list">
+                  <!-- dynamically inserted -->
                 </ul>
               </li>
             </ul>

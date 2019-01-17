@@ -59,8 +59,7 @@ const actions = {
   },
 
   grabFrame(state, input) {
-    const id = input.detail.id;
-    state.doc.selected.frame = state.doc.selectFrameAndShape(id);
+    state.doc.select(input.detail.id);
 
     this.aux.originX = input.detail.inputX;
     this.aux.originY = input.detail.inputY;

@@ -36,6 +36,16 @@ const nodeFactory = {
     node.appendChild(frameTemplate(index).content.cloneNode(true));
     return node;
   },
+
+  makeListNode(id) {
+    const node = document.createElement('li');
+    node.innerHTML = `
+      <li class="pure-menu-item doc-list-entry" data-type="doc-list-entry" data-id="${id}">
+        <a href="#" class="pure-menu-link">${id}</a>
+      </li>
+    `;
+    return node;
+  },
 };
 
 export { nodeFactory };

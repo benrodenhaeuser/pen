@@ -6,7 +6,7 @@ gulp.task('rollup', () => {
     input: './src/js/app.js',
   }).then(bundle => {
     return bundle.write({
-      file: './public/js/bundle.js',
+      file: './dist/js/bundle.js',
       format: 'iife',
       name: 'library',
       sourcemap: true

@@ -3,7 +3,7 @@
 
   const transitionMap = [
     [
-      { stateLabel: 'start', input: 'kickoff' }, 
+      { stateLabel: 'start', input: 'kickoff' },
       { action: 'skip', nextLabel: 'idle' }
     ],
     [
@@ -174,13 +174,13 @@
       }
     },
 
-    selectFrameAndShape(frameId) {
+    select(frameId) {
       for (let shape of this.shapes) {
         for (let frame of shape.frames) {
           if (frame._id === frameId) {
             this.selected.frame = frame;
             this.selected.shape = shape;
-            return frame; // TODO: unexpected given method name
+            return frame;
           }
         }
       }
@@ -295,8 +295,7 @@
     },
 
     grabFrame(state, input) {
-      const id = input.detail.id;
-      state.doc.selected.frame = state.doc.selectFrameAndShape(id);
+      state.doc.select(input.detail.id);
 
       this.aux.originX = input.detail.inputX;
       this.aux.originY = input.detail.inputY;
@@ -346,7 +345,7 @@
 
     init() {
       this.state = {
-        doc: doc.init(), // TODO: just initializing an empty doc is odd
+        doc: doc.init(), // TODO: just initializing an empty doc is
         label: 'start',
         docIds: null,
       };
@@ -398,6 +397,16 @@
       node.dataset.type = 'frame';
       node.dataset.id = id;
       node.appendChild(frameTemplate(index).content.cloneNode(true));
+      return node;
+    },
+
+    makeListNode(id) {
+      const node = document.createElement('li');
+      node.innerHTML = `
+      <li class="pure-menu-item doc-list-entry" data-type="doc-list-entry" data-id="${id}">
+        <a href="#" class="pure-menu-link">${id}</a>
+      </li>
+    `;
       return node;
     },
   };
@@ -480,7 +489,6 @@
     sync(state) {
       if (state.label === 'start') {
         this.start(state);
-        this.previousState = state;
         return;
       }
 
@@ -490,22 +498,12 @@
       this.previousState = state;
     },
 
-    changes(state1, state2) {
-      const keys = Object.keys(state1);
-      const changed = keys.filter(key => !this.equal(state1[key], state2[key]));
-      return changed;
-    },
-
-    equal(obj1, obj2) {
-      return JSON.stringify(obj1) === JSON.stringify(obj2);
-    },
-
-    // API
     render: {
       doc(state) {
-        if (ui.previousState.doc && state.doc._id !== ui.previousState.doc._id) {
-          ui.flash('New document saved');
-        }
+        ui.flash('Document saved');
+        // TODO: is this guaranteed? I don't think so.
+        // I think in order to have a guarantee here, we need a more complex
+        // transition diagram.
 
         ui.canvasNode.innerHTML = '';
 
@@ -555,15 +553,28 @@
       },
 
       docIds(state) {
-        console.log("doc ids: " + state.docIds); // fine
-        ui.flash('Document list loaded');
-        // TODO: implement
-        // append a list entry for each project id
-        // the list entry needs a data-id
-        // Since projects don't have a name, we don't quite know what to write there.
+        const docList = document.querySelector('.doc-list');
+        docList.innerHTML = '';
+
+        for (let docId of state.docIds) {
+          const node = nodeFactory.makeListNode(docId);
+          docList.appendChild(node);
+        }
       },
     },
 
+    // helpers 1
+    changes(state1, state2) {
+      const keys = Object.keys(state1);
+      return keys.filter(key => !this.equal(state1[key], state2[key]));
+    },
+
+    // helpers 2
+    equal(obj1, obj2) {
+      return JSON.stringify(obj1) === JSON.stringify(obj2);
+    },
+
+    // helpers 3
     flash(message) {
       const flash = document.createElement('p');
       flash.innerHTML = message;
@@ -572,6 +583,7 @@
       window.setTimeout(() => flash.remove(), 1500);
     },
 
+    // helpers 4
     adjust(frame) {
       return {
         top:    frame.top - ui.canvasNode.offsetTop,
@@ -581,6 +593,7 @@
       };
     },
 
+    // helpers 5
     place(node, frame) {
       node.style.top    = String(this.adjust(frame).top)  + 'px';
       node.style.left   = String(this.adjust(frame).left) + 'px';
@@ -589,7 +602,7 @@
     },
 
     start(state) {
-      return;
+      this.previousState = state;
     },
 
     init(core) {
@@ -600,7 +613,7 @@
 
   const db = {
     bindEvents(controller) {
-      window.addEventListener('saveNewProject', function(event) {
+      window.addEventListener('upsert', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
@@ -610,9 +623,8 @@
           });
         });
 
-        request.open('POST', "/projects/");
-        request.responseType = 'json';
-        request.send(event.detail);
+        request.open('POST', "/projects/" + event.detail._id);
+        request.send(JSON.stringify(event.detail));
       });
 
       window.addEventListener('loadProjectIds', function(event) {
@@ -636,58 +648,43 @@
     sync(state) {
       if (state.label === 'start') {
         this.start(state);
-        this.previousState = state;
         return;
       }
 
       for (let changed of this.changes(state, this.previousState)) {
-        this.process[changed] && this.process[changed](state);
+        this.crud[changed] && this.crud[changed](state);
       }
       this.previousState = state;
     },
 
-    changes(state1, state2) {
-      const keys = Object.keys(state1);
-      const changed = keys.filter(key => !this.equal(state1[key], state2[key]));
-      return changed;
+    crud: {
+      doc(state) {
+         window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
+      },
+
+      // TODO: read and delete
+
     },
 
+    // helpers 1
+    changes(state1, state2) {
+      const keys = Object.keys(state1);
+      return keys.filter(key => !db.equal(state1[key], state2[key]));
+    },
+
+    // helpers 2
     equal(obj1, obj2) {
       return JSON.stringify(obj1) === JSON.stringify(obj2);
     },
 
-    process: {
-      doc(state) {
-         if (db.previousState.doc && state.doc._id != db.previousState.doc._id) {
-           db.saveNewProject(state);
-         }
-      },
-
-      label(state) {
-        // TODO
-      },
-
-      docIds(state) {
-        // TODO
-      },
-    },
-
-    // OK
+    // helpers 3
     loadProjectIds() {
-      const event = new Event('loadProjectIds');
-      window.dispatchEvent(event);
-    },
-
-    saveNewProject(state) {
-      const event = new CustomEvent(
-        'saveNewProject',
-        { detail: JSON.stringify(state.doc) }
-      );
-      window.dispatchEvent(event);
+      window.dispatchEvent(new Event('loadProjectIds'));
     },
 
     start(state) {
-      this.loadProjectIds();
+      db.loadProjectIds();
+      this.previousState = state;
     },
 
     init(core) {

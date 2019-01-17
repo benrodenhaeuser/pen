@@ -71,13 +71,13 @@ const doc = {
     }
   },
 
-  selectFrameAndShape(frameId) {
+  select(frameId) {
     for (let shape of this.shapes) {
       for (let frame of shape.frames) {
         if (frame._id === frameId) {
           this.selected.frame = frame;
           this.selected.shape = shape;
-          return frame; // TODO: unexpected given method name
+          return frame;
         }
       }
     }

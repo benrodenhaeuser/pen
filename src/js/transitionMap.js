@@ -1,6 +1,6 @@
 const transitionMap = [
   [
-    { stateLabel: 'start', input: 'kickoff' }, 
+    { stateLabel: 'start', input: 'kickoff' },
     { action: 'skip', nextLabel: 'idle' }
   ],
   [

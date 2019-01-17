@@ -25,7 +25,7 @@ const core = {
 
   init() {
     this.state = {
-      doc: doc.init(), // TODO: just initializing an empty doc is odd
+      doc: doc.init(), // TODO: just initializing an empty doc is
       label: 'start',
       docIds: null,
     };

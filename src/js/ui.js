@@ -46,7 +46,6 @@ const ui = {
   sync(state) {
     if (state.label === 'start') {
       this.start(state);
-      this.previousState = state;
       return;
     }
 
@@ -56,22 +55,12 @@ const ui = {
     this.previousState = state;
   },
 
-  changes(state1, state2) {
-    const keys = Object.keys(state1);
-    const changed = keys.filter(key => !this.equal(state1[key], state2[key]));
-    return changed;
-  },
-
-  equal(obj1, obj2) {
-    return JSON.stringify(obj1) === JSON.stringify(obj2);
-  },
-
-  // API
   render: {
     doc(state) {
-      if (ui.previousState.doc && state.doc._id !== ui.previousState.doc._id) {
-        ui.flash('New document saved');
-      }
+      ui.flash('Document saved');
+      // TODO: is this guaranteed? I don't think so.
+      // I think in order to have a guarantee here, we need a more complex
+      // transition diagram.
 
       ui.canvasNode.innerHTML = '';
 
@@ -121,15 +110,28 @@ const ui = {
     },
 
     docIds(state) {
-      console.log("doc ids: " + state.docIds); // fine
-      ui.flash('Document list loaded');
-      // TODO: implement
-      // append a list entry for each project id
-      // the list entry needs a data-id
-      // Since projects don't have a name, we don't quite know what to write there.
+      const docList = document.querySelector('.doc-list');
+      docList.innerHTML = '';
+
+      for (let docId of state.docIds) {
+        const node = nodeFactory.makeListNode(docId);
+        docList.appendChild(node);
+      }
     },
   },
 
+  // helpers 1
+  changes(state1, state2) {
+    const keys = Object.keys(state1);
+    return keys.filter(key => !this.equal(state1[key], state2[key]));
+  },
+
+  // helpers 2
+  equal(obj1, obj2) {
+    return JSON.stringify(obj1) === JSON.stringify(obj2);
+  },
+
+  // helpers 3
   flash(message) {
     const flash = document.createElement('p');
     flash.innerHTML = message;
@@ -138,6 +140,7 @@ const ui = {
     window.setTimeout(() => flash.remove(), 1500);
   },
 
+  // helpers 4
   adjust(frame) {
     return {
       top:    frame.top - ui.canvasNode.offsetTop,
@@ -147,6 +150,7 @@ const ui = {
     };
   },
 
+  // helpers 5
   place(node, frame) {
     node.style.top    = String(this.adjust(frame).top)  + 'px';
     node.style.left   = String(this.adjust(frame).left) + 'px';
@@ -155,7 +159,7 @@ const ui = {
   },
 
   start(state) {
-    return;
+    this.previousState = state;
   },
 
   init(core) {

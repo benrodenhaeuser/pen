@@ -7,6 +7,7 @@ require 'bson'
 Mongo::Logger.logger.level = ::Logger::ERROR
 
 configure do
+  set :public_folder, './dist'
   client = Mongo::Client.new(['127.0.0.1:27017'], :database => 'test')
   set :db, client.database
 end
@@ -17,7 +18,7 @@ end
 
 get '/' do
   content_type :html
-  File.read(File.join('public', 'index.html'))
+  File.read(File.join('dist', 'index.html'))
 end
 
 get '/collections' do
@@ -33,27 +34,18 @@ get '/ids' do
   projects.map { |project| project['_id'] }.to_json
 end
 
-# CREATE
-post '/projects/' do
-  project = JSON.parse(request.body.read)
-  puts "_id of project posted: " + project['_id'].to_s
-  settings.db[:projects].insert_one(project)
-  settings.db[:projects].find('_id' => project['_id']).first.to_json
-end
-
-# READ
 get '/projects/:_id' do
   settings.db[:projects].find('_id' => params['_id']).first.to_json
 end
 
-# UPDATE
-put '/projects/:_id' do
+# upsert
+post '/projects/:_id' do
   project_id = params['_id']
   new_data = JSON.parse(request.body.read)
-  settings.db[:projects].find('_id' => project['_id']).update_one(new_data)
+  settings.db[:projects].find('_id' => project_id).update_one(new_data, upsert: true)
+  status 201
 end
 
-# DELETE
 delete '/projects/:id' do
   # TODO
 end
