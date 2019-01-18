@@ -14,6 +14,23 @@ const db = {
       request.send(JSON.stringify(event.detail));
     });
 
+    window.addEventListener('read', function(event) {
+      const request = new XMLHttpRequest;
+
+      request.addEventListener('load', function() {
+        controller({
+          label: 'docLoaded',
+          detail: {
+            doc: request.response
+          }
+        });
+      });
+
+      request.open('GET', "/projects/" + event.detail);
+      request.responseType = 'json';
+      request.send(JSON.stringify(event.detail));
+    });
+
     window.addEventListener('loadProjectIds', function(event) {
       const request = new XMLHttpRequest;
 
@@ -46,11 +63,23 @@ const db = {
 
   crud: {
     doc(state) {
-       window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
+      if (db.hasFrames(state.doc)) {
+        window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
+      }
     },
 
-    // TODO: read and delete
+    lastInput(state) {
+      if (state.lastInput === 'loadDoc') {
+        console.log('loadDoc!');
+        window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
+      }
+    },
+  },
 
+  // helpers 0
+  hasFrames(doc) {
+    // console.log('it has frames');
+    return doc.shapes.find((shape) => shape.frames.length !== 0);
   },
 
   // helpers 1

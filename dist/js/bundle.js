@@ -47,12 +47,20 @@
       { action: 'processProjectIds', nextLabel: 'idle' }
     ],
     [
+      { stateLabel: 'idle', input: 'loadDoc' },
+      { action: 'loadDoc', nextLabel: 'loading' }
+    ],
+    [
       { stateLabel: 'drawingFrame', input: 'changeCoordinates' },
       { action: 'sizeFrame', nextLabel: 'drawingFrame' }
     ],
     [
       { stateLabel: 'drawingFrame', input: 'releaseFrame' },
       { action: 'clear', nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'drawingFrame', input: 'projectSaved' },
+      { action: 'skip', nextLabel: 'drawingFrame' }
     ],
     [
       { stateLabel: 'draggingFrame', input: 'changeCoordinates' },
@@ -63,12 +71,20 @@
       { action: 'clear', nextLabel: 'idle' }
     ],
     [
+      { stateLabel: 'draggingFrame', input: 'projectSaved' },
+      { action: 'skip', nextLabel: 'draggingFrame' }
+    ],
+    [
       { stateLabel: 'resizingFrame', input: 'changeCoordinates' },
       { action: 'sizeFrame', nextLabel: 'resizingFrame' }
     ],
     [
       { stateLabel: 'resizingFrame', input: 'releaseFrame' },
       { action: 'clear', nextLabel: 'idle' }
+    ],
+    [
+      { stateLabel: 'resizingFrame', input: 'projectSaved' },
+      { action: 'skip', nextLabel: 'resizingFrame' }
     ],
     [
       { stateLabel: 'animating', input: 'startAnimation' },
@@ -85,7 +101,11 @@
     [
       { stateLabel: 'animating', input: 'createShape' },
       { action: 'createShape', nextLabel: 'idle' }
-    ]
+    ],
+    [
+      { stateLabel: 'loading', input: 'docLoaded' },
+      { action: 'setDoc', nextLabel: 'idle' }
+    ],
   ];
 
   transitionMap.get = function(key) {
@@ -116,12 +136,12 @@
       this.height = coordinates.height || this.height;
     },
 
-    init(coordinates) {
-      this.left   = coordinates.left || 0;
-      this.top    = coordinates.top || 0;
-      this.width  = coordinates.width || 0;
-      this.height = coordinates.height || 0;
-      this._id    = createId();
+    init(data) {
+      this.left   = data.left || 0;
+      this.top    = data.top || 0;
+      this.width  = data.width || 0;
+      this.height = data.height || 0;
+      this._id    = data._id || createId();
       return this;
     },
   };
@@ -215,7 +235,27 @@
       };
     },
 
-    init() {
+    initFromDocData(docData) {
+      for (let shape of docData.shapes) {
+        shape.frames = shape.frames.map((frame) => {
+          return Object.create(Frame).init(frame);
+        });
+      }
+
+      console.log(docData.shapes);
+
+      this._id = docData._id;
+      this.shapes = docData.shapes;
+      this.selected.shape = this.findShape(docData.selected.shapeID);
+      this.selected.frame = this.findFrame(docData.selected.frameID);
+    },
+
+    init(docData) {
+      if (docData !== undefined) {
+        this.initFromDocData(docData);
+        return;
+      }
+
       const docId   = createId();
       const shapeId = createId();
       const shape   = {
@@ -317,6 +357,17 @@
       state.docIds = input.detail.docIds;
     },
 
+    loadDoc(state, input) {
+      state.docId = input.detail.id;
+      console.log("doc id is" + state.docId);
+    },
+
+    setDoc(state, input) {
+      state.doc.init(input.detail.doc);
+    },
+
+
+
     init() {
       this.aux = {};
     }
@@ -337,7 +388,9 @@
       const transition = transitionMap.get([this.state.label, input.label]);
 
       if (transition) {
+        console.log(transition);
         actions[transition.action](this.state, input);
+        this.state.lastInput = input.label;
         this.state.label = transition.nextLabel;
         this.syncPeriphery();
       }
@@ -345,7 +398,7 @@
 
     init() {
       this.state = {
-        doc: doc.init(), // TODO: just initializing an empty doc is
+        doc: doc.init(),
         label: 'start',
         docIds: null,
       };
@@ -403,8 +456,8 @@
     makeListNode(id) {
       const node = document.createElement('li');
       node.innerHTML = `
-      <li class="pure-menu-item doc-list-entry" data-type="doc-list-entry" data-id="${id}">
-        <a href="#" class="pure-menu-link">${id}</a>
+      <li class="pure-menu-item doc-list-entry">
+        <a href="#" class="pure-menu-link"  data-type="doc-list-entry" data-id="${id}">${id}</a>
       </li>
     `;
       return node;
@@ -417,6 +470,7 @@
     [['click',     'newProjectButton' ], 'createProject'     ],
     [['click',     'animateButton'    ], 'startAnimation'    ],
     [['click',     'deleteLink'       ], 'deleteFrame'       ],
+    [['click',     'doc-list-entry'   ], 'loadDoc'           ],
     [['click',     'canvas'           ], 'toIdle'            ],
     [['click',     'canvas'           ], 'toIdle'            ],
     [['mousedown', 'frame'            ], 'modifyPosition'    ],
@@ -479,6 +533,8 @@
       });
 
       document.addEventListener('click', (event) => {
+        console.log(event.target.dataset.type);
+
         controller({
           label: inputMap.get(['click', event.target.dataset.type]),
           detail: mouseEventDetails(event)
@@ -500,12 +556,10 @@
 
     render: {
       doc(state) {
-        ui.flash('Document saved');
-        // TODO: is this guaranteed? I don't think so.
-        // I think in order to have a guarantee here, we need a more complex
-        // transition diagram.
-
         ui.canvasNode.innerHTML = '';
+
+        console.log(state.doc.shapes); // undefined
+        console.log(state.doc); // OK
 
         for (let shape of state.doc.shapes) {
           const shapeNode = nodeFactory.makeShapeNode(shape._id);
@@ -524,6 +578,13 @@
           }
 
           ui.canvasNode.appendChild(shapeNode);
+        }
+      },
+
+      lastInput(state) {
+        if (state.lastInput === 'projectSaved') {
+          console.log('saved');
+          ui.flash('Document saved');
         }
       },
 
@@ -627,6 +688,23 @@
         request.send(JSON.stringify(event.detail));
       });
 
+      window.addEventListener('read', function(event) {
+        const request = new XMLHttpRequest;
+
+        request.addEventListener('load', function() {
+          controller({
+            label: 'docLoaded',
+            detail: {
+              doc: request.response
+            }
+          });
+        });
+
+        request.open('GET', "/projects/" + event.detail);
+        request.responseType = 'json';
+        request.send(JSON.stringify(event.detail));
+      });
+
       window.addEventListener('loadProjectIds', function(event) {
         const request = new XMLHttpRequest;
 
@@ -659,11 +737,23 @@
 
     crud: {
       doc(state) {
-         window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
+        if (db.hasFrames(state.doc)) {
+          window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
+        }
       },
 
-      // TODO: read and delete
+      lastInput(state) {
+        if (state.lastInput === 'loadDoc') {
+          console.log('loadDoc!');
+          window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
+        }
+      },
+    },
 
+    // helpers 0
+    hasFrames(doc) {
+      // console.log('it has frames');
+      return doc.shapes.find((shape) => shape.frames.length !== 0);
     },
 
     // helpers 1

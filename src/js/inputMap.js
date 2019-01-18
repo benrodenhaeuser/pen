@@ -4,6 +4,7 @@ const inputMap = [
   [['click',     'newProjectButton' ], 'createProject'     ],
   [['click',     'animateButton'    ], 'startAnimation'    ],
   [['click',     'deleteLink'       ], 'deleteFrame'       ],
+  [['click',     'doc-list-entry'   ], 'loadDoc'           ],
   [['click',     'canvas'           ], 'toIdle'            ],
   [['click',     'canvas'           ], 'toIdle'            ],
   [['mousedown', 'frame'            ], 'modifyPosition'    ],

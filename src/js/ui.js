@@ -36,6 +36,8 @@ const ui = {
     });
 
     document.addEventListener('click', (event) => {
+      console.log(event.target.dataset.type);
+
       controller({
         label: inputMap.get(['click', event.target.dataset.type]),
         detail: mouseEventDetails(event)
@@ -57,12 +59,10 @@ const ui = {
 
   render: {
     doc(state) {
-      ui.flash('Document saved');
-      // TODO: is this guaranteed? I don't think so.
-      // I think in order to have a guarantee here, we need a more complex
-      // transition diagram.
-
       ui.canvasNode.innerHTML = '';
+
+      console.log(state.doc.shapes); // undefined
+      console.log(state.doc); // OK
 
       for (let shape of state.doc.shapes) {
         const shapeNode = nodeFactory.makeShapeNode(shape._id);
@@ -81,6 +81,13 @@ const ui = {
         }
 
         ui.canvasNode.appendChild(shapeNode);
+      }
+    },
+
+    lastInput(state) {
+      if (state.lastInput === 'projectSaved') {
+        console.log('saved');
+        ui.flash('Document saved');
       }
     },
 

@@ -13,12 +13,12 @@ const Frame = {
     this.height = coordinates.height || this.height;
   },
 
-  init(coordinates) {
-    this.left   = coordinates.left || 0;
-    this.top    = coordinates.top || 0;
-    this.width  = coordinates.width || 0;
-    this.height = coordinates.height || 0;
-    this._id    = createId();
+  init(data) {
+    this.left   = data.left || 0;
+    this.top    = data.top || 0;
+    this.width  = data.width || 0;
+    this.height = data.height || 0;
+    this._id    = data._id || createId();
     return this;
   },
 };
@@ -112,7 +112,27 @@ const doc = {
     };
   },
 
-  init() {
+  initFromDocData(docData) {
+    for (let shape of docData.shapes) {
+      shape.frames = shape.frames.map((frame) => {
+        return Object.create(Frame).init(frame);
+      });
+    }
+
+    console.log(docData.shapes);
+
+    this._id = docData._id;
+    this.shapes = docData.shapes;
+    this.selected.shape = this.findShape(docData.selected.shapeID);
+    this.selected.frame = this.findFrame(docData.selected.frameID);
+  },
+
+  init(docData) {
+    if (docData !== undefined) {
+      this.initFromDocData(docData);
+      return;
+    }
+
     const docId   = createId();
     const shapeId = createId();
     const shape   = {

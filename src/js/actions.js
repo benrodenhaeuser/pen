@@ -81,6 +81,17 @@ const actions = {
     state.docIds = input.detail.docIds;
   },
 
+  loadDoc(state, input) {
+    state.docId = input.detail.id;
+    console.log("doc id is" + state.docId);
+  },
+
+  setDoc(state, input) {
+    state.doc.init(input.detail.doc);
+  },
+
+
+
   init() {
     this.aux = {};
   }

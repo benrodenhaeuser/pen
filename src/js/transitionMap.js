@@ -44,12 +44,20 @@ const transitionMap = [
     { action: 'processProjectIds', nextLabel: 'idle' }
   ],
   [
+    { stateLabel: 'idle', input: 'loadDoc' },
+    { action: 'loadDoc', nextLabel: 'loading' }
+  ],
+  [
     { stateLabel: 'drawingFrame', input: 'changeCoordinates' },
     { action: 'sizeFrame', nextLabel: 'drawingFrame' }
   ],
   [
     { stateLabel: 'drawingFrame', input: 'releaseFrame' },
     { action: 'clear', nextLabel: 'idle' }
+  ],
+  [
+    { stateLabel: 'drawingFrame', input: 'projectSaved' },
+    { action: 'skip', nextLabel: 'drawingFrame' }
   ],
   [
     { stateLabel: 'draggingFrame', input: 'changeCoordinates' },
@@ -60,12 +68,20 @@ const transitionMap = [
     { action: 'clear', nextLabel: 'idle' }
   ],
   [
+    { stateLabel: 'draggingFrame', input: 'projectSaved' },
+    { action: 'skip', nextLabel: 'draggingFrame' }
+  ],
+  [
     { stateLabel: 'resizingFrame', input: 'changeCoordinates' },
     { action: 'sizeFrame', nextLabel: 'resizingFrame' }
   ],
   [
     { stateLabel: 'resizingFrame', input: 'releaseFrame' },
     { action: 'clear', nextLabel: 'idle' }
+  ],
+  [
+    { stateLabel: 'resizingFrame', input: 'projectSaved' },
+    { action: 'skip', nextLabel: 'resizingFrame' }
   ],
   [
     { stateLabel: 'animating', input: 'startAnimation' },
@@ -82,7 +98,11 @@ const transitionMap = [
   [
     { stateLabel: 'animating', input: 'createShape' },
     { action: 'createShape', nextLabel: 'idle' }
-  ]
+  ],
+  [
+    { stateLabel: 'loading', input: 'docLoaded' },
+    { action: 'setDoc', nextLabel: 'idle' }
+  ],
 ];
 
 transitionMap.get = function(key) {

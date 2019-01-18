@@ -17,7 +17,9 @@ const core = {
     const transition = transitionMap.get([this.state.label, input.label]);
 
     if (transition) {
+      console.log(transition);
       actions[transition.action](this.state, input);
+      this.state.lastInput = input.label;
       this.state.label = transition.nextLabel;
       this.syncPeriphery();
     }
@@ -25,7 +27,7 @@ const core = {
 
   init() {
     this.state = {
-      doc: doc.init(), // TODO: just initializing an empty doc is
+      doc: doc.init(),
       label: 'start',
       docIds: null,
     };
