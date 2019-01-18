@@ -19,7 +19,7 @@ const db = {
 
       request.addEventListener('load', function() {
         controller({
-          label: 'docLoaded',
+          label: 'setDoc',
           detail: {
             doc: request.response
           }
@@ -36,7 +36,7 @@ const db = {
 
       request.addEventListener('load', function() {
         controller({
-          label: 'projectIdsLoaded',
+          label: 'updateDocList',
           detail: {
             docIds: request.response
           }
@@ -71,12 +71,12 @@ const db = {
     },
 
     lastInput(state) {
-      if (state.lastInput === 'loadDoc') {
+      if (state.lastInput === 'setDocId') {
         window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
       }
 
       // TODO: we could perhaps do this.start(state) here?
-      //       if the last input is 'kickoff' ... 
+      //       if the last input is 'kickoff' ...
     },
   },
 

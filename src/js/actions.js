@@ -1,12 +1,4 @@
 const actions = {
-  skip() {
-    return;
-  },
-
-  clear() {
-    this.aux = {};
-  },
-
   createShape(state, input) {
     state.doc.appendShape();
   },
@@ -21,10 +13,9 @@ const actions = {
     this.aux.originY = input.detail.inputY;
   },
 
-  grabCorner(state, input) {
+  resizeFrame(state, input) {
     const frame = state.doc.selected.frame;
 
-    // store coordinates of *opposite* corner
     switch (input.detail.target) {
       case 'top-left-corner':
         this.aux.originX = frame.left + frame.width;
@@ -58,9 +49,8 @@ const actions = {
     state.doc.deleteSelectedFrame();
   },
 
-  grabFrame(state, input) {
+  getFrameOrigin(state, input) {
     state.doc.select(input.detail.id);
-
     this.aux.originX = input.detail.inputX;
     this.aux.originY = input.detail.inputY;
   },
@@ -77,19 +67,17 @@ const actions = {
     this.aux.originY = input.detail.inputY;
   },
 
-  processProjectIds(state, input) {
+  updateDocList(state, input) {
     state.docIds = input.detail.docIds;
   },
 
-  loadDoc(state, input) {
+  setDocId(state, input) {
     state.docId = input.detail.id;
   },
 
   setDoc(state, input) {
     state.doc.init(input.detail.doc);
   },
-
-
 
   init() {
     this.aux = {};

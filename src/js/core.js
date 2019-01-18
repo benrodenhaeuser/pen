@@ -17,7 +17,8 @@ const core = {
     const transition = transitionMap.get([this.state.label, input.label]);
 
     if (transition) {
-      actions[transition.action](this.state, input);
+      const action = actions[transition.action] || actions[input.label];
+      action && action.bind(actions)(this.state, input);
       this.state.lastInput = input.label;
       this.state.label = transition.nextLabel;
       this.syncPeriphery();

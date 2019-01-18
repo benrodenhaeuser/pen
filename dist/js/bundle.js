@@ -2,110 +2,49 @@
   'use strict';
 
   const transitionMap = [
-    [
-      { stateLabel: 'start', input: 'kickoff' },
-      { action: 'skip', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'createShape' },
-      { action: 'createShape', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'createProject' },
-      { action: 'createProject', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'projectSaved' },
-      { action: 'skip', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'startAnimation' },
-      { action: 'skip', nextLabel: 'animating' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'modifyPosition' },
-      { action: 'grabFrame', nextLabel: 'draggingFrame' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'resizeFrame' },
-      { action: 'grabCorner', nextLabel: 'resizingFrame' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'createFrame' },
-      { action: 'setFrameOrigin', nextLabel: 'drawingFrame' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'deleteFrame' },
-      { action: 'deleteFrame', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'projecSaved' },
-      { action: 'skip', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'projectIdsLoaded' },
-      { action: 'processProjectIds', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'idle', input: 'loadDoc' },
-      { action: 'loadDoc', nextLabel: 'loading' }
-    ],
+    [{ stateLabel: 'start', input: 'kickoff' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'idle', input: 'createShape' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'idle', input: 'createProject' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'idle', input: 'projectSaved' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'idle', input: 'startAnimation' }, { nextLabel: 'animating' }],
+    [{ stateLabel: 'idle', input: 'getFrameOrigin' }, { nextLabel: 'draggingFrame' }],
+    [{ stateLabel: 'idle', input: 'resizeFrame' }, { nextLabel: 'resizingFrame' }],
+    [{ stateLabel: 'idle', input: 'setFrameOrigin' }, { nextLabel: 'drawingFrame' }],
+    [{ stateLabel: 'idle', input: 'deleteFrame' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'idle', input: 'updateDocList' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'idle', input: 'setDocId' }, { nextLabel: 'loading' }],
     [
       { stateLabel: 'drawingFrame', input: 'changeCoordinates' },
       { action: 'sizeFrame', nextLabel: 'drawingFrame' }
     ],
-    [
-      { stateLabel: 'drawingFrame', input: 'releaseFrame' },
-      { action: 'clear', nextLabel: 'idle' }
-    ],
+    [{ stateLabel: 'drawingFrame', input: 'releaseFrame' }, { nextLabel: 'idle' }],
     [
       { stateLabel: 'drawingFrame', input: 'projectSaved' },
-      { action: 'skip', nextLabel: 'drawingFrame' }
+      { nextLabel: 'drawingFrame' }
     ],
     [
       { stateLabel: 'draggingFrame', input: 'changeCoordinates' },
       { action: 'moveFrame', nextLabel: 'draggingFrame' }
     ],
-    [
-      { stateLabel: 'draggingFrame', input: 'releaseFrame' },
-      { action: 'clear', nextLabel: 'idle' }
-    ],
+    [{ stateLabel: 'draggingFrame', input: 'releaseFrame' }, { nextLabel: 'idle' }],
     [
       { stateLabel: 'draggingFrame', input: 'projectSaved' },
-      { action: 'skip', nextLabel: 'draggingFrame' }
+      { nextLabel: 'draggingFrame' }
     ],
     [
       { stateLabel: 'resizingFrame', input: 'changeCoordinates' },
       { action: 'sizeFrame', nextLabel: 'resizingFrame' }
     ],
-    [
-      { stateLabel: 'resizingFrame', input: 'releaseFrame' },
-      { action: 'clear', nextLabel: 'idle' }
-    ],
+    [{ stateLabel: 'resizingFrame', input: 'releaseFrame' }, { nextLabel: 'idle' }],
     [
       { stateLabel: 'resizingFrame', input: 'projectSaved' },
-      { action: 'skip', nextLabel: 'resizingFrame' }
+      { nextLabel: 'resizingFrame' }
     ],
-    [
-      { stateLabel: 'animating', input: 'startAnimation' },
-      { action: 'skip', nextLabel: 'animating' }
-    ],
-    [
-      { stateLabel: 'animating', input: 'toIdle' },
-      { action: 'skip', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'animating', input: 'createProject' },
-      { action: 'createProject', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'animating', input: 'createShape' },
-      { action: 'createShape', nextLabel: 'idle' }
-    ],
-    [
-      { stateLabel: 'loading', input: 'docLoaded' },
-      { action: 'setDoc', nextLabel: 'idle' }
-    ],
+    [{ stateLabel: 'animating', input: 'startAnimation' }, { nextLabel: 'animating' }],
+    [{ stateLabel: 'animating', input: 'toIdle' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'animating', input: 'createProject' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'animating', input: 'createShape' }, { nextLabel: 'idle' }],
+    [{ stateLabel: 'loading', input: 'setDoc' }, { nextLabel: 'idle' }],
   ];
 
   transitionMap.get = function(key) {
@@ -273,14 +212,6 @@
   };
 
   const actions = {
-    skip() {
-      return;
-    },
-
-    clear() {
-      this.aux = {};
-    },
-
     createShape(state, input) {
       state.doc.appendShape();
     },
@@ -295,10 +226,9 @@
       this.aux.originY = input.detail.inputY;
     },
 
-    grabCorner(state, input) {
+    resizeFrame(state, input) {
       const frame = state.doc.selected.frame;
 
-      // store coordinates of *opposite* corner
       switch (input.detail.target) {
         case 'top-left-corner':
           this.aux.originX = frame.left + frame.width;
@@ -332,9 +262,8 @@
       state.doc.deleteSelectedFrame();
     },
 
-    grabFrame(state, input) {
+    getFrameOrigin(state, input) {
       state.doc.select(input.detail.id);
-
       this.aux.originX = input.detail.inputX;
       this.aux.originY = input.detail.inputY;
     },
@@ -351,19 +280,17 @@
       this.aux.originY = input.detail.inputY;
     },
 
-    processProjectIds(state, input) {
+    updateDocList(state, input) {
       state.docIds = input.detail.docIds;
     },
 
-    loadDoc(state, input) {
+    setDocId(state, input) {
       state.docId = input.detail.id;
     },
 
     setDoc(state, input) {
       state.doc.init(input.detail.doc);
     },
-
-
 
     init() {
       this.aux = {};
@@ -385,7 +312,8 @@
       const transition = transitionMap.get([this.state.label, input.label]);
 
       if (transition) {
-        actions[transition.action](this.state, input);
+        const action = actions[transition.action] || actions[input.label];
+        action && action.bind(actions)(this.state, input);
         this.state.lastInput = input.label;
         this.state.label = transition.nextLabel;
         this.syncPeriphery();
@@ -468,15 +396,15 @@
     [['click',     'newProjectButton' ], 'createProject'     ],
     [['click',     'animateButton'    ], 'startAnimation'    ],
     [['click',     'deleteLink'       ], 'deleteFrame'       ],
-    [['click',     'doc-list-entry'   ], 'loadDoc'           ],
+    [['click',     'doc-list-entry'   ], 'setDocId'           ],
     [['click',     'canvas'           ], 'toIdle'            ],
     [['click',     'canvas'           ], 'toIdle'            ],
-    [['mousedown', 'frame'            ], 'modifyPosition'    ],
+    [['mousedown', 'frame'            ], 'getFrameOrigin'    ],
     [['mousedown', 'top-left-corner'  ], 'resizeFrame'       ],
     [['mousedown', 'top-right-corner' ], 'resizeFrame'       ],
     [['mousedown', 'bot-left-corner'  ], 'resizeFrame'       ],
     [['mousedown', 'bot-right-corner' ], 'resizeFrame'       ],
-    [['mousedown', 'canvas'           ], 'createFrame'       ],
+    [['mousedown', 'canvas'           ], 'setFrameOrigin'       ],
     [['mousemove'                     ], 'changeCoordinates' ],
     [['mouseup'                       ], 'releaseFrame'      ],
   ];
@@ -688,7 +616,7 @@
 
         request.addEventListener('load', function() {
           controller({
-            label: 'docLoaded',
+            label: 'setDoc',
             detail: {
               doc: request.response
             }
@@ -705,7 +633,7 @@
 
         request.addEventListener('load', function() {
           controller({
-            label: 'projectIdsLoaded',
+            label: 'updateDocList',
             detail: {
               docIds: request.response
             }
@@ -740,12 +668,12 @@
       },
 
       lastInput(state) {
-        if (state.lastInput === 'loadDoc') {
+        if (state.lastInput === 'setDocId') {
           window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
         }
 
         // TODO: we could perhaps do this.start(state) here?
-        //       if the last input is 'kickoff' ... 
+        //       if the last input is 'kickoff' ...
       },
     },
 
