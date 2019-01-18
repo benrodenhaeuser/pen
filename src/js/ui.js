@@ -36,8 +36,6 @@ const ui = {
     });
 
     document.addEventListener('click', (event) => {
-      console.log(event.target.dataset.type);
-
       controller({
         label: inputMap.get(['click', event.target.dataset.type]),
         detail: mouseEventDetails(event)
@@ -52,17 +50,14 @@ const ui = {
     }
 
     for (let changed of this.changes(state, this.previousState)) {
-      this.render[changed] && this.render[changed](state);
+      this.renderChanges[changed] && this.renderChanges[changed](state);
     }
     this.previousState = state;
   },
 
-  render: {
+  renderChanges: {
     doc(state) {
       ui.canvasNode.innerHTML = '';
-
-      console.log(state.doc.shapes); // undefined
-      console.log(state.doc); // OK
 
       for (let shape of state.doc.shapes) {
         const shapeNode = nodeFactory.makeShapeNode(shape._id);
@@ -86,9 +81,11 @@ const ui = {
 
     lastInput(state) {
       if (state.lastInput === 'projectSaved') {
-        console.log('saved');
         ui.flash('Document saved');
       }
+
+      // TODO: we could perhaps do this.start(state) here? 
+      //       if the last input is 'kickoff'
     },
 
     label(state) {

@@ -1,3 +1,5 @@
+// the inputMap determines an input given an event type and target type
+
 const inputMap = [
   // event type   target type           input
   [['click',     'newShapeButton'   ], 'createShape'       ],

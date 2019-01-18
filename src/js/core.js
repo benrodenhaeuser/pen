@@ -17,7 +17,6 @@ const core = {
     const transition = transitionMap.get([this.state.label, input.label]);
 
     if (transition) {
-      console.log(transition);
       actions[transition.action](this.state, input);
       this.state.lastInput = input.label;
       this.state.label = transition.nextLabel;

@@ -119,8 +119,6 @@ const doc = {
       });
     }
 
-    console.log(docData.shapes);
-
     this._id = docData._id;
     this.shapes = docData.shapes;
     this.selected.shape = this.findShape(docData.selected.shapeID);
@@ -130,7 +128,7 @@ const doc = {
   init(docData) {
     if (docData !== undefined) {
       this.initFromDocData(docData);
-      return;
+      return this;
     }
 
     const docId   = createId();

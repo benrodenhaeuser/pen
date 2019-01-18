@@ -64,21 +64,24 @@ const db = {
   crud: {
     doc(state) {
       if (db.hasFrames(state.doc)) {
+        // TODO: that's not quite enough, because a doc read from the database has
+        // frames, but there's no need to save it rightaway.
         window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
       }
     },
 
     lastInput(state) {
       if (state.lastInput === 'loadDoc') {
-        console.log('loadDoc!');
         window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
       }
+
+      // TODO: we could perhaps do this.start(state) here?
+      //       if the last input is 'kickoff' ... 
     },
   },
 
   // helpers 0
   hasFrames(doc) {
-    // console.log('it has frames');
     return doc.shapes.find((shape) => shape.frames.length !== 0);
   },
 

@@ -242,8 +242,6 @@
         });
       }
 
-      console.log(docData.shapes);
-
       this._id = docData._id;
       this.shapes = docData.shapes;
       this.selected.shape = this.findShape(docData.selected.shapeID);
@@ -253,7 +251,7 @@
     init(docData) {
       if (docData !== undefined) {
         this.initFromDocData(docData);
-        return;
+        return this;
       }
 
       const docId   = createId();
@@ -359,7 +357,6 @@
 
     loadDoc(state, input) {
       state.docId = input.detail.id;
-      console.log("doc id is" + state.docId);
     },
 
     setDoc(state, input) {
@@ -388,7 +385,6 @@
       const transition = transitionMap.get([this.state.label, input.label]);
 
       if (transition) {
-        console.log(transition);
         actions[transition.action](this.state, input);
         this.state.lastInput = input.label;
         this.state.label = transition.nextLabel;
@@ -464,6 +460,8 @@
     },
   };
 
+  // the inputMap determines an input given an event type and target type
+
   const inputMap = [
     // event type   target type           input
     [['click',     'newShapeButton'   ], 'createShape'       ],
@@ -533,8 +531,6 @@
       });
 
       document.addEventListener('click', (event) => {
-        console.log(event.target.dataset.type);
-
         controller({
           label: inputMap.get(['click', event.target.dataset.type]),
           detail: mouseEventDetails(event)
@@ -549,17 +545,14 @@
       }
 
       for (let changed of this.changes(state, this.previousState)) {
-        this.render[changed] && this.render[changed](state);
+        this.renderChanges[changed] && this.renderChanges[changed](state);
       }
       this.previousState = state;
     },
 
-    render: {
+    renderChanges: {
       doc(state) {
         ui.canvasNode.innerHTML = '';
-
-        console.log(state.doc.shapes); // undefined
-        console.log(state.doc); // OK
 
         for (let shape of state.doc.shapes) {
           const shapeNode = nodeFactory.makeShapeNode(shape._id);
@@ -583,9 +576,11 @@
 
       lastInput(state) {
         if (state.lastInput === 'projectSaved') {
-          console.log('saved');
           ui.flash('Document saved');
         }
+
+        // TODO: we could perhaps do this.start(state) here? 
+        //       if the last input is 'kickoff'
       },
 
       label(state) {
@@ -738,21 +733,24 @@
     crud: {
       doc(state) {
         if (db.hasFrames(state.doc)) {
+          // TODO: that's not quite enough, because a doc read from the database has
+          // frames, but there's no need to save it rightaway.
           window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
         }
       },
 
       lastInput(state) {
         if (state.lastInput === 'loadDoc') {
-          console.log('loadDoc!');
           window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
         }
+
+        // TODO: we could perhaps do this.start(state) here?
+        //       if the last input is 'kickoff' ... 
       },
     },
 
     // helpers 0
     hasFrames(doc) {
-      // console.log('it has frames');
       return doc.shapes.find((shape) => shape.frames.length !== 0);
     },
 
