@@ -3,8 +3,9 @@ const actions = {
     state.doc.appendShape();
   },
 
-  createProject(state, input) {
+  createDoc(state, input) {
     state.doc.init();
+    state.docIds.push(state.doc._id);
   },
 
   setFrameOrigin(state, input) {
@@ -45,6 +46,22 @@ const actions = {
     });
   },
 
+  clean(state, input) {
+    // TODO: not sure if this is needed.
+    const same = (val1, val2) => {
+      const treshold = 1;
+      // console.log(Math.abs(val1 - val2));
+      return Math.abs(val1 - val2) <= treshold;
+    };
+
+    const sameX = same(this.aux.originX, input.detail.inputX);
+    const sameY = same(this.aux.originY, input.detail.inputY);
+
+    if (sameX && sameY) {
+      state.doc.deleteSelectedFrame();
+    }
+  },
+
   deleteFrame(state, input) {
     state.doc.deleteSelectedFrame();
   },
@@ -71,7 +88,7 @@ const actions = {
     state.docIds = input.detail.docIds;
   },
 
-  setDocId(state, input) {
+  requestDoc(state, input) {
     state.docId = input.detail.id;
   },
 

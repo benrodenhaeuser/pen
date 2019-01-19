@@ -25,27 +25,27 @@ get '/collections' do
   settings.db.collection_names.to_json
 end
 
-get '/projects' do
-  settings.db[:projects].find.to_a.to_json
+get '/docs' do
+  settings.db[:docs].find.to_a.to_json
 end
 
 get '/ids' do
-  projects = settings.db[:projects].find.to_a
-  projects.map { |project| project['_id'] }.to_json
+  docs = settings.db[:docs].find.to_a
+  docs.map { |doc| doc['_id'] }.to_json
 end
 
-get '/projects/:_id' do
-  settings.db[:projects].find('_id' => params['_id']).first.to_json
+get '/docs/:_id' do
+  settings.db[:docs].find('_id' => params['_id']).first.to_json
 end
 
 # upsert
-post '/projects/:_id' do
-  project_id = params['_id']
+post '/docs/:_id' do
+  doc_id = params['_id']
   new_data = JSON.parse(request.body.read)
-  settings.db[:projects].find('_id' => project_id).update_one(new_data, upsert: true)
+  settings.db[:docs].find('_id' => doc_id).update_one(new_data, upsert: true)
   status 201
 end
 
-delete '/projects/:id' do
+delete '/docs/:id' do
   # TODO
 end

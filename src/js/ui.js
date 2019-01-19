@@ -1,8 +1,8 @@
 import { nodeFactory } from './nodeFactory.js';
-import { inputMap } from './inputMap.js';
+import { inputTable } from './inputTable.js';
 
 const ui = {
-  bindEvents(controller) {
+  bindEvents(dispatch) {
     this.canvasNode = document.querySelector('#canvas');
 
     const mouseEventDetails = (event) => {
@@ -15,29 +15,29 @@ const ui = {
     };
 
     this.canvasNode.addEventListener('mousedown', (event) => {
-      controller({
-        label:  inputMap.get(['mousedown', event.target.dataset.type]),
+      dispatch({
+        label:  inputTable.get(['mousedown', event.target.dataset.type]),
         detail: mouseEventDetails(event)
       });
     });
 
     this.canvasNode.addEventListener('mousemove', (event) => {
-      controller({
-        label:  inputMap.get(['mousemove']),
+      dispatch({
+        label:  inputTable.get(['mousemove']),
         detail: mouseEventDetails(event)
       });
     });
 
     this.canvasNode.addEventListener('mouseup', (event) => {
-      controller({
-        label:  inputMap.get(['mouseup']),
+      dispatch({
+        label:  inputTable.get(['mouseup']),
         detail: mouseEventDetails(event)
       });
     });
 
     document.addEventListener('click', (event) => {
-      controller({
-        label: inputMap.get(['click', event.target.dataset.type]),
+      dispatch({
+        label: inputTable.get(['click', event.target.dataset.type]),
         detail: mouseEventDetails(event)
       });
     });
@@ -80,11 +80,11 @@ const ui = {
     },
 
     lastInput(state) {
-      if (state.lastInput === 'projectSaved') {
+      if (state.lastInput === 'docSaved') {
         ui.flash('Document saved');
       }
 
-      // TODO: we could perhaps do this.start(state) here? 
+      // TODO: we could perhaps do this.start(state) here?
       //       if the last input is 'kickoff'
     },
 
@@ -164,11 +164,6 @@ const ui = {
 
   start(state) {
     this.previousState = state;
-  },
-
-  init(core) {
-    this.bindEvents(core.controller.bind(core));
-    core.attach(this);
   },
 };
 

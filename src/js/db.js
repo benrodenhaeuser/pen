@@ -1,16 +1,16 @@
 const db = {
-  bindEvents(controller) {
+  bindEvents(dispatch) {
     window.addEventListener('upsert', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        controller({
-          label: 'projectSaved',
+        dispatch({
+          label: 'docSaved',
           detail: {}
         });
       });
 
-      request.open('POST', "/projects/" + event.detail._id);
+      request.open('POST', "/docs/" + event.detail._id);
       request.send(JSON.stringify(event.detail));
     });
 
@@ -18,7 +18,7 @@ const db = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        controller({
+        dispatch({
           label: 'setDoc',
           detail: {
             doc: request.response
@@ -26,16 +26,16 @@ const db = {
         });
       });
 
-      request.open('GET', "/projects/" + event.detail);
+      request.open('GET', "/docs/" + event.detail);
       request.responseType = 'json';
       request.send(JSON.stringify(event.detail));
     });
 
-    window.addEventListener('loadProjectIds', function(event) {
+    window.addEventListener('loadDocIds', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        controller({
+        dispatch({
           label: 'updateDocList',
           detail: {
             docIds: request.response
@@ -51,64 +51,52 @@ const db = {
 
   sync(state) {
     if (state.label === 'start') {
-      this.start(state);
+      db.loadDocIds();
+      this.previousState = state;
       return;
     }
 
-    for (let changed of this.changes(state, this.previousState)) {
-      this.crud[changed] && this.crud[changed](state);
+    if (['idle', 'blocked'].includes(state.label)) {
+      for (let changed of this.changes(state, this.previousState)) {
+        this.crud[changed] && this.crud[changed](state);
+      }
+      this.previousState = state;
     }
-    this.previousState = state;
   },
 
   crud: {
+    docId(state) {
+      window.dispatchEvent(new CustomEvent(
+        'read',
+        { detail: state.docId }
+      ));
+    },
+
     doc(state) {
-      if (db.hasFrames(state.doc)) {
-        // TODO: that's not quite enough, because a doc read from the database has
-        // frames, but there's no need to save it rightaway.
-        window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
+      if (state.docId === db.previousState.docId) { // user has edited doc
+        window.dispatchEvent(new CustomEvent(
+          'upsert',
+          { detail: state.doc }
+        ));
       }
-    },
-
-    lastInput(state) {
-      if (state.lastInput === 'setDocId') {
-        window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
-      }
-
-      // TODO: we could perhaps do this.start(state) here?
-      //       if the last input is 'kickoff' ...
     },
   },
 
-  // helpers 0
-  hasFrames(doc) {
-    return doc.shapes.find((shape) => shape.frames.length !== 0);
-  },
+  // hasFrames(doc) {
+  //   return doc.shapes.find((shape) => shape.frames.length !== 0);
+  // },
 
-  // helpers 1
   changes(state1, state2) {
     const keys = Object.keys(state1);
     return keys.filter(key => !db.equal(state1[key], state2[key]));
   },
 
-  // helpers 2
   equal(obj1, obj2) {
     return JSON.stringify(obj1) === JSON.stringify(obj2);
   },
 
-  // helpers 3
-  loadProjectIds() {
-    window.dispatchEvent(new Event('loadProjectIds'));
-  },
-
-  start(state) {
-    db.loadProjectIds();
-    this.previousState = state;
-  },
-
-  init(core) {
-    this.bindEvents(core.controller.bind(core));
-    core.attach(this);
+  loadDocIds() {
+    window.dispatchEvent(new Event('loadDocIds'));
   },
 };
 

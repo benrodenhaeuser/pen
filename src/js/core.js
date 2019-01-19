@@ -1,35 +1,31 @@
-import { transitionMap } from './transitionMap.js';
+import { transitionTable } from './transitionTable.js';
 import { doc } from './doc.js';
 import { actions } from './actions.js';
 
 const core = {
-  attach(component) {
-    this.periphery.push(component);
-  },
-
   syncPeriphery() {
-    for (let component of this.periphery) {
-      component.sync(JSON.parse(JSON.stringify(this.state)));
+    for (let peripheral of this.periphery) {
+      peripheral(JSON.parse(JSON.stringify(this.state)));
     }
   },
 
-  controller(input) {
-    const transition = transitionMap.get([this.state.label, input.label]);
+  dispatch(input) {
+    const transition = transitionTable.get([this.state.label, input.label]);
 
     if (transition) {
       const action = actions[transition.action] || actions[input.label];
       action && action.bind(actions)(this.state, input);
       this.state.lastInput = input.label;
-      this.state.label = transition.nextLabel;
+      this.state.label = transition.to || this.state.label;
       this.syncPeriphery();
     }
   },
 
   init() {
     this.state = {
-      doc: doc.init(),
-      label: 'start',
-      docIds: null,
+      doc: doc.init(),   // domain state
+      label: 'start',    // app state
+      docIds: null,      // app state
     };
 
     actions.init();
@@ -39,7 +35,7 @@ const core = {
 
   kickoff() {
     this.syncPeriphery();
-    this.controller({ label: 'kickoff' });
+    this.dispatch({ label: 'kickoff' });
   },
 };
 

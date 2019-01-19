@@ -55,6 +55,7 @@ const doc = {
     }
 
     this.selected.frame = frame;
+    return frame;
   },
 
   deleteSelectedFrame() {

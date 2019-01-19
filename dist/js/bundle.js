@@ -1,62 +1,41 @@
 (function () {
   'use strict';
 
-  const transitionMap = [
-    [{ stateLabel: 'start', input: 'kickoff' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'idle', input: 'createShape' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'idle', input: 'createProject' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'idle', input: 'projectSaved' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'idle', input: 'startAnimation' }, { nextLabel: 'animating' }],
-    [{ stateLabel: 'idle', input: 'getFrameOrigin' }, { nextLabel: 'draggingFrame' }],
-    [{ stateLabel: 'idle', input: 'resizeFrame' }, { nextLabel: 'resizingFrame' }],
-    [{ stateLabel: 'idle', input: 'setFrameOrigin' }, { nextLabel: 'drawingFrame' }],
-    [{ stateLabel: 'idle', input: 'deleteFrame' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'idle', input: 'updateDocList' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'idle', input: 'setDocId' }, { nextLabel: 'loading' }],
-    [
-      { stateLabel: 'drawingFrame', input: 'changeCoordinates' },
-      { action: 'sizeFrame', nextLabel: 'drawingFrame' }
-    ],
-    [{ stateLabel: 'drawingFrame', input: 'releaseFrame' }, { nextLabel: 'idle' }],
-    [
-      { stateLabel: 'drawingFrame', input: 'projectSaved' },
-      { nextLabel: 'drawingFrame' }
-    ],
-    [
-      { stateLabel: 'draggingFrame', input: 'changeCoordinates' },
-      { action: 'moveFrame', nextLabel: 'draggingFrame' }
-    ],
-    [{ stateLabel: 'draggingFrame', input: 'releaseFrame' }, { nextLabel: 'idle' }],
-    [
-      { stateLabel: 'draggingFrame', input: 'projectSaved' },
-      { nextLabel: 'draggingFrame' }
-    ],
-    [
-      { stateLabel: 'resizingFrame', input: 'changeCoordinates' },
-      { action: 'sizeFrame', nextLabel: 'resizingFrame' }
-    ],
-    [{ stateLabel: 'resizingFrame', input: 'releaseFrame' }, { nextLabel: 'idle' }],
-    [
-      { stateLabel: 'resizingFrame', input: 'projectSaved' },
-      { nextLabel: 'resizingFrame' }
-    ],
-    [{ stateLabel: 'animating', input: 'startAnimation' }, { nextLabel: 'animating' }],
-    [{ stateLabel: 'animating', input: 'toIdle' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'animating', input: 'createProject' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'animating', input: 'createShape' }, { nextLabel: 'idle' }],
-    [{ stateLabel: 'loading', input: 'setDoc' }, { nextLabel: 'idle' }],
+  const transitionTable = [
+    [{                    input: 'docSaved'   }, {                     }],
+    [{                    input: 'updateDocList'  }, {                     }],
+    [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'          }],
+    [{ from: 'idle',      input: 'createShape'    }, {                     }],
+    [{ from: 'idle',      input: 'createDoc'  }, {                     }],
+    [{ from: 'idle',      input: 'startAnimation' }, { to: 'animating'     }],
+    [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'      }],
+    [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'      }],
+    [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'       }],
+    [{ from: 'idle',      input: 'deleteFrame'    }, {                     }],
+    [{ from: 'idle',      input: 'requestDoc'       }, { to: 'blocked'       }],
+    [{ from: 'drawing',   input: 'changeCoords'   }, { action: 'sizeFrame' }],
+    [{ from: 'dragging',  input: 'changeCoords'   }, { action: 'moveFrame' }],
+    [{ from: 'resizing',  input: 'changeCoords'   }, { action: 'sizeFrame' }],
+    [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', action: 'clean' }],
+    [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'          }],
+    [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'          }],
+    [{ from: 'animating', input: 'startAnimation' }, {                     }],
+    [{ from: 'animating', input: 'toIdle'         }, { to: 'idle'          }],
+    [{ from: 'animating', input: 'createDoc'  }, { to: 'idle'          }],
+    [{ from: 'animating', input: 'createShape'    }, { to: 'idle'          }],
+    [{ from: 'blocked',   input: 'setDoc'         }, { to: 'idle'          }],
   ];
 
-  transitionMap.get = function(key) {
+  transitionTable.get = function(key) {
     const match = (pair) => {
-      return pair[0].stateLabel === key[0] &&
+      return (pair[0].from === key[0] || !pair[0].from) &&
         pair[0].input === key[1];
     };
 
-    const pair = transitionMap.find(match);
+    const pair = transitionTable.find(match);
 
     if (pair) {
-      return pair[1]; // returns an object
+      return pair[1];
     }
   };
 
@@ -117,6 +96,7 @@
       }
 
       this.selected.frame = frame;
+      return frame;
     },
 
     deleteSelectedFrame() {
@@ -216,8 +196,9 @@
       state.doc.appendShape();
     },
 
-    createProject(state, input) {
+    createDoc(state, input) {
       state.doc.init();
+      state.docIds.push(state.doc._id);
     },
 
     setFrameOrigin(state, input) {
@@ -258,6 +239,22 @@
       });
     },
 
+    clean(state, input) {
+      // TODO: not sure if this is needed.
+      const same = (val1, val2) => {
+        const treshold = 1;
+        // console.log(Math.abs(val1 - val2));
+        return Math.abs(val1 - val2) <= treshold;
+      };
+
+      const sameX = same(this.aux.originX, input.detail.inputX);
+      const sameY = same(this.aux.originY, input.detail.inputY);
+
+      if (sameX && sameY) {
+        state.doc.deleteSelectedFrame();
+      }
+    },
+
     deleteFrame(state, input) {
       state.doc.deleteSelectedFrame();
     },
@@ -284,7 +281,7 @@
       state.docIds = input.detail.docIds;
     },
 
-    setDocId(state, input) {
+    requestDoc(state, input) {
       state.docId = input.detail.id;
     },
 
@@ -298,33 +295,29 @@
   };
 
   const core = {
-    attach(component) {
-      this.periphery.push(component);
-    },
-
     syncPeriphery() {
-      for (let component of this.periphery) {
-        component.sync(JSON.parse(JSON.stringify(this.state)));
+      for (let peripheral of this.periphery) {
+        peripheral(JSON.parse(JSON.stringify(this.state)));
       }
     },
 
-    controller(input) {
-      const transition = transitionMap.get([this.state.label, input.label]);
+    dispatch(input) {
+      const transition = transitionTable.get([this.state.label, input.label]);
 
       if (transition) {
         const action = actions[transition.action] || actions[input.label];
         action && action.bind(actions)(this.state, input);
         this.state.lastInput = input.label;
-        this.state.label = transition.nextLabel;
+        this.state.label = transition.to || this.state.label;
         this.syncPeriphery();
       }
     },
 
     init() {
       this.state = {
-        doc: doc.init(),
-        label: 'start',
-        docIds: null,
+        doc: doc.init(),   // domain state
+        label: 'start',    // app state
+        docIds: null,      // app state
       };
 
       actions.init();
@@ -334,7 +327,7 @@
 
     kickoff() {
       this.syncPeriphery();
-      this.controller({ label: 'kickoff' });
+      this.dispatch({ label: 'kickoff' });
     },
   };
 
@@ -388,34 +381,32 @@
     },
   };
 
-  // the inputMap determines an input given an event type and target type
-
-  const inputMap = [
-    // event type   target type           input
-    [['click',     'newShapeButton'   ], 'createShape'       ],
-    [['click',     'newProjectButton' ], 'createProject'     ],
-    [['click',     'animateButton'    ], 'startAnimation'    ],
-    [['click',     'deleteLink'       ], 'deleteFrame'       ],
-    [['click',     'doc-list-entry'   ], 'setDocId'           ],
-    [['click',     'canvas'           ], 'toIdle'            ],
-    [['click',     'canvas'           ], 'toIdle'            ],
-    [['mousedown', 'frame'            ], 'getFrameOrigin'    ],
-    [['mousedown', 'top-left-corner'  ], 'resizeFrame'       ],
-    [['mousedown', 'top-right-corner' ], 'resizeFrame'       ],
-    [['mousedown', 'bot-left-corner'  ], 'resizeFrame'       ],
-    [['mousedown', 'bot-right-corner' ], 'resizeFrame'       ],
-    [['mousedown', 'canvas'           ], 'setFrameOrigin'       ],
-    [['mousemove'                     ], 'changeCoordinates' ],
-    [['mouseup'                       ], 'releaseFrame'      ],
+  const inputTable = [
+    // event type     target type            input
+    [['click',       'newShapeButton'   ], 'createShape'       ],
+    [['click',       'newDocButton'     ], 'createDoc'     ],
+    [['click',       'animateButton'    ], 'startAnimation'    ],
+    [['click',       'deleteLink'       ], 'deleteFrame'       ],
+    [['click',       'doc-list-entry'   ], 'requestDoc'          ],
+    [['click',       'canvas'           ], 'toIdle'            ],
+    [['click',       'canvas'           ], 'toIdle'            ],
+    [['mousedown',   'frame'            ], 'getFrameOrigin'    ],
+    [['mousedown',   'top-left-corner'  ], 'resizeFrame'       ],
+    [['mousedown',   'top-right-corner' ], 'resizeFrame'       ],
+    [['mousedown',   'bot-left-corner'  ], 'resizeFrame'       ],
+    [['mousedown',   'bot-right-corner' ], 'resizeFrame'       ],
+    [['mousedown',   'canvas'           ], 'setFrameOrigin'    ],
+    [['mousemove'                       ], 'changeCoords'      ],
+    [['mouseup'                         ], 'releaseFrame'      ],
   ];
 
-  inputMap.get = function(key) {
+  inputTable.get = function(key) {
     const match = (pair) => {
       return pair[0][0] === key[0] &&
         pair[0][1] === key[1];
     };
 
-    const pair = inputMap.find(match);
+    const pair = inputTable.find(match);
 
     if (pair) {
       return pair[1];
@@ -425,7 +416,7 @@
   };
 
   const ui = {
-    bindEvents(controller) {
+    bindEvents(dispatch) {
       this.canvasNode = document.querySelector('#canvas');
 
       const mouseEventDetails = (event) => {
@@ -438,29 +429,29 @@
       };
 
       this.canvasNode.addEventListener('mousedown', (event) => {
-        controller({
-          label:  inputMap.get(['mousedown', event.target.dataset.type]),
+        dispatch({
+          label:  inputTable.get(['mousedown', event.target.dataset.type]),
           detail: mouseEventDetails(event)
         });
       });
 
       this.canvasNode.addEventListener('mousemove', (event) => {
-        controller({
-          label:  inputMap.get(['mousemove']),
+        dispatch({
+          label:  inputTable.get(['mousemove']),
           detail: mouseEventDetails(event)
         });
       });
 
       this.canvasNode.addEventListener('mouseup', (event) => {
-        controller({
-          label:  inputMap.get(['mouseup']),
+        dispatch({
+          label:  inputTable.get(['mouseup']),
           detail: mouseEventDetails(event)
         });
       });
 
       document.addEventListener('click', (event) => {
-        controller({
-          label: inputMap.get(['click', event.target.dataset.type]),
+        dispatch({
+          label: inputTable.get(['click', event.target.dataset.type]),
           detail: mouseEventDetails(event)
         });
       });
@@ -503,11 +494,11 @@
       },
 
       lastInput(state) {
-        if (state.lastInput === 'projectSaved') {
+        if (state.lastInput === 'docSaved') {
           ui.flash('Document saved');
         }
 
-        // TODO: we could perhaps do this.start(state) here? 
+        // TODO: we could perhaps do this.start(state) here?
         //       if the last input is 'kickoff'
       },
 
@@ -588,26 +579,21 @@
     start(state) {
       this.previousState = state;
     },
-
-    init(core) {
-      this.bindEvents(core.controller.bind(core));
-      core.attach(this);
-    },
   };
 
   const db = {
-    bindEvents(controller) {
+    bindEvents(dispatch) {
       window.addEventListener('upsert', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          controller({
-            label: 'projectSaved',
+          dispatch({
+            label: 'docSaved',
             detail: {}
           });
         });
 
-        request.open('POST', "/projects/" + event.detail._id);
+        request.open('POST', "/docs/" + event.detail._id);
         request.send(JSON.stringify(event.detail));
       });
 
@@ -615,7 +601,7 @@
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          controller({
+          dispatch({
             label: 'setDoc',
             detail: {
               doc: request.response
@@ -623,16 +609,16 @@
           });
         });
 
-        request.open('GET', "/projects/" + event.detail);
+        request.open('GET', "/docs/" + event.detail);
         request.responseType = 'json';
         request.send(JSON.stringify(event.detail));
       });
 
-      window.addEventListener('loadProjectIds', function(event) {
+      window.addEventListener('loadDocIds', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          controller({
+          dispatch({
             label: 'updateDocList',
             detail: {
               docIds: request.response
@@ -648,78 +634,72 @@
 
     sync(state) {
       if (state.label === 'start') {
-        this.start(state);
+        db.loadDocIds();
+        this.previousState = state;
         return;
       }
 
-      for (let changed of this.changes(state, this.previousState)) {
-        this.crud[changed] && this.crud[changed](state);
+      if (['idle', 'blocked'].includes(state.label)) {
+        for (let changed of this.changes(state, this.previousState)) {
+          this.crud[changed] && this.crud[changed](state);
+        }
+        this.previousState = state;
       }
-      this.previousState = state;
     },
 
     crud: {
+      docId(state) {
+        window.dispatchEvent(new CustomEvent(
+          'read',
+          { detail: state.docId }
+        ));
+      },
+
       doc(state) {
-        if (db.hasFrames(state.doc)) {
-          // TODO: that's not quite enough, because a doc read from the database has
-          // frames, but there's no need to save it rightaway.
-          window.dispatchEvent(new CustomEvent('upsert', { detail: state.doc }));
+        if (state.docId === db.previousState.docId) { // user has edited doc
+          window.dispatchEvent(new CustomEvent(
+            'upsert',
+            { detail: state.doc }
+          ));
         }
-      },
-
-      lastInput(state) {
-        if (state.lastInput === 'setDocId') {
-          window.dispatchEvent(new CustomEvent('read', { detail: state.docId }));
-        }
-
-        // TODO: we could perhaps do this.start(state) here?
-        //       if the last input is 'kickoff' ...
       },
     },
 
-    // helpers 0
-    hasFrames(doc) {
-      return doc.shapes.find((shape) => shape.frames.length !== 0);
-    },
+    // hasFrames(doc) {
+    //   return doc.shapes.find((shape) => shape.frames.length !== 0);
+    // },
 
-    // helpers 1
     changes(state1, state2) {
       const keys = Object.keys(state1);
       return keys.filter(key => !db.equal(state1[key], state2[key]));
     },
 
-    // helpers 2
     equal(obj1, obj2) {
       return JSON.stringify(obj1) === JSON.stringify(obj2);
     },
 
-    // helpers 3
-    loadProjectIds() {
-      window.dispatchEvent(new Event('loadProjectIds'));
-    },
-
-    start(state) {
-      db.loadProjectIds();
-      this.previousState = state;
-    },
-
-    init(core) {
-      this.bindEvents(core.controller.bind(core));
-      core.attach(this);
+    loadDocIds() {
+      window.dispatchEvent(new Event('loadDocIds'));
     },
   };
 
   const app = {
+    connect(core$$1, component) {
+      component.bindEvents(core$$1.dispatch.bind(core$$1));
+      core$$1.periphery.push(component.sync.bind(component));
+    },
+
     init() {
       core.init();
-      ui.init(core);
-      db.init(core);
+
+      this.connect(core, ui);
+      this.connect(core, db);
 
       core.kickoff();
     },
   };
 
-  document.addEventListener('DOMContentLoaded', app.init);
+  document.addEventListener('DOMContentLoaded', app.init.bind(app));
 
 }());
 //# sourceMappingURL=bundle.js.map
