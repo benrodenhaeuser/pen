@@ -203,14 +203,14 @@
 
     setFrameOrigin(state, input) {
       state.doc.insertFrameInPlace();
-      this.aux.originX = input.detail.inputX;
-      this.aux.originY = input.detail.inputY;
+      this.aux.originX = input.data.inputX;
+      this.aux.originY = input.data.inputY;
     },
 
     resizeFrame(state, input) {
       const frame = state.doc.selected.frame;
 
-      switch (input.detail.target) {
+      switch (input.data.target) {
         case 'top-left-corner':
           this.aux.originX = frame.left + frame.width;
           this.aux.originY = frame.top + frame.height;
@@ -232,10 +232,10 @@
 
     sizeFrame(state, input) {
       state.doc.selected.frame.set({
-        top:    Math.min(this.aux.originY, input.detail.inputY),
-        left:   Math.min(this.aux.originX, input.detail.inputX),
-        width:  Math.abs(this.aux.originX - input.detail.inputX),
-        height: Math.abs(this.aux.originY - input.detail.inputY),
+        top:    Math.min(this.aux.originY, input.data.inputY),
+        left:   Math.min(this.aux.originX, input.data.inputX),
+        width:  Math.abs(this.aux.originX - input.data.inputX),
+        height: Math.abs(this.aux.originY - input.data.inputY),
       });
     },
 
@@ -247,8 +247,8 @@
         return Math.abs(val1 - val2) <= treshold;
       };
 
-      const sameX = same(this.aux.originX, input.detail.inputX);
-      const sameY = same(this.aux.originY, input.detail.inputY);
+      const sameX = same(this.aux.originX, input.data.inputX);
+      const sameY = same(this.aux.originY, input.data.inputY);
 
       if (sameX && sameY) {
         state.doc.deleteSelectedFrame();
@@ -260,33 +260,33 @@
     },
 
     getFrameOrigin(state, input) {
-      state.doc.select(input.detail.id);
-      this.aux.originX = input.detail.inputX;
-      this.aux.originY = input.detail.inputY;
+      state.doc.select(input.data.id);
+      this.aux.originX = input.data.inputX;
+      this.aux.originY = input.data.inputY;
     },
 
     moveFrame(state, input) {
       const frame = state.doc.selected.frame;
 
       frame.set({
-        top:  frame.top  + (input.detail.inputY - this.aux.originY),
-        left: frame.left + (input.detail.inputX - this.aux.originX),
+        top:  frame.top  + (input.data.inputY - this.aux.originY),
+        left: frame.left + (input.data.inputX - this.aux.originX),
       });
 
-      this.aux.originX = input.detail.inputX;
-      this.aux.originY = input.detail.inputY;
+      this.aux.originX = input.data.inputX;
+      this.aux.originY = input.data.inputY;
     },
 
     updateDocList(state, input) {
-      state.docIDs = input.detail.docIDs;
+      state.docIDs = input.data.docIDs;
     },
 
     requestDoc(state, input) {
-      state.docID = input.detail.id;
+      state.docID = input.data.id;
     },
 
     setDoc(state, input) {
-      state.doc.init(input.detail.doc);
+      state.doc.init(input.data.doc);
     },
 
     init() {
@@ -302,13 +302,13 @@
     },
 
     dispatch(input) {
-      const transition = transitionTable.get([this.state.label, input.label]);
+      const transition = transitionTable.get([this.state.id, input.id]);
 
       if (transition) {
-        const action = actions[transition.action] || actions[input.label];
+        const action = actions[transition.action] || actions[input.id];
         action && action.bind(actions)(this.state, input);
-        this.state.lastInput = input.label;
-        this.state.label = transition.to || this.state.label;
+        this.state.lastInputID = input.id;
+        this.state.id = transition.to || this.state.id;
         this.syncPeriphery();
       }
     },
@@ -316,7 +316,7 @@
     init() {
       this.state = {
         doc: doc.init(),   // domain state
-        label: 'start',    // app state
+        id: 'start',    // app state
         docIDs: null,      // app state
       };
 
@@ -327,7 +327,7 @@
 
     kickoff() {
       this.syncPeriphery();
-      this.dispatch({ label: 'kickoff' });
+      this.dispatch({ id: 'kickoff' });
     },
   };
 
@@ -419,7 +419,7 @@
     bindEvents(dispatch) {
       this.canvasNode = document.querySelector('#canvas');
 
-      const mouseEventDetails = (event) => {
+      const mouseEventData = (event) => {
         return {
           inputX:     event.clientX,
           inputY:     event.clientY,
@@ -430,35 +430,35 @@
 
       this.canvasNode.addEventListener('mousedown', (event) => {
         dispatch({
-          label:  inputTable.get(['mousedown', event.target.dataset.type]),
-          detail: mouseEventDetails(event)
+          id:  inputTable.get(['mousedown', event.target.dataset.type]),
+          data: mouseEventData(event)
         });
       });
 
       this.canvasNode.addEventListener('mousemove', (event) => {
         dispatch({
-          label:  inputTable.get(['mousemove']),
-          detail: mouseEventDetails(event)
+          id:  inputTable.get(['mousemove']),
+          data: mouseEventData(event)
         });
       });
 
       this.canvasNode.addEventListener('mouseup', (event) => {
         dispatch({
-          label:  inputTable.get(['mouseup']),
-          detail: mouseEventDetails(event)
+          id:  inputTable.get(['mouseup']),
+          data: mouseEventData(event)
         });
       });
 
       document.addEventListener('click', (event) => {
         dispatch({
-          label: inputTable.get(['click', event.target.dataset.type]),
-          detail: mouseEventDetails(event)
+          id: inputTable.get(['click', event.target.dataset.type]),
+          data: mouseEventData(event)
         });
       });
     },
 
     sync(state) {
-      if (state.label === 'start') {
+      if (state.id === 'start') {
         this.start(state);
         return;
       }
@@ -493,8 +493,8 @@
         }
       },
 
-      lastInput(state) {
-        if (state.lastInput === 'docSaved') {
+      lastInputID(state) {
+        if (state.lastInputID === 'docSaved') {
           ui.flash('Document saved');
         }
 
@@ -502,8 +502,8 @@
         //       if the last input is 'kickoff'
       },
 
-      label(state) {
-        if (state.label === 'animating') {
+      id(state) {
+        if (state.id === 'animating') {
           ui.canvasNode.innerHTML = '';
 
           for (let shape of state.doc.shapes) {
@@ -588,8 +588,8 @@
 
         request.addEventListener('load', function() {
           dispatch({
-            label: 'docSaved',
-            detail: {}
+            id: 'docSaved',
+            data: {}
           });
         });
 
@@ -602,8 +602,8 @@
 
         request.addEventListener('load', function() {
           dispatch({
-            label: 'setDoc',
-            detail: {
+            id: 'setDoc',
+            data: {
               doc: request.response
             }
           });
@@ -619,8 +619,8 @@
 
         request.addEventListener('load', function() {
           dispatch({
-            label: 'updateDocList',
-            detail: {
+            id: 'updateDocList',
+            data: {
               docIDs: request.response
             }
           });
@@ -633,13 +633,13 @@
     },
 
     sync(state) {
-      if (state.label === 'start') {
+      if (state.id === 'start') {
         db.loadDocIDs();
         this.previousState = state;
         return;
       }
 
-      if (['idle', 'blocked'].includes(state.label)) {
+      if (['idle', 'blocked'].includes(state.id)) {
         for (let changed of this.changes(state, this.previousState)) {
           this.crud[changed] && this.crud[changed](state);
         }

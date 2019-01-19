@@ -5,8 +5,8 @@ const db = {
 
       request.addEventListener('load', function() {
         dispatch({
-          label: 'docSaved',
-          detail: {}
+          id: 'docSaved',
+          data: {}
         });
       });
 
@@ -19,8 +19,8 @@ const db = {
 
       request.addEventListener('load', function() {
         dispatch({
-          label: 'setDoc',
-          detail: {
+          id: 'setDoc',
+          data: {
             doc: request.response
           }
         });
@@ -36,8 +36,8 @@ const db = {
 
       request.addEventListener('load', function() {
         dispatch({
-          label: 'updateDocList',
-          detail: {
+          id: 'updateDocList',
+          data: {
             docIDs: request.response
           }
         });
@@ -50,13 +50,13 @@ const db = {
   },
 
   sync(state) {
-    if (state.label === 'start') {
+    if (state.id === 'start') {
       db.loadDocIDs();
       this.previousState = state;
       return;
     }
 
-    if (['idle', 'blocked'].includes(state.label)) {
+    if (['idle', 'blocked'].includes(state.id)) {
       for (let changed of this.changes(state, this.previousState)) {
         this.crud[changed] && this.crud[changed](state);
       }

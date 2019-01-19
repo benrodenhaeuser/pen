@@ -10,13 +10,13 @@ const core = {
   },
 
   dispatch(input) {
-    const transition = transitionTable.get([this.state.label, input.label]);
+    const transition = transitionTable.get([this.state.id, input.id]);
 
     if (transition) {
-      const action = actions[transition.action] || actions[input.label];
+      const action = actions[transition.action] || actions[input.id];
       action && action.bind(actions)(this.state, input);
-      this.state.lastInput = input.label;
-      this.state.label = transition.to || this.state.label;
+      this.state.lastInputID = input.id;
+      this.state.id = transition.to || this.state.id;
       this.syncPeriphery();
     }
   },
@@ -24,7 +24,7 @@ const core = {
   init() {
     this.state = {
       doc: doc.init(),   // domain state
-      label: 'start',    // app state
+      id: 'start',    // app state
       docIDs: null,      // app state
     };
 
@@ -35,7 +35,7 @@ const core = {
 
   kickoff() {
     this.syncPeriphery();
-    this.dispatch({ label: 'kickoff' });
+    this.dispatch({ id: 'kickoff' });
   },
 };
 

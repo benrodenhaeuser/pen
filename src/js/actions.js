@@ -10,14 +10,14 @@ const actions = {
 
   setFrameOrigin(state, input) {
     state.doc.insertFrameInPlace();
-    this.aux.originX = input.detail.inputX;
-    this.aux.originY = input.detail.inputY;
+    this.aux.originX = input.data.inputX;
+    this.aux.originY = input.data.inputY;
   },
 
   resizeFrame(state, input) {
     const frame = state.doc.selected.frame;
 
-    switch (input.detail.target) {
+    switch (input.data.target) {
       case 'top-left-corner':
         this.aux.originX = frame.left + frame.width;
         this.aux.originY = frame.top + frame.height;
@@ -39,10 +39,10 @@ const actions = {
 
   sizeFrame(state, input) {
     state.doc.selected.frame.set({
-      top:    Math.min(this.aux.originY, input.detail.inputY),
-      left:   Math.min(this.aux.originX, input.detail.inputX),
-      width:  Math.abs(this.aux.originX - input.detail.inputX),
-      height: Math.abs(this.aux.originY - input.detail.inputY),
+      top:    Math.min(this.aux.originY, input.data.inputY),
+      left:   Math.min(this.aux.originX, input.data.inputX),
+      width:  Math.abs(this.aux.originX - input.data.inputX),
+      height: Math.abs(this.aux.originY - input.data.inputY),
     });
   },
 
@@ -54,8 +54,8 @@ const actions = {
       return Math.abs(val1 - val2) <= treshold;
     };
 
-    const sameX = same(this.aux.originX, input.detail.inputX);
-    const sameY = same(this.aux.originY, input.detail.inputY);
+    const sameX = same(this.aux.originX, input.data.inputX);
+    const sameY = same(this.aux.originY, input.data.inputY);
 
     if (sameX && sameY) {
       state.doc.deleteSelectedFrame();
@@ -67,33 +67,33 @@ const actions = {
   },
 
   getFrameOrigin(state, input) {
-    state.doc.select(input.detail.id);
-    this.aux.originX = input.detail.inputX;
-    this.aux.originY = input.detail.inputY;
+    state.doc.select(input.data.id);
+    this.aux.originX = input.data.inputX;
+    this.aux.originY = input.data.inputY;
   },
 
   moveFrame(state, input) {
     const frame = state.doc.selected.frame;
 
     frame.set({
-      top:  frame.top  + (input.detail.inputY - this.aux.originY),
-      left: frame.left + (input.detail.inputX - this.aux.originX),
+      top:  frame.top  + (input.data.inputY - this.aux.originY),
+      left: frame.left + (input.data.inputX - this.aux.originX),
     });
 
-    this.aux.originX = input.detail.inputX;
-    this.aux.originY = input.detail.inputY;
+    this.aux.originX = input.data.inputX;
+    this.aux.originY = input.data.inputY;
   },
 
   updateDocList(state, input) {
-    state.docIDs = input.detail.docIDs;
+    state.docIDs = input.data.docIDs;
   },
 
   requestDoc(state, input) {
-    state.docID = input.detail.id;
+    state.docID = input.data.id;
   },
 
   setDoc(state, input) {
-    state.doc.init(input.detail.doc);
+    state.doc.init(input.data.doc);
   },
 
   init() {

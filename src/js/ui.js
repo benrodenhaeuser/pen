@@ -5,7 +5,7 @@ const ui = {
   bindEvents(dispatch) {
     this.canvasNode = document.querySelector('#canvas');
 
-    const mouseEventDetails = (event) => {
+    const mouseEventData = (event) => {
       return {
         inputX:     event.clientX,
         inputY:     event.clientY,
@@ -16,35 +16,35 @@ const ui = {
 
     this.canvasNode.addEventListener('mousedown', (event) => {
       dispatch({
-        label:  inputTable.get(['mousedown', event.target.dataset.type]),
-        detail: mouseEventDetails(event)
+        id:  inputTable.get(['mousedown', event.target.dataset.type]),
+        data: mouseEventData(event)
       });
     });
 
     this.canvasNode.addEventListener('mousemove', (event) => {
       dispatch({
-        label:  inputTable.get(['mousemove']),
-        detail: mouseEventDetails(event)
+        id:  inputTable.get(['mousemove']),
+        data: mouseEventData(event)
       });
     });
 
     this.canvasNode.addEventListener('mouseup', (event) => {
       dispatch({
-        label:  inputTable.get(['mouseup']),
-        detail: mouseEventDetails(event)
+        id:  inputTable.get(['mouseup']),
+        data: mouseEventData(event)
       });
     });
 
     document.addEventListener('click', (event) => {
       dispatch({
-        label: inputTable.get(['click', event.target.dataset.type]),
-        detail: mouseEventDetails(event)
+        id: inputTable.get(['click', event.target.dataset.type]),
+        data: mouseEventData(event)
       });
     });
   },
 
   sync(state) {
-    if (state.label === 'start') {
+    if (state.id === 'start') {
       this.start(state);
       return;
     }
@@ -79,8 +79,8 @@ const ui = {
       }
     },
 
-    lastInput(state) {
-      if (state.lastInput === 'docSaved') {
+    lastInputID(state) {
+      if (state.lastInputID === 'docSaved') {
         ui.flash('Document saved');
       }
 
@@ -88,8 +88,8 @@ const ui = {
       //       if the last input is 'kickoff'
     },
 
-    label(state) {
-      if (state.label === 'animating') {
+    id(state) {
+      if (state.id === 'animating') {
         ui.canvasNode.innerHTML = '';
 
         for (let shape of state.doc.shapes) {
