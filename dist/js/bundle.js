@@ -2,26 +2,26 @@
   'use strict';
 
   const transitionTable = [
-    [{                    input: 'docSaved'   }, {                     }],
+    [{                    input: 'docSaved'       }, {                     }],
     [{                    input: 'updateDocList'  }, {                     }],
     [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'          }],
     [{ from: 'idle',      input: 'createShape'    }, {                     }],
-    [{ from: 'idle',      input: 'createDoc'  }, {                     }],
+    [{ from: 'idle',      input: 'createDoc'      }, {                     }],
     [{ from: 'idle',      input: 'startAnimation' }, { to: 'animating'     }],
     [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'      }],
     [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'      }],
     [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'       }],
     [{ from: 'idle',      input: 'deleteFrame'    }, {                     }],
-    [{ from: 'idle',      input: 'requestDoc'       }, { to: 'blocked'       }],
+    [{ from: 'idle',      input: 'requestDoc'     }, { to: 'blocked'       }],
     [{ from: 'drawing',   input: 'changeCoords'   }, { action: 'sizeFrame' }],
     [{ from: 'dragging',  input: 'changeCoords'   }, { action: 'moveFrame' }],
     [{ from: 'resizing',  input: 'changeCoords'   }, { action: 'sizeFrame' }],
-    [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', action: 'clean' }],
+    [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', action: 'cleanup' }],
     [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'          }],
     [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'          }],
     [{ from: 'animating', input: 'startAnimation' }, {                     }],
     [{ from: 'animating', input: 'toIdle'         }, { to: 'idle'          }],
-    [{ from: 'animating', input: 'createDoc'  }, { to: 'idle'          }],
+    [{ from: 'animating', input: 'createDoc'      }, { to: 'idle'          }],
     [{ from: 'animating', input: 'createShape'    }, { to: 'idle'          }],
     [{ from: 'blocked',   input: 'setDoc'         }, { to: 'idle'          }],
   ];
@@ -39,7 +39,7 @@
     }
   };
 
-  const createId = () => {
+  const createID = () => {
     const randomString = Math.random().toString(36).substring(2);
     const timestamp    = (new Date()).getTime().toString(36);
 
@@ -59,7 +59,7 @@
       this.top    = data.top || 0;
       this.width  = data.width || 0;
       this.height = data.height || 0;
-      this._id    = data._id || createId();
+      this._id    = data._id || createID();
       return this;
     },
   };
@@ -76,7 +76,7 @@
 
     appendShape() {
       const shape = {
-        _id: createId(),
+        _id: createID(),
         frames: [],
       };
       this.shapes.push(shape);
@@ -113,10 +113,10 @@
       }
     },
 
-    select(frameId) {
+    select(frameID) {
       for (let shape of this.shapes) {
         for (let frame of shape.frames) {
-          if (frame._id === frameId) {
+          if (frame._id === frameID) {
             this.selected.frame = frame;
             this.selected.shape = shape;
             return frame;
@@ -173,14 +173,14 @@
         return this;
       }
 
-      const docId   = createId();
-      const shapeId = createId();
+      const docID   = createID();
+      const shapeID = createID();
       const shape   = {
-        _id: shapeId,
+        _id: shapeID,
         frames: [],
       };
 
-      this._id = docId;
+      this._id = docID;
       this.shapes = [shape];
       this.selected = {
         shape: shape,
@@ -198,7 +198,7 @@
 
     createDoc(state, input) {
       state.doc.init();
-      state.docIds.push(state.doc._id);
+      state.docIDs.push(state.doc._id);
     },
 
     setFrameOrigin(state, input) {
@@ -239,7 +239,7 @@
       });
     },
 
-    clean(state, input) {
+    cleanup(state, input) {
       // TODO: not sure if this is needed.
       const same = (val1, val2) => {
         const treshold = 1;
@@ -278,11 +278,11 @@
     },
 
     updateDocList(state, input) {
-      state.docIds = input.detail.docIds;
+      state.docIDs = input.detail.docIDs;
     },
 
     requestDoc(state, input) {
-      state.docId = input.detail.id;
+      state.docID = input.detail.id;
     },
 
     setDoc(state, input) {
@@ -317,7 +317,7 @@
       this.state = {
         doc: doc.init(),   // domain state
         label: 'start',    // app state
-        docIds: null,      // app state
+        docIDs: null,      // app state
       };
 
       actions.init();
@@ -527,12 +527,12 @@
         }
       },
 
-      docIds(state) {
+      docIDs(state) {
         const docList = document.querySelector('.doc-list');
         docList.innerHTML = '';
 
-        for (let docId of state.docIds) {
-          const node = nodeFactory.makeListNode(docId);
+        for (let docID of state.docIDs) {
+          const node = nodeFactory.makeListNode(docID);
           docList.appendChild(node);
         }
       },
@@ -614,14 +614,14 @@
         request.send(JSON.stringify(event.detail));
       });
 
-      window.addEventListener('loadDocIds', function(event) {
+      window.addEventListener('loadDocIDs', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
           dispatch({
             label: 'updateDocList',
             detail: {
-              docIds: request.response
+              docIDs: request.response
             }
           });
         });
@@ -634,7 +634,7 @@
 
     sync(state) {
       if (state.label === 'start') {
-        db.loadDocIds();
+        db.loadDocIDs();
         this.previousState = state;
         return;
       }
@@ -648,15 +648,15 @@
     },
 
     crud: {
-      docId(state) {
+      docID(state) {
         window.dispatchEvent(new CustomEvent(
           'read',
-          { detail: state.docId }
+          { detail: state.docID }
         ));
       },
 
       doc(state) {
-        if (state.docId === db.previousState.docId) { // user has edited doc
+        if (state.docID === db.previousState.docID) { // user has edited doc
           window.dispatchEvent(new CustomEvent(
             'upsert',
             { detail: state.doc }
@@ -678,8 +678,8 @@
       return JSON.stringify(obj1) === JSON.stringify(obj2);
     },
 
-    loadDocIds() {
-      window.dispatchEvent(new Event('loadDocIds'));
+    loadDocIDs() {
+      window.dispatchEvent(new Event('loadDocIDs'));
     },
   };
 

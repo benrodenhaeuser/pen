@@ -25,7 +25,7 @@ const core = {
     this.state = {
       doc: doc.init(),   // domain state
       label: 'start',    // app state
-      docIds: null,      // app state
+      docIDs: null,      // app state
     };
 
     actions.init();

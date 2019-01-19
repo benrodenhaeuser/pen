@@ -113,12 +113,12 @@ const ui = {
       }
     },
 
-    docIds(state) {
+    docIDs(state) {
       const docList = document.querySelector('.doc-list');
       docList.innerHTML = '';
 
-      for (let docId of state.docIds) {
-        const node = nodeFactory.makeListNode(docId);
+      for (let docID of state.docIDs) {
+        const node = nodeFactory.makeListNode(docID);
         docList.appendChild(node);
       }
     },

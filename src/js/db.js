@@ -31,14 +31,14 @@ const db = {
       request.send(JSON.stringify(event.detail));
     });
 
-    window.addEventListener('loadDocIds', function(event) {
+    window.addEventListener('loadDocIDs', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
         dispatch({
           label: 'updateDocList',
           detail: {
-            docIds: request.response
+            docIDs: request.response
           }
         });
       });
@@ -51,7 +51,7 @@ const db = {
 
   sync(state) {
     if (state.label === 'start') {
-      db.loadDocIds();
+      db.loadDocIDs();
       this.previousState = state;
       return;
     }
@@ -65,15 +65,15 @@ const db = {
   },
 
   crud: {
-    docId(state) {
+    docID(state) {
       window.dispatchEvent(new CustomEvent(
         'read',
-        { detail: state.docId }
+        { detail: state.docID }
       ));
     },
 
     doc(state) {
-      if (state.docId === db.previousState.docId) { // user has edited doc
+      if (state.docID === db.previousState.docID) { // user has edited doc
         window.dispatchEvent(new CustomEvent(
           'upsert',
           { detail: state.doc }
@@ -95,8 +95,8 @@ const db = {
     return JSON.stringify(obj1) === JSON.stringify(obj2);
   },
 
-  loadDocIds() {
-    window.dispatchEvent(new Event('loadDocIds'));
+  loadDocIDs() {
+    window.dispatchEvent(new Event('loadDocIDs'));
   },
 };
 

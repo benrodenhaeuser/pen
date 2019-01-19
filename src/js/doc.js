@@ -1,4 +1,4 @@
-const createId = () => {
+const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
   const timestamp    = (new Date()).getTime().toString(36);
 
@@ -18,7 +18,7 @@ const Frame = {
     this.top    = data.top || 0;
     this.width  = data.width || 0;
     this.height = data.height || 0;
-    this._id    = data._id || createId();
+    this._id    = data._id || createID();
     return this;
   },
 };
@@ -35,7 +35,7 @@ const doc = {
 
   appendShape() {
     const shape = {
-      _id: createId(),
+      _id: createID(),
       frames: [],
     };
     this.shapes.push(shape);
@@ -72,10 +72,10 @@ const doc = {
     }
   },
 
-  select(frameId) {
+  select(frameID) {
     for (let shape of this.shapes) {
       for (let frame of shape.frames) {
-        if (frame._id === frameId) {
+        if (frame._id === frameID) {
           this.selected.frame = frame;
           this.selected.shape = shape;
           return frame;
@@ -132,14 +132,14 @@ const doc = {
       return this;
     }
 
-    const docId   = createId();
-    const shapeId = createId();
+    const docID   = createID();
+    const shapeID = createID();
     const shape   = {
-      _id: shapeId,
+      _id: shapeID,
       frames: [],
     };
 
-    this._id = docId;
+    this._id = docID;
     this.shapes = [shape];
     this.selected = {
       shape: shape,

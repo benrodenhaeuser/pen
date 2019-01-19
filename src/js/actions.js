@@ -5,7 +5,7 @@ const actions = {
 
   createDoc(state, input) {
     state.doc.init();
-    state.docIds.push(state.doc._id);
+    state.docIDs.push(state.doc._id);
   },
 
   setFrameOrigin(state, input) {
@@ -46,7 +46,7 @@ const actions = {
     });
   },
 
-  clean(state, input) {
+  cleanup(state, input) {
     // TODO: not sure if this is needed.
     const same = (val1, val2) => {
       const treshold = 1;
@@ -85,11 +85,11 @@ const actions = {
   },
 
   updateDocList(state, input) {
-    state.docIds = input.detail.docIds;
+    state.docIDs = input.detail.docIDs;
   },
 
   requestDoc(state, input) {
-    state.docId = input.detail.id;
+    state.docID = input.detail.id;
   },
 
   setDoc(state, input) {
