@@ -1,10 +1,10 @@
 const inputTable = [
   // event type     target type            input
   [['click',       'newShapeButton'   ], 'createShape'       ],
-  [['click',       'newDocButton'     ], 'createDoc'     ],
+  [['click',       'newDocButton'     ], 'createDoc'         ],
   [['click',       'animateButton'    ], 'startAnimation'    ],
   [['click',       'deleteLink'       ], 'deleteFrame'       ],
-  [['click',       'doc-list-entry'   ], 'requestDoc'          ],
+  [['click',       'doc-list-entry'   ], 'requestDoc'        ],
   [['click',       'canvas'           ], 'toIdle'            ],
   [['click',       'canvas'           ], 'toIdle'            ],
   [['mousedown',   'frame'            ], 'getFrameOrigin'    ],
