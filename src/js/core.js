@@ -17,7 +17,7 @@ const core = {
       this.state.clock.tick();
       const action = actions[transition.do] || actions[input.id];
       action && action.bind(actions)(this.state, input);
-      this.state.currentInputID = input.id;
+      this.state.currentInput = input.id;
       this.state.id = transition.to || this.state.id;
       this.syncPeriphery();
     }
@@ -28,8 +28,7 @@ const core = {
       clock: clock.init(),
       id: 'start',
       doc: doc.init(),
-      docIDs: null,
-      docID: null,
+      docs: { ids: [], selected: null },
     };
 
     actions.init();

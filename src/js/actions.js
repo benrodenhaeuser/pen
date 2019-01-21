@@ -5,7 +5,8 @@ const actions = {
 
   createDoc(state, input) {
     state.doc.init();
-    state.docIDs.push(state.doc._id);
+    state.docs.ids.push(state.doc._id);
+    state.docs.selected = state.doc._id;
   },
 
   setFrameOrigin(state, input) {
@@ -84,11 +85,11 @@ const actions = {
   },
 
   updateDocList(state, input) {
-    state.docIDs = input.data.docIDs;
+    state.docs.ids = input.data.docIDs;
   },
 
   requestDoc(state, input) {
-    state.docID = input.data.id;
+    state.docs.selected = input.data.id;
   },
 
   setDoc(state, input) {

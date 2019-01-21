@@ -171,7 +171,8 @@
 
     createDoc(state, input) {
       state.doc.init();
-      state.docIDs.push(state.doc._id);
+      state.docs.ids.push(state.doc._id);
+      state.docs.selected = state.doc._id;
     },
 
     setFrameOrigin(state, input) {
@@ -250,11 +251,11 @@
     },
 
     updateDocList(state, input) {
-      state.docIDs = input.data.docIDs;
+      state.docs.ids = input.data.docIDs;
     },
 
     requestDoc(state, input) {
-      state.docID = input.data.id;
+      state.docs.selected = input.data.id;
     },
 
     setDoc(state, input) {
@@ -273,7 +274,7 @@
     [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
     [{ from: 'idle',      input: 'createShape'    }, {                         }],
     [{ from: 'idle',      input: 'createDoc'      }, {                         }],
-    [{ from: 'idle',      input: 'startAnimation' }, { to: 'animating'         }],
+    [{ from: 'idle',      input: 'animate' }, { to: 'animating'         }],
     [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
     [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
     [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
@@ -285,8 +286,8 @@
     [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
     [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'sizeFrame'         }],
     [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
-    [{ from: 'animating', input: 'startAnimation' }, { to: 'animating'         }],
-    [{ from: 'animating', input: 'toIdle'         }, { to: 'idle'              }],
+    [{ from: 'animating', input: 'animate' }, { to: 'animating'         }],
+    [{ from: 'animating', input: 'edit'         }, { to: 'idle'              }],
     [{ from: 'animating', input: 'createDoc'      }, { to: 'idle'              }],
     [{ from: 'animating', input: 'createShape'    }, { to: 'idle'              }],
   ];
@@ -318,7 +319,7 @@
         this.state.clock.tick();
         const action = actions[transition.do] || actions[input.id];
         action && action.bind(actions)(this.state, input);
-        this.state.currentInputID = input.id;
+        this.state.currentInput = input.id;
         this.state.id = transition.to || this.state.id;
         this.syncPeriphery();
       }
@@ -329,8 +330,7 @@
         clock: clock.init(),
         id: 'start',
         doc: doc.init(),
-        docIDs: null,
-        docID: null,
+        docs: { ids: [], selected: null },
       };
 
       actions.init();
@@ -396,13 +396,13 @@
   };
 
   const inputTable = [
-    // event type     target type            input
+    // event type     target type           input
     [['click',       'newShapeButton'   ], 'createShape'       ],
     [['click',       'newDocButton'     ], 'createDoc'         ],
-    [['click',       'animateButton'    ], 'startAnimation'    ],
+    [['click',       'animateButton'    ], 'animate'    ],
     [['click',       'deleteLink'       ], 'deleteFrame'       ],
     [['click',       'doc-list-entry'   ], 'requestDoc'        ],
-    [['click',       'canvas'           ], 'toIdle'            ],
+    [['click',       'canvas'           ], 'edit'            ],
     [['mousedown',   'frame'            ], 'getFrameOrigin'    ],
     [['mousedown',   'top-left-corner'  ], 'resizeFrame'       ],
     [['mousedown',   'top-right-corner' ], 'resizeFrame'       ],
@@ -425,7 +425,7 @@
       console.log(pair[1]);
       return pair[1];
     } else {
-      console.log(key[0], key[1]); 
+      console.log(key[0], key[1]);
       console.log('ui: no proper input');
     }
   };
@@ -478,37 +478,71 @@
       }
 
       for (let changed of changes(state, this.previousState)) {
-        this.reactToChanges[changed] && this.reactToChanges[changed](state);
+        this.render[changed] && this.render[changed](state);
       }
       this.previousState = state;
     },
 
-    reactToChanges: {
-      clock(state) {
-        ui.renderDocList(state);
+    render: {
+      // if the doc has been edited, render the frames
+      doc(state) {
+        ui.renderFrames(state);
+      },
 
-        if (state.id === 'animating') {
-          ui.renderAnimations(state);
-        } else {
+      // if doc list/selected doc has changed, render doc list
+      docs(state) {
+        ui.renderDocList(state);
+      },
+
+      currentInput(state) {
+        // if doc has been saved, render flash message
+        if (state.currentInput === 'docSaved') {
+          ui.renderFlash('Saved');
+        }
+
+        // if switching to edit mode, render the frames
+        if (state.currentInput === 'edit') {
           ui.renderFrames(state);
         }
-      },
 
-      currentInputID(state) {
-        if (state.currentInputID === 'docSaved') {
-          ui.renderFlash('Document saved');
+        // if switching to animation mode, render the frames
+        if (state.currentInput === 'animate') {
+          ui.renderAnimations(state);
         }
       },
+    },
+
+    renderFrames(state) {
+      ui.canvasNode.innerHTML = '';
+
+      for (let shape of state.doc.shapes) {
+        const shapeNode = nodeFactory.makeShapeNode(shape._id);
+        if (state.doc.selected.shapeID === shape._id) {
+          shapeNode.classList.add('selected');
+        }
+
+        for (var i = 0; i < shape.frames.length; i += 1) {
+          const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
+          ui.place(frameNode, shape.frames[i]);
+          if (shape.frames[i]._id === state.doc.selected.frameID) {
+            frameNode.classList.add('selected');
+          }
+
+          shapeNode.appendChild(frameNode);
+        }
+
+        ui.canvasNode.appendChild(shapeNode);
+      }
     },
 
     renderDocList(state) {
       const docList = document.querySelector('.doc-list');
       docList.innerHTML = '';
 
-      for (let docID of state.docIDs) {
+      for (let docID of state.docs.ids) {
         const node = nodeFactory.makeListNode(docID);
         docList.appendChild(node);
-        if (docID === state.doc._id) {
+        if (docID === state.docs.selected) {
           node.classList.add('selected');
         }
       }
@@ -531,29 +565,6 @@
             ui.adjust(source),
             ui.adjust(target)
           );
-        }
-
-        ui.canvasNode.appendChild(shapeNode);
-      }
-    },
-
-    renderFrames(state) {
-      ui.canvasNode.innerHTML = '';
-
-      for (let shape of state.doc.shapes) {
-        const shapeNode = nodeFactory.makeShapeNode(shape._id);
-        if (state.doc.selected.shapeID === shape._id) {
-          shapeNode.classList.add('selected');
-        }
-
-        for (var i = 0; i < shape.frames.length; i += 1) {
-          const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
-          ui.place(frameNode, shape.frames[i]);
-          if (shape.frames[i]._id === state.doc.selected.frameID) {
-            frameNode.classList.add('selected');
-          }
-
-          shapeNode.appendChild(frameNode);
         }
 
         ui.canvasNode.appendChild(shapeNode);
@@ -647,7 +658,7 @@
         return;
       }
 
-      // only sync db if stateID is `idle` or `busy`
+      // only sync db state if current state.id is `idle` or `busy`
       if (['idle', 'busy'].includes(state.id)) {
         for (let changed of this.changes(state, this.previousState)) {
           this.crud[changed] && this.crud[changed](state);
@@ -657,17 +668,19 @@
     },
 
     crud: {
-      // if the   docID has changed, we load the corresponding document
-      docID(state) {
-        window.dispatchEvent(new CustomEvent(
-          'read',
-          { detail: state.docID }
-        ));
+      // if selected doc has changed, read that doc from backend
+      docs(state) {
+        if (state.docs.selected !== db.previousState.docs.selected) {
+          window.dispatchEvent(new CustomEvent(
+            'read',
+            { detail: state.docs.selected }
+          ));
+        }
       },
 
-      // if the document has been edited, we save it
+      // if doc has been edited, save it to backend
       doc(state) {
-        if (state.docID === db.previousState.docID) { // user has edited doc (?)
+        if (state.docs.selected === db.previousState.docs.selected) {
           window.dispatchEvent(new CustomEvent(
             'upsert',
             { detail: state.doc }
