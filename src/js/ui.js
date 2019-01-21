@@ -113,7 +113,7 @@ const ui = {
     for (let docID of state.docs.ids) {
       const node = nodeFactory.makeListNode(docID);
       docList.appendChild(node);
-      if (docID === state.docs.selected) {
+      if (docID === state.docs.selectedID) {
         node.classList.add('selected');
       }
     }

@@ -6,7 +6,7 @@ const actions = {
   createDoc(state, input) {
     state.doc.init();
     state.docs.ids.push(state.doc._id);
-    state.docs.selected = state.doc._id;
+    state.docs.selectedID = state.doc._id;
   },
 
   setFrameOrigin(state, input) {
@@ -89,7 +89,7 @@ const actions = {
   },
 
   requestDoc(state, input) {
-    state.docs.selected = input.data.id;
+    state.docs.selectedID = input.data.id;
   },
 
   setDoc(state, input) {

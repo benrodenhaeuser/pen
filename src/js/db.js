@@ -68,17 +68,17 @@ const db = {
   crud: {
     // if selected doc has changed, read that doc from backend
     docs(state) {
-      if (state.docs.selected !== db.previousState.docs.selected) {
+      if (state.docs.selectedID !== db.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
           'read',
-          { detail: state.docs.selected }
+          { detail: state.docs.selectedID }
         ));
       }
     },
 
     // if doc has been edited, save it to backend
     doc(state) {
-      if (state.docs.selected === db.previousState.docs.selected) {
+      if (state.docs.selectedID === db.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
           'upsert',
           { detail: state.doc }

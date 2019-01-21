@@ -28,7 +28,7 @@ const core = {
       clock: clock.init(),
       id: 'start',
       doc: doc.init(),
-      docs: { ids: [], selected: null },
+      docs: { ids: [], selectedID: null },
     };
 
     actions.init();

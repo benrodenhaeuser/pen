@@ -172,7 +172,7 @@
     createDoc(state, input) {
       state.doc.init();
       state.docs.ids.push(state.doc._id);
-      state.docs.selected = state.doc._id;
+      state.docs.selectedID = state.doc._id;
     },
 
     setFrameOrigin(state, input) {
@@ -255,7 +255,7 @@
     },
 
     requestDoc(state, input) {
-      state.docs.selected = input.data.id;
+      state.docs.selectedID = input.data.id;
     },
 
     setDoc(state, input) {
@@ -330,7 +330,7 @@
         clock: clock.init(),
         id: 'start',
         doc: doc.init(),
-        docs: { ids: [], selected: null },
+        docs: { ids: [], selectedID: null },
       };
 
       actions.init();
@@ -542,7 +542,7 @@
       for (let docID of state.docs.ids) {
         const node = nodeFactory.makeListNode(docID);
         docList.appendChild(node);
-        if (docID === state.docs.selected) {
+        if (docID === state.docs.selectedID) {
           node.classList.add('selected');
         }
       }
@@ -670,17 +670,17 @@
     crud: {
       // if selected doc has changed, read that doc from backend
       docs(state) {
-        if (state.docs.selected !== db.previousState.docs.selected) {
+        if (state.docs.selectedID !== db.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
             'read',
-            { detail: state.docs.selected }
+            { detail: state.docs.selectedID }
           ));
         }
       },
 
       // if doc has been edited, save it to backend
       doc(state) {
-        if (state.docs.selected === db.previousState.docs.selected) {
+        if (state.docs.selectedID === db.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
             'upsert',
             { detail: state.doc }
