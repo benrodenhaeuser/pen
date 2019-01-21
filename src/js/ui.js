@@ -4,8 +4,6 @@ import { inputTable } from './inputTable.js';
 const ui = {
   bindEvents(dispatch) {
     this.canvasNode = document.querySelector('#canvas');
-    this.stageNode = document.querySelector('#stage');
-    this.toolsNode = document.querySelector('#tools');
 
     const eventData = (event) => {
       return {
@@ -55,28 +53,25 @@ const ui = {
   },
 
   render: {
-    // if the doc has been edited, render the frames
     doc(state) {
       ui.renderFrames(state);
     },
 
-    // if doc list/selected doc has changed, render doc list
     docs(state) {
       ui.renderDocList(state);
     },
 
     currentInput(state) {
-      // if doc has been saved, render flash message
       if (state.currentInput === 'docSaved') {
         ui.renderFlash('Saved');
       }
 
-      // if switching to edit mode, render the frames
       if (state.currentInput === 'edit') {
         ui.renderFrames(state);
       }
+    },
 
-      // if switching to animation mode, render the frames
+    clock(state) {
       if (state.currentInput === 'animate') {
         ui.renderAnimations(state);
       }
@@ -94,7 +89,7 @@ const ui = {
 
       for (var i = 0; i < shape.frames.length; i += 1) {
         const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
-        ui.place(frameNode, shape.frames[i]);
+        ui.writeCSS(frameNode, shape.frames[i]);
         if (shape.frames[i]._id === state.doc.selected.frameID) {
           frameNode.classList.add('selected');
         }
@@ -133,8 +128,8 @@ const ui = {
         timeline.fromTo(
           shapeNode,
           0.3,
-          ui.adjust(source),
-          ui.adjust(target)
+          ui.convertKeys(ui.adjust(source)),
+          ui.convertKeys(ui.adjust(target))
         );
       }
 
@@ -152,18 +147,27 @@ const ui = {
 
   adjust(frame) {
     return {
-      top:    frame.top - ui.canvasNode.offsetTop,
-      left:   frame.left - ui.canvasNode.offsetLeft,
-      width:  frame.width,
-      height: frame.height,
+      x: frame.x - ui.canvasNode.offsetLeft,
+      y: frame.y - ui.canvasNode.offsetTop,
+      w: frame.w,
+      h: frame.h,
     };
   },
 
-  place(node, frame) {
-    node.style.top    = String(this.adjust(frame).top)  + 'px';
-    node.style.left   = String(this.adjust(frame).left) + 'px';
-    node.style.width  = String(frame.width)        + 'px';
-    node.style.height = String(frame.height)       + 'px';
+  convertKeys(frame) {
+    return {
+      x: frame.x,
+      y: frame.y,
+      width: frame.w,
+      height: frame.h,
+    };
+  },
+
+  writeCSS(node, frame) {
+    node.style.left   = String(this.adjust(frame).x) + 'px';
+    node.style.top    = String(this.adjust(frame).y)  + 'px';
+    node.style.width  = String(frame.w) + 'px';
+    node.style.height = String(frame.h) + 'px';
   },
 
   start(state) {

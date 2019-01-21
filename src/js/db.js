@@ -56,7 +56,6 @@ const db = {
       return;
     }
 
-    // only sync db state if current state.id is `idle` or `busy`
     if (['idle', 'busy'].includes(state.id)) {
       for (let changed of this.changes(state, this.previousState)) {
         this.crud[changed] && this.crud[changed](state);
@@ -66,7 +65,6 @@ const db = {
   },
 
   crud: {
-    // if selected doc has changed, read that doc from backend
     docs(state) {
       if (state.docs.selectedID !== db.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
@@ -76,7 +74,6 @@ const db = {
       }
     },
 
-    // if doc has been edited, save it to backend
     doc(state) {
       if (state.docs.selectedID === db.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(

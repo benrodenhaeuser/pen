@@ -15,24 +15,24 @@
   const createID = () => {
     const randomString = Math.random().toString(36).substring(2);
     const timestamp    = (new Date()).getTime().toString(36);
-
     return randomString + timestamp;
   };
 
   const Frame = {
-    set(coordinates) {
-      this.left   = coordinates.left || this.left;
-      this.top    = coordinates.top || this.top;
-      this.width  = coordinates.width || this.width;
-      this.height = coordinates.height || this.height;
+    set(data) {
+      this.x = data.x || this.x;
+      this.y = data.y || this.y;
+      this.w = data.w || this.w;
+      this.h = data.h || this.h;
     },
 
     init(data) {
-      this.left   = data.left || 0;
-      this.top    = data.top || 0;
-      this.width  = data.width || 0;
-      this.height = data.height || 0;
-      this._id    = data._id || createID();
+      this._id = data._id || createID();
+      this.x   = data.x   || 0;
+      this.y   = data.y   || 0;
+      this.w   = data.w   || 0;
+      this.h   = data.h   || 0;
+
       return this;
     },
   };
@@ -57,8 +57,8 @@
       this.selected.frame = null;
     },
 
-    insertFrameInPlace(coordinates = {}) {
-      const frame  = Object.create(Frame).init(coordinates);
+    insertFrameInPlace(data = {}) {
+      const frame  = Object.create(Frame).init(data);
       const frames = this.selected.shape.frames;
 
       if (this.selected.frame) {
@@ -134,8 +134,8 @@
         });
       }
 
-      this._id = docData._id;
-      this.shapes = docData.shapes;
+      this._id            = docData._id;
+      this.shapes         = docData.shapes;
       this.selected.shape = this.findShape(docData.selected.shapeID);
       this.selected.frame = this.findFrame(docData.selected.frameID);
     },
@@ -152,9 +152,8 @@
         _id: shapeID,
         frames: [],
       };
-
-      this._id = docID;
-      this.shapes = [shape];
+      this._id      = docID;
+      this.shapes   = [shape];
       this.selected = {
         shape: shape,
         frame: null,
@@ -185,36 +184,36 @@
       const frame = state.doc.selected.frame;
 
       switch (input.data.target) {
-        case 'top-left-corner':
-          this.aux.originX = frame.left + frame.width;
-          this.aux.originY = frame.top + frame.height;
-          break;
-        case 'top-right-corner':
-          this.aux.originX = frame.left;
-          this.aux.originY = frame.top + frame.height;
-          break;
-        case 'bot-right-corner':
-          this.aux.originX = frame.left;
-          this.aux.originY = frame.top;
-          break;
-        case 'bot-left-corner':
-          this.aux.originX = frame.left + frame.width;
-          this.aux.originY = frame.top;
-          break;
+      case 'top-left-corner':
+        this.aux.originX = frame.x + frame.w;
+        this.aux.originY = frame.y + frame.h;
+        break;
+      case 'top-right-corner':
+        this.aux.originX = frame.x;
+        this.aux.originY = frame.y + frame.h;
+        break;
+      case 'bot-right-corner':
+        this.aux.originX = frame.x;
+        this.aux.originY = frame.y;
+        break;
+      case 'bot-left-corner':
+        this.aux.originX = frame.x + frame.w;
+        this.aux.originY = frame.y;
+        break;
       }
     },
 
     sizeFrame(state, input) {
       state.doc.selected.frame.set({
-        top:    Math.min(this.aux.originY, input.data.inputY),
-        left:   Math.min(this.aux.originX, input.data.inputX),
-        width:  Math.abs(this.aux.originX - input.data.inputX),
-        height: Math.abs(this.aux.originY - input.data.inputY),
+        y:    Math.min(this.aux.originY, input.data.inputY),
+        x:   Math.min(this.aux.originX, input.data.inputX),
+        w:  Math.abs(this.aux.originX - input.data.inputX),
+        h: Math.abs(this.aux.originY - input.data.inputY),
       });
     },
 
     clean(state, input) {
-      // TODO: not sure if this is needed.?
+      // TODO: not sure if this is needed?
       const same = (val1, val2) => {
         const treshold = 1;
         return Math.abs(val1 - val2) <= treshold;
@@ -242,8 +241,8 @@
       const frame = state.doc.selected.frame;
 
       frame.set({
-        top:  frame.top  + (input.data.inputY - this.aux.originY),
-        left: frame.left + (input.data.inputX - this.aux.originX),
+        y:  frame.y  + (input.data.inputY - this.aux.originY),
+        x: frame.x + (input.data.inputX - this.aux.originX),
       });
 
       this.aux.originX = input.data.inputX;
@@ -433,8 +432,6 @@
   const ui = {
     bindEvents(dispatch) {
       this.canvasNode = document.querySelector('#canvas');
-      this.stageNode = document.querySelector('#stage');
-      this.toolsNode = document.querySelector('#tools');
 
       const eventData = (event) => {
         return {
@@ -484,28 +481,25 @@
     },
 
     render: {
-      // if the doc has been edited, render the frames
       doc(state) {
         ui.renderFrames(state);
       },
 
-      // if doc list/selected doc has changed, render doc list
       docs(state) {
         ui.renderDocList(state);
       },
 
       currentInput(state) {
-        // if doc has been saved, render flash message
         if (state.currentInput === 'docSaved') {
           ui.renderFlash('Saved');
         }
 
-        // if switching to edit mode, render the frames
         if (state.currentInput === 'edit') {
           ui.renderFrames(state);
         }
+      },
 
-        // if switching to animation mode, render the frames
+      clock(state) {
         if (state.currentInput === 'animate') {
           ui.renderAnimations(state);
         }
@@ -523,7 +517,7 @@
 
         for (var i = 0; i < shape.frames.length; i += 1) {
           const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
-          ui.place(frameNode, shape.frames[i]);
+          ui.writeCSS(frameNode, shape.frames[i]);
           if (shape.frames[i]._id === state.doc.selected.frameID) {
             frameNode.classList.add('selected');
           }
@@ -562,8 +556,8 @@
           timeline.fromTo(
             shapeNode,
             0.3,
-            ui.adjust(source),
-            ui.adjust(target)
+            ui.convertKeys(ui.adjust(source)),
+            ui.convertKeys(ui.adjust(target))
           );
         }
 
@@ -581,18 +575,27 @@
 
     adjust(frame) {
       return {
-        top:    frame.top - ui.canvasNode.offsetTop,
-        left:   frame.left - ui.canvasNode.offsetLeft,
-        width:  frame.width,
-        height: frame.height,
+        x: frame.x - ui.canvasNode.offsetLeft,
+        y: frame.y - ui.canvasNode.offsetTop,
+        w: frame.w,
+        h: frame.h,
       };
     },
 
-    place(node, frame) {
-      node.style.top    = String(this.adjust(frame).top)  + 'px';
-      node.style.left   = String(this.adjust(frame).left) + 'px';
-      node.style.width  = String(frame.width)        + 'px';
-      node.style.height = String(frame.height)       + 'px';
+    convertKeys(frame) {
+      return {
+        x: frame.x,
+        y: frame.y,
+        width: frame.w,
+        height: frame.h,
+      };
+    },
+
+    writeCSS(node, frame) {
+      node.style.left   = String(this.adjust(frame).x) + 'px';
+      node.style.top    = String(this.adjust(frame).y)  + 'px';
+      node.style.width  = String(frame.w) + 'px';
+      node.style.height = String(frame.h) + 'px';
     },
 
     start(state) {
@@ -658,7 +661,6 @@
         return;
       }
 
-      // only sync db state if current state.id is `idle` or `busy`
       if (['idle', 'busy'].includes(state.id)) {
         for (let changed of this.changes(state, this.previousState)) {
           this.crud[changed] && this.crud[changed](state);
@@ -668,7 +670,6 @@
     },
 
     crud: {
-      // if selected doc has changed, read that doc from backend
       docs(state) {
         if (state.docs.selectedID !== db.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
@@ -678,7 +679,6 @@
         }
       },
 
-      // if doc has been edited, save it to backend
       doc(state) {
         if (state.docs.selectedID === db.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(

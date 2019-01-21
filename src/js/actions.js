@@ -19,36 +19,36 @@ const actions = {
     const frame = state.doc.selected.frame;
 
     switch (input.data.target) {
-      case 'top-left-corner':
-        this.aux.originX = frame.left + frame.width;
-        this.aux.originY = frame.top + frame.height;
-        break;
-      case 'top-right-corner':
-        this.aux.originX = frame.left;
-        this.aux.originY = frame.top + frame.height;
-        break;
-      case 'bot-right-corner':
-        this.aux.originX = frame.left;
-        this.aux.originY = frame.top;
-        break;
-      case 'bot-left-corner':
-        this.aux.originX = frame.left + frame.width;
-        this.aux.originY = frame.top;
-        break;
+    case 'top-left-corner':
+      this.aux.originX = frame.x + frame.w;
+      this.aux.originY = frame.y + frame.h;
+      break;
+    case 'top-right-corner':
+      this.aux.originX = frame.x;
+      this.aux.originY = frame.y + frame.h;
+      break;
+    case 'bot-right-corner':
+      this.aux.originX = frame.x;
+      this.aux.originY = frame.y;
+      break;
+    case 'bot-left-corner':
+      this.aux.originX = frame.x + frame.w;
+      this.aux.originY = frame.y;
+      break;
     }
   },
 
   sizeFrame(state, input) {
     state.doc.selected.frame.set({
-      top:    Math.min(this.aux.originY, input.data.inputY),
-      left:   Math.min(this.aux.originX, input.data.inputX),
-      width:  Math.abs(this.aux.originX - input.data.inputX),
-      height: Math.abs(this.aux.originY - input.data.inputY),
+      y:    Math.min(this.aux.originY, input.data.inputY),
+      x:   Math.min(this.aux.originX, input.data.inputX),
+      w:  Math.abs(this.aux.originX - input.data.inputX),
+      h: Math.abs(this.aux.originY - input.data.inputY),
     });
   },
 
   clean(state, input) {
-    // TODO: not sure if this is needed.?
+    // TODO: not sure if this is needed?
     const same = (val1, val2) => {
       const treshold = 1;
       return Math.abs(val1 - val2) <= treshold;
@@ -76,8 +76,8 @@ const actions = {
     const frame = state.doc.selected.frame;
 
     frame.set({
-      top:  frame.top  + (input.data.inputY - this.aux.originY),
-      left: frame.left + (input.data.inputX - this.aux.originX),
+      y:  frame.y  + (input.data.inputY - this.aux.originY),
+      x: frame.x + (input.data.inputX - this.aux.originX),
     });
 
     this.aux.originX = input.data.inputX;

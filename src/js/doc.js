@@ -1,24 +1,24 @@
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
   const timestamp    = (new Date()).getTime().toString(36);
-
   return randomString + timestamp;
 };
 
 const Frame = {
-  set(coordinates) {
-    this.left   = coordinates.left || this.left;
-    this.top    = coordinates.top || this.top;
-    this.width  = coordinates.width || this.width;
-    this.height = coordinates.height || this.height;
+  set(data) {
+    this.x = data.x || this.x;
+    this.y = data.y || this.y;
+    this.w = data.w || this.w;
+    this.h = data.h || this.h;
   },
 
   init(data) {
-    this.left   = data.left || 0;
-    this.top    = data.top || 0;
-    this.width  = data.width || 0;
-    this.height = data.height || 0;
-    this._id    = data._id || createID();
+    this._id = data._id || createID();
+    this.x   = data.x   || 0;
+    this.y   = data.y   || 0;
+    this.w   = data.w   || 0;
+    this.h   = data.h   || 0;
+
     return this;
   },
 };
@@ -43,8 +43,8 @@ const doc = {
     this.selected.frame = null;
   },
 
-  insertFrameInPlace(coordinates = {}) {
-    const frame  = Object.create(Frame).init(coordinates);
+  insertFrameInPlace(data = {}) {
+    const frame  = Object.create(Frame).init(data);
     const frames = this.selected.shape.frames;
 
     if (this.selected.frame) {
@@ -120,8 +120,8 @@ const doc = {
       });
     }
 
-    this._id = docData._id;
-    this.shapes = docData.shapes;
+    this._id            = docData._id;
+    this.shapes         = docData.shapes;
     this.selected.shape = this.findShape(docData.selected.shapeID);
     this.selected.frame = this.findFrame(docData.selected.frameID);
   },
@@ -138,9 +138,8 @@ const doc = {
       _id: shapeID,
       frames: [],
     };
-
-    this._id = docID;
-    this.shapes = [shape];
+    this._id      = docID;
+    this.shapes   = [shape];
     this.selected = {
       shape: shape,
       frame: null,
