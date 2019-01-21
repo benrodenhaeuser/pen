@@ -63,10 +63,10 @@ const doc = {
     const index = this.findIndexOf(this.selected.frame);
     frames.splice(index, 1);
 
-    if (frames[index] !== undefined) {
-      this.selected.frame = frames[index];
-    } else if (frames[index - 1] !== undefined) {
+    if (frames[index - 1] !== undefined) {
       this.selected.frame = frames[index - 1];
+    } else if (frames[index] !== undefined) {
+      this.selected.frame = frames[index];
     } else {
       this.selected.frame = null;
     }

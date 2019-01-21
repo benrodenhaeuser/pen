@@ -168,3 +168,7 @@ body {
 .pure-menu-link {
   color: #2E2E2E;
 }
+
+li.selected a {
+  color: red;
+}

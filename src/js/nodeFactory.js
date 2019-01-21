@@ -40,10 +40,10 @@ const nodeFactory = {
   makeListNode(id) {
     const node = document.createElement('li');
     node.innerHTML = `
-      <li class="pure-menu-item doc-list-entry">
         <a href="#" class="pure-menu-link"  data-type="doc-list-entry" data-id="${id}">${id}</a>
-      </li>
     `;
+    node.classList.add('pure-menu-item');
+
     return node;
   },
 };

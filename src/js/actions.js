@@ -46,11 +46,10 @@ const actions = {
     });
   },
 
-  cleanup(state, input) {
-    // TODO: not sure if this is needed.
+  clean(state, input) {
+    // TODO: not sure if this is needed.?
     const same = (val1, val2) => {
       const treshold = 1;
-      // console.log(Math.abs(val1 - val2));
       return Math.abs(val1 - val2) <= treshold;
     };
 
@@ -98,7 +97,7 @@ const actions = {
 
   init() {
     this.aux = {};
-  }
+  },
 };
 
 export { actions };

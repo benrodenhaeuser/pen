@@ -1,42 +1,15 @@
 (function () {
   'use strict';
 
-  const transitionTable = [
-    [{                    input: 'docSaved'       }, {                     }],
-    [{                    input: 'updateDocList'  }, {                     }],
-    [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'          }],
-    [{ from: 'idle',      input: 'createShape'    }, {                     }],
-    [{ from: 'idle',      input: 'createDoc'      }, {                     }],
-    [{ from: 'idle',      input: 'startAnimation' }, { to: 'animating'     }],
-    [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'      }],
-    [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'      }],
-    [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'       }],
-    [{ from: 'idle',      input: 'deleteFrame'    }, {                     }],
-    [{ from: 'idle',      input: 'requestDoc'     }, { to: 'blocked'       }],
-    [{ from: 'drawing',   input: 'changeCoords'   }, { action: 'sizeFrame' }],
-    [{ from: 'dragging',  input: 'changeCoords'   }, { action: 'moveFrame' }],
-    [{ from: 'resizing',  input: 'changeCoords'   }, { action: 'sizeFrame' }],
-    [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', action: 'cleanup' }],
-    [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'          }],
-    [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'          }],
-    [{ from: 'animating', input: 'startAnimation' }, {                     }],
-    [{ from: 'animating', input: 'toIdle'         }, { to: 'idle'          }],
-    [{ from: 'animating', input: 'createDoc'      }, { to: 'idle'          }],
-    [{ from: 'animating', input: 'createShape'    }, { to: 'idle'          }],
-    [{ from: 'blocked',   input: 'setDoc'         }, { to: 'idle'          }],
-  ];
+  const clock = {
+    tick() {
+      this.time += 1;
+    },
 
-  transitionTable.get = function(key) {
-    const match = (pair) => {
-      return (pair[0].from === key[0] || !pair[0].from) &&
-        pair[0].input === key[1];
-    };
-
-    const pair = transitionTable.find(match);
-
-    if (pair) {
-      return pair[1];
-    }
+    init() {
+      this.time = 0;
+      return this;
+    },
   };
 
   const createID = () => {
@@ -104,10 +77,10 @@
       const index = this.findIndexOf(this.selected.frame);
       frames.splice(index, 1);
 
-      if (frames[index] !== undefined) {
-        this.selected.frame = frames[index];
-      } else if (frames[index - 1] !== undefined) {
+      if (frames[index - 1] !== undefined) {
         this.selected.frame = frames[index - 1];
+      } else if (frames[index] !== undefined) {
+        this.selected.frame = frames[index];
       } else {
         this.selected.frame = null;
       }
@@ -239,11 +212,10 @@
       });
     },
 
-    cleanup(state, input) {
-      // TODO: not sure if this is needed.
+    clean(state, input) {
+      // TODO: not sure if this is needed.?
       const same = (val1, val2) => {
         const treshold = 1;
-        // console.log(Math.abs(val1 - val2));
         return Math.abs(val1 - val2) <= treshold;
       };
 
@@ -291,13 +263,51 @@
 
     init() {
       this.aux = {};
+    },
+  };
+
+  const transitionTable = [
+    [{                    input: 'docSaved'       }, {                         }],
+    [{                    input: 'updateDocList'  }, {                         }],
+    [{                    input: 'requestDoc'     }, { to: 'busy'              }],
+    [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
+    [{ from: 'idle',      input: 'createShape'    }, {                         }],
+    [{ from: 'idle',      input: 'createDoc'      }, {                         }],
+    [{ from: 'idle',      input: 'startAnimation' }, { to: 'animating'         }],
+    [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
+    [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
+    [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
+    [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
+    [{ from: 'busy',      input: 'setDoc'         }, { to: 'idle'              }],
+    [{ from: 'drawing',   input: 'changeCoords'   }, { do: 'sizeFrame'         }],
+    [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', do: 'clean' }],
+    [{ from: 'dragging',  input: 'changeCoords'   }, { do: 'moveFrame'         }],
+    [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
+    [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'sizeFrame'         }],
+    [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
+    [{ from: 'animating', input: 'startAnimation' }, { to: 'animating'         }],
+    [{ from: 'animating', input: 'toIdle'         }, { to: 'idle'              }],
+    [{ from: 'animating', input: 'createDoc'      }, { to: 'idle'              }],
+    [{ from: 'animating', input: 'createShape'    }, { to: 'idle'              }],
+  ];
+
+  transitionTable.get = function(key) {
+    const match = (pair) => {
+      return (pair[0].from === key[0] || !pair[0].from) &&
+        pair[0].input === key[1];
+    };
+
+    const pair = transitionTable.find(match);
+
+    if (pair) {
+      return pair[1];
     }
   };
 
   const core = {
     syncPeriphery() {
-      for (let peripheral of this.periphery) {
-        peripheral(JSON.parse(JSON.stringify(this.state)));
+      for (let func of this.periphery) {
+        func(JSON.parse(JSON.stringify(this.state)));
       }
     },
 
@@ -305,9 +315,10 @@
       const transition = transitionTable.get([this.state.id, input.id]);
 
       if (transition) {
-        const action = actions[transition.action] || actions[input.id];
+        this.state.clock.tick();
+        const action = actions[transition.do] || actions[input.id];
         action && action.bind(actions)(this.state, input);
-        this.state.lastInputID = input.id;
+        this.state.currentInputID = input.id;
         this.state.id = transition.to || this.state.id;
         this.syncPeriphery();
       }
@@ -315,9 +326,11 @@
 
     init() {
       this.state = {
-        doc: doc.init(),   // domain state
-        id: 'start',    // app state
-        docIDs: null,      // app state
+        clock: clock.init(),
+        id: 'start',
+        doc: doc.init(),
+        docIDs: null,
+        docID: null,
       };
 
       actions.init();
@@ -328,6 +341,7 @@
     kickoff() {
       this.syncPeriphery();
       this.dispatch({ id: 'kickoff' });
+      // ^ TODO: this involves two syncs, is that really necessary?
     },
   };
 
@@ -373,10 +387,10 @@
     makeListNode(id) {
       const node = document.createElement('li');
       node.innerHTML = `
-      <li class="pure-menu-item doc-list-entry">
         <a href="#" class="pure-menu-link"  data-type="doc-list-entry" data-id="${id}">${id}</a>
-      </li>
     `;
+      node.classList.add('pure-menu-item');
+
       return node;
     },
   };
@@ -388,7 +402,6 @@
     [['click',       'animateButton'    ], 'startAnimation'    ],
     [['click',       'deleteLink'       ], 'deleteFrame'       ],
     [['click',       'doc-list-entry'   ], 'requestDoc'        ],
-    [['click',       'canvas'           ], 'toIdle'            ],
     [['click',       'canvas'           ], 'toIdle'            ],
     [['mousedown',   'frame'            ], 'getFrameOrigin'    ],
     [['mousedown',   'top-left-corner'  ], 'resizeFrame'       ],
@@ -403,14 +416,16 @@
   inputTable.get = function(key) {
     const match = (pair) => {
       return pair[0][0] === key[0] &&
-        pair[0][1] === key[1];
+        (pair[0][1] === key[1] || pair[0][1] === undefined);
     };
 
     const pair = inputTable.find(match);
 
     if (pair) {
+      console.log(pair[1]);
       return pair[1];
     } else {
+      console.log(key[0], key[1]); 
       console.log('ui: no proper input');
     }
   };
@@ -418,139 +433,134 @@
   const ui = {
     bindEvents(dispatch) {
       this.canvasNode = document.querySelector('#canvas');
+      this.stageNode = document.querySelector('#stage');
+      this.toolsNode = document.querySelector('#tools');
 
-      const mouseEventData = (event) => {
+      const eventData = (event) => {
         return {
-          inputX:     event.clientX,
-          inputY:     event.clientY,
-          target:     event.target.dataset.type,
-          id:         event.target.dataset.id,
+          inputX: event.clientX,
+          inputY: event.clientY,
+          target: event.target.dataset.type,
+          id:     event.target.dataset.id,
         };
       };
 
-      this.canvasNode.addEventListener('mousedown', (event) => {
-        dispatch({
-          id:  inputTable.get(['mousedown', event.target.dataset.type]),
-          data: mouseEventData(event)
+      for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
+        this.canvasNode.addEventListener(eventType, (event) => {
+          dispatch({
+            id:   inputTable.get([eventType, event.target.dataset.type]),
+            data: eventData(event)
+          });
         });
-      });
-
-      this.canvasNode.addEventListener('mousemove', (event) => {
-        dispatch({
-          id:  inputTable.get(['mousemove']),
-          data: mouseEventData(event)
-        });
-      });
-
-      this.canvasNode.addEventListener('mouseup', (event) => {
-        dispatch({
-          id:  inputTable.get(['mouseup']),
-          data: mouseEventData(event)
-        });
-      });
+      }
 
       document.addEventListener('click', (event) => {
         dispatch({
-          id: inputTable.get(['click', event.target.dataset.type]),
-          data: mouseEventData(event)
+          id:   inputTable.get(['click', event.target.dataset.type]),
+          data: eventData(event)
         });
       });
     },
 
     sync(state) {
+      const changes = (state1, state2) => {
+        const keys = Object.keys(state1);
+        return keys.filter(key => !equal(state1[key], state2[key]));
+      };
+
+      const equal = (obj1, obj2) => {
+        return JSON.stringify(obj1) === JSON.stringify(obj2);
+      };
+
       if (state.id === 'start') {
         this.start(state);
         return;
       }
 
-      for (let changed of this.changes(state, this.previousState)) {
-        this.renderChanges[changed] && this.renderChanges[changed](state);
+      for (let changed of changes(state, this.previousState)) {
+        this.reactToChanges[changed] && this.reactToChanges[changed](state);
       }
       this.previousState = state;
     },
 
-    renderChanges: {
-      doc(state) {
-        ui.canvasNode.innerHTML = '';
+    reactToChanges: {
+      clock(state) {
+        ui.renderDocList(state);
 
-        for (let shape of state.doc.shapes) {
-          const shapeNode = nodeFactory.makeShapeNode(shape._id);
-          if (state.doc.selected.shapeID === shape._id) {
-            shapeNode.classList.add('selected');
-          }
-
-          for (var i = 0; i < shape.frames.length; i += 1) {
-            const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
-            ui.place(frameNode, shape.frames[i]);
-            if (shape.frames[i]._id === state.doc.selected.frameID) {
-              frameNode.classList.add('selected');
-            }
-
-            shapeNode.appendChild(frameNode);
-          }
-
-          ui.canvasNode.appendChild(shapeNode);
-        }
-      },
-
-      lastInputID(state) {
-        if (state.lastInputID === 'docSaved') {
-          ui.flash('Document saved');
-        }
-
-        // TODO: we could perhaps do this.start(state) here?
-        //       if the last input is 'kickoff'
-      },
-
-      id(state) {
         if (state.id === 'animating') {
-          ui.canvasNode.innerHTML = '';
+          ui.renderAnimations(state);
+        } else {
+          ui.renderFrames(state);
+        }
+      },
 
-          for (let shape of state.doc.shapes) {
-            const timeline = new TimelineMax();
-            const shapeNode = nodeFactory.makeShapeNode();
+      currentInputID(state) {
+        if (state.currentInputID === 'docSaved') {
+          ui.renderFlash('Document saved');
+        }
+      },
+    },
 
-            for (let i = 0; i < shape.frames.length - 1; i += 1) {
-              let source = shape.frames[i];
-              let target = shape.frames[i + 1];
+    renderDocList(state) {
+      const docList = document.querySelector('.doc-list');
+      docList.innerHTML = '';
 
-              timeline.fromTo(
-                shapeNode,
-                0.3,
-                ui.adjust(source),
-                ui.adjust(target)
-              );
-            }
+      for (let docID of state.docIDs) {
+        const node = nodeFactory.makeListNode(docID);
+        docList.appendChild(node);
+        if (docID === state.doc._id) {
+          node.classList.add('selected');
+        }
+      }
+    },
 
-            ui.canvasNode.appendChild(shapeNode);
+    renderAnimations(state) {
+      ui.canvasNode.innerHTML = '';
+
+      for (let shape of state.doc.shapes) {
+        const timeline = new TimelineMax();
+        const shapeNode = nodeFactory.makeShapeNode();
+
+        for (let i = 0; i < shape.frames.length - 1; i += 1) {
+          let source = shape.frames[i];
+          let target = shape.frames[i + 1];
+
+          timeline.fromTo(
+            shapeNode,
+            0.3,
+            ui.adjust(source),
+            ui.adjust(target)
+          );
+        }
+
+        ui.canvasNode.appendChild(shapeNode);
+      }
+    },
+
+    renderFrames(state) {
+      ui.canvasNode.innerHTML = '';
+
+      for (let shape of state.doc.shapes) {
+        const shapeNode = nodeFactory.makeShapeNode(shape._id);
+        if (state.doc.selected.shapeID === shape._id) {
+          shapeNode.classList.add('selected');
+        }
+
+        for (var i = 0; i < shape.frames.length; i += 1) {
+          const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
+          ui.place(frameNode, shape.frames[i]);
+          if (shape.frames[i]._id === state.doc.selected.frameID) {
+            frameNode.classList.add('selected');
           }
+
+          shapeNode.appendChild(frameNode);
         }
-      },
 
-      docIDs(state) {
-        const docList = document.querySelector('.doc-list');
-        docList.innerHTML = '';
-
-        for (let docID of state.docIDs) {
-          const node = nodeFactory.makeListNode(docID);
-          docList.appendChild(node);
-        }
-      },
+        ui.canvasNode.appendChild(shapeNode);
+      }
     },
 
-    // helpers 1
-    changes(state1, state2) {
-      const keys = Object.keys(state1);
-      return keys.filter(key => !this.equal(state1[key], state2[key]));
-    },
-
-    // helpers 2
-    equal(obj1, obj2) {
-      return JSON.stringify(obj1) === JSON.stringify(obj2);
-    },
-
-    // helpers 3
-    flash(message) {
+    renderFlash(message) {
       const flash = document.createElement('p');
       flash.innerHTML = message;
       flash.classList.add('flash');
@@ -558,7 +568,6 @@
       window.setTimeout(() => flash.remove(), 1500);
     },
 
-    // helpers 4
     adjust(frame) {
       return {
         top:    frame.top - ui.canvasNode.offsetTop,
@@ -568,7 +577,6 @@
       };
     },
 
-    // helpers 5
     place(node, frame) {
       node.style.top    = String(this.adjust(frame).top)  + 'px';
       node.style.left   = String(this.adjust(frame).left) + 'px';
@@ -639,7 +647,8 @@
         return;
       }
 
-      if (['idle', 'blocked'].includes(state.id)) {
+      // only sync db if stateID is `idle` or `busy`
+      if (['idle', 'busy'].includes(state.id)) {
         for (let changed of this.changes(state, this.previousState)) {
           this.crud[changed] && this.crud[changed](state);
         }
@@ -648,6 +657,7 @@
     },
 
     crud: {
+      // if the   docID has changed, we load the corresponding document
       docID(state) {
         window.dispatchEvent(new CustomEvent(
           'read',
@@ -655,8 +665,9 @@
         ));
       },
 
+      // if the document has been edited, we save it
       doc(state) {
-        if (state.docID === db.previousState.docID) { // user has edited doc
+        if (state.docID === db.previousState.docID) { // user has edited doc (?)
           window.dispatchEvent(new CustomEvent(
             'upsert',
             { detail: state.doc }
@@ -664,10 +675,6 @@
         }
       },
     },
-
-    // hasFrames(doc) {
-    //   return doc.shapes.find((shape) => shape.frames.length !== 0);
-    // },
 
     changes(state1, state2) {
       const keys = Object.keys(state1);

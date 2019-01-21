@@ -56,7 +56,8 @@ const db = {
       return;
     }
 
-    if (['idle', 'blocked'].includes(state.id)) {
+    // only sync db if stateID is `idle` or `busy`
+    if (['idle', 'busy'].includes(state.id)) {
       for (let changed of this.changes(state, this.previousState)) {
         this.crud[changed] && this.crud[changed](state);
       }
@@ -65,6 +66,7 @@ const db = {
   },
 
   crud: {
+    // if the   docID has changed, we load the corresponding document
     docID(state) {
       window.dispatchEvent(new CustomEvent(
         'read',
@@ -72,8 +74,9 @@ const db = {
       ));
     },
 
+    // if the document has been edited, we save it
     doc(state) {
-      if (state.docID === db.previousState.docID) { // user has edited doc
+      if (state.docID === db.previousState.docID) { // user has edited doc (?)
         window.dispatchEvent(new CustomEvent(
           'upsert',
           { detail: state.doc }
@@ -81,10 +84,6 @@ const db = {
       }
     },
   },
-
-  // hasFrames(doc) {
-  //   return doc.shapes.find((shape) => shape.frames.length !== 0);
-  // },
 
   changes(state1, state2) {
     const keys = Object.keys(state1);

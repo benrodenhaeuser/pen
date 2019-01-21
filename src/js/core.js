@@ -1,11 +1,12 @@
-import { transitionTable } from './transitionTable.js';
+import { clock } from './clock.js';
 import { doc } from './doc.js';
 import { actions } from './actions.js';
+import { transitionTable } from './transitionTable.js';
 
 const core = {
   syncPeriphery() {
-    for (let peripheral of this.periphery) {
-      peripheral(JSON.parse(JSON.stringify(this.state)));
+    for (let func of this.periphery) {
+      func(JSON.parse(JSON.stringify(this.state)));
     }
   },
 
@@ -13,9 +14,10 @@ const core = {
     const transition = transitionTable.get([this.state.id, input.id]);
 
     if (transition) {
-      const action = actions[transition.action] || actions[input.id];
+      this.state.clock.tick();
+      const action = actions[transition.do] || actions[input.id];
       action && action.bind(actions)(this.state, input);
-      this.state.lastInputID = input.id;
+      this.state.currentInputID = input.id;
       this.state.id = transition.to || this.state.id;
       this.syncPeriphery();
     }
@@ -23,9 +25,11 @@ const core = {
 
   init() {
     this.state = {
-      doc: doc.init(),   // domain state
-      id: 'start',    // app state
-      docIDs: null,      // app state
+      clock: clock.init(),
+      id: 'start',
+      doc: doc.init(),
+      docIDs: null,
+      docID: null,
     };
 
     actions.init();
@@ -36,6 +40,7 @@ const core = {
   kickoff() {
     this.syncPeriphery();
     this.dispatch({ id: 'kickoff' });
+    // ^ TODO: this involves two syncs, is that really necessary?
   },
 };
 
