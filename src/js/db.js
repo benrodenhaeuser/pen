@@ -1,10 +1,10 @@
-const ds = {
-  bindEvents(process) {
+const db = {
+  bindEvents(processInput) {
     window.addEventListener('upsert', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        process({
+        processInput({
           id: 'docSaved',
           data: {}
         });
@@ -18,7 +18,7 @@ const ds = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        process({
+        processInput({
           id: 'setDoc',
           data: {
             doc: request.response
@@ -35,7 +35,7 @@ const ds = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        process({
+        processInput({
           id: 'updateDocList',
           data: {
             docIDs: request.response
@@ -51,7 +51,7 @@ const ds = {
 
   sync(state) {
     if (state.id === 'start') {
-      ds.loadDocIDs();
+      db.loadDocIDs();
       this.previousState = state;
       return;
     }
@@ -66,7 +66,7 @@ const ds = {
 
   crud: {
     docs(state) {
-      if (state.docs.selectedID !== ds.previousState.docs.selectedID) {
+      if (state.docs.selectedID !== db.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
           'read',
           { detail: state.docs.selectedID }
@@ -75,7 +75,7 @@ const ds = {
     },
 
     doc(state) {
-      if (state.docs.selectedID === ds.previousState.docs.selectedID) {
+      if (state.docs.selectedID === db.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
           'upsert',
           { detail: state.doc }
@@ -86,7 +86,7 @@ const ds = {
 
   changes(state1, state2) {
     const keys = Object.keys(state1);
-    return keys.filter(key => !ds.equal(state1[key], state2[key]));
+    return keys.filter(key => !db.equal(state1[key], state2[key]));
   },
 
   equal(obj1, obj2) {
@@ -98,8 +98,8 @@ const ds = {
   },
 
   init() {
-    this.name = 'ds';
+    this.name = 'db';
   }
 };
 
-export { ds };
+export { db };

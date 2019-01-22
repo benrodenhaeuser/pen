@@ -6,8 +6,8 @@
       this.time += 1;
     },
 
-    init() {
-      this.time = 0;
+    init(time) {
+      this.time = time || 0;
       return this;
     },
   };
@@ -215,7 +215,6 @@
     },
 
     clean(state, input) {
-      // TODO: not sure if this is needed?
       const same = (val1, val2) => {
         const treshold = 1;
         return Math.abs(val1 - val2) <= treshold;
@@ -349,22 +348,27 @@
   };
 
   const core = {
+    get stateData() {
+      return JSON.parse(JSON.stringify(this.state));
+    },
+
     syncPeriphery() {
       const keys = Object.keys(this.periphery);
 
       for (let key of keys) {
-        this.periphery[key](JSON.parse(JSON.stringify(this.state)));
+        this.periphery[key](this.stateData);
       }
     },
 
-    setState(state) {
-      this.state = state;
-      // TODO: this overwrites our custom app object.
-      // need to "restore" a proper state object.
-      this.periphery['ui'](JSON.parse(JSON.stringify(this.state)));
+    // TODO: write a proper function to initalize state from stateData
+    setState(stateData) {
+      this.state = stateData;
+      this.state.doc = doc.init(stateData.doc);
+      this.state.clock = clock.init(stateData.clock.time);
+      this.periphery['ui'](this.stateData);
     },
 
-    process(input) {
+    processInput(input) {
       const transition = transitionTable.get([this.state.id, input.id]);
 
       if (transition) {
@@ -398,7 +402,7 @@
 
     kickoff() {
       this.syncPeriphery();
-      this.process({ id: 'kickoff' });
+      this.processInput({ id: 'kickoff' });
       // ^ TODO: this involves two syncs, is that really necessary?
     },
   };
@@ -466,7 +470,7 @@
     [['click',       'animateButton'    ], 'animate'        ],
     [['click',       'deleteLink'       ], 'deleteFrame'    ],
     [['click',       'doc-list-entry'   ], 'requestDoc'     ],
-    // [['click',       'canvas'           ], 'edit'           ],
+    [['click',       'canvas'           ], 'edit'           ],
     [['mousedown',   'frame'            ], 'getFrameOrigin' ],
     [['mousedown',   'top-left-corner'  ], 'resizeFrame'    ],
     [['mousedown',   'top-right-corner' ], 'resizeFrame'    ],
@@ -493,7 +497,7 @@
   };
 
   const ui = {
-    bindEvents(process) {
+    bindEvents(processInput) {
       this.canvasNode = document.querySelector('#canvas');
 
       const eventData = (event) => {
@@ -508,7 +512,7 @@
       for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
         this.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
-          process({
+          processInput({
             id:   inputTable.get([eventType, event.target.dataset.type]),
             data: eventData(event)
           });
@@ -517,7 +521,7 @@
 
       document.addEventListener('click', (event) => {
         event.preventDefault();
-        process({
+        processInput({
           id:   inputTable.get(['click', event.target.dataset.type]),
           data: eventData(event)
         });
@@ -675,13 +679,13 @@
     }
   };
 
-  const ds = {
-    bindEvents(process) {
+  const db = {
+    bindEvents(processInput) {
       window.addEventListener('upsert', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          process({
+          processInput({
             id: 'docSaved',
             data: {}
           });
@@ -695,7 +699,7 @@
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          process({
+          processInput({
             id: 'setDoc',
             data: {
               doc: request.response
@@ -712,7 +716,7 @@
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          process({
+          processInput({
             id: 'updateDocList',
             data: {
               docIDs: request.response
@@ -728,7 +732,7 @@
 
     sync(state) {
       if (state.id === 'start') {
-        ds.loadDocIDs();
+        db.loadDocIDs();
         this.previousState = state;
         return;
       }
@@ -743,7 +747,7 @@
 
     crud: {
       docs(state) {
-        if (state.docs.selectedID !== ds.previousState.docs.selectedID) {
+        if (state.docs.selectedID !== db.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
             'read',
             { detail: state.docs.selectedID }
@@ -752,7 +756,7 @@
       },
 
       doc(state) {
-        if (state.docs.selectedID === ds.previousState.docs.selectedID) {
+        if (state.docs.selectedID === db.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
             'upsert',
             { detail: state.doc }
@@ -763,7 +767,7 @@
 
     changes(state1, state2) {
       const keys = Object.keys(state1);
-      return keys.filter(key => !ds.equal(state1[key], state2[key]));
+      return keys.filter(key => !db.equal(state1[key], state2[key]));
     },
 
     equal(obj1, obj2) {
@@ -775,11 +779,11 @@
     },
 
     init() {
-      this.name = 'ds';
+      this.name = 'db';
     }
   };
 
-  const hist = {
+  const diary = {
     bindEvents(setState) {
       window.addEventListener('popstate', (event) => {
         setState(event.state);
@@ -787,20 +791,19 @@
     },
 
     sync(state) {
-      const ignoredInputs = ['docSaved'];
-      if (ignoredInputs.includes(state.currentInput)) {
+      const ignored = ['docSaved', 'edit']; // TODO: possibly others
+      const ignore  = ignored.includes(state.currentInput);
+      const idle    = state.id === 'idle';
+
+      if (ignore || !idle) {
         return;
       }
 
-      if (state.id !== 'idle') {
-        return;
-      }
-
-      history.pushState(state, 'entry');
+      window.history.pushState(state, 'entry');
     },
 
     init() {
-      this.name = 'hist';
+      this.name = 'diary';
       return this;
     }
   };
@@ -809,14 +812,15 @@
     init() {
       core.init();
 
-      for (let component of [ui, ds]) {
+      for (let component of [ui, db]) {
         component.init();
-        component.bindEvents(core.process.bind(core));
+        component.bindEvents(core.processInput.bind(core));
         core.periphery[component.name] = component.sync.bind(component);
       }
 
-      hist.bindEvents(core.setState.bind(core));
-      core.periphery[hist.name] = hist.sync.bind(hist);
+      diary.init();
+      diary.bindEvents(core.setState.bind(core));
+      core.periphery[diary.name] = diary.sync.bind(diary);
 
       core.kickoff();
     },

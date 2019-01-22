@@ -5,7 +5,7 @@ const inputTable = [
   [['click',       'animateButton'    ], 'animate'        ],
   [['click',       'deleteLink'       ], 'deleteFrame'    ],
   [['click',       'doc-list-entry'   ], 'requestDoc'     ],
-  // [['click',       'canvas'           ], 'edit'           ],
+  [['click',       'canvas'           ], 'edit'           ],
   [['mousedown',   'frame'            ], 'getFrameOrigin' ],
   [['mousedown',   'top-left-corner'  ], 'resizeFrame'    ],
   [['mousedown',   'top-right-corner' ], 'resizeFrame'    ],

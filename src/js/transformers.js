@@ -48,7 +48,6 @@ const transformers = {
   },
 
   clean(state, input) {
-    // TODO: not sure if this is needed?
     const same = (val1, val2) => {
       const treshold = 1;
       return Math.abs(val1 - val2) <= treshold;

@@ -2,7 +2,7 @@ import { nodeFactory } from './nodeFactory.js';
 import { inputTable } from './inputTable.js';
 
 const ui = {
-  bindEvents(process) {
+  bindEvents(processInput) {
     this.canvasNode = document.querySelector('#canvas');
 
     const eventData = (event) => {
@@ -17,7 +17,7 @@ const ui = {
     for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
       this.canvasNode.addEventListener(eventType, (event) => {
         event.preventDefault();
-        process({
+        processInput({
           id:   inputTable.get([eventType, event.target.dataset.type]),
           data: eventData(event)
         });
@@ -26,7 +26,7 @@ const ui = {
 
     document.addEventListener('click', (event) => {
       event.preventDefault();
-      process({
+      processInput({
         id:   inputTable.get(['click', event.target.dataset.type]),
         data: eventData(event)
       });

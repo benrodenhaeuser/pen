@@ -4,22 +4,27 @@ import { transformers } from './transformers.js';
 import { transitionTable } from './transitionTable.js';
 
 const core = {
+  get stateData() {
+    return JSON.parse(JSON.stringify(this.state));
+  },
+
   syncPeriphery() {
     const keys = Object.keys(this.periphery);
 
     for (let key of keys) {
-      this.periphery[key](JSON.parse(JSON.stringify(this.state)));
+      this.periphery[key](this.stateData);
     }
   },
 
-  setState(state) {
-    this.state = state;
-    // TODO: this overwrites our custom app object.
-    // need to "restore" a proper state object.
-    this.periphery['ui'](JSON.parse(JSON.stringify(this.state)));
+  // TODO: write a proper function to initalize state from stateData
+  setState(stateData) {
+    this.state = stateData;
+    this.state.doc = doc.init(stateData.doc);
+    this.state.clock = clock.init(stateData.clock.time);
+    this.periphery['ui'](this.stateData);
   },
 
-  process(input) {
+  processInput(input) {
     const transition = transitionTable.get([this.state.id, input.id]);
 
     if (transition) {
@@ -53,7 +58,7 @@ const core = {
 
   kickoff() {
     this.syncPeriphery();
-    this.process({ id: 'kickoff' });
+    this.processInput({ id: 'kickoff' });
     // ^ TODO: this involves two syncs, is that really necessary?
   },
 };

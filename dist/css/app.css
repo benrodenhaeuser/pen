@@ -16,7 +16,7 @@ body {
   display: flex;
   align-items: center;
   height: 50px;
-  background-color: #ededed;
+  background-color: black;
 }
 
 #navigator, #inspector {
@@ -64,7 +64,6 @@ body {
   cursor: grab;
   border: 1px solid #d3d3d3;
   box-sizing: content-box;
-  /* z-index: 1; */
 }
 
 .frame.selected {
@@ -160,32 +159,48 @@ body {
 .flash {
   position: fixed;
   right: 20px;
-  color: #8e8e8e;
+  color: yellow;
+}
+
+.pure-button, .pure-menu-list {
+  background-color: black;
+  color: white;
 }
 
 .pure-menu-horizontal {
   display: inline;
 }
 
-.pure-menu-list {
-  background-color: #E6E6E6;
+#menuLink1 {
+  color: white;
 }
 
-.pure-menu-link {
-  color: #2E2E2E;
+#menuLink1:hover {
+  color: white;
+  background-color: black;
 }
 
-li.selected a {
+.doc-list {
+  background-color: #2F4F4F;
+}
+
+.doc-list a {
+  color: white;
+}
+
+.doc-list a:hover {
+  color: black;
+}
+
+li.selected a, li.selected a:hover {
   color: red;
 }
 
 .rotate-handle {
   position: absolute;
   background-image: url(/assets/rotate.svg);
-  /* border-radius: 50%; */
   right: -20px;
   top: -20px;
   width: 10px;
   height: 10px;
-  /* background-color: black; */
 }

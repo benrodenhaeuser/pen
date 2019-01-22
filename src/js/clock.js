@@ -3,8 +3,8 @@ const clock = {
     this.time += 1;
   },
 
-  init() {
-    this.time = 0;
+  init(time) {
+    this.time = time || 0;
     return this;
   },
 };
