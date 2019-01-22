@@ -2,8 +2,8 @@ body {
   display: grid;
   grid-template-columns: 165px auto 165px;
   grid-template-areas:
-    "tools tools tools"
-    "shape-list canvas inspector";
+    "toolbar toolbar toolbar"
+    "navigator canvas inspector";
   position: relative;
   height: 100vh;
   width: 100vw;
@@ -11,15 +11,15 @@ body {
   background-color: white;
 }
 
-#tools {
-  grid-area: tools;
+#toolbar {
+  grid-area: toolbar;
   display: flex;
   align-items: center;
   height: 50px;
   background-color: #ededed;
 }
 
-#shape-list, #inspector {
+#navigator, #inspector {
   background-color: #f6f6f6;
   height: 100vh;
   /* z-index: 5; */
@@ -30,8 +30,8 @@ body {
   position: relative;
 }
 
-#shape-list {
-  grid-area: shape-list;
+#navigator {
+  grid-area: navigator;
 }
 
 #inspector {
@@ -56,7 +56,7 @@ body {
   position: absolute;
   background-color: red;
   box-sizing: content-box;
-  z-index: 1;
+  /* z-index: 1; */
 }
 
 .frame {
@@ -64,7 +64,11 @@ body {
   cursor: grab;
   border: 1px solid #d3d3d3;
   box-sizing: content-box;
-  z-index: 1;
+  /* z-index: 1; */
+}
+
+.frame.selected {
+  z-index: 5;
 }
 
 .counter {
@@ -73,6 +77,7 @@ body {
   left: 10px;
   font-size: 11px;
   color: #a9a9a9;
+  user-select: none;
 }
 
 .deleteLink {
@@ -82,7 +87,7 @@ body {
   font-size: 15px;
   text-decoration: none;
   color: red;
-
+  user-select: none;
 }
 
 .deleteLink:hover {
@@ -106,6 +111,7 @@ body {
 
 .shape:not(.selected) .corner,
 .frame:not(.selected) .deleteLink,
+.frame:not(.selected) .rotate-handle,
 .frame:not(.selected) .corner {
   display: none;
 }
@@ -171,4 +177,15 @@ body {
 
 li.selected a {
   color: red;
+}
+
+.rotate-handle {
+  position: absolute;
+  background-image: url(/assets/rotate.svg);
+  /* border-radius: 50%; */
+  right: -20px;
+  top: -20px;
+  width: 10px;
+  height: 10px;
+  /* background-color: black; */
 }

@@ -10,6 +10,7 @@ const Frame = {
     this.y = data.y || this.y;
     this.w = data.w || this.w;
     this.h = data.h || this.h;
+    this.r = data.r || this.r;
   },
 
   init(data) {
@@ -18,6 +19,7 @@ const Frame = {
     this.y   = data.y   || 0;
     this.w   = data.w   || 0;
     this.h   = data.h   || 0;
+    this.r   = data.r   || 0; 
 
     return this;
   },
@@ -78,7 +80,7 @@ const doc = {
         if (frame._id === frameID) {
           this.selected.frame = frame;
           this.selected.shape = shape;
-          return frame;
+          return frame; // TODO: aha!
         }
       }
     }

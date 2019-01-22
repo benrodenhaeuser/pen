@@ -1,22 +1,38 @@
 const transitionTable = [
+  // kickoff
+  [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
+
+  // create and delete
+  [{ from: 'idle',      input: 'createShape'    }, {                         }],
+  [{ from: 'idle',      input: 'createDoc'      }, {                         }],
+  [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
   [{                    input: 'docSaved'       }, {                         }],
   [{                    input: 'updateDocList'  }, {                         }],
   [{                    input: 'requestDoc'     }, { to: 'busy'              }],
-  [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
-  [{ from: 'idle',      input: 'createShape'    }, {                         }],
-  [{ from: 'idle',      input: 'createDoc'      }, {                         }],
-  [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
-  [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
-  [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
-  [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
-  [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
   [{ from: 'busy',      input: 'setDoc'         }, { to: 'idle'              }],
+
+  // draw
+  [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
   [{ from: 'drawing',   input: 'changeCoords'   }, { do: 'sizeFrame'         }],
   [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', do: 'clean' }],
+
+  // rotate
+  [{ from: 'idle',      input: 'getStartAngle'  }, { to: 'rotating'          }],
+  [{ from: 'rotating',  input: 'changeCoords'   }, { do: 'rotateFrame'       }],
+  [{ from: 'rotating',  input: 'releaseFrame'   }, { to: 'idle'              }],
+
+  // move
+  [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
   [{ from: 'dragging',  input: 'changeCoords'   }, { do: 'moveFrame'         }],
   [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
+
+  // resize
   [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'sizeFrame'         }],
   [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
+  [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
+
+  // animate
+  [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
   [{ from: 'animating', input: 'animate'        }, { to: 'animating'         }],
   [{ from: 'animating', input: 'edit'           }, { to: 'idle'              }],
   [{ from: 'animating', input: 'createDoc'      }, { to: 'idle'              }],

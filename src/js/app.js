@@ -1,18 +1,20 @@
 import { core } from './core.js';
 import { ui } from './ui.js';
-import { db } from './db.js';
+import { ds } from './ds.js';
+import { hist } from './hist.js';
 
 const app = {
-  connect(core, component) {
-    component.bindEvents(core.dispatch.bind(core));
-    core.periphery.push(component.sync.bind(component));
-  },
-
   init() {
     core.init();
 
-    this.connect(core, ui);
-    this.connect(core, db);
+    for (let component of [ui, ds]) {
+      component.init();
+      component.bindEvents(core.process.bind(core));
+      core.periphery[component.name] = component.sync.bind(component);
+    }
+
+    hist.bindEvents(core.setState.bind(core));
+    core.periphery[hist.name] = hist.sync.bind(hist);
 
     core.kickoff();
   },

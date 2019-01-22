@@ -1,10 +1,10 @@
-const db = {
-  bindEvents(dispatch) {
+const ds = {
+  bindEvents(process) {
     window.addEventListener('upsert', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        dispatch({
+        process({
           id: 'docSaved',
           data: {}
         });
@@ -18,7 +18,7 @@ const db = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        dispatch({
+        process({
           id: 'setDoc',
           data: {
             doc: request.response
@@ -35,7 +35,7 @@ const db = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        dispatch({
+        process({
           id: 'updateDocList',
           data: {
             docIDs: request.response
@@ -51,7 +51,7 @@ const db = {
 
   sync(state) {
     if (state.id === 'start') {
-      db.loadDocIDs();
+      ds.loadDocIDs();
       this.previousState = state;
       return;
     }
@@ -66,7 +66,7 @@ const db = {
 
   crud: {
     docs(state) {
-      if (state.docs.selectedID !== db.previousState.docs.selectedID) {
+      if (state.docs.selectedID !== ds.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
           'read',
           { detail: state.docs.selectedID }
@@ -75,7 +75,7 @@ const db = {
     },
 
     doc(state) {
-      if (state.docs.selectedID === db.previousState.docs.selectedID) {
+      if (state.docs.selectedID === ds.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
           'upsert',
           { detail: state.doc }
@@ -86,7 +86,7 @@ const db = {
 
   changes(state1, state2) {
     const keys = Object.keys(state1);
-    return keys.filter(key => !db.equal(state1[key], state2[key]));
+    return keys.filter(key => !ds.equal(state1[key], state2[key]));
   },
 
   equal(obj1, obj2) {
@@ -96,6 +96,10 @@ const db = {
   loadDocIDs() {
     window.dispatchEvent(new Event('loadDocIDs'));
   },
+
+  init() {
+    this.name = 'ds';
+  }
 };
 
-export { db };
+export { ds };

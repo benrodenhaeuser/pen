@@ -1,4 +1,4 @@
-const actions = {
+const transformers = {
   createShape(state, input) {
     state.doc.appendShape();
   },
@@ -40,9 +40,9 @@ const actions = {
 
   sizeFrame(state, input) {
     state.doc.selected.frame.set({
-      y:    Math.min(this.aux.originY, input.data.inputY),
-      x:   Math.min(this.aux.originX, input.data.inputX),
-      w:  Math.abs(this.aux.originX - input.data.inputX),
+      y: Math.min(this.aux.originY, input.data.inputY),
+      x: Math.min(this.aux.originX, input.data.inputX),
+      w: Math.abs(this.aux.originX - input.data.inputX),
       h: Math.abs(this.aux.originY - input.data.inputY),
     });
   },
@@ -76,7 +76,7 @@ const actions = {
     const frame = state.doc.selected.frame;
 
     frame.set({
-      y:  frame.y  + (input.data.inputY - this.aux.originY),
+      y: frame.y  + (input.data.inputY - this.aux.originY),
       x: frame.x + (input.data.inputX - this.aux.originX),
     });
 
@@ -96,9 +96,35 @@ const actions = {
     state.doc.init(input.data.doc);
   },
 
+  getStartAngle(state, input) {
+    const frame = state.doc.select(input.data.id);
+
+    const centerX = frame.x + frame.w / 2;
+    const centerY = frame.y + frame.h / 2;
+    const startX  = input.data.inputX - centerX;
+    const startY  = input.data.inputY - centerY;
+
+    this.aux.centerX = centerX;
+    this.aux.centerY = centerY;
+    this.aux.startAngle = Math.atan2(startY, startX);
+    this.aux.frameStartAngle = frame.r;
+  },
+
+  rotateFrame(state, input) {
+    const frame = state.doc.selected.frame;
+
+    const currentX = input.data.inputX - this.aux.centerX;
+    const currentY = input.data.inputY - this.aux.centerY;
+
+    const currentAngle = Math.atan2(currentY, currentX);
+    const startAngle = this.aux.startAngle;
+
+    frame.set({ r: currentAngle - startAngle + this.aux.frameStartAngle });
+  },
+
   init() {
     this.aux = {};
   },
 };
 
-export { actions };
+export { transformers };

@@ -1,6 +1,8 @@
 const frameTemplate = (index) => {
   const template = document.createElement('template');
   template.innerHTML = `
+    <div class="rotate-handle" data-type="rotate-handle">
+    </div>
     <div class="corner top-left" data-type="top-left-corner">
       <div class="center"></div>
     </div>
@@ -34,6 +36,10 @@ const nodeFactory = {
     node.dataset.type = 'frame';
     node.dataset.id = id;
     node.appendChild(frameTemplate(index).content.cloneNode(true));
+
+    const handle = node.querySelector('.rotate-handle');
+    handle.dataset.id = id;
+
     return node;
   },
 

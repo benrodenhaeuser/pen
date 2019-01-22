@@ -24,6 +24,7 @@
       this.y = data.y || this.y;
       this.w = data.w || this.w;
       this.h = data.h || this.h;
+      this.r = data.r || this.r;
     },
 
     init(data) {
@@ -32,6 +33,7 @@
       this.y   = data.y   || 0;
       this.w   = data.w   || 0;
       this.h   = data.h   || 0;
+      this.r   = data.r   || 0; 
 
       return this;
     },
@@ -92,7 +94,7 @@
           if (frame._id === frameID) {
             this.selected.frame = frame;
             this.selected.shape = shape;
-            return frame;
+            return frame; // TODO: aha!
           }
         }
       }
@@ -163,7 +165,7 @@
     },
   };
 
-  const actions = {
+  const transformers = {
     createShape(state, input) {
       state.doc.appendShape();
     },
@@ -205,9 +207,9 @@
 
     sizeFrame(state, input) {
       state.doc.selected.frame.set({
-        y:    Math.min(this.aux.originY, input.data.inputY),
-        x:   Math.min(this.aux.originX, input.data.inputX),
-        w:  Math.abs(this.aux.originX - input.data.inputX),
+        y: Math.min(this.aux.originY, input.data.inputY),
+        x: Math.min(this.aux.originX, input.data.inputX),
+        w: Math.abs(this.aux.originX - input.data.inputX),
         h: Math.abs(this.aux.originY - input.data.inputY),
       });
     },
@@ -241,7 +243,7 @@
       const frame = state.doc.selected.frame;
 
       frame.set({
-        y:  frame.y  + (input.data.inputY - this.aux.originY),
+        y: frame.y  + (input.data.inputY - this.aux.originY),
         x: frame.x + (input.data.inputX - this.aux.originX),
       });
 
@@ -261,30 +263,72 @@
       state.doc.init(input.data.doc);
     },
 
+    getStartAngle(state, input) {
+      const frame = state.doc.select(input.data.id);
+
+      const centerX = frame.x + frame.w / 2;
+      const centerY = frame.y + frame.h / 2;
+      const startX  = input.data.inputX - centerX;
+      const startY  = input.data.inputY - centerY;
+
+      this.aux.centerX = centerX;
+      this.aux.centerY = centerY;
+      this.aux.startAngle = Math.atan2(startY, startX);
+      this.aux.frameStartAngle = frame.r;
+    },
+
+    rotateFrame(state, input) {
+      const frame = state.doc.selected.frame;
+
+      const currentX = input.data.inputX - this.aux.centerX;
+      const currentY = input.data.inputY - this.aux.centerY;
+
+      const currentAngle = Math.atan2(currentY, currentX);
+      const startAngle = this.aux.startAngle;
+
+      frame.set({ r: currentAngle - startAngle + this.aux.frameStartAngle });
+    },
+
     init() {
       this.aux = {};
     },
   };
 
   const transitionTable = [
+    // kickoff
+    [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
+
+    // create and delete
+    [{ from: 'idle',      input: 'createShape'    }, {                         }],
+    [{ from: 'idle',      input: 'createDoc'      }, {                         }],
+    [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
     [{                    input: 'docSaved'       }, {                         }],
     [{                    input: 'updateDocList'  }, {                         }],
     [{                    input: 'requestDoc'     }, { to: 'busy'              }],
-    [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
-    [{ from: 'idle',      input: 'createShape'    }, {                         }],
-    [{ from: 'idle',      input: 'createDoc'      }, {                         }],
-    [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
-    [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
-    [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
-    [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
-    [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
     [{ from: 'busy',      input: 'setDoc'         }, { to: 'idle'              }],
+
+    // draw
+    [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
     [{ from: 'drawing',   input: 'changeCoords'   }, { do: 'sizeFrame'         }],
     [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', do: 'clean' }],
+
+    // rotate
+    [{ from: 'idle',      input: 'getStartAngle'  }, { to: 'rotating'          }],
+    [{ from: 'rotating',  input: 'changeCoords'   }, { do: 'rotateFrame'       }],
+    [{ from: 'rotating',  input: 'releaseFrame'   }, { to: 'idle'              }],
+
+    // move
+    [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
     [{ from: 'dragging',  input: 'changeCoords'   }, { do: 'moveFrame'         }],
     [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
+
+    // resize
     [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'sizeFrame'         }],
     [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
+    [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
+
+    // animate
+    [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
     [{ from: 'animating', input: 'animate'        }, { to: 'animating'         }],
     [{ from: 'animating', input: 'edit'           }, { to: 'idle'              }],
     [{ from: 'animating', input: 'createDoc'      }, { to: 'idle'              }],
@@ -306,22 +350,37 @@
 
   const core = {
     syncPeriphery() {
-      for (let func of this.periphery) {
-        func(JSON.parse(JSON.stringify(this.state)));
+      const keys = Object.keys(this.periphery);
+
+      for (let key of keys) {
+        this.periphery[key](JSON.parse(JSON.stringify(this.state)));
       }
     },
 
-    dispatch(input) {
+    setState(state) {
+      this.state = state;
+      // TODO: this overwrites our custom app object.
+      // need to "restore" a proper state object.
+      this.periphery['ui'](JSON.parse(JSON.stringify(this.state)));
+    },
+
+    process(input) {
       const transition = transitionTable.get([this.state.id, input.id]);
 
       if (transition) {
-        this.state.clock.tick();
-        const action = actions[transition.do] || actions[input.id];
-        action && action.bind(actions)(this.state, input);
-        this.state.currentInput = input.id;
-        this.state.id = transition.to || this.state.id;
+        console.log(input.id);
+        this.transform(input, transition);
         this.syncPeriphery();
       }
+    },
+
+    transform(input, transition) {
+      const transformer = transformers[transition.do] || transformers[input.id];
+      transformer && transformer.bind(transformers)(this.state, input);
+
+      this.state.clock.tick();
+      this.state.currentInput = input.id;
+      this.state.id = transition.to || this.state.id;
     },
 
     init() {
@@ -332,14 +391,14 @@
         docs: { ids: [], selectedID: null },
       };
 
-      actions.init();
+      transformers.init();
       this.periphery = [];
       return this;
     },
 
     kickoff() {
       this.syncPeriphery();
-      this.dispatch({ id: 'kickoff' });
+      this.process({ id: 'kickoff' });
       // ^ TODO: this involves two syncs, is that really necessary?
     },
   };
@@ -347,6 +406,8 @@
   const frameTemplate = (index) => {
     const template = document.createElement('template');
     template.innerHTML = `
+    <div class="rotate-handle" data-type="rotate-handle">
+    </div>
     <div class="corner top-left" data-type="top-left-corner">
       <div class="center"></div>
     </div>
@@ -380,6 +441,10 @@
       node.dataset.type = 'frame';
       node.dataset.id = id;
       node.appendChild(frameTemplate(index).content.cloneNode(true));
+
+      const handle = node.querySelector('.rotate-handle');
+      handle.dataset.id = id;
+
       return node;
     },
 
@@ -396,20 +461,21 @@
 
   const inputTable = [
     // event type     target type           input
-    [['click',       'newShapeButton'   ], 'createShape'       ],
-    [['click',       'newDocButton'     ], 'createDoc'         ],
-    [['click',       'animateButton'    ], 'animate'    ],
-    [['click',       'deleteLink'       ], 'deleteFrame'       ],
-    [['click',       'doc-list-entry'   ], 'requestDoc'        ],
-    [['click',       'canvas'           ], 'edit'            ],
-    [['mousedown',   'frame'            ], 'getFrameOrigin'    ],
-    [['mousedown',   'top-left-corner'  ], 'resizeFrame'       ],
-    [['mousedown',   'top-right-corner' ], 'resizeFrame'       ],
-    [['mousedown',   'bot-left-corner'  ], 'resizeFrame'       ],
-    [['mousedown',   'bot-right-corner' ], 'resizeFrame'       ],
-    [['mousedown',   'canvas'           ], 'setFrameOrigin'    ],
-    [['mousemove'                       ], 'changeCoords'      ],
-    [['mouseup'                         ], 'releaseFrame'      ],
+    [['click',       'newShapeButton'   ], 'createShape'    ],
+    [['click',       'newDocButton'     ], 'createDoc'      ],
+    [['click',       'animateButton'    ], 'animate'        ],
+    [['click',       'deleteLink'       ], 'deleteFrame'    ],
+    [['click',       'doc-list-entry'   ], 'requestDoc'     ],
+    // [['click',       'canvas'           ], 'edit'           ],
+    [['mousedown',   'frame'            ], 'getFrameOrigin' ],
+    [['mousedown',   'top-left-corner'  ], 'resizeFrame'    ],
+    [['mousedown',   'top-right-corner' ], 'resizeFrame'    ],
+    [['mousedown',   'bot-left-corner'  ], 'resizeFrame'    ],
+    [['mousedown',   'bot-right-corner' ], 'resizeFrame'    ],
+    [['mousedown',   'canvas'           ], 'setFrameOrigin' ],
+    [['mousedown',   'rotate-handle'    ], 'getStartAngle'  ],
+    [['mousemove'                       ], 'changeCoords'   ],
+    [['mouseup'                         ], 'releaseFrame'   ],
   ];
 
   inputTable.get = function(key) {
@@ -421,16 +487,13 @@
     const pair = inputTable.find(match);
 
     if (pair) {
-      console.log(pair[1]);
+      // console.log(pair[1]);
       return pair[1];
-    } else {
-      console.log(key[0], key[1]);
-      console.log('ui: no proper input');
     }
   };
 
   const ui = {
-    bindEvents(dispatch) {
+    bindEvents(process) {
       this.canvasNode = document.querySelector('#canvas');
 
       const eventData = (event) => {
@@ -444,7 +507,8 @@
 
       for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
         this.canvasNode.addEventListener(eventType, (event) => {
-          dispatch({
+          event.preventDefault();
+          process({
             id:   inputTable.get([eventType, event.target.dataset.type]),
             data: eventData(event)
           });
@@ -452,7 +516,8 @@
       }
 
       document.addEventListener('click', (event) => {
-        dispatch({
+        event.preventDefault();
+        process({
           id:   inputTable.get(['click', event.target.dataset.type]),
           data: eventData(event)
         });
@@ -462,10 +527,10 @@
     sync(state) {
       const changes = (state1, state2) => {
         const keys = Object.keys(state1);
-        return keys.filter(key => !equal(state1[key], state2[key]));
+        return keys.filter(key => !equalData(state1[key], state2[key]));
       };
 
-      const equal = (obj1, obj2) => {
+      const equalData = (obj1, obj2) => {
         return JSON.stringify(obj1) === JSON.stringify(obj2);
       };
 
@@ -579,37 +644,44 @@
         y: frame.y - ui.canvasNode.offsetTop,
         w: frame.w,
         h: frame.h,
+        r: frame.r, // ROTATION
       };
     },
 
     convertKeys(frame) {
       return {
-        x: frame.x,
-        y: frame.y,
-        width: frame.w,
-        height: frame.h,
+        x:        frame.x,
+        y:        frame.y,
+        width:    frame.w,
+        height:   frame.h,
+        rotation: frame.r * 57.2958, // ROTATION, convert to degrees
       };
     },
 
     writeCSS(node, frame) {
-      node.style.left   = String(this.adjust(frame).x) + 'px';
-      node.style.top    = String(this.adjust(frame).y)  + 'px';
-      node.style.width  = String(frame.w) + 'px';
-      node.style.height = String(frame.h) + 'px';
+      node.style.left      = String(this.adjust(frame).x) + 'px';
+      node.style.top       = String(this.adjust(frame).y) + 'px';
+      node.style.width     = String(frame.w) + 'px';
+      node.style.height    = String(frame.h) + 'px';
+      node.style.transform = `rotate(${frame.r}rad)`; // ROTATION
     },
 
     start(state) {
       this.previousState = state;
     },
+
+    init() {
+      this.name = 'ui';
+    }
   };
 
-  const db = {
-    bindEvents(dispatch) {
+  const ds = {
+    bindEvents(process) {
       window.addEventListener('upsert', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          dispatch({
+          process({
             id: 'docSaved',
             data: {}
           });
@@ -623,7 +695,7 @@
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          dispatch({
+          process({
             id: 'setDoc',
             data: {
               doc: request.response
@@ -640,7 +712,7 @@
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          dispatch({
+          process({
             id: 'updateDocList',
             data: {
               docIDs: request.response
@@ -656,7 +728,7 @@
 
     sync(state) {
       if (state.id === 'start') {
-        db.loadDocIDs();
+        ds.loadDocIDs();
         this.previousState = state;
         return;
       }
@@ -671,7 +743,7 @@
 
     crud: {
       docs(state) {
-        if (state.docs.selectedID !== db.previousState.docs.selectedID) {
+        if (state.docs.selectedID !== ds.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
             'read',
             { detail: state.docs.selectedID }
@@ -680,7 +752,7 @@
       },
 
       doc(state) {
-        if (state.docs.selectedID === db.previousState.docs.selectedID) {
+        if (state.docs.selectedID === ds.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
             'upsert',
             { detail: state.doc }
@@ -691,7 +763,7 @@
 
     changes(state1, state2) {
       const keys = Object.keys(state1);
-      return keys.filter(key => !db.equal(state1[key], state2[key]));
+      return keys.filter(key => !ds.equal(state1[key], state2[key]));
     },
 
     equal(obj1, obj2) {
@@ -701,19 +773,50 @@
     loadDocIDs() {
       window.dispatchEvent(new Event('loadDocIDs'));
     },
+
+    init() {
+      this.name = 'ds';
+    }
   };
 
-  const app = {
-    connect(core$$1, component) {
-      component.bindEvents(core$$1.dispatch.bind(core$$1));
-      core$$1.periphery.push(component.sync.bind(component));
+  const hist = {
+    bindEvents(setState) {
+      window.addEventListener('popstate', (event) => {
+        setState(event.state);
+      });
+    },
+
+    sync(state) {
+      const ignoredInputs = ['docSaved'];
+      if (ignoredInputs.includes(state.currentInput)) {
+        return;
+      }
+
+      if (state.id !== 'idle') {
+        return;
+      }
+
+      history.pushState(state, 'entry');
     },
 
     init() {
+      this.name = 'hist';
+      return this;
+    }
+  };
+
+  const app = {
+    init() {
       core.init();
 
-      this.connect(core, ui);
-      this.connect(core, db);
+      for (let component of [ui, ds]) {
+        component.init();
+        component.bindEvents(core.process.bind(core));
+        core.periphery[component.name] = component.sync.bind(component);
+      }
+
+      hist.bindEvents(core.setState.bind(core));
+      core.periphery[hist.name] = hist.sync.bind(hist);
 
       core.kickoff();
     },

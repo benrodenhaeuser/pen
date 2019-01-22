@@ -2,7 +2,7 @@ import { nodeFactory } from './nodeFactory.js';
 import { inputTable } from './inputTable.js';
 
 const ui = {
-  bindEvents(dispatch) {
+  bindEvents(process) {
     this.canvasNode = document.querySelector('#canvas');
 
     const eventData = (event) => {
@@ -16,7 +16,8 @@ const ui = {
 
     for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
       this.canvasNode.addEventListener(eventType, (event) => {
-        dispatch({
+        event.preventDefault();
+        process({
           id:   inputTable.get([eventType, event.target.dataset.type]),
           data: eventData(event)
         });
@@ -24,7 +25,8 @@ const ui = {
     }
 
     document.addEventListener('click', (event) => {
-      dispatch({
+      event.preventDefault();
+      process({
         id:   inputTable.get(['click', event.target.dataset.type]),
         data: eventData(event)
       });
@@ -34,10 +36,10 @@ const ui = {
   sync(state) {
     const changes = (state1, state2) => {
       const keys = Object.keys(state1);
-      return keys.filter(key => !equal(state1[key], state2[key]));
+      return keys.filter(key => !equalData(state1[key], state2[key]));
     };
 
-    const equal = (obj1, obj2) => {
+    const equalData = (obj1, obj2) => {
       return JSON.stringify(obj1) === JSON.stringify(obj2);
     };
 
@@ -151,28 +153,35 @@ const ui = {
       y: frame.y - ui.canvasNode.offsetTop,
       w: frame.w,
       h: frame.h,
+      r: frame.r, // ROTATION
     };
   },
 
   convertKeys(frame) {
     return {
-      x: frame.x,
-      y: frame.y,
-      width: frame.w,
-      height: frame.h,
+      x:        frame.x,
+      y:        frame.y,
+      width:    frame.w,
+      height:   frame.h,
+      rotation: frame.r * 57.2958, // ROTATION, convert to degrees
     };
   },
 
   writeCSS(node, frame) {
-    node.style.left   = String(this.adjust(frame).x) + 'px';
-    node.style.top    = String(this.adjust(frame).y)  + 'px';
-    node.style.width  = String(frame.w) + 'px';
-    node.style.height = String(frame.h) + 'px';
+    node.style.left      = String(this.adjust(frame).x) + 'px';
+    node.style.top       = String(this.adjust(frame).y) + 'px';
+    node.style.width     = String(frame.w) + 'px';
+    node.style.height    = String(frame.h) + 'px';
+    node.style.transform = `rotate(${frame.r}rad)`; // ROTATION
   },
 
   start(state) {
     this.previousState = state;
   },
+
+  init() {
+    this.name = 'ui';
+  }
 };
 
 export { ui };
