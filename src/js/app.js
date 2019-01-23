@@ -1,12 +1,12 @@
-import { core } from './core.js';
-import { ui } from './ui.js';
-import { db } from './db.js';
-import { diary } from './diary.js';
+import { core } from './core/core.js';
+import { ui } from './ui/ui.js';
+import { db } from './db/db.js';
+import { diary } from './history/diary.js';
 
 const app = {
   init() {
     core.init();
-
+ 
     for (let component of [ui, db]) {
       component.init();
       component.bindEvents(core.processInput.bind(core));

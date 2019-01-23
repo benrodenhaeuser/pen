@@ -6,20 +6,20 @@ const createID = () => {
 
 const Frame = {
   set(data) {
-    this.x = data.x || this.x;
-    this.y = data.y || this.y;
-    this.w = data.w || this.w;
-    this.h = data.h || this.h;
-    this.r = data.r || this.r;
+    this.x      = data.x      || this.x;
+    this.y      = data.y      || this.y;
+    this.width  = data.width  || this.width;
+    this.height = data.height || this.height;
+    this.angle  = data.angle  || this.angle;
   },
 
   init(data) {
-    this._id = data._id || createID();
-    this.x   = data.x   || 0;
-    this.y   = data.y   || 0;
-    this.w   = data.w   || 0;
-    this.h   = data.h   || 0;
-    this.r   = data.r   || 0; 
+    this._id    = data._id    || createID();
+    this.x      = data.x      || 0;
+    this.y      = data.y      || 0;
+    this.width  = data.width  || 0;
+    this.height = data.height || 0;
+    this.angle  = data.angle  || 0;
 
     return this;
   },

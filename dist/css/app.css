@@ -96,7 +96,7 @@ body {
 
 .shape.selected .frame,
 .shape.selected .corner {
-  border: 1px solid blue;
+  border: 1px solid black;
 }
 
 .shape.selected .frame.selected,
@@ -159,7 +159,7 @@ body {
 .flash {
   position: fixed;
   right: 20px;
-  color: yellow;
+  color: red;
 }
 
 .pure-button, .pure-menu-list {

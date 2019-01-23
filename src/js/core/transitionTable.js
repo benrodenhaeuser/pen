@@ -27,9 +27,9 @@ const transitionTable = [
   [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
 
   // resize
-  [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'sizeFrame'         }],
+  [{ from: 'idle',      input: 'findOppCorner'     }, { to: 'resizing'          }],
+  [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'resizeFrame'       }],
   [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
-  [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
 
   // animate
   [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],

@@ -15,7 +15,7 @@ gulp.task('rollup', () => {
 });
 
 gulp.task('watch', () => {
-  gulp.watch('./src/js/*.js', gulp.series('rollup'));
+  gulp.watch(['./src/js/app.js', './src/js/**/*.js'], gulp.series('rollup'));
 });
 
 gulp.task('default', gulp.series('watch'));

@@ -20,20 +20,20 @@
 
   const Frame = {
     set(data) {
-      this.x = data.x || this.x;
-      this.y = data.y || this.y;
-      this.w = data.w || this.w;
-      this.h = data.h || this.h;
-      this.r = data.r || this.r;
+      this.x      = data.x      || this.x;
+      this.y      = data.y      || this.y;
+      this.width  = data.width  || this.width;
+      this.height = data.height || this.height;
+      this.angle  = data.angle  || this.angle;
     },
 
     init(data) {
-      this._id = data._id || createID();
-      this.x   = data.x   || 0;
-      this.y   = data.y   || 0;
-      this.w   = data.w   || 0;
-      this.h   = data.h   || 0;
-      this.r   = data.r   || 0; 
+      this._id    = data._id    || createID();
+      this.x      = data.x      || 0;
+      this.y      = data.y      || 0;
+      this.width  = data.width  || 0;
+      this.height = data.height || 0;
+      this.angle  = data.angle  || 0;
 
       return this;
     },
@@ -176,42 +176,103 @@
       state.docs.selectedID = state.doc._id;
     },
 
+    deleteFrame(state, input) {
+      state.doc.deleteSelectedFrame();
+    },
+
+    updateDocList(state, input) {
+      state.docs.ids = input.data.docIDs;
+    },
+
+    requestDoc(state, input) {
+      state.docs.selectedID = input.data.id;
+    },
+
+    setDoc(state, input) {
+      state.doc.init(input.data.doc);
+    },
+
     setFrameOrigin(state, input) {
       state.doc.insertFrameInPlace();
       this.aux.originX = input.data.inputX;
       this.aux.originY = input.data.inputY;
     },
 
-    resizeFrame(state, input) {
+    findOppCorner(state, input) {
       const frame = state.doc.selected.frame;
+
+      let opp;
 
       switch (input.data.target) {
       case 'top-left-corner':
-        this.aux.originX = frame.x + frame.w;
-        this.aux.originY = frame.y + frame.h;
+        opp = [frame.x + frame.width, frame.y + frame.height]; // bottom right
         break;
       case 'top-right-corner':
-        this.aux.originX = frame.x;
-        this.aux.originY = frame.y + frame.h;
+        opp = [frame.x, frame.y + frame.height];               // bottom left
         break;
       case 'bot-right-corner':
-        this.aux.originX = frame.x;
-        this.aux.originY = frame.y;
+        opp = [frame.x, frame.y];                              // top left
         break;
       case 'bot-left-corner':
-        this.aux.originX = frame.x + frame.w;
-        this.aux.originY = frame.y;
+        opp = [frame.x + frame.width, frame.y];                // top right
         break;
       }
+
+      [this.aux.oppX, this.aux.oppY] = opp;
+      this.aux.center = [frame.x + frame.width / 2, frame.y + frame.height / 2];
+    },
+
+    // rotate point around center by angle radians
+    rotate(point, center, angle) {
+      const [pointX,  pointY ] = point;
+      const [centerX, centerY] = center;
+      const cos                = Math.cos(angle);
+      const sin                = Math.sin(angle);
+
+      return [
+        cos * (pointX - centerX) - sin * (pointY - centerY) + centerX,
+        sin * (pointX - centerX) + cos * (pointY - centerY) + centerY
+      ];
+    },
+
+    resizeFrame(state, input) {
+      const frame          = state.doc.selected.frame;
+
+      // rotate stored opposite corner
+      const angle          = frame.angle;
+      const opp            = [this.aux.oppX, this.aux.oppY];
+      const [oppX, oppY]   = opp;
+      const oppRotated     = this.rotate(opp, this.aux.center, angle);
+      const [oppXr, oppYr] = oppRotated;
+
+      // use rotated opposite corner to unrotate mouse position
+      const cornerRotated        = [input.data.inputX, input.data.inputY];
+      const [cornerXr, cornerYr] = cornerRotated;
+      const newCenter            = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
+      const corner               = this.rotate(cornerRotated, newCenter, -angle);
+      const [cornerX, cornerY]   = corner;
+
+      // set frame state using unrotated corners (leaving angle as is)
+      state.doc.selected.frame.set({
+        x:      Math.min(oppX, cornerX),
+        y:      Math.min(oppY, cornerY),
+        width:  Math.abs(oppX - cornerX),
+        height: Math.abs(oppY - cornerY),
+      });
     },
 
     sizeFrame(state, input) {
       state.doc.selected.frame.set({
-        y: Math.min(this.aux.originY, input.data.inputY),
-        x: Math.min(this.aux.originX, input.data.inputX),
-        w: Math.abs(this.aux.originX - input.data.inputX),
-        h: Math.abs(this.aux.originY - input.data.inputY),
+        y:      Math.min(this.aux.originY, input.data.inputY),
+        x:      Math.min(this.aux.originX, input.data.inputX),
+        width:  Math.abs(this.aux.originX - input.data.inputX),
+        height: Math.abs(this.aux.originY - input.data.inputY),
       });
+    },
+
+    releaseFrame(state, input) {
+      const frame = state.doc.selected.frame;
+      console.log('x: ' + String(frame.x), 'y: ' + String(frame.y));
     },
 
     clean(state, input) {
@@ -226,10 +287,6 @@
       if (sameX && sameY) {
         state.doc.deleteSelectedFrame();
       }
-    },
-
-    deleteFrame(state, input) {
-      state.doc.deleteSelectedFrame();
     },
 
     getFrameOrigin(state, input) {
@@ -250,42 +307,24 @@
       this.aux.originY = input.data.inputY;
     },
 
-    updateDocList(state, input) {
-      state.docs.ids = input.data.docIDs;
-    },
-
-    requestDoc(state, input) {
-      state.docs.selectedID = input.data.id;
-    },
-
-    setDoc(state, input) {
-      state.doc.init(input.data.doc);
-    },
-
     getStartAngle(state, input) {
-      const frame = state.doc.select(input.data.id);
-
-      const centerX = frame.x + frame.w / 2;
-      const centerY = frame.y + frame.h / 2;
-      const startX  = input.data.inputX - centerX;
-      const startY  = input.data.inputY - centerY;
-
-      this.aux.centerX = centerX;
-      this.aux.centerY = centerY;
-      this.aux.startAngle = Math.atan2(startY, startX);
-      this.aux.frameStartAngle = frame.r;
+      const frame              = state.doc.select(input.data.id);
+      this.aux.centerX         = frame.x + frame.width / 2;
+      this.aux.centerY         = frame.y + frame.height / 2;
+      const startX             = input.data.inputX - this.aux.centerX;
+      const startY             = input.data.inputY - this.aux.centerY;
+      this.aux.startAngle      = Math.atan2(startY, startX);
+      this.aux.frameStartAngle = frame.angle;
     },
 
     rotateFrame(state, input) {
-      const frame = state.doc.selected.frame;
-
-      const currentX = input.data.inputX - this.aux.centerX;
-      const currentY = input.data.inputY - this.aux.centerY;
-
+      const frame        = state.doc.selected.frame;
+      const currentX     = input.data.inputX - this.aux.centerX;
+      const currentY     = input.data.inputY - this.aux.centerY;
       const currentAngle = Math.atan2(currentY, currentX);
-      const startAngle = this.aux.startAngle;
+      const angleToAdd   = currentAngle - this.aux.startAngle;
 
-      frame.set({ r: currentAngle - startAngle + this.aux.frameStartAngle });
+      frame.set({ angle: this.aux.frameStartAngle + angleToAdd });
     },
 
     init() {
@@ -322,9 +361,9 @@
     [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
 
     // resize
-    [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'sizeFrame'         }],
+    [{ from: 'idle',      input: 'findOppCorner'     }, { to: 'resizing'          }],
+    [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'resizeFrame'       }],
     [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
-    [{ from: 'idle',      input: 'resizeFrame'    }, { to: 'resizing'          }],
 
     // animate
     [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
@@ -350,7 +389,7 @@
   const core = {
     get stateData() {
       return JSON.parse(JSON.stringify(this.state));
-    },
+    }, 
 
     syncPeriphery() {
       const keys = Object.keys(this.periphery);
@@ -465,21 +504,21 @@
 
   const inputTable = [
     // event type     target type           input
-    [['click',       'newShapeButton'   ], 'createShape'    ],
-    [['click',       'newDocButton'     ], 'createDoc'      ],
-    [['click',       'animateButton'    ], 'animate'        ],
-    [['click',       'deleteLink'       ], 'deleteFrame'    ],
-    [['click',       'doc-list-entry'   ], 'requestDoc'     ],
-    [['click',       'canvas'           ], 'edit'           ],
-    [['mousedown',   'frame'            ], 'getFrameOrigin' ],
-    [['mousedown',   'top-left-corner'  ], 'resizeFrame'    ],
-    [['mousedown',   'top-right-corner' ], 'resizeFrame'    ],
-    [['mousedown',   'bot-left-corner'  ], 'resizeFrame'    ],
-    [['mousedown',   'bot-right-corner' ], 'resizeFrame'    ],
-    [['mousedown',   'canvas'           ], 'setFrameOrigin' ],
-    [['mousedown',   'rotate-handle'    ], 'getStartAngle'  ],
-    [['mousemove'                       ], 'changeCoords'   ],
-    [['mouseup'                         ], 'releaseFrame'   ],
+    [['click',       'newShapeButton'   ], 'createShape'     ],
+    [['click',       'newDocButton'     ], 'createDoc'       ],
+    [['click',       'animateButton'    ], 'animate'         ],
+    [['click',       'deleteLink'       ], 'deleteFrame'     ],
+    [['click',       'doc-list-entry'   ], 'requestDoc'      ],
+    [['click',       'canvas'           ], 'edit'            ],
+    [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
+    [['mousedown',   'top-left-corner'  ], 'findOppCorner'      ],
+    [['mousedown',   'top-right-corner' ], 'findOppCorner'      ],
+    [['mousedown',   'bot-left-corner'  ], 'findOppCorner'      ],
+    [['mousedown',   'bot-right-corner' ], 'findOppCorner'      ],
+    [['mousedown',   'canvas'           ], 'setFrameOrigin'  ],
+    [['mousedown',   'rotate-handle'    ], 'getStartAngle'   ],
+    [['mousemove'                       ], 'changeCoords'    ],
+    [['mouseup'                         ], 'releaseFrame'    ],
   ];
 
   inputTable.get = function(key) {
@@ -646,9 +685,9 @@
       return {
         x: frame.x - ui.canvasNode.offsetLeft,
         y: frame.y - ui.canvasNode.offsetTop,
-        w: frame.w,
-        h: frame.h,
-        r: frame.r, // ROTATION
+        width: frame.width,
+        height: frame.height,
+        angle: frame.angle, // ROTATION
       };
     },
 
@@ -656,18 +695,18 @@
       return {
         x:        frame.x,
         y:        frame.y,
-        width:    frame.w,
-        height:   frame.h,
-        rotation: frame.r * 57.2958, // ROTATION, convert to degrees
+        width:    frame.width,
+        height:   frame.height,
+        rotation: frame.angle * 57.2958, // ROTATION, convert to degrees
       };
     },
 
     writeCSS(node, frame) {
       node.style.left      = String(this.adjust(frame).x) + 'px';
       node.style.top       = String(this.adjust(frame).y) + 'px';
-      node.style.width     = String(frame.w) + 'px';
-      node.style.height    = String(frame.h) + 'px';
-      node.style.transform = `rotate(${frame.r}rad)`; // ROTATION
+      node.style.width     = String(frame.width) + 'px';
+      node.style.height    = String(frame.height) + 'px';
+      node.style.transform = `rotate(${frame.angle}rad)`; // ROTATION
     },
 
     start(state) {
@@ -791,13 +830,10 @@
     },
 
     sync(state) {
-      const ignored = ['docSaved', 'edit']; // TODO: possibly others
+      const ignored = ['docSaved', 'edit', 'createDoc', 'createShape'];
       const ignore  = ignored.includes(state.currentInput);
       const idle    = state.id === 'idle';
-
-      if (ignore || !idle) {
-        return;
-      }
+      if (ignore || !idle) { return; }
 
       window.history.pushState(state, 'entry');
     },
@@ -811,7 +847,7 @@
   const app = {
     init() {
       core.init();
-
+   
       for (let component of [ui, db]) {
         component.init();
         component.bindEvents(core.processInput.bind(core));

@@ -6,7 +6,7 @@ import { transitionTable } from './transitionTable.js';
 const core = {
   get stateData() {
     return JSON.parse(JSON.stringify(this.state));
-  },
+  }, 
 
   syncPeriphery() {
     const keys = Object.keys(this.periphery);

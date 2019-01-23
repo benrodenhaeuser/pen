@@ -151,9 +151,9 @@ const ui = {
     return {
       x: frame.x - ui.canvasNode.offsetLeft,
       y: frame.y - ui.canvasNode.offsetTop,
-      w: frame.w,
-      h: frame.h,
-      r: frame.r, // ROTATION
+      width: frame.width,
+      height: frame.height,
+      angle: frame.angle, // ROTATION
     };
   },
 
@@ -161,18 +161,18 @@ const ui = {
     return {
       x:        frame.x,
       y:        frame.y,
-      width:    frame.w,
-      height:   frame.h,
-      rotation: frame.r * 57.2958, // ROTATION, convert to degrees
+      width:    frame.width,
+      height:   frame.height,
+      rotation: frame.angle * 57.2958, // ROTATION, convert to degrees
     };
   },
 
   writeCSS(node, frame) {
     node.style.left      = String(this.adjust(frame).x) + 'px';
     node.style.top       = String(this.adjust(frame).y) + 'px';
-    node.style.width     = String(frame.w) + 'px';
-    node.style.height    = String(frame.h) + 'px';
-    node.style.transform = `rotate(${frame.r}rad)`; // ROTATION
+    node.style.width     = String(frame.width) + 'px';
+    node.style.height    = String(frame.height) + 'px';
+    node.style.transform = `rotate(${frame.angle}rad)`; // ROTATION
   },
 
   start(state) {
