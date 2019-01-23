@@ -218,7 +218,9 @@
         break;
       }
 
+      // store opposite corner
       [this.aux.oppX, this.aux.oppY] = opp;
+      // store centre of frame
       this.aux.center = [frame.x + frame.width / 2, frame.y + frame.height / 2];
     },
 
@@ -241,7 +243,6 @@
       // rotate stored opposite corner
       const angle          = frame.angle;
       const opp            = [this.aux.oppX, this.aux.oppY];
-      const [oppX, oppY]   = opp;
       const oppRotated     = this.rotate(opp, this.aux.center, angle);
       const [oppXr, oppYr] = oppRotated;
 
@@ -249,22 +250,38 @@
       const cornerRotated        = [input.data.inputX, input.data.inputY];
       const [cornerXr, cornerYr] = cornerRotated;
       const newCenter            = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
+      const [newCenterX, newCenterY] = newCenter;
       const corner               = this.rotate(cornerRotated, newCenter, -angle);
       const [cornerX, cornerY]   = corner;
 
-      // set frame state using unrotated corners (leaving angle as is)
+      // use corner and newCenter to find width and height
+      const width  = 2 * Math.abs(cornerX - newCenterX);
+      const height = 2 * Math.abs(cornerY - newCenterY);
+      // => seems right.
+
+      // find new opposite corner (unrotated)
+      const newOpp = [
+        newCenterX + (newCenterX - cornerX),
+        newCenterY + (newCenterY - cornerY)
+      ];
+
+      // store new opposite corner (unrotated) and new center
+      const [newOppX, newOppY] = newOpp;
+      [this.aux.oppX, this.aux.oppY] = newOpp;
+      this.aux.center = newCenter;
+
       state.doc.selected.frame.set({
-        x:      Math.min(oppX, cornerX),
-        y:      Math.min(oppY, cornerY),
-        width:  Math.abs(oppX - cornerX),
-        height: Math.abs(oppY - cornerY),
+        x:      Math.min(newOppX, cornerX),
+        y:      Math.min(newOppY, cornerY),
+        width:  width,
+        height: height,
       });
     },
 
     sizeFrame(state, input) {
       state.doc.selected.frame.set({
-        y:      Math.min(this.aux.originY, input.data.inputY),
         x:      Math.min(this.aux.originX, input.data.inputX),
+        y:      Math.min(this.aux.originY, input.data.inputY),
         width:  Math.abs(this.aux.originX - input.data.inputX),
         height: Math.abs(this.aux.originY - input.data.inputY),
       });
