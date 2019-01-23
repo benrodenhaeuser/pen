@@ -238,28 +238,23 @@
     },
 
     resizeFrame(state, input) {
-      const frame          = state.doc.selected.frame;
+      const frame = state.doc.selected.frame;
 
       // rotate stored opposite corner
-      const angle          = frame.angle;
-      const opp            = [this.aux.oppX, this.aux.oppY];
-      const oppRotated     = this.rotate(opp, this.aux.center, angle);
+      const angle = frame.angle;
+      const opp = [this.aux.oppX, this.aux.oppY];
+      const oppRotated = this.rotate(opp, this.aux.center, angle);
       const [oppXr, oppYr] = oppRotated;
 
       // use rotated opposite corner to unrotate mouse position
-      const cornerRotated        = [input.data.inputX, input.data.inputY];
+      const cornerRotated = [input.data.inputX, input.data.inputY];
       const [cornerXr, cornerYr] = cornerRotated;
-      const newCenter            = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
+      const newCenter = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
       const [newCenterX, newCenterY] = newCenter;
-      const corner               = this.rotate(cornerRotated, newCenter, -angle);
-      const [cornerX, cornerY]   = corner;
+      const corner = this.rotate(cornerRotated, newCenter, -angle);
+      const [cornerX, cornerY] = corner;
 
-      // use corner and newCenter to find width and height
-      const width  = 2 * Math.abs(cornerX - newCenterX);
-      const height = 2 * Math.abs(cornerY - newCenterY);
-      // => seems right.
-
-      // find new opposite corner (unrotated)
+      // use corner/newCenter to find new opposite corner
       const newOpp = [
         newCenterX + (newCenterX - cornerX),
         newCenterY + (newCenterY - cornerY)
@@ -270,11 +265,12 @@
       [this.aux.oppX, this.aux.oppY] = newOpp;
       this.aux.center = newCenter;
 
+      // mutate frame state
       state.doc.selected.frame.set({
         x:      Math.min(newOppX, cornerX),
         y:      Math.min(newOppY, cornerY),
-        width:  width,
-        height: height,
+        width: Math.abs(newOppX - cornerX),
+        height: Math.abs(newOppY - cornerY)
       });
     },
 
@@ -406,7 +402,7 @@
   const core = {
     get stateData() {
       return JSON.parse(JSON.stringify(this.state));
-    }, 
+    },
 
     syncPeriphery() {
       const keys = Object.keys(this.periphery);
@@ -421,7 +417,8 @@
       this.state = stateData;
       this.state.doc = doc.init(stateData.doc);
       this.state.clock = clock.init(stateData.clock.time);
-      this.periphery['ui'](this.stateData);
+      this.periphery['ui'](this.stateData); // only UI is synced
+      // ^ TODO: call syncPeriphery here, and make that method more flexible
     },
 
     processInput(input) {
@@ -461,6 +458,28 @@
       this.processInput({ id: 'kickoff' });
       // ^ TODO: this involves two syncs, is that really necessary?
     },
+  };
+
+  const timeline = {
+    bindEvents(setState) {
+      window.addEventListener('popstate', (event) => {
+        setState(event.state);
+      });
+    },
+   
+    sync(state) {
+      const ignored = ['docSaved', 'edit', 'createDoc', 'createShape'];
+      const ignore  = ignored.includes(state.currentInput);
+      const idle    = state.id === 'idle';
+      if (ignore || !idle) { return; }
+
+      window.history.pushState(state, 'entry');
+    },
+
+    init() {
+      this.name = 'timeline';
+      return this;
+    }
   };
 
   const frameTemplate = (index) => {
@@ -839,41 +858,19 @@
     }
   };
 
-  const diary = {
-    bindEvents(setState) {
-      window.addEventListener('popstate', (event) => {
-        setState(event.state);
-      });
-    },
-
-    sync(state) {
-      const ignored = ['docSaved', 'edit', 'createDoc', 'createShape'];
-      const ignore  = ignored.includes(state.currentInput);
-      const idle    = state.id === 'idle';
-      if (ignore || !idle) { return; }
-
-      window.history.pushState(state, 'entry');
-    },
-
-    init() {
-      this.name = 'diary';
-      return this;
-    }
-  };
-
   const app = {
     init() {
       core.init();
-   
+
       for (let component of [ui, db]) {
         component.init();
         component.bindEvents(core.processInput.bind(core));
         core.periphery[component.name] = component.sync.bind(component);
       }
 
-      diary.init();
-      diary.bindEvents(core.setState.bind(core));
-      core.periphery[diary.name] = diary.sync.bind(diary);
+      timeline.init();
+      timeline.bindEvents(core.setState.bind(core));
+      core.periphery[timeline.name] = timeline.sync.bind(timeline);
 
       core.kickoff();
     },

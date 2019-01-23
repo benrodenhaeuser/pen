@@ -71,29 +71,24 @@ const transformers = {
   },
 
   resizeFrame(state, input) {
-    const frame          = state.doc.selected.frame;
+    const frame = state.doc.selected.frame;
 
     // rotate stored opposite corner
-    const angle          = frame.angle;
-    const opp            = [this.aux.oppX, this.aux.oppY];
-    const [oppX, oppY]   = opp;
-    const oppRotated     = this.rotate(opp, this.aux.center, angle);
+    const angle = frame.angle;
+    const opp = [this.aux.oppX, this.aux.oppY];
+    const [oppX, oppY] = opp;
+    const oppRotated = this.rotate(opp, this.aux.center, angle);
     const [oppXr, oppYr] = oppRotated;
 
     // use rotated opposite corner to unrotate mouse position
-    const cornerRotated        = [input.data.inputX, input.data.inputY];
+    const cornerRotated = [input.data.inputX, input.data.inputY];
     const [cornerXr, cornerYr] = cornerRotated;
-    const newCenter            = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
+    const newCenter = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
     const [newCenterX, newCenterY] = newCenter;
-    const corner               = this.rotate(cornerRotated, newCenter, -angle);
-    const [cornerX, cornerY]   = corner;
+    const corner = this.rotate(cornerRotated, newCenter, -angle);
+    const [cornerX, cornerY] = corner;
 
-    // use corner and newCenter to find width and height
-    const width  = 2 * Math.abs(cornerX - newCenterX);
-    const height = 2 * Math.abs(cornerY - newCenterY);
-    // => seems right.
-
-    // find new opposite corner (unrotated)
+    // use corner/newCenter to find new opposite corner
     const newOpp = [
       newCenterX + (newCenterX - cornerX),
       newCenterY + (newCenterY - cornerY)
@@ -104,11 +99,12 @@ const transformers = {
     [this.aux.oppX, this.aux.oppY] = newOpp;
     this.aux.center = newCenter;
 
+    // mutate frame state
     state.doc.selected.frame.set({
       x:      Math.min(newOppX, cornerX),
       y:      Math.min(newOppY, cornerY),
-      width:  width,
-      height: height,
+      width: Math.abs(newOppX - cornerX),
+      height: Math.abs(newOppY - cornerY)
     });
   },
 

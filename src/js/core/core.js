@@ -6,7 +6,7 @@ import { transitionTable } from './transitionTable.js';
 const core = {
   get stateData() {
     return JSON.parse(JSON.stringify(this.state));
-  }, 
+  },
 
   syncPeriphery() {
     const keys = Object.keys(this.periphery);
@@ -21,7 +21,8 @@ const core = {
     this.state = stateData;
     this.state.doc = doc.init(stateData.doc);
     this.state.clock = clock.init(stateData.clock.time);
-    this.periphery['ui'](this.stateData);
+    this.periphery['ui'](this.stateData); // only UI is synced
+    // ^ TODO: call syncPeriphery here, and make that method more flexible
   },
 
   processInput(input) {

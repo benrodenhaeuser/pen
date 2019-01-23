@@ -1,10 +1,10 @@
-const diary = {
+const timeline = {
   bindEvents(setState) {
     window.addEventListener('popstate', (event) => {
       setState(event.state);
     });
   },
-
+ 
   sync(state) {
     const ignored = ['docSaved', 'edit', 'createDoc', 'createShape'];
     const ignore  = ignored.includes(state.currentInput);
@@ -15,9 +15,9 @@ const diary = {
   },
 
   init() {
-    this.name = 'diary';
+    this.name = 'timeline';
     return this;
   }
 };
 
-export { diary };
+export { timeline };
