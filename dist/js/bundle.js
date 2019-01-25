@@ -126,6 +126,7 @@
           frameID: this.selected.frame && this.selected.frame._id || null,
           shapeID: this.selected.shape._id,
         },
+        svg: this.svg, // TODO: stringifies the svg property
       };
     },
 
@@ -140,6 +141,10 @@
       this.shapes         = docData.shapes;
       this.selected.shape = this.findShape(docData.selected.shapeID);
       this.selected.frame = this.findFrame(docData.selected.frameID);
+    },
+
+    initFromSVG() {
+      // TODO
     },
 
     init(docData) {
@@ -160,6 +165,9 @@
         shape: shape,
         frame: null,
       };
+
+      // TODO: svg hard-coded here
+      this.svg = '<svg viewbox="0 0 150 150"><rect width="150" height="150" style="fill:blue;stroke:pink;stroke-width:5;fill-opacity:0.1;stroke-opacity:0.9" />';
 
       return this;
     },
@@ -283,10 +291,10 @@
       });
     },
 
-    releaseFrame(state, input) {
-      const frame = state.doc.selected.frame;
-      console.log('x: ' + String(frame.x), 'y: ' + String(frame.y));
-    },
+    // releaseFrame(state, input) {
+    //   const frame = state.doc.selected.frame;
+    //   console.log('x: ' + String(frame.x), 'y: ' + String(frame.y));
+    // },
 
     clean(state, input) {
       const same = (val1, val2) => {
@@ -482,9 +490,13 @@
     }
   };
 
-  const frameTemplate = (index) => {
+  // TODO frameTemplate makes svg node by simply copying svg code into the template.
+
+  const frameTemplate = (state, index, id) => {
     const template = document.createElement('template');
     template.innerHTML = `
+    <div class="svg">${state.doc.svg}</div>
+    <div class="frame-body" data-type="frame" data-id="${id}"></div>
     <div class="rotate-handle" data-type="rotate-handle">
     </div>
     <div class="corner top-left" data-type="top-left-corner">
@@ -506,7 +518,7 @@
   };
 
   const nodeFactory = {
-    makeShapeNode(id) {
+    makeShapeNode(state, id) {
       const node = document.createElement('div');
       node.classList.add('shape');
       node.dataset.id = id;
@@ -514,12 +526,12 @@
       return node;
     },
 
-    makeFrameNode(index, id) {
+    makeFrameNode(state, index, id) {
       const node = document.createElement('div');
       node.classList.add('frame');
-      node.dataset.type = 'frame';
+      // node.dataset.type = 'frame';
       node.dataset.id = id;
-      node.appendChild(frameTemplate(index).content.cloneNode(true));
+      node.appendChild(frameTemplate(state, index, id).content.cloneNode(true));
 
       const handle = node.querySelector('.rotate-handle');
       handle.dataset.id = id;
@@ -527,15 +539,38 @@
       return node;
     },
 
-    makeListNode(id) {
+    makeDocListNode(id) {
       const node = document.createElement('li');
       node.innerHTML = `
-        <a href="#" class="pure-menu-link"  data-type="doc-list-entry" data-id="${id}">${id}</a>
+      <a href="#" class="pure-menu-link"  data-type="doc-list-entry" data-id="${id}">${id}</a>
     `;
       node.classList.add('pure-menu-item');
 
       return node;
     },
+
+    makeNavigatorNode(doc) {
+      const node = document.createElement('ul');
+      node.classList.add('navigator-list');
+      // generate innerHTML in a loop
+    },
+
+    makeInspectorNode(frame) {
+      const node = document.createElement('ul');
+      node.classList.add('inspector-list');
+
+      if (frame !== undefined) {
+        node.innerHTML = `
+        <li>x: ${frame.x}</li>
+        <li>y: ${frame.y}</li>
+        <li>width: ${frame.width}</li>
+        <li>height: ${frame.height}</li>
+        <li>angle: ${frame.angle}</li>
+      `;
+      }
+
+      return node;
+    }
   };
 
   const inputTable = [
@@ -547,10 +582,10 @@
     [['click',       'doc-list-entry'   ], 'requestDoc'      ],
     [['click',       'canvas'           ], 'edit'            ],
     [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
-    [['mousedown',   'top-left-corner'  ], 'findOppCorner'      ],
-    [['mousedown',   'top-right-corner' ], 'findOppCorner'      ],
-    [['mousedown',   'bot-left-corner'  ], 'findOppCorner'      ],
-    [['mousedown',   'bot-right-corner' ], 'findOppCorner'      ],
+    [['mousedown',   'top-left-corner'  ], 'findOppCorner'   ],
+    [['mousedown',   'top-right-corner' ], 'findOppCorner'   ],
+    [['mousedown',   'bot-left-corner'  ], 'findOppCorner'   ],
+    [['mousedown',   'bot-right-corner' ], 'findOppCorner'   ],
     [['mousedown',   'canvas'           ], 'setFrameOrigin'  ],
     [['mousedown',   'rotate-handle'    ], 'getStartAngle'   ],
     [['mousemove'                       ], 'changeCoords'    ],
@@ -627,6 +662,7 @@
     render: {
       doc(state) {
         ui.renderFrames(state);
+        ui.renderInspector(state);
       },
 
       docs(state) {
@@ -654,13 +690,13 @@
       ui.canvasNode.innerHTML = '';
 
       for (let shape of state.doc.shapes) {
-        const shapeNode = nodeFactory.makeShapeNode(shape._id);
+        const shapeNode = nodeFactory.makeShapeNode(state, shape._id);
         if (state.doc.selected.shapeID === shape._id) {
           shapeNode.classList.add('selected');
         }
 
         for (var i = 0; i < shape.frames.length; i += 1) {
-          const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
+          const frameNode = nodeFactory.makeFrameNode(state, i, shape.frames[i]._id);
           ui.writeCSS(frameNode, shape.frames[i]);
           if (shape.frames[i]._id === state.doc.selected.frameID) {
             frameNode.classList.add('selected');
@@ -678,7 +714,7 @@
       docList.innerHTML = '';
 
       for (let docID of state.docs.ids) {
-        const node = nodeFactory.makeListNode(docID);
+        const node = nodeFactory.makeDocListNode(docID);
         docList.appendChild(node);
         if (docID === state.docs.selectedID) {
           node.classList.add('selected');
@@ -686,12 +722,31 @@
       }
     },
 
+    findSelected(doc) {
+      for (let shape of doc.shapes) {
+        for (let frame of shape.frames) {
+          if (frame._id === doc.selected.frameID) {
+            return frame;
+          }
+        }
+      }
+    },
+
+    renderInspector(state) {
+      const inspector = document.querySelector('#inspector');
+      inspector.innerHTML = '';
+
+      const node = nodeFactory.makeInspectorNode(this.findSelected(state.doc));
+      inspector.appendChild(node);
+    },
+
     renderAnimations(state) {
       ui.canvasNode.innerHTML = '';
 
       for (let shape of state.doc.shapes) {
         const timeline = new TimelineMax();
-        const shapeNode = nodeFactory.makeShapeNode();
+        const shapeNode = nodeFactory.makeShapeNode(state);
+        shapeNode.innerHTML = state.doc.svg; // TODO: append svg to shape
 
         for (let i = 0; i < shape.frames.length - 1; i += 1) {
           let source = shape.frames[i];

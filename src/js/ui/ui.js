@@ -57,6 +57,7 @@ const ui = {
   render: {
     doc(state) {
       ui.renderFrames(state);
+      ui.renderInspector(state);
     },
 
     docs(state) {
@@ -84,13 +85,13 @@ const ui = {
     ui.canvasNode.innerHTML = '';
 
     for (let shape of state.doc.shapes) {
-      const shapeNode = nodeFactory.makeShapeNode(shape._id);
+      const shapeNode = nodeFactory.makeShapeNode(state, shape._id);
       if (state.doc.selected.shapeID === shape._id) {
         shapeNode.classList.add('selected');
       }
 
       for (var i = 0; i < shape.frames.length; i += 1) {
-        const frameNode = nodeFactory.makeFrameNode(i, shape.frames[i]._id);
+        const frameNode = nodeFactory.makeFrameNode(state, i, shape.frames[i]._id);
         ui.writeCSS(frameNode, shape.frames[i]);
         if (shape.frames[i]._id === state.doc.selected.frameID) {
           frameNode.classList.add('selected');
@@ -108,7 +109,7 @@ const ui = {
     docList.innerHTML = '';
 
     for (let docID of state.docs.ids) {
-      const node = nodeFactory.makeListNode(docID);
+      const node = nodeFactory.makeDocListNode(docID);
       docList.appendChild(node);
       if (docID === state.docs.selectedID) {
         node.classList.add('selected');
@@ -116,12 +117,31 @@ const ui = {
     }
   },
 
+  findSelected(doc) {
+    for (let shape of doc.shapes) {
+      for (let frame of shape.frames) {
+        if (frame._id === doc.selected.frameID) {
+          return frame;
+        }
+      }
+    }
+  },
+
+  renderInspector(state) {
+    const inspector = document.querySelector('#inspector');
+    inspector.innerHTML = '';
+
+    const node = nodeFactory.makeInspectorNode(this.findSelected(state.doc));
+    inspector.appendChild(node);
+  },
+
   renderAnimations(state) {
     ui.canvasNode.innerHTML = '';
 
     for (let shape of state.doc.shapes) {
       const timeline = new TimelineMax();
-      const shapeNode = nodeFactory.makeShapeNode();
+      const shapeNode = nodeFactory.makeShapeNode(state);
+      shapeNode.innerHTML = state.doc.svg; // TODO: append svg to shape
 
       for (let i = 0; i < shape.frames.length - 1; i += 1) {
         let source = shape.frames[i];

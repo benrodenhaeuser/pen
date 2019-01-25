@@ -112,6 +112,7 @@ const doc = {
         frameID: this.selected.frame && this.selected.frame._id || null,
         shapeID: this.selected.shape._id,
       },
+      svg: this.svg, // TODO: stringifies the svg property
     };
   },
 
@@ -126,6 +127,10 @@ const doc = {
     this.shapes         = docData.shapes;
     this.selected.shape = this.findShape(docData.selected.shapeID);
     this.selected.frame = this.findFrame(docData.selected.frameID);
+  },
+
+  initFromSVG() {
+    // TODO
   },
 
   init(docData) {
@@ -146,6 +151,9 @@ const doc = {
       shape: shape,
       frame: null,
     };
+
+    // TODO: svg hard-coded here
+    this.svg = '<svg viewbox="0 0 150 150"><rect width="150" height="150" style="fill:blue;stroke:pink;stroke-width:5;fill-opacity:0.1;stroke-opacity:0.9" />';
 
     return this;
   },

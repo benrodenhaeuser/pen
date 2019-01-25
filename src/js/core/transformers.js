@@ -117,10 +117,10 @@ const transformers = {
     });
   },
 
-  releaseFrame(state, input) {
-    const frame = state.doc.selected.frame;
-    console.log('x: ' + String(frame.x), 'y: ' + String(frame.y));
-  },
+  // releaseFrame(state, input) {
+  //   const frame = state.doc.selected.frame;
+  //   console.log('x: ' + String(frame.x), 'y: ' + String(frame.y));
+  // },
 
   clean(state, input) {
     const same = (val1, val2) => {

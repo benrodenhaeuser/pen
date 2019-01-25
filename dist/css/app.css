@@ -54,7 +54,7 @@ body {
 
 .shape {
   position: absolute;
-  background-color: red;
+  /* background-color: red; */
   box-sizing: content-box;
   /* z-index: 1; */
 }
@@ -203,4 +203,19 @@ li.selected a, li.selected a:hover {
   top: -20px;
   width: 10px;
   height: 10px;
+}
+
+.inspector-list {
+  font-size: 14px;
+  line-height: 20px;
+  list-style: none;
+  padding: 10px;
+}
+
+.frame-body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
