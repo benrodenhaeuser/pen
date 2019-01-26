@@ -1,10 +1,10 @@
-// TODO frameTemplate makes svg node by simply copying svg code into the template.
+// TODO frameTemplate makes svg node by simply copying svg markup into the template.
 
-const frameTemplate = (state, index, id) => {
+const frameTemplate = (index, shape, frame) => {
   const template = document.createElement('template');
   template.innerHTML = `
-    <div class="svg">${state.doc.svg}</div>
-    <div class="frame-body" data-type="frame" data-id="${id}"></div>
+    <div class="svg">${shape.markup}</div>
+    <div class="frame-body" data-type="frame" data-id="${frame._id}"></div>
     <div class="rotate-handle" data-type="rotate-handle">
     </div>
     <div class="corner top-left" data-type="top-left-corner">
@@ -34,15 +34,15 @@ const nodeFactory = {
     return node;
   },
 
-  makeFrameNode(state, index, id) {
+  makeFrameNode(index, shape, frame) {
     const node = document.createElement('div');
     node.classList.add('frame');
     // node.dataset.type = 'frame';
-    node.dataset.id = id;
-    node.appendChild(frameTemplate(state, index, id).content.cloneNode(true));
+    node.dataset.id = frame._id;
+    node.appendChild(frameTemplate(index, shape, frame).content.cloneNode(true));
 
     const handle = node.querySelector('.rotate-handle');
-    handle.dataset.id = id;
+    handle.dataset.id = frame._id;
 
     return node;
   },

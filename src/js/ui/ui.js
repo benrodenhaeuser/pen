@@ -45,6 +45,7 @@ const ui = {
 
     if (state.id === 'start') {
       this.start(state);
+      this.renderFrames(state); // ?
       return;
     }
 
@@ -91,7 +92,7 @@ const ui = {
       }
 
       for (var i = 0; i < shape.frames.length; i += 1) {
-        const frameNode = nodeFactory.makeFrameNode(state, i, shape.frames[i]._id);
+        const frameNode = nodeFactory.makeFrameNode(i, shape, shape.frames[i]);
         ui.writeCSS(frameNode, shape.frames[i]);
         if (shape.frames[i]._id === state.doc.selected.frameID) {
           frameNode.classList.add('selected');
@@ -141,7 +142,7 @@ const ui = {
     for (let shape of state.doc.shapes) {
       const timeline = new TimelineMax();
       const shapeNode = nodeFactory.makeShapeNode(state);
-      shapeNode.innerHTML = state.doc.svg; // TODO: append svg to shape
+      shapeNode.innerHTML = shape.markup; // TODO: append svg to shape
 
       for (let i = 0; i < shape.frames.length - 1; i += 1) {
         let source = shape.frames[i];
@@ -168,9 +169,12 @@ const ui = {
   },
 
   adjust(frame) {
+    console.log(ui.canvasNode.offsetLeft);
     return {
       x: frame.x - ui.canvasNode.offsetLeft,
       y: frame.y - ui.canvasNode.offsetTop,
+      // x: frame.x,
+      // y: frame.y,
       width: frame.width,
       height: frame.height,
       angle: frame.angle, // ROTATION

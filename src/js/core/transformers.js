@@ -72,6 +72,7 @@ const transformers = {
 
   resizeFrame(state, input) {
     const frame = state.doc.selected.frame;
+    const shape = state.doc.selected.shape;
 
     // rotate stored opposite corner
     const angle = frame.angle;
@@ -99,21 +100,34 @@ const transformers = {
     [this.aux.oppX, this.aux.oppY] = newOpp;
     this.aux.center = newCenter;
 
+    const newWidth  = Math.abs(newOppX - cornerX);
+    const newHeight = newWidth / shape.aspectRatio;
+
     // mutate frame state
     state.doc.selected.frame.set({
       x:      Math.min(newOppX, cornerX),
       y:      Math.min(newOppY, cornerY),
-      width: Math.abs(newOppX - cornerX),
-      height: Math.abs(newOppY - cornerY)
+      // width:  Math.abs(newOppX - cornerX),
+      // height: Math.abs(newOppY - cornerY)
+      width:  newWidth,
+      height: newHeight,
     });
+
+    console.log('done');
   },
 
   sizeFrame(state, input) {
+    const shape     = state.doc.selected.shape;
+    const newWidth  = Math.abs(this.aux.originX - input.data.inputX);
+    const newHeight = newWidth / shape.aspectRatio;
+
     state.doc.selected.frame.set({
       x:      Math.min(this.aux.originX, input.data.inputX),
       y:      Math.min(this.aux.originY, input.data.inputY),
-      width:  Math.abs(this.aux.originX - input.data.inputX),
-      height: Math.abs(this.aux.originY - input.data.inputY),
+      // width:  Math.abs(this.aux.originX - input.data.inputX),
+      // height: Math.abs(this.aux.originY - input.data.inputY),
+      width:  newWidth,
+      height: newHeight,
     });
   },
 
@@ -144,6 +158,7 @@ const transformers = {
 
   moveFrame(state, input) {
     const frame = state.doc.selected.frame;
+    console.log('frame: ' + JSON.stringify(frame));
 
     frame.set({
       y: frame.y  + (input.data.inputY - this.aux.originY),

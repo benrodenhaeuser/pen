@@ -15,14 +15,14 @@ const explode = (svg) => {
 
   const isSvgGroup = (element) => element.tagName === 'g';
   const rootGroups = Array.from(svg.children).filter(isSvgGroup);
-  const svgs       = rootGroups.map(groupToSVG);
+  const svgs       = rootGroups.map(toSVG);
 
   svg.remove();
   return svgs;
 };
 
-const groupToSVG = (group) => {
-  const owner = group.ownerSVGElement;
+const toSVG = (groupElement) => {
+  const owner = groupElement.ownerSVGElement;
   const svg   = document.createElementNS(owner.namespaceURI,'svg');
   const css   = Array.from(owner.querySelectorAll('style, defs'));
 
@@ -30,9 +30,9 @@ const groupToSVG = (group) => {
     svg.appendChild(element.cloneNode(true));
   }
 
-  svg.appendChild(group.cloneNode(true));
+  svg.appendChild(groupElement.cloneNode(true));
 
-  const bb = globalBoundingBox(group);
+  const bb = globalBoundingBox(groupElement);
   svg.setAttribute('viewBox',[bb.x, bb.y, bb.width, bb.height].join(' '));
   return svg;
 };
@@ -78,10 +78,10 @@ const getCoordinates = (svg) => {
   const coordinates = svg.getAttribute('viewBox').split(' ');
 
   return {
-      x:      coordinates[0],
-      y:      coordinates[1],
-      width:  coordinates[2],
-      height: coordinates[3]
+      x:      Number(coordinates[0]),
+      y:      Number(coordinates[1]),
+      width:  Number(coordinates[2]),
+      height: Number(coordinates[3])
     };
 };
 
