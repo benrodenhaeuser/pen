@@ -10,9 +10,8 @@ const core = {
 
   syncPeriphery() {
     const keys = Object.keys(this.periphery);
-
     for (let key of keys) {
-      this.periphery[key](this.stateData);
+      this.periphery[key](JSON.parse(JSON.stringify(this.state)));
     }
   },
 
@@ -21,7 +20,7 @@ const core = {
     this.state = stateData;
     this.state.doc = doc.init(stateData.doc);
     this.state.clock = clock.init(stateData.clock.time);
-    this.periphery['ui'](this.stateData); // only UI is synced
+    this.periphery['ui'](JSON.parse(JSON.stringify(this.state))); // only UI is synced
     // ^ TODO: call syncPeriphery here, and make that method more flexible
   },
 

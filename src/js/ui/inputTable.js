@@ -1,5 +1,5 @@
 const inputTable = [
-  // event type     target type           input
+  // event type     pointer target        input
   [['click',       'newShapeButton'   ], 'createShape'     ],
   [['click',       'newDocButton'     ], 'createDoc'       ],
   [['click',       'animateButton'    ], 'animate'         ],

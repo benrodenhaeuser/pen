@@ -141,7 +141,6 @@ const doc = {
         frameID: this.selected.frame && this.selected.frame._id || null,
         shapeID: this.selected.shape._id,
       },
-      svg: this.svg, // TODO: stringifies the svg property
     };
   },
 
@@ -165,16 +164,21 @@ const doc = {
     this.shapes = [];
 
     for (let svg of svgs) {
-      const shape = {};
-      shape._id = createID();
-      shape.markup = svg.markup;
-      shape.aspectRatio = svg.width / svg.height;
-      shape.frames = [Object.create(Frame).init({
-        x: svg.x,
-        y: svg.y,
-        width: svg.width,
+      const frame = Object.create(Frame).init({
+        x:      svg.x,
+        y:      svg.y,
+        width:  svg.width,
         height: svg.height,
-      })];
+      });
+
+      const shape = {
+        _id:         createID(),
+        markup:      svg.markup,
+        aspectRatio: svg.width / svg.height,
+        frames:      [frame],
+        initial:     frame, // TODO needed? wanted?
+      };
+
       this.shapes.push(shape);
     }
 
@@ -184,10 +188,10 @@ const doc = {
   },
 
   init(docData) {
-    // if (docData !== undefined) {
-    //   this.initFromDocData(docData);
-    //   return this;
-    // }
+    if (docData !== undefined) {
+      this.initFromDocData(docData);
+      return this;
+    }
     //
     // const docID   = createID();
     // const shapeID = createID();
@@ -203,8 +207,6 @@ const doc = {
     // };
 
     this.initFromSVG(markup);
-
-    console.log(this);
 
     return this;
   },

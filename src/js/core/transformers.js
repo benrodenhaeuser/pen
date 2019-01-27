@@ -18,7 +18,7 @@ const transformers = {
   },
 
   requestDoc(state, input) {
-    state.docs.selectedID = input.data.id;
+    state.docs.selectedID = input.pointer.targetID;
   },
 
   setDoc(state, input) {
@@ -27,8 +27,8 @@ const transformers = {
 
   setFrameOrigin(state, input) {
     state.doc.insertFrameInPlace();
-    this.aux.originX = input.data.inputX;
-    this.aux.originY = input.data.inputY;
+    this.aux.originX = input.pointer.x;
+    this.aux.originY = input.pointer.y;
   },
 
   findOppCorner(state, input) {
@@ -36,7 +36,7 @@ const transformers = {
 
     let opp;
 
-    switch (input.data.target) {
+    switch (input.pointer.target) {
     case 'top-left-corner':
       opp = [frame.x + frame.width, frame.y + frame.height]; // bottom right
       break;
@@ -82,7 +82,7 @@ const transformers = {
     const [oppXr, oppYr] = oppRotated;
 
     // use rotated opposite corner to unrotate mouse position
-    const cornerRotated = [input.data.inputX, input.data.inputY];
+    const cornerRotated = [input.pointer.x, input.pointer.y];
     const [cornerXr, cornerYr] = cornerRotated;
     const newCenter = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
     const [newCenterX, newCenterY] = newCenter;
@@ -107,25 +107,19 @@ const transformers = {
     state.doc.selected.frame.set({
       x:      Math.min(newOppX, cornerX),
       y:      Math.min(newOppY, cornerY),
-      // width:  Math.abs(newOppX - cornerX),
-      // height: Math.abs(newOppY - cornerY)
       width:  newWidth,
       height: newHeight,
     });
-
-    console.log('done');
   },
 
   sizeFrame(state, input) {
     const shape     = state.doc.selected.shape;
-    const newWidth  = Math.abs(this.aux.originX - input.data.inputX);
+    const newWidth  = Math.abs(this.aux.originX - input.pointer.x);
     const newHeight = newWidth / shape.aspectRatio;
 
     state.doc.selected.frame.set({
-      x:      Math.min(this.aux.originX, input.data.inputX),
-      y:      Math.min(this.aux.originY, input.data.inputY),
-      // width:  Math.abs(this.aux.originX - input.data.inputX),
-      // height: Math.abs(this.aux.originY - input.data.inputY),
+      x:      Math.min(this.aux.originX, input.pointer.x),
+      y:      Math.min(this.aux.originY, input.pointer.y),
       width:  newWidth,
       height: newHeight,
     });
@@ -133,7 +127,6 @@ const transformers = {
 
   // releaseFrame(state, input) {
   //   const frame = state.doc.selected.frame;
-  //   console.log('x: ' + String(frame.x), 'y: ' + String(frame.y));
   // },
 
   clean(state, input) {
@@ -142,8 +135,8 @@ const transformers = {
       return Math.abs(val1 - val2) <= treshold;
     };
 
-    const sameX = same(this.aux.originX, input.data.inputX);
-    const sameY = same(this.aux.originY, input.data.inputY);
+    const sameX = same(this.aux.originX, input.pointer.x);
+    const sameY = same(this.aux.originY, input.pointer.y);
 
     if (sameX && sameY) {
       state.doc.deleteSelectedFrame();
@@ -151,38 +144,37 @@ const transformers = {
   },
 
   getFrameOrigin(state, input) {
-    state.doc.select(input.data.id);
-    this.aux.originX = input.data.inputX;
-    this.aux.originY = input.data.inputY;
+    state.doc.select(input.pointer.targetID);
+    this.aux.originX = input.pointer.x;
+    this.aux.originY = input.pointer.y;
   },
 
   moveFrame(state, input) {
     const frame = state.doc.selected.frame;
-    console.log('frame: ' + JSON.stringify(frame));
 
     frame.set({
-      y: frame.y  + (input.data.inputY - this.aux.originY),
-      x: frame.x + (input.data.inputX - this.aux.originX),
+      y: frame.y  + (input.pointer.y - this.aux.originY),
+      x: frame.x + (input.pointer.x - this.aux.originX),
     });
 
-    this.aux.originX = input.data.inputX;
-    this.aux.originY = input.data.inputY;
+    this.aux.originX = input.pointer.x;
+    this.aux.originY = input.pointer.y;
   },
 
   getStartAngle(state, input) {
-    const frame              = state.doc.select(input.data.id);
+    const frame              = state.doc.select(input.pointer.targetID);
     this.aux.centerX         = frame.x + frame.width / 2;
     this.aux.centerY         = frame.y + frame.height / 2;
-    const startX             = input.data.inputX - this.aux.centerX;
-    const startY             = input.data.inputY - this.aux.centerY;
+    const startX             = input.pointer.x - this.aux.centerX;
+    const startY             = input.pointer.y - this.aux.centerY;
     this.aux.startAngle      = Math.atan2(startY, startX);
     this.aux.frameStartAngle = frame.angle;
   },
 
   rotateFrame(state, input) {
     const frame        = state.doc.selected.frame;
-    const currentX     = input.data.inputX - this.aux.centerX;
-    const currentY     = input.data.inputY - this.aux.centerY;
+    const currentX     = input.pointer.x - this.aux.centerX;
+    const currentY     = input.pointer.y - this.aux.centerY;
     const currentAngle = Math.atan2(currentY, currentX);
     const angleToAdd   = currentAngle - this.aux.startAngle;
 

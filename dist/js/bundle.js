@@ -254,7 +254,6 @@
           frameID: this.selected.frame && this.selected.frame._id || null,
           shapeID: this.selected.shape._id,
         },
-        svg: this.svg, // TODO: stringifies the svg property
       };
     },
 
@@ -278,16 +277,21 @@
       this.shapes = [];
 
       for (let svg of svgs) {
-        const shape = {};
-        shape._id = createID();
-        shape.markup = svg.markup;
-        shape.aspectRatio = svg.width / svg.height;
-        shape.frames = [Object.create(Frame).init({
-          x: svg.x,
-          y: svg.y,
-          width: svg.width,
+        const frame = Object.create(Frame).init({
+          x:      svg.x,
+          y:      svg.y,
+          width:  svg.width,
           height: svg.height,
-        })];
+        });
+
+        const shape = {
+          _id:         createID(),
+          markup:      svg.markup,
+          aspectRatio: svg.width / svg.height,
+          frames:      [frame],
+          initial:     frame, // TODO needed? wanted?
+        };
+
         this.shapes.push(shape);
       }
 
@@ -297,10 +301,10 @@
     },
 
     init(docData) {
-      // if (docData !== undefined) {
-      //   this.initFromDocData(docData);
-      //   return this;
-      // }
+      if (docData !== undefined) {
+        this.initFromDocData(docData);
+        return this;
+      }
       //
       // const docID   = createID();
       // const shapeID = createID();
@@ -316,8 +320,6 @@
       // };
 
       this.initFromSVG(markup);
-
-      console.log(this);
 
       return this;
     },
@@ -343,7 +345,7 @@
     },
 
     requestDoc(state, input) {
-      state.docs.selectedID = input.data.id;
+      state.docs.selectedID = input.pointer.targetID;
     },
 
     setDoc(state, input) {
@@ -352,8 +354,8 @@
 
     setFrameOrigin(state, input) {
       state.doc.insertFrameInPlace();
-      this.aux.originX = input.data.inputX;
-      this.aux.originY = input.data.inputY;
+      this.aux.originX = input.pointer.x;
+      this.aux.originY = input.pointer.y;
     },
 
     findOppCorner(state, input) {
@@ -361,7 +363,7 @@
 
       let opp;
 
-      switch (input.data.target) {
+      switch (input.pointer.target) {
       case 'top-left-corner':
         opp = [frame.x + frame.width, frame.y + frame.height]; // bottom right
         break;
@@ -406,7 +408,7 @@
       const [oppXr, oppYr] = oppRotated;
 
       // use rotated opposite corner to unrotate mouse position
-      const cornerRotated = [input.data.inputX, input.data.inputY];
+      const cornerRotated = [input.pointer.x, input.pointer.y];
       const [cornerXr, cornerYr] = cornerRotated;
       const newCenter = [(cornerXr + oppXr)/2, (cornerYr + oppYr)/2];
       const [newCenterX, newCenterY] = newCenter;
@@ -431,25 +433,19 @@
       state.doc.selected.frame.set({
         x:      Math.min(newOppX, cornerX),
         y:      Math.min(newOppY, cornerY),
-        // width:  Math.abs(newOppX - cornerX),
-        // height: Math.abs(newOppY - cornerY)
         width:  newWidth,
         height: newHeight,
       });
-
-      console.log('done');
     },
 
     sizeFrame(state, input) {
       const shape     = state.doc.selected.shape;
-      const newWidth  = Math.abs(this.aux.originX - input.data.inputX);
+      const newWidth  = Math.abs(this.aux.originX - input.pointer.x);
       const newHeight = newWidth / shape.aspectRatio;
 
       state.doc.selected.frame.set({
-        x:      Math.min(this.aux.originX, input.data.inputX),
-        y:      Math.min(this.aux.originY, input.data.inputY),
-        // width:  Math.abs(this.aux.originX - input.data.inputX),
-        // height: Math.abs(this.aux.originY - input.data.inputY),
+        x:      Math.min(this.aux.originX, input.pointer.x),
+        y:      Math.min(this.aux.originY, input.pointer.y),
         width:  newWidth,
         height: newHeight,
       });
@@ -457,7 +453,6 @@
 
     // releaseFrame(state, input) {
     //   const frame = state.doc.selected.frame;
-    //   console.log('x: ' + String(frame.x), 'y: ' + String(frame.y));
     // },
 
     clean(state, input) {
@@ -466,8 +461,8 @@
         return Math.abs(val1 - val2) <= treshold;
       };
 
-      const sameX = same(this.aux.originX, input.data.inputX);
-      const sameY = same(this.aux.originY, input.data.inputY);
+      const sameX = same(this.aux.originX, input.pointer.x);
+      const sameY = same(this.aux.originY, input.pointer.y);
 
       if (sameX && sameY) {
         state.doc.deleteSelectedFrame();
@@ -475,38 +470,37 @@
     },
 
     getFrameOrigin(state, input) {
-      state.doc.select(input.data.id);
-      this.aux.originX = input.data.inputX;
-      this.aux.originY = input.data.inputY;
+      state.doc.select(input.pointer.targetID);
+      this.aux.originX = input.pointer.x;
+      this.aux.originY = input.pointer.y;
     },
 
     moveFrame(state, input) {
       const frame = state.doc.selected.frame;
-      console.log('frame: ' + JSON.stringify(frame));
 
       frame.set({
-        y: frame.y  + (input.data.inputY - this.aux.originY),
-        x: frame.x + (input.data.inputX - this.aux.originX),
+        y: frame.y  + (input.pointer.y - this.aux.originY),
+        x: frame.x + (input.pointer.x - this.aux.originX),
       });
 
-      this.aux.originX = input.data.inputX;
-      this.aux.originY = input.data.inputY;
+      this.aux.originX = input.pointer.x;
+      this.aux.originY = input.pointer.y;
     },
 
     getStartAngle(state, input) {
-      const frame              = state.doc.select(input.data.id);
+      const frame              = state.doc.select(input.pointer.targetID);
       this.aux.centerX         = frame.x + frame.width / 2;
       this.aux.centerY         = frame.y + frame.height / 2;
-      const startX             = input.data.inputX - this.aux.centerX;
-      const startY             = input.data.inputY - this.aux.centerY;
+      const startX             = input.pointer.x - this.aux.centerX;
+      const startY             = input.pointer.y - this.aux.centerY;
       this.aux.startAngle      = Math.atan2(startY, startX);
       this.aux.frameStartAngle = frame.angle;
     },
 
     rotateFrame(state, input) {
       const frame        = state.doc.selected.frame;
-      const currentX     = input.data.inputX - this.aux.centerX;
-      const currentY     = input.data.inputY - this.aux.centerY;
+      const currentX     = input.pointer.x - this.aux.centerX;
+      const currentY     = input.pointer.y - this.aux.centerY;
       const currentAngle = Math.atan2(currentY, currentX);
       const angleToAdd   = currentAngle - this.aux.startAngle;
 
@@ -579,9 +573,8 @@
 
     syncPeriphery() {
       const keys = Object.keys(this.periphery);
-
       for (let key of keys) {
-        this.periphery[key](this.stateData);
+        this.periphery[key](JSON.parse(JSON.stringify(this.state)));
       }
     },
 
@@ -590,7 +583,7 @@
       this.state = stateData;
       this.state.doc = doc.init(stateData.doc);
       this.state.clock = clock.init(stateData.clock.time);
-      this.periphery['ui'](this.stateData); // only UI is synced
+      this.periphery['ui'](JSON.parse(JSON.stringify(this.state))); // only UI is synced
       // ^ TODO: call syncPeriphery here, and make that method more flexible
     },
 
@@ -633,24 +626,26 @@
     },
   };
 
-  const timeline = {
+  const log = {
     bindEvents(setState) {
       window.addEventListener('popstate', (event) => {
         setState(event.state);
       });
     },
-   
+
     sync(state) {
       const ignored = ['docSaved', 'edit', 'createDoc', 'createShape'];
       const ignore  = ignored.includes(state.currentInput);
       const idle    = state.id === 'idle';
-      if (ignore || !idle) { return; }
+      if (ignore || !idle) {
+        return;
+      }
 
       window.history.pushState(state, 'entry');
     },
 
     init() {
-      this.name = 'timeline';
+      this.name = 'log';
       return this;
     }
   };
@@ -739,7 +734,7 @@
   };
 
   const inputTable = [
-    // event type     target type           input
+    // event type     pointer target        input
     [['click',       'newShapeButton'   ], 'createShape'     ],
     [['click',       'newDocButton'     ], 'createDoc'       ],
     [['click',       'animateButton'    ], 'animate'         ],
@@ -775,12 +770,12 @@
     bindEvents(processInput) {
       this.canvasNode = document.querySelector('#canvas');
 
-      const eventData = (event) => {
+      const pointerData = (event) => {
         return {
-          inputX: event.clientX,
-          inputY: event.clientY,
-          target: event.target.dataset.type,
-          id:     event.target.dataset.id,
+          x:        event.clientX - this.canvasNode.offsetLeft,
+          y:        event.clientY - ui.canvasNode.offsetTop,
+          target:   event.target.dataset.type,
+          targetID: event.target.dataset.id,
         };
       };
 
@@ -789,7 +784,7 @@
           event.preventDefault();
           processInput({
             id:   inputTable.get([eventType, event.target.dataset.type]),
-            data: eventData(event)
+            pointer: pointerData(event)
           });
         });
       }
@@ -798,7 +793,7 @@
         event.preventDefault();
         processInput({
           id:   inputTable.get(['click', event.target.dataset.type]),
-          data: eventData(event)
+          pointer: pointerData(event)
         });
       });
     },
@@ -888,41 +883,51 @@
       }
     },
 
-    findSelected(doc) {
-      for (let shape of doc.shapes) {
-        for (let frame of shape.frames) {
-          if (frame._id === doc.selected.frameID) {
-            return frame;
+    renderInspector(state) {
+      const findSelected = (doc) => {
+        for (let shape of doc.shapes) {
+          for (let frame of shape.frames) {
+            if (frame._id === doc.selected.frameID) {
+              return frame;
+            }
           }
         }
-      }
-    },
+      };
 
-    renderInspector(state) {
       const inspector = document.querySelector('#inspector');
       inspector.innerHTML = '';
 
-      const node = nodeFactory.makeInspectorNode(this.findSelected(state.doc));
+      const node = nodeFactory.makeInspectorNode(findSelected(state.doc));
       inspector.appendChild(node);
     },
 
     renderAnimations(state) {
+      const convertAngleToDegrees = (frame) => {
+        return {
+          x:        frame.x,
+          y:        frame.y,
+          width:    frame.width,
+          height:   frame.height,
+          rotation: frame.angle * 57.2958, // convert to degrees
+        };
+      };
+
       ui.canvasNode.innerHTML = '';
 
       for (let shape of state.doc.shapes) {
         const timeline = new TimelineMax();
         const shapeNode = nodeFactory.makeShapeNode(state);
-        shapeNode.innerHTML = shape.markup; // TODO: append svg to shape
+        shapeNode.innerHTML = shape.markup;
 
         for (let i = 0; i < shape.frames.length - 1; i += 1) {
-          let source = shape.frames[i];
-          let target = shape.frames[i + 1];
+          let start = shape.frames[i];
+          let end   = shape.frames[i + 1];
 
           timeline.fromTo(
             shapeNode,
             0.3,
-            ui.convertKeys(ui.adjust(source)),
-            ui.convertKeys(ui.adjust(target))
+            convertAngleToDegrees(start),
+            convertAngleToDegrees(end)
           );
         }
 
@@ -938,35 +943,12 @@
       window.setTimeout(() => flash.remove(), 1500);
     },
 
-    adjust(frame) {
-      console.log(ui.canvasNode.offsetLeft);
-      return {
-        x: frame.x - ui.canvasNode.offsetLeft,
-        y: frame.y - ui.canvasNode.offsetTop,
-        // x: frame.x,
-        // y: frame.y,
-        width: frame.width,
-        height: frame.height,
-        angle: frame.angle, // ROTATION
-      };
-    },
-
-    convertKeys(frame) {
-      return {
-        x:        frame.x,
-        y:        frame.y,
-        width:    frame.width,
-        height:   frame.height,
-        rotation: frame.angle * 57.2958, // ROTATION, convert to degrees
-      };
-    },
-
     writeCSS(node, frame) {
-      node.style.left      = String(this.adjust(frame).x) + 'px';
-      node.style.top       = String(this.adjust(frame).y) + 'px';
+      node.style.left      = String(frame.x) + 'px';
+      node.style.top       = String(frame.y) + 'px';
       node.style.width     = String(frame.width) + 'px';
       node.style.height    = String(frame.height) + 'px';
-      node.style.transform = `rotate(${frame.angle}rad)`; // ROTATION
+      node.style.transform = `rotate(${frame.angle}rad)`;
     },
 
     start(state) {
@@ -1092,9 +1074,9 @@
         core.periphery[component.name] = component.sync.bind(component);
       }
 
-      timeline.init();
-      timeline.bindEvents(core.setState.bind(core));
-      core.periphery[timeline.name] = timeline.sync.bind(timeline);
+      log.init();
+      log.bindEvents(core.setState.bind(core));
+      core.periphery[log.name] = log.sync.bind(log);
 
       core.kickoff();
     },

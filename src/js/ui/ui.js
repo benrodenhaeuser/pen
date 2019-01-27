@@ -5,12 +5,12 @@ const ui = {
   bindEvents(processInput) {
     this.canvasNode = document.querySelector('#canvas');
 
-    const eventData = (event) => {
+    const pointerData = (event) => {
       return {
-        inputX: event.clientX,
-        inputY: event.clientY,
-        target: event.target.dataset.type,
-        id:     event.target.dataset.id,
+        x:        event.clientX - this.canvasNode.offsetLeft,
+        y:        event.clientY - ui.canvasNode.offsetTop,
+        target:   event.target.dataset.type,
+        targetID: event.target.dataset.id,
       };
     };
 
@@ -19,7 +19,7 @@ const ui = {
         event.preventDefault();
         processInput({
           id:   inputTable.get([eventType, event.target.dataset.type]),
-          data: eventData(event)
+          pointer: pointerData(event)
         });
       });
     }
@@ -28,7 +28,7 @@ const ui = {
       event.preventDefault();
       processInput({
         id:   inputTable.get(['click', event.target.dataset.type]),
-        data: eventData(event)
+        pointer: pointerData(event)
       });
     });
   },
@@ -118,41 +118,51 @@ const ui = {
     }
   },
 
-  findSelected(doc) {
-    for (let shape of doc.shapes) {
-      for (let frame of shape.frames) {
-        if (frame._id === doc.selected.frameID) {
-          return frame;
+  renderInspector(state) {
+    const findSelected = (doc) => {
+      for (let shape of doc.shapes) {
+        for (let frame of shape.frames) {
+          if (frame._id === doc.selected.frameID) {
+            return frame;
+          }
         }
       }
-    }
-  },
+    };
 
-  renderInspector(state) {
     const inspector = document.querySelector('#inspector');
     inspector.innerHTML = '';
 
-    const node = nodeFactory.makeInspectorNode(this.findSelected(state.doc));
+    const node = nodeFactory.makeInspectorNode(findSelected(state.doc));
     inspector.appendChild(node);
   },
 
   renderAnimations(state) {
+    const convertAngleToDegrees = (frame) => {
+      return {
+        x:        frame.x,
+        y:        frame.y,
+        width:    frame.width,
+        height:   frame.height,
+        rotation: frame.angle * 57.2958, // convert to degrees
+      };
+    };
+
     ui.canvasNode.innerHTML = '';
 
     for (let shape of state.doc.shapes) {
       const timeline = new TimelineMax();
       const shapeNode = nodeFactory.makeShapeNode(state);
-      shapeNode.innerHTML = shape.markup; // TODO: append svg to shape
+      shapeNode.innerHTML = shape.markup;
 
       for (let i = 0; i < shape.frames.length - 1; i += 1) {
-        let source = shape.frames[i];
-        let target = shape.frames[i + 1];
+        let start = shape.frames[i];
+        let end   = shape.frames[i + 1];
 
         timeline.fromTo(
           shapeNode,
           0.3,
-          ui.convertKeys(ui.adjust(source)),
-          ui.convertKeys(ui.adjust(target))
+          convertAngleToDegrees(start),
+          convertAngleToDegrees(end)
         );
       }
 
@@ -168,35 +178,12 @@ const ui = {
     window.setTimeout(() => flash.remove(), 1500);
   },
 
-  adjust(frame) {
-    console.log(ui.canvasNode.offsetLeft);
-    return {
-      x: frame.x - ui.canvasNode.offsetLeft,
-      y: frame.y - ui.canvasNode.offsetTop,
-      // x: frame.x,
-      // y: frame.y,
-      width: frame.width,
-      height: frame.height,
-      angle: frame.angle, // ROTATION
-    };
-  },
-
-  convertKeys(frame) {
-    return {
-      x:        frame.x,
-      y:        frame.y,
-      width:    frame.width,
-      height:   frame.height,
-      rotation: frame.angle * 57.2958, // ROTATION, convert to degrees
-    };
-  },
-
   writeCSS(node, frame) {
-    node.style.left      = String(this.adjust(frame).x) + 'px';
-    node.style.top       = String(this.adjust(frame).y) + 'px';
+    node.style.left      = String(frame.x) + 'px';
+    node.style.top       = String(frame.y) + 'px';
     node.style.width     = String(frame.width) + 'px';
     node.style.height    = String(frame.height) + 'px';
-    node.style.transform = `rotate(${frame.angle}rad)`; // ROTATION
+    node.style.transform = `rotate(${frame.angle}rad)`;
   },
 
   start(state) {

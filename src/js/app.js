@@ -1,5 +1,5 @@
 import { core } from './core/core.js';
-import { timeline } from './timeline/timeline.js';
+import { log } from './log/log.js';
 import { ui } from './ui/ui.js';
 import { db } from './db/db.js';
 
@@ -13,9 +13,9 @@ const app = {
       core.periphery[component.name] = component.sync.bind(component);
     }
 
-    timeline.init();
-    timeline.bindEvents(core.setState.bind(core));
-    core.periphery[timeline.name] = timeline.sync.bind(timeline);
+    log.init();
+    log.bindEvents(core.setState.bind(core));
+    core.periphery[log.name] = log.sync.bind(log);
 
     core.kickoff();
   },
