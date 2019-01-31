@@ -56,6 +56,9 @@ const core = {
     return this;
   },
 
+  // TODO: why do we need this function? why can't we just do:
+  //   this.processInput({ id: 'kickoff' });
+  // ?
   kickoff() {
     this.syncPeriphery();
     this.processInput({ id: 'kickoff' });

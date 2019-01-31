@@ -352,13 +352,15 @@
       state.doc.init(input.data.doc);
     },
 
-    setFrameOrigin(state, input) {
+    setFrameOrigin(state, input) { // don't have it
       state.doc.insertFrameInPlace();
       this.aux.originX = input.pointer.x;
       this.aux.originY = input.pointer.y;
     },
 
     findOppCorner(state, input) {
+      // purpose was to find the fixed point of resizing
+      // but we don't do that.
       const frame = state.doc.selected.frame;
 
       let opp;
@@ -397,7 +399,7 @@
       ];
     },
 
-    resizeFrame(state, input) {
+    resizeFrame(state, input) { // becomes scale transform - different!
       const frame = state.doc.selected.frame;
       const shape = state.doc.selected.shape;
 
@@ -619,6 +621,9 @@
       return this;
     },
 
+    // TODO: why do we need this function? why can't we just do:
+    //   this.processInput({ id: 'kickoff' });
+    // ?
     kickoff() {
       this.syncPeriphery();
       this.processInput({ id: 'kickoff' });
@@ -1068,12 +1073,14 @@
     init() {
       core.init();
 
+      // wire up `ui` and `db`
       for (let component of [ui, db]) {
         component.init();
         component.bindEvents(core.processInput.bind(core));
         core.periphery[component.name] = component.sync.bind(component);
       }
 
+      // wire up `log`
       log.init();
       log.bindEvents(core.setState.bind(core));
       core.periphery[log.name] = log.sync.bind(log);

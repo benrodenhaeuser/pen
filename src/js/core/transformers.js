@@ -25,13 +25,15 @@ const transformers = {
     state.doc.init(input.data.doc);
   },
 
-  setFrameOrigin(state, input) {
+  setFrameOrigin(state, input) { // don't have it
     state.doc.insertFrameInPlace();
     this.aux.originX = input.pointer.x;
     this.aux.originY = input.pointer.y;
   },
 
   findOppCorner(state, input) {
+    // purpose was to find the fixed point of resizing
+    // but we don't do that.
     const frame = state.doc.selected.frame;
 
     let opp;
@@ -70,7 +72,7 @@ const transformers = {
     ];
   },
 
-  resizeFrame(state, input) {
+  resizeFrame(state, input) { // becomes scale transform - different!
     const frame = state.doc.selected.frame;
     const shape = state.doc.selected.shape;
 
@@ -112,7 +114,7 @@ const transformers = {
     });
   },
 
-  sizeFrame(state, input) {
+  sizeFrame(state, input) { // part of creating a frame: we don't do that
     const shape     = state.doc.selected.shape;
     const newWidth  = Math.abs(this.aux.originX - input.pointer.x);
     const newHeight = newWidth / shape.aspectRatio;
@@ -171,7 +173,7 @@ const transformers = {
     this.aux.frameStartAngle = frame.angle;
   },
 
-  rotateFrame(state, input) {
+  rotateFrame(state, input) { // don't really need that?
     const frame        = state.doc.selected.frame;
     const currentX     = input.pointer.x - this.aux.centerX;
     const currentY     = input.pointer.y - this.aux.centerY;
