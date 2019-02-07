@@ -1,5 +1,6 @@
 import { nodeFactory } from './nodeFactory.js';
 import { inputTable } from './inputTable.js';
+import { sceneRenderer } from './sceneRenderer.js';
 
 const ui = {
   bindEvents(processInput) {
@@ -45,7 +46,7 @@ const ui = {
 
     if (state.id === 'start') {
       this.start(state);
-      this.renderFrames(state); // ?
+      this.renderScene(state); // ?
       return;
     }
 
@@ -57,7 +58,7 @@ const ui = {
 
   render: {
     doc(state) {
-      ui.renderFrames(state);
+      ui.renderScene(state);
       ui.renderInspector(state);
     },
 
@@ -71,7 +72,7 @@ const ui = {
       }
 
       if (state.currentInput === 'edit') {
-        ui.renderFrames(state);
+        ui.renderScene(state);
       }
     },
 
@@ -82,27 +83,11 @@ const ui = {
     },
   },
 
-  renderFrames(state) {
+  renderScene(state) {
+    const svgns  = "http://www.w3.org/2000/svg";
     ui.canvasNode.innerHTML = '';
 
-    for (let shape of state.doc.shapes) {
-      const shapeNode = nodeFactory.makeShapeNode(state, shape._id);
-      if (state.doc.selected.shapeID === shape._id) {
-        shapeNode.classList.add('selected');
-      }
-
-      for (var i = 0; i < shape.frames.length; i += 1) {
-        const frameNode = nodeFactory.makeFrameNode(i, shape, shape.frames[i]);
-        ui.writeCSS(frameNode, shape.frames[i]);
-        if (shape.frames[i]._id === state.doc.selected.frameID) {
-          frameNode.classList.add('selected');
-        }
-
-        shapeNode.appendChild(frameNode);
-      }
-
-      ui.canvasNode.appendChild(shapeNode);
-    }
+    sceneRenderer.build(state.doc.scene, ui.canvasNode);
   },
 
   renderDocList(state) {
