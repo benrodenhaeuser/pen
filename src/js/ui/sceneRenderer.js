@@ -15,13 +15,6 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
   }
 };
 
-//   return this.setAttributeNS.apply(this, [null].concat(args));
-// };
-//
-// const setSVGAttrs = (element, obj) => {
-//
-// };
-
 // TODO: need to take care of style and defs
 // I think they are eliminated when stringifying the state object
 
@@ -31,6 +24,7 @@ const sceneRenderer = {
     const $node = document.createElementNS(svgns, scene.tag);
 
     if (scene.tag === 'svg') {
+      console.log('styles', scene.styles); // TODO: undefined
       $node.setAttributeNS(xmlns, 'xmlns', svgns);
     }
 

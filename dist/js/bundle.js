@@ -172,6 +172,8 @@
       this.copyDefs($svg, svg);
       this.buildTree($svg, svg);
 
+      console.log(svg.styles); // prints a style object
+
       return svg;
     },
   };
@@ -231,7 +233,7 @@
       return sceneBuilder.createScene($svg);
     },
 
-    // TODO: the only change is to the `parent` property
+    // TODO: use Object.assign
     toJSON() {
       return {
         _id:         this._id,
@@ -243,13 +245,13 @@
     },
 
     defaults() {
-      return {                           // for toJSON:
+      return {
         _id:         createID(),
-        parent:      null,               // need to replace with parent id
+        parent:      null,
         children:    [],
         tag:         null,
         props:       {
-          transform: Matrix.identity(),  // need to replace matrix with matrix.m
+          transform: Matrix.identity(),
         },
       };
     },
@@ -765,13 +767,6 @@
     }
   };
 
-  //   return this.setAttributeNS.apply(this, [null].concat(args));
-  // };
-  //
-  // const setSVGAttrs = (element, obj) => {
-  //
-  // };
-
   // TODO: need to take care of style and defs
   // I think they are eliminated when stringifying the state object
 
@@ -781,6 +776,7 @@
       const $node = document.createElementNS(svgns, scene.tag);
 
       if (scene.tag === 'svg') {
+        console.log('styles', scene.styles); // TODO: undefined
         $node.setAttributeNS(xmlns, 'xmlns', svgns);
       }
 

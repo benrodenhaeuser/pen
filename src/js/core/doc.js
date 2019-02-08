@@ -158,6 +158,8 @@ const sceneBuilder = {
     this.copyDefs($svg, svg);
     this.buildTree($svg, svg);
 
+    console.log(svg.styles); // prints a style object
+
     return svg;
   },
 };
@@ -217,7 +219,7 @@ const Scene = {
     return sceneBuilder.createScene($svg);
   },
 
-  // TODO: the only change is to the `parent` property
+  // TODO: use Object.assign
   toJSON() {
     return {
       _id:         this._id,
@@ -229,13 +231,13 @@ const Scene = {
   },
 
   defaults() {
-    return {                           // for toJSON:
+    return {
       _id:         createID(),
-      parent:      null,               // need to replace with parent id
+      parent:      null,
       children:    [],
       tag:         null,
       props:       {
-        transform: Matrix.identity(),  // need to replace matrix with matrix.m
+        transform: Matrix.identity(),
       },
     };
   },
