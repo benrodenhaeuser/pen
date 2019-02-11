@@ -2,6 +2,14 @@ const transitionTable = [
   // kickoff
   [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
 
+  // NEW
+  [{ from: 'idle',      input: 'select'         }, { to: 'idle'              }],
+  [{ from: 'idle',      input: 'deselect'       }, { to: 'idle'              }],
+  [{ from: 'idle',      input: 'selectThrough'  }, { to: 'idle'              }],
+  [{ from: 'idle',      input: 'movePointer'    }, { to: 'idle', do: 'focus' }],
+
+  // OLD
+
   // create and delete
   [{ from: 'idle',      input: 'createShape'    }, {                         }],
   [{ from: 'idle',      input: 'createDoc'      }, {                         }],

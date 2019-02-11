@@ -52,110 +52,6 @@ body {
   margin: 0 5px;
 }
 
-.shape {
-  position: absolute;
-  /* background-color: red; */
-  box-sizing: content-box;
-  /* z-index: 1; */
-}
-
-.frame {
-  position: absolute;
-  cursor: grab;
-  border: 1px solid #d3d3d3;
-  box-sizing: content-box;
-}
-
-.frame.selected {
-  z-index: 5;
-}
-
-.counter {
-  position: absolute;
-  top: -20px;
-  left: 10px;
-  font-size: 11px;
-  color: #a9a9a9;
-  user-select: none;
-}
-
-.deleteLink {
-  position: absolute;
-  top: -23px;
-  right: 10px;
-  font-size: 15px;
-  text-decoration: none;
-  color: red;
-  user-select: none;
-}
-
-.deleteLink:hover {
-  text-decoration: none;
-  color: #d3d3d3;
-}
-
-.shape.selected .frame,
-.shape.selected .corner {
-  border: 1px solid black;
-}
-
-.shape.selected .frame.selected,
-.shape.selected .frame.selected .corner {
-  border: 1px solid red;
-}
-
-.frame.selected .counter {
-  color: red;
-}
-
-.shape:not(.selected) .corner,
-.frame:not(.selected) .deleteLink,
-.frame:not(.selected) .rotate-handle,
-.frame:not(.selected) .corner {
-  display: none;
-}
-
-.corner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background-color: white;
-  border: 1px solid #d3d3d3;
-}
-
-.top-left {
-  cursor: nwse-resize;
-  top: -4px;
-  left: -4px;
-}
-
-.top-right {
-  cursor: nesw-resize;
-  top: -4px;
-  right: -4px;
-}
-
-.bottom-left {
-  cursor: nesw-resize;
-  bottom: -4px;
-  left: -4px;
-}
-
-.bottom-right {
-  cursor: nwse-resize;
-  bottom: -4px;
-  right: -4px;
-}
-
-.center {
-  height: 1px;
-  width: 1px;
-  background-color: red;
-}
-
 .flash {
   position: fixed;
   right: 20px;
@@ -196,15 +92,6 @@ li.selected a, li.selected a:hover {
   color: red;
 }
 
-.rotate-handle {
-  position: absolute;
-  background-image: url(/assets/rotate.svg);
-  right: -20px;
-  top: -20px;
-  width: 10px;
-  height: 10px;
-}
-
 .inspector-list {
   font-size: 14px;
   line-height: 20px;
@@ -212,10 +99,23 @@ li.selected a, li.selected a:hover {
   padding: 10px;
 }
 
-.frame-body {
-  position: absolute;
-  top: 0;
-  left: 0;
+/* NEW  */
+
+svg {
   width: 100%;
-  height: 100%;
+  outline: 1px solid red;
+}
+
+.focus ~ g > [data-type="frame"] {
+  stroke: #5DADE2;
+  stroke-width: 5px;
+}
+
+.selected ~ g > [data-type="frame"] {
+  stroke: yellow;
+  stroke-width: 5px;
+}
+
+.focus ~ [data-type="chrome"], .selected ~ [data-type="chrome"] {
+  visibility: visible;
 }

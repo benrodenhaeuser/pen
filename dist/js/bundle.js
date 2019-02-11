@@ -18,6 +18,162 @@
     return randomString + timestamp;
   };
 
+  const Scene = {
+    findAncestor(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else if (this.parent === null) {
+        return null;
+      } else {
+        return this.parent.findAncestor(predicate);
+      }
+    },
+
+    findDescendant(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else {
+        for (let child of this.children) {
+          let val = child.findDescendant(predicate);
+          if (val) { return val; }
+        }
+      }
+
+      return null;
+    },
+
+    findDescendants(predicate, results = []) {
+      if (predicate(this)) {
+        results.push(this);
+      }
+
+      for (let child of this.children) {
+        child.findDescendants(predicate, results);
+      }
+
+      return results;
+    },
+
+    get root() {
+      return this.findAncestor((node) => {
+        return node.parent === null;
+      });
+    },
+
+    get selected() {
+      return this.root.findDescendant((node) => {
+        return node.props.class.includes('selected');
+      });
+    },
+
+    get frontier() {
+      return this.root.findDescendants((node) => {
+        return node.props.class.includes('frontier');
+      });
+    },
+
+    get siblings() {
+      return this.parent.children.filter((node) => {
+        return node !== this;
+      });
+    },
+
+    unsetFrontier() {
+      const frontier = this.root.findDescendants((node) => {
+        return node.props.class.includes('frontier');
+      });
+
+      for (let node of frontier) {
+        node.props.class.remove('frontier');
+      }
+    },
+
+    unfocus() {
+      const focussed = this.root.findDescendants((node) => {
+        return node.props.class.includes('focus');
+      });
+
+      for (let node of focussed) {
+        node.props.class.remove('focus');
+      }
+    },
+
+    setFrontier() {
+      this.unsetFrontier();
+
+      if (this.selected) {
+        this.selected.props.class.add('frontier');
+
+        let node = this.selected;
+
+        do {
+          for (let sibling of node.siblings) {
+            sibling.props.class.add('frontier');
+          }
+          node = node.parent;
+        } while (node.parent !== null);
+      } else {
+        for (let child of this.root.children) {
+          child.props.class.add('frontier');
+        }
+      }
+    },
+
+    deselect() {
+      if (this.selected) {
+        this.selected.props.class.remove('selected');
+      }
+      this.setFrontier();
+    },
+
+    select() {
+      this.deselect();
+      this.props.class.add('selected');
+      this.setFrontier();
+    },
+
+    append(node) {
+      this.children.push(node);
+      node.parent = this;
+    },
+
+    set(settings) {
+      for (let key of Object.keys(settings)) {
+        this[key] = settings[key];
+      }
+    },
+
+    fromMarkup(markup) {
+
+    },
+
+    toJSON() {
+      return {
+        _id:         this._id,
+        parent:      this.parent && this.parent._id || null,
+        children:    this.children,
+        tag:         this.tag,
+        props:       this.props,
+      };
+    },
+
+    defaults() {
+      return {
+        _id:         createID(),
+        parent:      null,
+        children:    [],
+        tag:         null,
+        props:       {},
+      };
+    },
+
+    init(opts = {}) {
+      this.set(this.defaults());
+      this.set(opts);
+      return this;
+    },
+  };
+
   const Matrix = {
     multiply(other) {
       const thisRows  = this.m.length;
@@ -122,20 +278,49 @@
     },
   };
 
+  const ClassList = {
+    add(className) {
+      this.c.add(className);
+    },
+
+    includes(className) {
+      return this.c.has(className);
+    },
+
+    remove(className) {
+      this.c.delete(className);
+    },
+
+    toJSON() {
+      return Array.from(this.c).join(' ');
+    },
+
+    init(classList) {
+      this.c = new Set(classList) || newSet([]);
+      return this;
+    },
+  };
+
   const sceneBuilder = {
     processAttributes($node, node) {
       const $attributes = Array.from($node.attributes);
-
       for (let $attribute of $attributes) {
         node.props[$attribute.name] = $attribute.value;
       }
-
       delete node.props.xmlns;
 
+      // store `transform` as a Matrix object:
       if ($node.transform && $node.transform.baseVal && $node.transform.baseVal.consolidate()) {
         const $matrix = $node.transform.baseVal.consolidate().matrix;
         node.props.transform = Object.create(Matrix).fromDOMMatrix($matrix);
+      } else {
+        node.props.transform = Matrix.identity();
       }
+
+      // store `class` as a ClassList object:
+      node.props.class = Object.create(ClassList).init(
+        Array.from($node.classList)
+      );
     },
 
     copyTagName($node, node) {
@@ -165,121 +350,108 @@
       }
     },
 
-    createScene($svg) {
+    createScene(markup) {
+      const $svg = new DOMParser()
+        .parseFromString(markup, "application/xml")
+        .documentElement;
       const svg = Object.create(Scene).init();
 
       this.copyStyles($svg, svg);
       this.copyDefs($svg, svg);
       this.buildTree($svg, svg);
-
-      console.log(svg.styles); // prints a style object
+      svg.setFrontier();
 
       return svg;
     },
   };
 
-  const Scene = {
-    closestAncestor(params) {
-      let node = this;
-
-      while (node.parent !== null) {
-        if (node.satisfies(params)) {
-          return node;
-        } else {
-          node = node.parent;
-        }
-      }
-
-      return null;
-    },
-
-    satisfies(params) {
-      const sameValue = key => this[key] === params[key];
-      const keys      = Object.keys(params);
-
-      return keys.every(sameValue);
-    },
-
-    findNode(params) {
-      if (this.satisfies(params)) {
-        return this;
-      } else {
-        for (child of this.children) {
-          return child.findNode(params);
-        }
-      }
-
-      return null;
-    },
-
-    append(node) {
-      this.children.push(node);
-      node.parent = this;
-    },
-
-    set(params) {
-      const keys = Object.keys(params);
-
-      for (let key of keys) {
-        this[key] = params[key] || this[key];
-      }
-    },
-
-    fromMarkup(markup) {
-      const $svg = new DOMParser()
-        .parseFromString(markup, "application/xml")
-        .documentElement;
-
-      return sceneBuilder.createScene($svg);
-    },
-
-    // TODO: use Object.assign
-    toJSON() {
-      return {
-        _id:         this._id,
-        parent:      this.parent && this.parent._id || null,
-        children:    this.children,
-        tag:         this.tag,
-        props:       this.props,
-      };
-    },
-
-    defaults() {
-      return {
-        _id:         createID(),
-        parent:      null,
-        children:    [],
-        tag:         null,
-        props:       {
-          transform: Matrix.identity(),
-        },
-      };
-    },
-
-    init(params = {}) {
-      this.set(this.defaults());
-      this.set(params);
-
-      return this;
-    },
+  const createID$1 = () => {
+    const randomString = Math.random().toString(36).substring(2);
+    const timestamp    = (new Date()).getTime().toString(36);
+    return randomString + timestamp;
   };
 
   const doc = {
-    insert(scene) {
-      // TODO: insert new scene after active scene
-    },
-
     init(markup) {
-      this._id = createID();
-      this.scene = Object.create(Scene).fromMarkup(markup);
+      this._id   = createID$1();
+      this.scene = sceneBuilder.createScene(markup);
 
       return this;
     },
+
+    toJSON() {
+      return {
+        id: this._id,
+        scene: this.scene,
+      }
+    }
   };
 
   const transformers = {
+
+    // NEW
+    select(state, input) {
+      const target = state.doc.scene.findDescendant((node) => {
+        return node._id === input.pointer.targetID;
+      });
+
+      const selection = target.findAncestor((node) => {
+        return node.props.class.includes('frontier');
+      });
+
+      if (selection) {
+        selection.select();
+      }
+    },
+
+    deselect(state, input) {
+      state.doc.scene.deselect();
+    },
+
+    selectThrough(state, input) {
+      const target = state.doc.scene.findDescendant((node) => {
+        return node._id === input.pointer.targetID;
+      });
+
+      const selection = target.findAncestor((node) => {
+        return node.parent && node.parent.props.class.includes('frontier');
+      });
+
+      if (selection) {
+        selection.select();
+        state.doc.scene.setFrontier();
+        state.doc.scene.unfocus();
+      }
+    },
+
+    focus(state, input) {
+      const target = state.doc.scene.findDescendant((node) => {
+        return node._id === input.pointer.targetID;
+      });
+
+      if (target) {
+        const highlight = target.findAncestor((node) => {
+          return node.props.class.includes('frontier');
+        });
+
+        if (highlight) {
+          highlight.props.class.add('focus');
+        } else {
+          state.doc.scene.unfocus();
+        }
+      }
+    },
+
+    // OLD
+
     createShape(state, input) {
       state.doc.appendShape();
+
+      input.pointerData.target; // 'wrapper'
+      input.pointerData.targetID; // our id ...
+      input.pointerData.x;  // x coord with offset
+      input.pointerData.y;  // y coord with offset
+
     },
 
     createDoc(state, input) {
@@ -470,6 +642,14 @@
     // kickoff
     [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
 
+    // NEW
+    [{ from: 'idle',      input: 'select'         }, { to: 'idle'              }],
+    [{ from: 'idle',      input: 'deselect'       }, { to: 'idle'              }],
+    [{ from: 'idle',      input: 'selectThrough'  }, { to: 'idle'              }],
+    [{ from: 'idle',      input: 'movePointer'    }, { to: 'idle', do: 'focus' }],
+
+    // OLD
+
     // create and delete
     [{ from: 'idle',      input: 'createShape'    }, {                         }],
     [{ from: 'idle',      input: 'createDoc'      }, {                         }],
@@ -547,7 +727,6 @@
       const transition = transitionTable.get([this.state.id, input.id]);
 
       if (transition) {
-        console.log(input.id);
         this.transform(input, transition);
         this.syncPeriphery();
       }
@@ -567,6 +746,7 @@
         clock: clock.init(),
         id: 'start',
         doc: doc.init(markup),
+        docs: { ids: [], selectedID: null },
       };
 
       transformers.init();
@@ -584,29 +764,44 @@
     },
   };
 
+  // const markup = `
+  // <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17">
+  //     <defs>
+  //       <style>.cls-1{fill:#2a2a2a;}</style>
+  //     </defs>
+  //
+  //     <title>
+  //       Logo_48_Web_160601
+  //     </title>
+  //
+  //     <g id="four">
+  //       <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
+  //       </g>
+  //
+  //     <g id="eight">
+  //       <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
+  //     </g>
+  //
+  //     <g id="k">
+  //       <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
+  //
+  //       <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
+  //     </g>
+  //   </svg>
+  // `;
+
   const markup = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17">
-    <defs>
-      <style>.cls-1{fill:#2a2a2a;}</style>
-    </defs>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
 
-    <title>
-      Logo_48_Web_160601
-    </title>
-
-    <g id="four">
-      <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
+    <g id="5">
+      <circle id="4" cx="200" cy="200" r="50"></circle>
+      <g id="3">
+        <rect id="0" x="260" y="250" width="100" height="100"></rect>
+        <rect id="1" x="400" y="250" width="100" height="100"></rect>
       </g>
-
-    <g id="eight">
-      <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
     </g>
 
-    <g id="k">
-      <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
-
-      <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
-    </g>
+    <rect id="2" x="400" y="400" width="100" height="100"></rect>
   </svg>
 `;
 
@@ -618,7 +813,9 @@
     },
 
     sync(state) {
-      const ignored = ['docSaved', 'edit', 'createDoc', 'createShape'];
+      const ignored = [
+        'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
+      ];
       const ignore  = ignored.includes(state.currentInput);
       const idle    = state.id === 'idle';
       if (ignore || !idle) {
@@ -722,18 +919,23 @@
     [['click',       'newShapeButton'   ], 'createShape'     ],
     [['click',       'newDocButton'     ], 'createDoc'       ],
     [['click',       'animateButton'    ], 'animate'         ],
-    [['click',       'deleteLink'       ], 'deleteFrame'     ],
     [['click',       'doc-list-entry'   ], 'requestDoc'      ],
-    [['click',       'canvas'           ], 'edit'            ],
-    [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
-    [['mousedown',   'top-left-corner'  ], 'findOppCorner'   ],
-    [['mousedown',   'top-right-corner' ], 'findOppCorner'   ],
-    [['mousedown',   'bot-left-corner'  ], 'findOppCorner'   ],
-    [['mousedown',   'bot-right-corner' ], 'findOppCorner'   ],
-    [['mousedown',   'canvas'           ], 'setFrameOrigin'  ],
-    [['mousedown',   'rotate-handle'    ], 'getStartAngle'   ],
-    [['mousemove'                       ], 'changeCoords'    ],
-    [['mouseup'                         ], 'releaseFrame'    ],
+    // NEW
+    [['click',       'wrapper'          ], 'select'          ],
+    [['dblclick',    'wrapper'          ], 'selectThrough'   ],
+    [['click',       'root'             ], 'deselect'        ],
+    [['mousemove'                       ], 'movePointer'     ],
+    // [['click',       'deleteLink'       ], 'deleteFrame'     ],
+    // [['click',       'canvas'           ], 'edit'            ],
+    // [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
+    // [['mousedown',   'top-left-corner'  ], 'findOppCorner'   ],
+    // [['mousedown',   'top-right-corner' ], 'findOppCorner'   ],
+    // [['mousedown',   'bot-left-corner'  ], 'findOppCorner'   ],
+    // [['mousedown',   'bot-right-corner' ], 'findOppCorner'   ],
+    // [['mousedown',   'canvas'           ], 'setFrameOrigin'  ],
+    // [['mousedown',   'rotate-handle'    ], 'getStartAngle'   ],
+    // [['mousemove'                       ], 'changeCoords'    ],
+    // [['mouseup'                         ], 'releaseFrame'    ],
   ];
 
   inputTable.get = function(key) {
@@ -745,7 +947,6 @@
     const pair = inputTable.find(match);
 
     if (pair) {
-      // console.log(pair[1]);
       return pair[1];
     }
   };
@@ -767,24 +968,147 @@
     }
   };
 
-  // TODO: need to take care of style and defs
-  // I think they are eliminated when stringifying the state object
+  const wrap = (element) => {
+    const parent         = element.parentNode;
+    const wrapper        = document.createElementNS(svgns, 'g');
+    const chrome         = document.createElementNS(svgns, 'g');
+    const frame          = document.createElementNS(svgns, 'rect');
+    const topLeftCorner  = document.createElementNS(svgns, 'rect');
+    const botLeftCorner  = document.createElementNS(svgns, 'rect');
+    const topRightCorner = document.createElementNS(svgns, 'rect');
+    const botRightCorner = document.createElementNS(svgns, 'rect');
 
-  // TODO: wrap nodes from original svg
+    wrapper.appendChild(element);
+    parent.appendChild(wrapper);
+
+    const bb             = wrapper.getBBox();
+    const width          = bb.width;
+    const height         = bb.height;
+    const x              = bb.x;
+    const y              = bb.y;
+    const id             = element.getSVGAttr('data-id');
+    const corners        = [
+      topLeftCorner, botLeftCorner, topRightCorner, botRightCorner
+    ];
+
+    wrapper.appendChild(chrome);
+    chrome.appendChild(frame);
+    for (let corner of corners) {
+      chrome.appendChild(corner);
+    }
+
+    element.setSVGAttrs({
+      'data-type': 'content',
+      'pointer-events': 'none',
+    });
+
+    wrapper.setSVGAttrs({
+      'data-type':      'wrapper',
+      'pointer-events': 'bounding-box',
+      'data-id':        id,
+    });
+
+    chrome.setSVGAttrs({
+      'data-type': 'chrome',
+      'data-id': id,
+      'pointer-events': 'visiblePainted',
+      'visibility': 'hidden',
+    });
+
+    frame.setSVGAttrs({
+      'data-type':      'frame',
+      x:                 x,
+      y:                 y,
+      width:             width,
+      height:            height,
+      stroke:            '#d3d3d3',
+      'vector-effect':  'non-scaling-stroke',
+      'stroke-width':   '1px',
+      fill:             'none',
+      'pointer-events': 'none',
+      'data-id':        id,
+    });
+
+    topLeftCorner.setSVGAttrs({
+      'data-type': 'top-left-corner',
+      x: x - 2,
+      y: y - 2,
+    });
+
+    botLeftCorner.setSVGAttrs({
+      'data-type': 'bot-left-corner',
+      x: x - 2,
+      y: y + height - 2,
+    });
+
+    topRightCorner.setSVGAttrs({
+      'data-type': 'top-right-corner',
+      x: x + width - 2,
+      y: y - 2,
+    });
+
+    botRightCorner.setSVGAttrs({
+      'data-type': 'bot-right-corner',
+      x: x + width - 2,
+      y: y + height - 2,
+    });
+
+    for (let corner of corners) {
+      corner.setSVGAttrs({
+        'data-id': id,
+        width: 4,
+        height: 4,
+        stroke: '#d3d3d3',
+        'vector-effect': 'non-scaling-stroke',
+        'stroke-width': '1px',
+        fill: '#FFFFFF',
+      });
+    }
+
+    return wrapper;
+  };
+
+
+  // TODO: need to take care of style and defs
+
+  // This recreates the original svg from our scene tree:
+  // TODO: need to wrap nodes. for this to make sense,
+  // the leaf nodes need to have been rendered.
   const sceneRenderer = {
     build(scene, $parent) {
       const $node = document.createElementNS(svgns, scene.tag);
 
+      $node.setSVGAttrs(scene.props);
+      $node.setSVGAttr('data-id', scene._id);
+
       if (scene.tag === 'svg') {
-        console.log('styles', scene.styles); // TODO: undefined
+        // console.log('styles', scene.styles); // TODO: undefined
         $node.setAttributeNS(xmlns, 'xmlns', svgns);
+        $node.setAttributeNS(svgns, 'data-type', 'root');
+        // $node.setSVGAttr('viewBox', '-100 -100 400 400'); // for 48k
       }
 
-      $node.setSVGAttrs(scene.props);
       $parent.appendChild($node);
 
       for (let child of scene.children) {
         sceneRenderer.build(child, $node);
+      }
+
+      return $node;
+    },
+
+    decorate($node) {
+      if ($node.tagName !== 'svg') {
+        wrap($node);
+      }
+
+      const $children = Array.from($node.children);
+      // ^ don't iterate over $node.children directly!
+      // this results in an infinite loop, because
+      // it's a *live* collection!
+
+      for (let $child of $children) {
+        sceneRenderer.decorate($child);
       }
     },
   };
@@ -805,17 +1129,31 @@
       for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
         this.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
+
           processInput({
-            id:   inputTable.get([eventType, event.target.dataset.type]),
-            pointer: pointerData(event)
+            id:      inputTable.get([eventType, event.target.dataset.type]),
+            pointer: pointerData(event),
           });
         });
       }
 
       document.addEventListener('click', (event) => {
         event.preventDefault();
+        if (event.detail > 1) {
+          return;
+        }
+
         processInput({
-          id:   inputTable.get(['click', event.target.dataset.type]),
+          id:      inputTable.get(['click', event.target.dataset.type]),
+          pointer: pointerData(event)
+        });
+      });
+
+      document.addEventListener('dblclick', (event) => {
+        event.preventDefault();
+
+        processInput({
+          id:      inputTable.get(['dblclick', event.target.dataset.type]),
           pointer: pointerData(event)
         });
       });
@@ -840,13 +1178,14 @@
       for (let changed of changes(state, this.previousState)) {
         this.render[changed] && this.render[changed](state);
       }
+
       this.previousState = state;
     },
 
     render: {
       doc(state) {
         ui.renderScene(state);
-        ui.renderInspector(state);
+        // ui.renderInspector(state); // TODO ==> later
       },
 
       docs(state) {
@@ -873,7 +1212,8 @@
     renderScene(state) {
       ui.canvasNode.innerHTML = '';
 
-      sceneRenderer.build(state.doc.scene, ui.canvasNode);
+      const $root = sceneRenderer.build(state.doc.scene, ui.canvasNode);
+      sceneRenderer.decorate($root);
     },
 
     renderDocList(state) {

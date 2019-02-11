@@ -3,18 +3,23 @@ const inputTable = [
   [['click',       'newShapeButton'   ], 'createShape'     ],
   [['click',       'newDocButton'     ], 'createDoc'       ],
   [['click',       'animateButton'    ], 'animate'         ],
-  [['click',       'deleteLink'       ], 'deleteFrame'     ],
   [['click',       'doc-list-entry'   ], 'requestDoc'      ],
-  [['click',       'canvas'           ], 'edit'            ],
-  [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
-  [['mousedown',   'top-left-corner'  ], 'findOppCorner'   ],
-  [['mousedown',   'top-right-corner' ], 'findOppCorner'   ],
-  [['mousedown',   'bot-left-corner'  ], 'findOppCorner'   ],
-  [['mousedown',   'bot-right-corner' ], 'findOppCorner'   ],
-  [['mousedown',   'canvas'           ], 'setFrameOrigin'  ],
-  [['mousedown',   'rotate-handle'    ], 'getStartAngle'   ],
-  [['mousemove'                       ], 'changeCoords'    ],
-  [['mouseup'                         ], 'releaseFrame'    ],
+  // NEW
+  [['click',       'wrapper'          ], 'select'          ],
+  [['dblclick',    'wrapper'          ], 'selectThrough'   ],
+  [['click',       'root'             ], 'deselect'        ],
+  [['mousemove'                       ], 'movePointer'     ],
+  // [['click',       'deleteLink'       ], 'deleteFrame'     ],
+  // [['click',       'canvas'           ], 'edit'            ],
+  // [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
+  // [['mousedown',   'top-left-corner'  ], 'findOppCorner'   ],
+  // [['mousedown',   'top-right-corner' ], 'findOppCorner'   ],
+  // [['mousedown',   'bot-left-corner'  ], 'findOppCorner'   ],
+  // [['mousedown',   'bot-right-corner' ], 'findOppCorner'   ],
+  // [['mousedown',   'canvas'           ], 'setFrameOrigin'  ],
+  // [['mousedown',   'rotate-handle'    ], 'getStartAngle'   ],
+  // [['mousemove'                       ], 'changeCoords'    ],
+  // [['mouseup'                         ], 'releaseFrame'    ],
 ];
 
 inputTable.get = function(key) {
@@ -26,11 +31,7 @@ inputTable.get = function(key) {
   const pair = inputTable.find(match);
 
   if (pair) {
-    // console.log(pair[1]);
     return pair[1];
-  } else {
-    // console.log(key[0], key[1]);
-    // console.log('ui: no proper input');
   }
 };
 

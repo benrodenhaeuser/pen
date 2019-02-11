@@ -1,6 +1,68 @@
 const transformers = {
+
+  // NEW
+  select(state, input) {
+    const target = state.doc.scene.findDescendant((node) => {
+      return node._id === input.pointer.targetID;
+    });
+
+    const selection = target.findAncestor((node) => {
+      return node.props.class.includes('frontier');
+    });
+
+    if (selection) {
+      selection.select();
+    }
+  },
+
+  deselect(state, input) {
+    state.doc.scene.deselect();
+  },
+
+  selectThrough(state, input) {
+    const target = state.doc.scene.findDescendant((node) => {
+      return node._id === input.pointer.targetID;
+    });
+
+    const selection = target.findAncestor((node) => {
+      return node.parent && node.parent.props.class.includes('frontier');
+    });
+
+    if (selection) {
+      selection.select();
+      state.doc.scene.setFrontier();
+      state.doc.scene.unfocus();
+    }
+  },
+
+  focus(state, input) {
+    const target = state.doc.scene.findDescendant((node) => {
+      return node._id === input.pointer.targetID;
+    });
+
+    if (target) {
+      const highlight = target.findAncestor((node) => {
+        return node.props.class.includes('frontier');
+      });
+
+      if (highlight) {
+        highlight.props.class.add('focus');
+      } else {
+        state.doc.scene.unfocus();
+      }
+    }
+  },
+
+  // OLD
+
   createShape(state, input) {
     state.doc.appendShape();
+
+    input.pointerData.target // 'wrapper'
+    input.pointerData.targetID // our id ...
+    input.pointerData.x  // x coord with offset
+    input.pointerData.y  // y coord with offset
+
   },
 
   createDoc(state, input) {

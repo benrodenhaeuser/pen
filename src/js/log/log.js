@@ -6,7 +6,9 @@ const log = {
   },
 
   sync(state) {
-    const ignored = ['docSaved', 'edit', 'createDoc', 'createShape'];
+    const ignored = [
+      'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
+    ];
     const ignore  = ignored.includes(state.currentInput);
     const idle    = state.id === 'idle';
     if (ignore || !idle) {

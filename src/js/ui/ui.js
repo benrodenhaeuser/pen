@@ -18,17 +18,31 @@ const ui = {
     for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
       this.canvasNode.addEventListener(eventType, (event) => {
         event.preventDefault();
+
         processInput({
-          id:   inputTable.get([eventType, event.target.dataset.type]),
-          pointer: pointerData(event)
+          id:      inputTable.get([eventType, event.target.dataset.type]),
+          pointer: pointerData(event),
         });
       });
     }
 
     document.addEventListener('click', (event) => {
       event.preventDefault();
+      if (event.detail > 1) {
+        return;
+      }
+
       processInput({
-        id:   inputTable.get(['click', event.target.dataset.type]),
+        id:      inputTable.get(['click', event.target.dataset.type]),
+        pointer: pointerData(event)
+      });
+    });
+
+    document.addEventListener('dblclick', (event) => {
+      event.preventDefault();
+
+      processInput({
+        id:      inputTable.get(['dblclick', event.target.dataset.type]),
         pointer: pointerData(event)
       });
     });
@@ -53,13 +67,14 @@ const ui = {
     for (let changed of changes(state, this.previousState)) {
       this.render[changed] && this.render[changed](state);
     }
+
     this.previousState = state;
   },
 
   render: {
     doc(state) {
       ui.renderScene(state);
-      ui.renderInspector(state);
+      // ui.renderInspector(state); // TODO ==> later
     },
 
     docs(state) {
@@ -87,7 +102,8 @@ const ui = {
     const svgns  = "http://www.w3.org/2000/svg";
     ui.canvasNode.innerHTML = '';
 
-    sceneRenderer.build(state.doc.scene, ui.canvasNode);
+    const $root = sceneRenderer.build(state.doc.scene, ui.canvasNode);
+    sceneRenderer.decorate($root);
   },
 
   renderDocList(state) {
