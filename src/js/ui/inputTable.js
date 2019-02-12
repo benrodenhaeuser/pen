@@ -5,10 +5,12 @@ const inputTable = [
   [['click',       'animateButton'    ], 'animate'         ],
   [['click',       'doc-list-entry'   ], 'requestDoc'      ],
   // NEW
-  [['click',       'wrapper'          ], 'select'          ],
+  [['mousedown',   'wrapper'          ], 'select'          ],
+  [['mousedown',   'corner'           ], 'initRotate'      ],
   [['dblclick',    'wrapper'          ], 'selectThrough'   ],
-  [['click',       'root'             ], 'deselect'        ],
   [['mousemove'                       ], 'movePointer'     ],
+  [['mouseup'                         ], 'release'         ],
+
   // [['click',       'deleteLink'       ], 'deleteFrame'     ],
   // [['click',       'canvas'           ], 'edit'            ],
   // [['mousedown',   'frame'            ], 'getFrameOrigin'  ],

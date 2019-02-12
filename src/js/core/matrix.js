@@ -47,7 +47,7 @@ const Matrix = {
     return Object.create(Matrix).init(m);
   },
 
-  translation(vector) {
+  translation(...vector) {
     const [vectorX, vectorY] = vector;
 
     const m = [
@@ -71,11 +71,16 @@ const Matrix = {
     return Object.create(Matrix).init(m);
   },
 
+  // TODO: not general enough
   toVector() {
     return [
       this.m[0][0], this.m[1][0], this.m[0][1],
       this.m[1][1], this.m[0][2], this.m[1][2]
     ];
+  },
+
+  toArray() {
+    return this.m;
   },
 
   fromDOMMatrix($matrix) {

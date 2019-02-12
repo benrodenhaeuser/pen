@@ -105,7 +105,7 @@ const Scene = {
     }
   },
 
-  deselect() {
+  deselectAll() {
     if (this.selected) {
       this.selected.props.class.remove('selected');
     }
@@ -113,7 +113,7 @@ const Scene = {
   },
 
   select() {
-    this.deselect();
+    this.deselectAll();
     this.props.class.add('selected');
     this.setFrontier();
   },
@@ -127,10 +127,6 @@ const Scene = {
     for (let key of Object.keys(settings)) {
       this[key] = settings[key];
     }
-  },
-
-  fromMarkup(markup) {
-
   },
 
   toJSON() {

@@ -36,9 +36,22 @@ const sceneBuilder = {
     node.defs = Array.from($node.querySelectorAll('style'));
   },
 
+  copyBBox($node, node) {
+    const box = $node.getBBox();
+    node.coords = {
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+    };
+    // console.log(node.coords);
+  },
+
   buildTree($node, node) {
     this.copyTagName($node, node);
     this.processAttributes($node, node);
+
+    this.copyBBox($node, node);
 
     const $graphics = Array.from($node.children).filter((child) => {
       return child instanceof SVGGElement || child instanceof SVGGeometryElement
@@ -51,16 +64,22 @@ const sceneBuilder = {
     }
   },
 
+  process($svg, svg) {
+    this.copyStyles($svg, svg);
+    this.copyDefs($svg, svg);
+    this.buildTree($svg, svg);
+    svg.setFrontier();
+  },
+
   createScene(markup) {
     const $svg = new DOMParser()
       .parseFromString(markup, "application/xml")
       .documentElement;
     const svg = Object.create(Scene).init();
 
-    this.copyStyles($svg, svg);
-    this.copyDefs($svg, svg);
-    this.buildTree($svg, svg);
-    svg.setFrontier();
+    document.body.appendChild($svg);
+    this.process($svg, svg);
+    $svg.remove();
 
     return svg;
   },

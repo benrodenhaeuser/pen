@@ -6,10 +6,22 @@ const ui = {
   bindEvents(processInput) {
     this.canvasNode = document.querySelector('#canvas');
 
+    const getSVGCoords = (x, y) => {
+      const svg = document.querySelector('svg');
+      let point = svg.createSVGPoint();
+      point.x   = x;
+      point.y   = y;
+      point     = point.matrixTransform(svg.getScreenCTM().inverse());
+
+      return [point.x, point.y];
+    };
+
     const pointerData = (event) => {
+      const [x, y] = getSVGCoords(event.clientX, event.clientY);
+
       return {
-        x:        event.clientX - this.canvasNode.offsetLeft,
-        y:        event.clientY - ui.canvasNode.offsetTop,
+        x:        x,
+        y:        y,
         target:   event.target.dataset.type,
         targetID: event.target.dataset.id,
       };

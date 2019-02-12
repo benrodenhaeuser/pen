@@ -119,7 +119,7 @@
       }
     },
 
-    deselect() {
+    deselectAll() {
       if (this.selected) {
         this.selected.props.class.remove('selected');
       }
@@ -127,7 +127,7 @@
     },
 
     select() {
-      this.deselect();
+      this.deselectAll();
       this.props.class.add('selected');
       this.setFrontier();
     },
@@ -141,10 +141,6 @@
       for (let key of Object.keys(settings)) {
         this[key] = settings[key];
       }
-    },
-
-    fromMarkup(markup) {
-
     },
 
     toJSON() {
@@ -223,7 +219,7 @@
       return Object.create(Matrix).init(m);
     },
 
-    translation(vector) {
+    translation(...vector) {
       const [vectorX, vectorY] = vector;
 
       const m = [
@@ -247,11 +243,16 @@
       return Object.create(Matrix).init(m);
     },
 
+    // TODO: not general enough
     toVector() {
       return [
         this.m[0][0], this.m[1][0], this.m[0][1],
         this.m[1][1], this.m[0][2], this.m[1][2]
       ];
+    },
+
+    toArray() {
+      return this.m;
     },
 
     fromDOMMatrix($matrix) {
@@ -280,23 +281,23 @@
 
   const ClassList = {
     add(className) {
-      this.c.add(className);
+      this.set.add(className);
     },
 
     includes(className) {
-      return this.c.has(className);
+      return this.set.has(className);
     },
 
     remove(className) {
-      this.c.delete(className);
+      this.set.delete(className);
     },
 
     toJSON() {
-      return Array.from(this.c).join(' ');
+      return Array.from(this.set).join(' ');
     },
 
     init(classList) {
-      this.c = new Set(classList) || newSet([]);
+      this.set = new Set(classList) || newSet([]);
       return this;
     },
   };
@@ -335,9 +336,22 @@
       node.defs = Array.from($node.querySelectorAll('style'));
     },
 
+    copyBBox($node, node) {
+      const box = $node.getBBox();
+      node.coords = {
+        x: box.x,
+        y: box.y,
+        width: box.width,
+        height: box.height,
+      };
+      // console.log(node.coords);
+    },
+
     buildTree($node, node) {
       this.copyTagName($node, node);
       this.processAttributes($node, node);
+
+      this.copyBBox($node, node);
 
       const $graphics = Array.from($node.children).filter((child) => {
         return child instanceof SVGGElement || child instanceof SVGGeometryElement
@@ -350,16 +364,22 @@
       }
     },
 
+    process($svg, svg) {
+      this.copyStyles($svg, svg);
+      this.copyDefs($svg, svg);
+      this.buildTree($svg, svg);
+      svg.setFrontier();
+    },
+
     createScene(markup) {
       const $svg = new DOMParser()
         .parseFromString(markup, "application/xml")
         .documentElement;
       const svg = Object.create(Scene).init();
 
-      this.copyStyles($svg, svg);
-      this.copyDefs($svg, svg);
-      this.buildTree($svg, svg);
-      svg.setFrontier();
+      document.body.appendChild($svg);
+      this.process($svg, svg);
+      $svg.remove();
 
       return svg;
     },
@@ -387,25 +407,96 @@
     }
   };
 
+  let aux = {};
+
   const transformers = {
 
     // NEW
+
     select(state, input) {
-      const target = state.doc.scene.findDescendant((node) => {
-        return node._id === input.pointer.targetID;
-      });
+      console.log(input.pointer.target);
 
-      const selection = target.findAncestor((node) => {
-        return node.props.class.includes('frontier');
-      });
+      const selected = state.doc.scene
+        .findDescendant((node) => {
+          if (node._id === input.pointer.targetID) {
+            console.log('found matching id');
+          }
+          return node._id === input.pointer.targetID;
+        })
+        .findAncestor((node) => {
+          return node.props.class.includes('frontier');
+        });
 
-      if (selection) {
-        selection.select();
-      }
+      selected ? selected.select() : state.doc.scene.deselectAll();
+
+      aux.sourceX = input.pointer.x;
+      aux.sourceY = input.pointer.y;
     },
 
-    deselect(state, input) {
-      state.doc.scene.deselect();
+    // TODO: Cleanup
+    initRotate(state, input) {
+      aux.sourceX = input.pointer.x;
+      aux.sourceY = input.pointer.y;
+
+      const selected = state.doc.scene.selected;
+      // ^ assumption: there is already a selected elem.
+      //   this should be true because otherwise no corner can be selected.
+
+      const coords = selected.coords;
+      const centerX = coords.x + coords.width / 2;
+      const centerY = coords.y + coords.height / 2;
+
+      const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
+      const transformed = selected.props.transform.multiply(column).toArray();
+
+      aux.centerX = transformed[0][0];
+      aux.centerY = transformed[1][0];
+    },
+
+    // TODO: Cleanup
+    rotate(state, input) {
+      const selected = state.doc.scene.selected;
+
+      const targetX = input.pointer.x;
+      const targetY = input.pointer.y;
+
+      const sourceVector   = [aux.sourceX - aux.centerX, aux.sourceY - aux.centerY];
+      const targetVector   = [targetX - aux.centerX, targetY - aux.centerY];
+
+      const sourceAngle    = Math.atan2(...sourceVector);
+      const targetAngle    = Math.atan2(...targetVector);
+      const angle          = sourceAngle - targetAngle;
+
+      const matrix = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
+
+      selected.props.transform = matrix.multiply(selected.props.transform);
+
+      aux.sourceX    = targetX;
+      aux.sourceY    = targetY;
+    },
+
+    shift(state, input) {
+      const selected = state.doc.scene.selected;
+
+      if (!selected) {
+        return;
+      }
+
+      const targetX  = input.pointer.x;
+      const targetY  = input.pointer.y;
+
+      const vectorX  = targetX - aux.sourceX;
+      const vectorY  = targetY - aux.sourceY; 
+      const matrix   = Matrix.translation(vectorX, vectorY);
+
+      selected.props.transform = matrix.multiply(selected.props.transform);
+
+      aux.sourceX    = targetX;
+      aux.sourceY    = targetY;
+    },
+
+    release(state, input) {
+      aux = {};
     },
 
     selectThrough(state, input) {
@@ -511,17 +602,17 @@
     },
 
     // rotate point around center by angle radians
-    rotate(point, center, angle) {
-      const [pointX,  pointY ] = point;
-      const [centerX, centerY] = center;
-      const cos                = Math.cos(angle);
-      const sin                = Math.sin(angle);
-
-      return [
-        cos * (pointX - centerX) - sin * (pointY - centerY) + centerX,
-        sin * (pointX - centerX) + cos * (pointY - centerY) + centerY
-      ];
-    },
+    // rotate(point, center, angle) {
+    //   const [pointX,  pointY ] = point;
+    //   const [centerX, centerY] = center;
+    //   const cos                = Math.cos(angle);
+    //   const sin                = Math.sin(angle);
+    //
+    //   return [
+    //     cos * (pointX - centerX) - sin * (pointY - centerY) + centerX,
+    //     sin * (pointX - centerX) + cos * (pointY - centerY) + centerY
+    //   ];
+    // },
 
     resizeFrame(state, input) { // becomes scale transform - different!
       const frame = state.doc.selected.frame;
@@ -643,10 +734,21 @@
     [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
 
     // NEW
-    [{ from: 'idle',      input: 'select'         }, { to: 'idle'              }],
-    [{ from: 'idle',      input: 'deselect'       }, { to: 'idle'              }],
+
+    // selection and focusing
+    // [{ from: 'idle',      input: 'deselect'       }, { to: 'idle'              }],
     [{ from: 'idle',      input: 'selectThrough'  }, { to: 'idle'              }],
     [{ from: 'idle',      input: 'movePointer'    }, { to: 'idle', do: 'focus' }],
+
+    // shift transformation
+    [{ from: 'idle',      input: 'select'         }, { to: 'shifting'          }],
+    [{ from: 'shifting',  input: 'movePointer'    }, { do: 'shift'             }],
+    [{ from: 'shifting',  input: 'release'        }, { to: 'idle'              }],
+
+    // shift transformation
+    [{ from: 'idle',      input: 'initRotate'     }, { to: 'rotating'          }],
+    [{ from: 'rotating',  input: 'movePointer'    }, { do: 'rotate'            }],
+    [{ from: 'rotating',  input: 'release'        }, { to: 'idle'              }],
 
     // OLD
 
@@ -921,10 +1023,12 @@
     [['click',       'animateButton'    ], 'animate'         ],
     [['click',       'doc-list-entry'   ], 'requestDoc'      ],
     // NEW
-    [['click',       'wrapper'          ], 'select'          ],
+    [['mousedown',   'wrapper'          ], 'select'          ],
+    [['mousedown',   'corner'           ], 'initRotate'      ],
     [['dblclick',    'wrapper'          ], 'selectThrough'   ],
-    [['click',       'root'             ], 'deselect'        ],
     [['mousemove'                       ], 'movePointer'     ],
+    [['mouseup'                         ], 'release'         ],
+
     // [['click',       'deleteLink'       ], 'deleteFrame'     ],
     // [['click',       'canvas'           ], 'edit'            ],
     // [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
@@ -1030,34 +1134,38 @@
     });
 
     topLeftCorner.setSVGAttrs({
-      'data-type': 'top-left-corner',
-      x: x - 2,
-      y: y - 2,
+      'data-type': 'corner',
+      // 'data-type': 'top-left-corner',
+      x: x - 4,
+      y: y - 4,
     });
 
     botLeftCorner.setSVGAttrs({
-      'data-type': 'bot-left-corner',
-      x: x - 2,
-      y: y + height - 2,
+      'data-type': 'corner',
+      // 'data-type': 'bot-left-corner',
+      x: x - 4,
+      y: y + height - 4,
     });
 
     topRightCorner.setSVGAttrs({
-      'data-type': 'top-right-corner',
-      x: x + width - 2,
-      y: y - 2,
+      'data-type': 'corner',
+      // 'data-type': 'top-right-corner',
+      x: x + width - 4,
+      y: y - 4,
     });
 
     botRightCorner.setSVGAttrs({
-      'data-type': 'bot-right-corner',
-      x: x + width - 2,
-      y: y + height - 2,
+      'data-type': 'corner',
+      // 'data-type': 'bot-right-corner',
+      x: x + width - 4,
+      y: y + height - 4,
     });
 
     for (let corner of corners) {
       corner.setSVGAttrs({
         'data-id': id,
-        width: 4,
-        height: 4,
+        width: 8,
+        height: 8,
         stroke: '#d3d3d3',
         'vector-effect': 'non-scaling-stroke',
         'stroke-width': '1px',
@@ -1117,10 +1225,22 @@
     bindEvents(processInput) {
       this.canvasNode = document.querySelector('#canvas');
 
+      const getSVGCoords = (x, y) => {
+        const svg = document.querySelector('svg');
+        let point = svg.createSVGPoint();
+        point.x   = x;
+        point.y   = y;
+        point     = point.matrixTransform(svg.getScreenCTM().inverse());
+
+        return [point.x, point.y];
+      };
+
       const pointerData = (event) => {
+        const [x, y] = getSVGCoords(event.clientX, event.clientY);
+
         return {
-          x:        event.clientX - this.canvasNode.offsetLeft,
-          y:        event.clientY - ui.canvasNode.offsetTop,
+          x:        x,
+          y:        y,
           target:   event.target.dataset.type,
           targetID: event.target.dataset.id,
         };

@@ -77,34 +77,38 @@ const wrap = (element) => {
   });
 
   topLeftCorner.setSVGAttrs({
-    'data-type': 'top-left-corner',
-    x: x - 2,
-    y: y - 2,
+    'data-type': 'corner',
+    // 'data-type': 'top-left-corner',
+    x: x - 4,
+    y: y - 4,
   });
 
   botLeftCorner.setSVGAttrs({
-    'data-type': 'bot-left-corner',
-    x: x - 2,
-    y: y + height - 2,
+    'data-type': 'corner',
+    // 'data-type': 'bot-left-corner',
+    x: x - 4,
+    y: y + height - 4,
   });
 
   topRightCorner.setSVGAttrs({
-    'data-type': 'top-right-corner',
-    x: x + width - 2,
-    y: y - 2,
+    'data-type': 'corner',
+    // 'data-type': 'top-right-corner',
+    x: x + width - 4,
+    y: y - 4,
   });
 
   botRightCorner.setSVGAttrs({
-    'data-type': 'bot-right-corner',
-    x: x + width - 2,
-    y: y + height - 2,
+    'data-type': 'corner',
+    // 'data-type': 'bot-right-corner',
+    x: x + width - 4,
+    y: y + height - 4,
   });
 
   for (let corner of corners) {
     corner.setSVGAttrs({
       'data-id': id,
-      width: 4,
-      height: 4,
+      width: 8,
+      height: 8,
       stroke: '#d3d3d3',
       'vector-effect': 'non-scaling-stroke',
       'stroke-width': '1px',

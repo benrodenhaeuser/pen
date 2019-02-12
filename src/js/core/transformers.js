@@ -1,22 +1,95 @@
+import { Matrix } from './matrix.js';
+
+let aux = {};
+
 const transformers = {
 
   // NEW
+
   select(state, input) {
-    const target = state.doc.scene.findDescendant((node) => {
-      return node._id === input.pointer.targetID;
-    });
+    console.log(input.pointer.target);
 
-    const selection = target.findAncestor((node) => {
-      return node.props.class.includes('frontier');
-    });
+    const selected = state.doc.scene
+      .findDescendant((node) => {
+        if (node._id === input.pointer.targetID) {
+          console.log('found matching id');
+        }
+        return node._id === input.pointer.targetID;
+      })
+      .findAncestor((node) => {
+        return node.props.class.includes('frontier');
+      });
 
-    if (selection) {
-      selection.select();
-    }
+    selected ? selected.select() : state.doc.scene.deselectAll();
+
+    aux.sourceX = input.pointer.x;
+    aux.sourceY = input.pointer.y;
   },
 
-  deselect(state, input) {
-    state.doc.scene.deselect();
+  // TODO: Cleanup
+  initRotate(state, input) {
+    aux.sourceX = input.pointer.x;
+    aux.sourceY = input.pointer.y;
+
+    const selected = state.doc.scene.selected;
+    // ^ assumption: there is already a selected elem.
+    //   this should be true because otherwise no corner can be selected.
+
+    const coords = selected.coords;
+    const centerX = coords.x + coords.width / 2;
+    const centerY = coords.y + coords.height / 2;
+
+    const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
+    const transformed = selected.props.transform.multiply(column).toArray();
+
+    aux.centerX = transformed[0][0];
+    aux.centerY = transformed[1][0];
+  },
+
+  // TODO: Cleanup
+  rotate(state, input) {
+    const selected = state.doc.scene.selected;
+
+    const targetX = input.pointer.x;
+    const targetY = input.pointer.y;
+
+    const sourceVector   = [aux.sourceX - aux.centerX, aux.sourceY - aux.centerY];
+    const targetVector   = [targetX - aux.centerX, targetY - aux.centerY];
+
+    const sourceAngle    = Math.atan2(...sourceVector);
+    const targetAngle    = Math.atan2(...targetVector);
+    const angle          = sourceAngle - targetAngle;
+
+    const matrix = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
+
+    selected.props.transform = matrix.multiply(selected.props.transform);
+
+    aux.sourceX    = targetX;
+    aux.sourceY    = targetY;
+  },
+
+  shift(state, input) {
+    const selected = state.doc.scene.selected;
+
+    if (!selected) {
+      return;
+    }
+
+    const targetX  = input.pointer.x;
+    const targetY  = input.pointer.y;
+
+    const vectorX  = targetX - aux.sourceX;
+    const vectorY  = targetY - aux.sourceY; 
+    const matrix   = Matrix.translation(vectorX, vectorY);
+
+    selected.props.transform = matrix.multiply(selected.props.transform);
+
+    aux.sourceX    = targetX;
+    aux.sourceY    = targetY;
+  },
+
+  release(state, input) {
+    aux = {};
   },
 
   selectThrough(state, input) {
@@ -122,17 +195,17 @@ const transformers = {
   },
 
   // rotate point around center by angle radians
-  rotate(point, center, angle) {
-    const [pointX,  pointY ] = point;
-    const [centerX, centerY] = center;
-    const cos                = Math.cos(angle);
-    const sin                = Math.sin(angle);
-
-    return [
-      cos * (pointX - centerX) - sin * (pointY - centerY) + centerX,
-      sin * (pointX - centerX) + cos * (pointY - centerY) + centerY
-    ];
-  },
+  // rotate(point, center, angle) {
+  //   const [pointX,  pointY ] = point;
+  //   const [centerX, centerY] = center;
+  //   const cos                = Math.cos(angle);
+  //   const sin                = Math.sin(angle);
+  //
+  //   return [
+  //     cos * (pointX - centerX) - sin * (pointY - centerY) + centerX,
+  //     sin * (pointX - centerX) + cos * (pointY - centerY) + centerY
+  //   ];
+  // },
 
   resizeFrame(state, input) { // becomes scale transform - different!
     const frame = state.doc.selected.frame;

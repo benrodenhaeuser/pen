@@ -1,22 +1,22 @@
 const ClassList = {
   add(className) {
-    this.c.add(className);
+    this.set.add(className);
   },
 
   includes(className) {
-    return this.c.has(className);
+    return this.set.has(className);
   },
 
   remove(className) {
-    this.c.delete(className);
+    this.set.delete(className);
   },
 
   toJSON() {
-    return Array.from(this.c).join(' ');
+    return Array.from(this.set).join(' ');
   },
 
   init(classList) {
-    this.c = new Set(classList) || newSet([]);
+    this.set = new Set(classList) || newSet([]);
     return this;
   },
 };

@@ -106,12 +106,12 @@ svg {
   outline: 1px solid red;
 }
 
-.focus ~ g > [data-type="frame"] {
+.focus ~ [data-type="chrome"] > [data-type="frame"] {
   stroke: #5DADE2;
   stroke-width: 5px;
 }
 
-.selected ~ g > [data-type="frame"] {
+.selected ~ [data-type="chrome"] > [data-type="frame"] {
   stroke: yellow;
   stroke-width: 5px;
 }
