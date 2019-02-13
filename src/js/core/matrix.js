@@ -21,6 +21,11 @@ const Matrix = {
     return Object.create(Matrix).init(m);
   },
 
+  invert() {
+    const m = JSON.parse(JSON.stringify(this.m));
+    return Object.create(Matrix).init(math.inv(m));
+  },
+
   identity() {
     const m = JSON.parse(JSON.stringify(
       [

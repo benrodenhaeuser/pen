@@ -7,13 +7,8 @@ const transformers = {
   // NEW
 
   select(state, input) {
-    console.log(input.pointer.target);
-
     const selected = state.doc.scene
       .findDescendant((node) => {
-        if (node._id === input.pointer.targetID) {
-          console.log('found matching id');
-        }
         return node._id === input.pointer.targetID;
       })
       .findAncestor((node) => {
@@ -24,48 +19,48 @@ const transformers = {
 
     aux.sourceX = input.pointer.x;
     aux.sourceY = input.pointer.y;
+    aux.ctm = selected.getCTM();
+    aux.inv = selected.getCTM().invert();
   },
 
-  // TODO: Cleanup
   initRotate(state, input) {
     aux.sourceX = input.pointer.x;
     aux.sourceY = input.pointer.y;
 
     const selected = state.doc.scene.selected;
-    // ^ assumption: there is already a selected elem.
-    //   this should be true because otherwise no corner can be selected.
-
     const coords = selected.coords;
-    const centerX = coords.x + coords.width / 2;
-    const centerY = coords.y + coords.height / 2;
+    const centerX = coords.x + coords.width / 2;   // untransformed
+    const centerY = coords.y + coords.height / 2;  // untransformed
 
     const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
-    const transformed = selected.props.transform.multiply(column).toArray();
+    const transformed = selected.getCTM().multiply(column).toArray();
+    // ^ idea: apply ctm to center to obtain "current center"
 
     aux.centerX = transformed[0][0];
     aux.centerY = transformed[1][0];
+    aux.ctm = selected.getCTM();
+    aux.inv = selected.getCTM().invert();
   },
 
-  // TODO: Cleanup
   rotate(state, input) {
-    const selected = state.doc.scene.selected;
+    const selected     = state.doc.scene.selected;
+    const targetX      = input.pointer.x;
+    const targetY      = input.pointer.y;
+    const sourceVector = [aux.sourceX - aux.centerX, aux.sourceY - aux.centerY];
+    const targetVector = [targetX - aux.centerX, targetY - aux.centerY];
+    const sourceAngle  = Math.atan2(...sourceVector);
+    const targetAngle  = Math.atan2(...targetVector);
+    const angle        = sourceAngle - targetAngle;
+    const rotation     = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
+    const ctm          = selected.getCTM();
+    const inverse      = ctm.invert();
+    const matrix       = aux.inv.multiply(rotation).multiply(aux.ctm);
 
-    const targetX = input.pointer.x;
-    const targetY = input.pointer.y;
+    // notice that we just use the rotation matrix below:
+    selected.props.transform = rotation.multiply(selected.props.transform);
 
-    const sourceVector   = [aux.sourceX - aux.centerX, aux.sourceY - aux.centerY];
-    const targetVector   = [targetX - aux.centerX, targetY - aux.centerY];
-
-    const sourceAngle    = Math.atan2(...sourceVector);
-    const targetAngle    = Math.atan2(...targetVector);
-    const angle          = sourceAngle - targetAngle;
-
-    const matrix = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
-
-    selected.props.transform = matrix.multiply(selected.props.transform);
-
-    aux.sourceX    = targetX;
-    aux.sourceY    = targetY;
+    aux.sourceX = targetX;
+    aux.sourceY = targetY;
   },
 
   shift(state, input) {
@@ -77,15 +72,18 @@ const transformers = {
 
     const targetX  = input.pointer.x;
     const targetY  = input.pointer.y;
-
     const vectorX  = targetX - aux.sourceX;
-    const vectorY  = targetY - aux.sourceY; 
-    const matrix   = Matrix.translation(vectorX, vectorY);
+    const vectorY  = targetY - aux.sourceY;
+    const shift    = Matrix.translation(vectorX, vectorY);
+    const ctm      = selected.getCTM();
+    const inverse  = ctm.invert();
+    const matrix   = aux.inv.multiply(shift).multiply(aux.ctm);
 
-    selected.props.transform = matrix.multiply(selected.props.transform);
+    // notice that we just use the shift matrix below:
+    selected.props.transform = shift.multiply(selected.props.transform);
 
-    aux.sourceX    = targetX;
-    aux.sourceY    = targetY;
+    aux.sourceX = targetX;
+    aux.sourceY = targetY;
   },
 
   release(state, input) {

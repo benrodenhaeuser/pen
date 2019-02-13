@@ -116,6 +116,10 @@ svg {
   stroke-width: 5px;
 }
 
-.focus ~ [data-type="chrome"], .selected ~ [data-type="chrome"] {
+.selected ~ [data-type="chrome"] {
+  visibility: visible;
+}
+
+.focus ~ g > [data-type="frame"] {
   visibility: visible;
 }

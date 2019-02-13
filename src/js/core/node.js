@@ -1,10 +1,12 @@
+import { Matrix } from './matrix.js';
+
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
   const timestamp    = (new Date()).getTime().toString(36);
   return randomString + timestamp;
 };
 
-const Scene = {
+const Node = {
   findAncestor(predicate) {
     if (predicate(this)) {
       return this;
@@ -56,6 +58,26 @@ const Scene = {
     return this.root.findDescendants((node) => {
       return node.props.class.includes('frontier');
     });
+  },
+
+  ancestors(result = []) {
+    result.push(this);
+    if (this.parent === null) {
+      return result;
+    } else {
+      return this.parent.ancestors(result);
+    }
+  },
+
+  getCTM() {
+    const ancestors = this.ancestors();
+    let matrix = Matrix.identity();
+
+    for (let ancestor of ancestors.reverse()) {
+      matrix = matrix.multiply(ancestor.props.transform);
+    }
+
+    return matrix;
   },
 
   get siblings() {
@@ -156,4 +178,4 @@ const Scene = {
   },
 };
 
-export { Scene };
+export { Node };

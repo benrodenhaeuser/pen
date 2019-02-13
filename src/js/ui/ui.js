@@ -2,6 +2,10 @@ import { nodeFactory } from './nodeFactory.js';
 import { inputTable } from './inputTable.js';
 import { sceneRenderer } from './sceneRenderer.js';
 
+SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(element) {
+    return element.getScreenCTM().inverse().multiply(this.getScreenCTM());
+};
+
 const ui = {
   bindEvents(processInput) {
     this.canvasNode = document.querySelector('#canvas');
@@ -115,7 +119,7 @@ const ui = {
     ui.canvasNode.innerHTML = '';
 
     const $root = sceneRenderer.build(state.doc.scene, ui.canvasNode);
-    sceneRenderer.decorate($root);
+    sceneRenderer.decorate($root, state.doc.scene);
   },
 
   renderDocList(state) {

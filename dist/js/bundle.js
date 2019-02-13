@@ -12,13 +12,127 @@
     },
   };
 
+  const Matrix = {
+    multiply(other) {
+      const thisRows  = this.m.length;
+      const thisCols  = this.m[0].length;
+      const otherRows = other.m.length;
+      const otherCols = other.m[0].length;
+      const m         = new Array(thisRows);
+
+      for (let r = 0; r < thisRows; r += 1) {
+        m[r] = new Array(otherCols);
+
+        for (let c = 0; c < otherCols; c += 1) {
+          m[r][c] = 0;
+
+          for (let i = 0; i < thisCols; i += 1) {
+            m[r][c] += this.m[r][i] * other.m[i][c];
+          }
+        }
+      }
+
+      return Object.create(Matrix).init(m);
+    },
+
+    invert() {
+      const m = JSON.parse(JSON.stringify(this.m));
+      return Object.create(Matrix).init(math.inv(m));
+    },
+
+    identity() {
+      const m = JSON.parse(JSON.stringify(
+        [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ]
+      ));
+
+      return Object.create(Matrix).init(m);
+    },
+
+    rotation(angle, origin) {
+      const [originX, originY] = origin;
+      const sin                = Math.sin(angle);
+      const cos                = Math.cos(angle);
+
+      const m = [
+        [cos, -sin, -originX * cos + originY * sin + originX],
+        [sin,  cos, -originX * sin - originY * cos + originY],
+        [0,    0,    1                                      ]
+      ];
+
+      return Object.create(Matrix).init(m);
+    },
+
+    translation(...vector) {
+      const [vectorX, vectorY] = vector;
+
+      const m = [
+        [1, 0, vectorX],
+        [0, 1, vectorY],
+        [0, 0, 1      ]
+      ];
+
+      return Object.create(Matrix).init(m);
+    },
+
+    scale(factor, origin) {
+      const [originX, originY] = origin;
+
+      const m = [
+        [factor, 0,      originX - factor * originX],
+        [0,      factor, originY - factor * originY],
+        [0,      0,      1                         ]
+      ];
+
+      return Object.create(Matrix).init(m);
+    },
+
+    // TODO: not general enough
+    toVector() {
+      return [
+        this.m[0][0], this.m[1][0], this.m[0][1],
+        this.m[1][1], this.m[0][2], this.m[1][2]
+      ];
+    },
+
+    toArray() {
+      return this.m;
+    },
+
+    fromDOMMatrix($matrix) {
+      this.m = [
+        [$matrix.a, $matrix.c, $matrix.e],
+        [$matrix.b, $matrix.d, $matrix.f],
+        [0,         0,         1        ]
+      ];
+
+      return this;
+    },
+
+    toJSON() {
+      return this.toAttributeString();
+    },
+
+    toAttributeString() {
+      return `matrix(${this.toVector()})`;
+    },
+
+    init(m) {
+      this.m = m;
+      return this;
+    },
+  };
+
   const createID = () => {
     const randomString = Math.random().toString(36).substring(2);
     const timestamp    = (new Date()).getTime().toString(36);
     return randomString + timestamp;
   };
 
-  const Scene = {
+  const Node = {
     findAncestor(predicate) {
       if (predicate(this)) {
         return this;
@@ -70,6 +184,26 @@
       return this.root.findDescendants((node) => {
         return node.props.class.includes('frontier');
       });
+    },
+
+    ancestors(result = []) {
+      result.push(this);
+      if (this.parent === null) {
+        return result;
+      } else {
+        return this.parent.ancestors(result);
+      }
+    },
+
+    getCTM() {
+      const ancestors = this.ancestors();
+      let matrix = Matrix.identity();
+
+      for (let ancestor of ancestors.reverse()) {
+        matrix = matrix.multiply(ancestor.props.transform);
+      }
+
+      return matrix;
     },
 
     get siblings() {
@@ -170,115 +304,6 @@
     },
   };
 
-  const Matrix = {
-    multiply(other) {
-      const thisRows  = this.m.length;
-      const thisCols  = this.m[0].length;
-      const otherRows = other.m.length;
-      const otherCols = other.m[0].length;
-      const m         = new Array(thisRows);
-
-      for (let r = 0; r < thisRows; r += 1) {
-        m[r] = new Array(otherCols);
-
-        for (let c = 0; c < otherCols; c += 1) {
-          m[r][c] = 0;
-
-          for (let i = 0; i < thisCols; i += 1) {
-            m[r][c] += this.m[r][i] * other.m[i][c];
-          }
-        }
-      }
-
-      return Object.create(Matrix).init(m);
-    },
-
-    identity() {
-      const m = JSON.parse(JSON.stringify(
-        [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ]
-      ));
-
-      return Object.create(Matrix).init(m);
-    },
-
-    rotation(angle, origin) {
-      const [originX, originY] = origin;
-      const sin                = Math.sin(angle);
-      const cos                = Math.cos(angle);
-
-      const m = [
-        [cos, -sin, -originX * cos + originY * sin + originX],
-        [sin,  cos, -originX * sin - originY * cos + originY],
-        [0,    0,    1                                      ]
-      ];
-
-      return Object.create(Matrix).init(m);
-    },
-
-    translation(...vector) {
-      const [vectorX, vectorY] = vector;
-
-      const m = [
-        [1, 0, vectorX],
-        [0, 1, vectorY],
-        [0, 0, 1      ]
-      ];
-
-      return Object.create(Matrix).init(m);
-    },
-
-    scale(factor, origin) {
-      const [originX, originY] = origin;
-
-      const m = [
-        [factor, 0,      originX - factor * originX],
-        [0,      factor, originY - factor * originY],
-        [0,      0,      1                         ]
-      ];
-
-      return Object.create(Matrix).init(m);
-    },
-
-    // TODO: not general enough
-    toVector() {
-      return [
-        this.m[0][0], this.m[1][0], this.m[0][1],
-        this.m[1][1], this.m[0][2], this.m[1][2]
-      ];
-    },
-
-    toArray() {
-      return this.m;
-    },
-
-    fromDOMMatrix($matrix) {
-      this.m = [
-        [$matrix.a, $matrix.c, $matrix.e],
-        [$matrix.b, $matrix.d, $matrix.f],
-        [0,         0,         1        ]
-      ];
-
-      return this;
-    },
-
-    toJSON() {
-      return this.toAttributeString();
-    },
-
-    toAttributeString() {
-      return `matrix(${this.toVector()})`;
-    },
-
-    init(m) {
-      this.m = m;
-      return this;
-    },
-  };
-
   const ClassList = {
     add(className) {
       this.set.add(className);
@@ -358,7 +383,7 @@
       });
 
       for (let $child of $graphics) {
-        const child = Object.create(Scene).init();
+        const child = Object.create(Node).init();
         node.append(child);
         this.buildTree($child, child);
       }
@@ -375,7 +400,7 @@
       const $svg = new DOMParser()
         .parseFromString(markup, "application/xml")
         .documentElement;
-      const svg = Object.create(Scene).init();
+      const svg = Object.create(Node).init();
 
       document.body.appendChild($svg);
       this.process($svg, svg);
@@ -414,13 +439,8 @@
     // NEW
 
     select(state, input) {
-      console.log(input.pointer.target);
-
       const selected = state.doc.scene
         .findDescendant((node) => {
-          if (node._id === input.pointer.targetID) {
-            console.log('found matching id');
-          }
           return node._id === input.pointer.targetID;
         })
         .findAncestor((node) => {
@@ -431,48 +451,48 @@
 
       aux.sourceX = input.pointer.x;
       aux.sourceY = input.pointer.y;
+      aux.ctm = selected.getCTM();
+      aux.inv = selected.getCTM().invert();
     },
 
-    // TODO: Cleanup
     initRotate(state, input) {
       aux.sourceX = input.pointer.x;
       aux.sourceY = input.pointer.y;
 
       const selected = state.doc.scene.selected;
-      // ^ assumption: there is already a selected elem.
-      //   this should be true because otherwise no corner can be selected.
-
       const coords = selected.coords;
-      const centerX = coords.x + coords.width / 2;
-      const centerY = coords.y + coords.height / 2;
+      const centerX = coords.x + coords.width / 2;   // untransformed
+      const centerY = coords.y + coords.height / 2;  // untransformed
 
       const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
-      const transformed = selected.props.transform.multiply(column).toArray();
+      const transformed = selected.getCTM().multiply(column).toArray();
+      // ^ idea: apply ctm to center to obtain "current center"
 
       aux.centerX = transformed[0][0];
       aux.centerY = transformed[1][0];
+      aux.ctm = selected.getCTM();
+      aux.inv = selected.getCTM().invert();
     },
 
-    // TODO: Cleanup
     rotate(state, input) {
-      const selected = state.doc.scene.selected;
+      const selected     = state.doc.scene.selected;
+      const targetX      = input.pointer.x;
+      const targetY      = input.pointer.y;
+      const sourceVector = [aux.sourceX - aux.centerX, aux.sourceY - aux.centerY];
+      const targetVector = [targetX - aux.centerX, targetY - aux.centerY];
+      const sourceAngle  = Math.atan2(...sourceVector);
+      const targetAngle  = Math.atan2(...targetVector);
+      const angle        = sourceAngle - targetAngle;
+      const rotation     = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
+      const ctm          = selected.getCTM();
+      const inverse      = ctm.invert();
+      const matrix       = aux.inv.multiply(rotation).multiply(aux.ctm);
 
-      const targetX = input.pointer.x;
-      const targetY = input.pointer.y;
+      // notice that we just use the rotation matrix below:
+      selected.props.transform = rotation.multiply(selected.props.transform);
 
-      const sourceVector   = [aux.sourceX - aux.centerX, aux.sourceY - aux.centerY];
-      const targetVector   = [targetX - aux.centerX, targetY - aux.centerY];
-
-      const sourceAngle    = Math.atan2(...sourceVector);
-      const targetAngle    = Math.atan2(...targetVector);
-      const angle          = sourceAngle - targetAngle;
-
-      const matrix = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
-
-      selected.props.transform = matrix.multiply(selected.props.transform);
-
-      aux.sourceX    = targetX;
-      aux.sourceY    = targetY;
+      aux.sourceX = targetX;
+      aux.sourceY = targetY;
     },
 
     shift(state, input) {
@@ -484,15 +504,18 @@
 
       const targetX  = input.pointer.x;
       const targetY  = input.pointer.y;
-
       const vectorX  = targetX - aux.sourceX;
-      const vectorY  = targetY - aux.sourceY; 
-      const matrix   = Matrix.translation(vectorX, vectorY);
+      const vectorY  = targetY - aux.sourceY;
+      const shift    = Matrix.translation(vectorX, vectorY);
+      const ctm      = selected.getCTM();
+      const inverse  = ctm.invert();
+      const matrix   = aux.inv.multiply(shift).multiply(aux.ctm);
 
-      selected.props.transform = matrix.multiply(selected.props.transform);
+      // notice that we just use the shift matrix below:
+      selected.props.transform = shift.multiply(selected.props.transform);
 
-      aux.sourceX    = targetX;
-      aux.sourceY    = targetY;
+      aux.sourceX = targetX;
+      aux.sourceY = targetY;
     },
 
     release(state, input) {
@@ -1073,27 +1096,25 @@
   };
 
   const wrap = (element) => {
-    const parent         = element.parentNode;
-    const wrapper        = document.createElementNS(svgns, 'g');
-    const chrome         = document.createElementNS(svgns, 'g');
-    const frame          = document.createElementNS(svgns, 'rect');
-    const topLeftCorner  = document.createElementNS(svgns, 'rect');
-    const botLeftCorner  = document.createElementNS(svgns, 'rect');
-    const topRightCorner = document.createElementNS(svgns, 'rect');
-    const botRightCorner = document.createElementNS(svgns, 'rect');
+    const parent     = element.parentNode;
+    const wrapper    = document.createElementNS(svgns, 'g');
+    const chrome     = document.createElementNS(svgns, 'g');
+    const frame      = document.createElementNS(svgns, 'rect');
+    const topLCorner = document.createElementNS(svgns, 'rect');
+    const botLCorner = document.createElementNS(svgns, 'rect');
+    const topRCorner = document.createElementNS(svgns, 'rect');
+    const botRCorner = document.createElementNS(svgns, 'rect');
 
     wrapper.appendChild(element);
     parent.appendChild(wrapper);
 
-    const bb             = wrapper.getBBox();
-    const width          = bb.width;
-    const height         = bb.height;
-    const x              = bb.x;
-    const y              = bb.y;
-    const id             = element.getSVGAttr('data-id');
-    const corners        = [
-      topLeftCorner, botLeftCorner, topRightCorner, botRightCorner
-    ];
+    const bb      = wrapper.getBBox();
+    const width   = bb.width;
+    const height  = bb.height;
+    const x       = bb.x;
+    const y       = bb.y;
+    const id      = element.getSVGAttr('data-id');
+    const corners = [topLCorner, botLCorner, topRCorner, botRCorner];
 
     wrapper.appendChild(chrome);
     chrome.appendChild(frame);
@@ -1125,6 +1146,8 @@
       y:                 y,
       width:             width,
       height:            height,
+      // ^ use initial bounding box given by coords here
+      //   apply current transform on element
       stroke:            '#d3d3d3',
       'vector-effect':  'non-scaling-stroke',
       'stroke-width':   '1px',
@@ -1133,36 +1156,9 @@
       'data-id':        id,
     });
 
-    topLeftCorner.setSVGAttrs({
-      'data-type': 'corner',
-      // 'data-type': 'top-left-corner',
-      x: x - 4,
-      y: y - 4,
-    });
-
-    botLeftCorner.setSVGAttrs({
-      'data-type': 'corner',
-      // 'data-type': 'bot-left-corner',
-      x: x - 4,
-      y: y + height - 4,
-    });
-
-    topRightCorner.setSVGAttrs({
-      'data-type': 'corner',
-      // 'data-type': 'top-right-corner',
-      x: x + width - 4,
-      y: y - 4,
-    });
-
-    botRightCorner.setSVGAttrs({
-      'data-type': 'corner',
-      // 'data-type': 'bot-right-corner',
-      x: x + width - 4,
-      y: y + height - 4,
-    });
-
     for (let corner of corners) {
       corner.setSVGAttrs({
+        'data-type': 'corner',
         'data-id': id,
         width: 8,
         height: 8,
@@ -1173,15 +1169,19 @@
       });
     }
 
+    topLCorner.setSVGAttrs({ x: x - 4,         y: y - 4          });
+    botLCorner.setSVGAttrs({ x: x - 4,         y: y + height - 4 });
+    topRCorner.setSVGAttrs({ x: x + width - 4, y: y - 4          });
+    botRCorner.setSVGAttrs({ x: x + width - 4, y: y + height - 4 });
+
     return wrapper;
   };
 
 
   // TODO: need to take care of style and defs
 
-  // This recreates the original svg from our scene tree:
-  // TODO: need to wrap nodes. for this to make sense,
-  // the leaf nodes need to have been rendered.
+  // Recreate SVG DOM from scene tree.
+
   const sceneRenderer = {
     build(scene, $parent) {
       const $node = document.createElementNS(svgns, scene.tag);
@@ -1219,6 +1219,13 @@
         sceneRenderer.decorate($child);
       }
     },
+  };
+
+
+  // Need to reorganize this in such a way that we have access to the pair ($node, node) throughout
+
+  SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(element) {
+      return element.getScreenCTM().inverse().multiply(this.getScreenCTM());
   };
 
   const ui = {
@@ -1333,7 +1340,7 @@
       ui.canvasNode.innerHTML = '';
 
       const $root = sceneRenderer.build(state.doc.scene, ui.canvasNode);
-      sceneRenderer.decorate($root);
+      sceneRenderer.decorate($root, state.doc.scene);
     },
 
     renderDocList(state) {

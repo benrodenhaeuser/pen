@@ -1,4 +1,4 @@
-import { Scene } from './scene.js';
+import { Node } from './node.js';
 import { Matrix } from './matrix.js';
 import { ClassList } from './classList.js';
 
@@ -58,7 +58,7 @@ const sceneBuilder = {
     });
 
     for (let $child of $graphics) {
-      const child = Object.create(Scene).init();
+      const child = Object.create(Node).init();
       node.append(child);
       this.buildTree($child, child);
     }
@@ -75,7 +75,7 @@ const sceneBuilder = {
     const $svg = new DOMParser()
       .parseFromString(markup, "application/xml")
       .documentElement;
-    const svg = Object.create(Scene).init();
+    const svg = Object.create(Node).init();
 
     document.body.appendChild($svg);
     this.process($svg, svg);
