@@ -186,20 +186,22 @@
       });
     },
 
+    // note that these are proper ancestors, i.e., not
+    // including the current node
     ancestors(result = []) {
-      result.push(this);
       if (this.parent === null) {
         return result;
       } else {
+        result.push(this.parent);
         return this.parent.ancestors(result);
       }
     },
 
-    getCTM() {
-      const ancestors = this.ancestors();
+    ancestorTransform() {
       let matrix = Matrix.identity();
 
-      for (let ancestor of ancestors.reverse()) {
+      // reverse ancestors to start from the root ...
+      for (let ancestor of this.ancestors().reverse()) {
         matrix = matrix.multiply(ancestor.props.transform);
       }
 
@@ -281,12 +283,15 @@
       return {
         _id:         this._id,
         parent:      this.parent && this.parent._id || null,
+        // TODO: I don't think we need the second disjunct.
         children:    this.children,
         tag:         this.tag,
         props:       this.props,
+        coords:      this.coords,
       };
     },
 
+    // TODO: we should set a transform matrix and define a class list here.
     defaults() {
       return {
         _id:         createID(),
@@ -294,6 +299,7 @@
         children:    [],
         tag:         null,
         props:       {},
+        coords:      {},
       };
     },
 
@@ -322,7 +328,8 @@
     },
 
     init(classList) {
-      this.set = new Set(classList) || newSet([]);
+      classList = classList ? classList : [];
+      this.set = new Set(classList);
       return this;
     },
   };
@@ -438,6 +445,12 @@
 
     // NEW
 
+    // transform(point, node) {
+    //   const column = Object.create(Matrix).init([[point[0]], [point[1]], [1]]);
+    //   const transformed = node.getCTM().multiply(column).toArray();
+    //   return [transformed[0][0], transformed[1][0]];
+    // },
+
     select(state, input) {
       const selected = state.doc.scene
         .findDescendant((node) => {
@@ -451,27 +464,42 @@
 
       aux.sourceX = input.pointer.x;
       aux.sourceY = input.pointer.y;
-      aux.ctm = selected.getCTM();
-      aux.inv = selected.getCTM().invert();
     },
 
     initRotate(state, input) {
-      aux.sourceX = input.pointer.x;
-      aux.sourceY = input.pointer.y;
-
       const selected = state.doc.scene.selected;
-      const coords = selected.coords;
-      const centerX = coords.x + coords.width / 2;   // untransformed
-      const centerY = coords.y + coords.height / 2;  // untransformed
+      aux.sourceX    = input.pointer.x;
+      aux.sourceY    = input.pointer.y;
+      const coords   = selected.coords;
+      const centerX  = coords.x + coords.width / 2;
+      const centerY  = coords.y + coords.height / 2;
+      // const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
+      // const transformed = selected.props.transform.multiply(column).toArray();
+      // [aux.centerX, aux.centerY] = [transformed[0][0], transformed[1][0]];
 
+      const ancTransform = selected.ancestorTransform();
+      const matrix       = ancTransform.multiply(selected.props.transform);
+      // ^ this is the current transform.
       const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
-      const transformed = selected.getCTM().multiply(column).toArray();
-      // ^ idea: apply ctm to center to obtain "current center"
+      const transformed = matrix.multiply(column).toArray();
+      [aux.centerX, aux.centerY] = [transformed[0][0], transformed[1][0]];
 
-      aux.centerX = transformed[0][0];
-      aux.centerY = transformed[1][0];
-      aux.ctm = selected.getCTM();
-      aux.inv = selected.getCTM().invert();
+      // DEBUG: add a node to visualize the center
+      const center = Object.create(Node).init();
+      center.tag = 'circle';
+      center.props = {
+        r: 5,
+        cx: aux.centerX,
+        cy: aux.centerY,
+        fill: 'red',
+        stroke: 'black',
+        transform: Matrix.identity(),
+        class: Object.create(ClassList).init(),
+      };
+      center.coords = { x: centerX, y: centerY, width: 5, height: 5};
+      selected.root.append(center);
+
+      console.log(aux.centerX, aux.centerY);
     },
 
     rotate(state, input) {
@@ -483,13 +511,13 @@
       const sourceAngle  = Math.atan2(...sourceVector);
       const targetAngle  = Math.atan2(...targetVector);
       const angle        = sourceAngle - targetAngle;
-      const rotation     = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
-      const ctm          = selected.getCTM();
-      const inverse      = ctm.invert();
-      const matrix       = aux.inv.multiply(rotation).multiply(aux.ctm);
 
-      // notice that we just use the rotation matrix below:
-      selected.props.transform = rotation.multiply(selected.props.transform);
+      const rotation     = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
+      const ancTransform = selected.ancestorTransform();
+      const inv          = ancTransform.invert();
+      const matrix       = inv.multiply(rotation).multiply(ancTransform);
+
+      selected.props.transform = matrix.multiply(selected.props.transform);
 
       aux.sourceX = targetX;
       aux.sourceY = targetY;
@@ -502,17 +530,17 @@
         return;
       }
 
-      const targetX  = input.pointer.x;
-      const targetY  = input.pointer.y;
-      const vectorX  = targetX - aux.sourceX;
-      const vectorY  = targetY - aux.sourceY;
-      const shift    = Matrix.translation(vectorX, vectorY);
-      const ctm      = selected.getCTM();
-      const inverse  = ctm.invert();
-      const matrix   = aux.inv.multiply(shift).multiply(aux.ctm);
+      const targetX      = input.pointer.x;
+      const targetY      = input.pointer.y;
+      const vectorX      = targetX - aux.sourceX;
+      const vectorY      = targetY - aux.sourceY;
 
-      // notice that we just use the shift matrix below:
-      selected.props.transform = shift.multiply(selected.props.transform);
+      const shift        = Matrix.translation(vectorX, vectorY);
+      const ancTransform = selected.ancestorTransform();
+      const inv          = ancTransform.invert();
+      const matrix       = inv.multiply(shift).multiply(ancTransform);
+
+      selected.props.transform = matrix.multiply(selected.props.transform);
 
       aux.sourceX = targetX;
       aux.sourceY = targetY;
@@ -1095,8 +1123,7 @@
     }
   };
 
-  const wrap = (element) => {
-    const parent     = element.parentNode;
+  const wrap = ($node, node) => {
     const wrapper    = document.createElementNS(svgns, 'g');
     const chrome     = document.createElementNS(svgns, 'g');
     const frame      = document.createElementNS(svgns, 'rect');
@@ -1104,25 +1131,16 @@
     const botLCorner = document.createElementNS(svgns, 'rect');
     const topRCorner = document.createElementNS(svgns, 'rect');
     const botRCorner = document.createElementNS(svgns, 'rect');
+    const corners    = [topLCorner, botLCorner, topRCorner, botRCorner];
 
-    wrapper.appendChild(element);
-    parent.appendChild(wrapper);
+    const width     = node.coords.width;
+    const height    = node.coords.height;
+    const x         = node.coords.x;
+    const y         = node.coords.y;
+    const transform = node.props.transform;
+    const id        = node._id;
 
-    const bb      = wrapper.getBBox();
-    const width   = bb.width;
-    const height  = bb.height;
-    const x       = bb.x;
-    const y       = bb.y;
-    const id      = element.getSVGAttr('data-id');
-    const corners = [topLCorner, botLCorner, topRCorner, botRCorner];
-
-    wrapper.appendChild(chrome);
-    chrome.appendChild(frame);
-    for (let corner of corners) {
-      chrome.appendChild(corner);
-    }
-
-    element.setSVGAttrs({
+    $node.setSVGAttrs({
       'data-type': 'content',
       'pointer-events': 'none',
     });
@@ -1142,15 +1160,14 @@
 
     frame.setSVGAttrs({
       'data-type':      'frame',
-      x:                 x,
-      y:                 y,
-      width:             width,
-      height:            height,
-      // ^ use initial bounding box given by coords here
-      //   apply current transform on element
+      x:                 x,                    // alternative:
+      y:                 y,                    // get the bounding box
+      width:             width,                // of the wrapper here
+      height:            height,               
       stroke:            '#d3d3d3',
       'vector-effect':  'non-scaling-stroke',
       'stroke-width':   '1px',
+      transform:         transform,
       fill:             'none',
       'pointer-events': 'none',
       'data-id':        id,
@@ -1158,14 +1175,15 @@
 
     for (let corner of corners) {
       corner.setSVGAttrs({
-        'data-type': 'corner',
-        'data-id': id,
-        width: 8,
-        height: 8,
-        stroke: '#d3d3d3',
+        'data-type':     'corner',
+        'data-id':       id,
+        transform:       transform,
+        width:           8,
+        height:          8,
+        stroke:          '#d3d3d3',
         'vector-effect': 'non-scaling-stroke',
-        'stroke-width': '1px',
-        fill: '#FFFFFF',
+        'stroke-width':  '1px',
+        fill:            '#FFFFFF',
       });
     }
 
@@ -1174,49 +1192,41 @@
     topRCorner.setSVGAttrs({ x: x + width - 4, y: y - 4          });
     botRCorner.setSVGAttrs({ x: x + width - 4, y: y + height - 4 });
 
+    wrapper.appendChild($node);
+    wrapper.appendChild(chrome);
+    chrome.appendChild(frame);
+    for (let corner of corners) {
+      chrome.appendChild(corner);
+    }
+
     return wrapper;
   };
 
 
   // TODO: need to take care of style and defs
 
-  // Recreate SVG DOM from scene tree.
-
   const sceneRenderer = {
-    build(scene, $parent) {
-      const $node = document.createElementNS(svgns, scene.tag);
-
-      $node.setSVGAttrs(scene.props);
-      $node.setSVGAttr('data-id', scene._id);
-
-      if (scene.tag === 'svg') {
-        // console.log('styles', scene.styles); // TODO: undefined
-        $node.setAttributeNS(xmlns, 'xmlns', svgns);
-        $node.setAttributeNS(svgns, 'data-type', 'root');
-        // $node.setSVGAttr('viewBox', '-100 -100 400 400'); // for 48k
-      }
-
-      $parent.appendChild($node);
-
-      for (let child of scene.children) {
-        sceneRenderer.build(child, $node);
-      }
-
-      return $node;
+    render(scene, $canvas) {
+      canvas.innerHTML = '';
+      this.build(scene, $canvas);
     },
 
-    decorate($node) {
-      if ($node.tagName !== 'svg') {
-        wrap($node);
+    build(node, $parent) {
+      const $node = document.createElementNS(svgns, node.tag);
+      $node.setSVGAttrs(node.props);
+      $node.setSVGAttr('data-id', node._id);
+
+      if (node.tag === 'svg') {
+        $node.setAttributeNS(xmlns, 'xmlns', svgns);
+        $node.setAttributeNS(svgns, 'data-type', 'root');
+        $parent.appendChild($node);
+      } else {
+        const $wrapper = wrap($node, node);
+        $parent.appendChild($wrapper);
       }
 
-      const $children = Array.from($node.children);
-      // ^ don't iterate over $node.children directly!
-      // this results in an infinite loop, because
-      // it's a *live* collection!
-
-      for (let $child of $children) {
-        sceneRenderer.decorate($child);
+      for (let child of node.children) {
+        sceneRenderer.build(child, $node);
       }
     },
   };
@@ -1337,10 +1347,7 @@
     },
 
     renderScene(state) {
-      ui.canvasNode.innerHTML = '';
-
-      const $root = sceneRenderer.build(state.doc.scene, ui.canvasNode);
-      sceneRenderer.decorate($root, state.doc.scene);
+      sceneRenderer.render(state.doc.scene, ui.canvasNode);
     },
 
     renderDocList(state) {

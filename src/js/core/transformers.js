@@ -1,10 +1,18 @@
 import { Matrix } from './matrix.js';
+import { Node } from './node.js';
+import { ClassList } from './classList.js';
 
 let aux = {};
 
 const transformers = {
 
   // NEW
+
+  // transform(point, node) {
+  //   const column = Object.create(Matrix).init([[point[0]], [point[1]], [1]]);
+  //   const transformed = node.getCTM().multiply(column).toArray();
+  //   return [transformed[0][0], transformed[1][0]];
+  // },
 
   select(state, input) {
     const selected = state.doc.scene
@@ -19,27 +27,42 @@ const transformers = {
 
     aux.sourceX = input.pointer.x;
     aux.sourceY = input.pointer.y;
-    aux.ctm = selected.getCTM();
-    aux.inv = selected.getCTM().invert();
   },
 
   initRotate(state, input) {
-    aux.sourceX = input.pointer.x;
-    aux.sourceY = input.pointer.y;
-
     const selected = state.doc.scene.selected;
-    const coords = selected.coords;
-    const centerX = coords.x + coords.width / 2;   // untransformed
-    const centerY = coords.y + coords.height / 2;  // untransformed
+    aux.sourceX    = input.pointer.x;
+    aux.sourceY    = input.pointer.y;
+    const coords   = selected.coords;
+    const centerX  = coords.x + coords.width / 2;
+    const centerY  = coords.y + coords.height / 2;
+    // const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
+    // const transformed = selected.props.transform.multiply(column).toArray();
+    // [aux.centerX, aux.centerY] = [transformed[0][0], transformed[1][0]];
 
+    const ancTransform = selected.ancestorTransform();
+    const matrix       = ancTransform.multiply(selected.props.transform);
+    // ^ this is the current transform.
     const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
-    const transformed = selected.getCTM().multiply(column).toArray();
-    // ^ idea: apply ctm to center to obtain "current center"
+    const transformed = matrix.multiply(column).toArray();
+    [aux.centerX, aux.centerY] = [transformed[0][0], transformed[1][0]];
 
-    aux.centerX = transformed[0][0];
-    aux.centerY = transformed[1][0];
-    aux.ctm = selected.getCTM();
-    aux.inv = selected.getCTM().invert();
+    // DEBUG: add a node to visualize the center
+    const center = Object.create(Node).init();
+    center.tag = 'circle';
+    center.props = {
+      r: 5,
+      cx: aux.centerX,
+      cy: aux.centerY,
+      fill: 'red',
+      stroke: 'black',
+      transform: Matrix.identity(),
+      class: Object.create(ClassList).init(),
+    };
+    center.coords = { x: centerX, y: centerY, width: 5, height: 5};
+    selected.root.append(center);
+
+    console.log(aux.centerX, aux.centerY);
   },
 
   rotate(state, input) {
@@ -51,13 +74,13 @@ const transformers = {
     const sourceAngle  = Math.atan2(...sourceVector);
     const targetAngle  = Math.atan2(...targetVector);
     const angle        = sourceAngle - targetAngle;
-    const rotation     = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
-    const ctm          = selected.getCTM();
-    const inverse      = ctm.invert();
-    const matrix       = aux.inv.multiply(rotation).multiply(aux.ctm);
 
-    // notice that we just use the rotation matrix below:
-    selected.props.transform = rotation.multiply(selected.props.transform);
+    const rotation     = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
+    const ancTransform = selected.ancestorTransform();
+    const inv          = ancTransform.invert();
+    const matrix       = inv.multiply(rotation).multiply(ancTransform);
+
+    selected.props.transform = matrix.multiply(selected.props.transform);
 
     aux.sourceX = targetX;
     aux.sourceY = targetY;
@@ -70,17 +93,17 @@ const transformers = {
       return;
     }
 
-    const targetX  = input.pointer.x;
-    const targetY  = input.pointer.y;
-    const vectorX  = targetX - aux.sourceX;
-    const vectorY  = targetY - aux.sourceY;
-    const shift    = Matrix.translation(vectorX, vectorY);
-    const ctm      = selected.getCTM();
-    const inverse  = ctm.invert();
-    const matrix   = aux.inv.multiply(shift).multiply(aux.ctm);
+    const targetX      = input.pointer.x;
+    const targetY      = input.pointer.y;
+    const vectorX      = targetX - aux.sourceX;
+    const vectorY      = targetY - aux.sourceY;
 
-    // notice that we just use the shift matrix below:
-    selected.props.transform = shift.multiply(selected.props.transform);
+    const shift        = Matrix.translation(vectorX, vectorY);
+    const ancTransform = selected.ancestorTransform();
+    const inv          = ancTransform.invert();
+    const matrix       = inv.multiply(shift).multiply(ancTransform);
+
+    selected.props.transform = matrix.multiply(selected.props.transform);
 
     aux.sourceX = targetX;
     aux.sourceY = targetY;

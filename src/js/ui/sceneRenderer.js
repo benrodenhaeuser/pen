@@ -15,8 +15,7 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
   }
 };
 
-const wrap = (element) => {
-  const parent     = element.parentNode;
+const wrap = ($node, node) => {
   const wrapper    = document.createElementNS(svgns, 'g');
   const chrome     = document.createElementNS(svgns, 'g');
   const frame      = document.createElementNS(svgns, 'rect');
@@ -24,25 +23,16 @@ const wrap = (element) => {
   const botLCorner = document.createElementNS(svgns, 'rect');
   const topRCorner = document.createElementNS(svgns, 'rect');
   const botRCorner = document.createElementNS(svgns, 'rect');
+  const corners    = [topLCorner, botLCorner, topRCorner, botRCorner];
 
-  wrapper.appendChild(element);
-  parent.appendChild(wrapper);
+  const width     = node.coords.width;
+  const height    = node.coords.height;
+  const x         = node.coords.x;
+  const y         = node.coords.y;
+  const transform = node.props.transform;
+  const id        = node._id;
 
-  const bb      = wrapper.getBBox();
-  const width   = bb.width;
-  const height  = bb.height;
-  const x       = bb.x;
-  const y       = bb.y;
-  const id      = element.getSVGAttr('data-id');
-  const corners = [topLCorner, botLCorner, topRCorner, botRCorner];
-
-  wrapper.appendChild(chrome);
-  chrome.appendChild(frame);
-  for (let corner of corners) {
-    chrome.appendChild(corner);
-  }
-
-  element.setSVGAttrs({
+  $node.setSVGAttrs({
     'data-type': 'content',
     'pointer-events': 'none',
   });
@@ -62,15 +52,14 @@ const wrap = (element) => {
 
   frame.setSVGAttrs({
     'data-type':      'frame',
-    x:                 x,
-    y:                 y,
-    width:             width,
-    height:            height,
-    // ^ use initial bounding box given by coords here
-    //   apply current transform on element
+    x:                 x,                    // alternative:
+    y:                 y,                    // get the bounding box
+    width:             width,                // of the wrapper here
+    height:            height,               
     stroke:            '#d3d3d3',
     'vector-effect':  'non-scaling-stroke',
     'stroke-width':   '1px',
+    transform:         transform,
     fill:             'none',
     'pointer-events': 'none',
     'data-id':        id,
@@ -78,14 +67,15 @@ const wrap = (element) => {
 
   for (let corner of corners) {
     corner.setSVGAttrs({
-      'data-type': 'corner',
-      'data-id': id,
-      width: 8,
-      height: 8,
-      stroke: '#d3d3d3',
+      'data-type':     'corner',
+      'data-id':       id,
+      transform:       transform,
+      width:           8,
+      height:          8,
+      stroke:          '#d3d3d3',
       'vector-effect': 'non-scaling-stroke',
-      'stroke-width': '1px',
-      fill: '#FFFFFF',
+      'stroke-width':  '1px',
+      fill:            '#FFFFFF',
     });
   }
 
@@ -94,49 +84,41 @@ const wrap = (element) => {
   topRCorner.setSVGAttrs({ x: x + width - 4, y: y - 4          });
   botRCorner.setSVGAttrs({ x: x + width - 4, y: y + height - 4 });
 
+  wrapper.appendChild($node);
+  wrapper.appendChild(chrome);
+  chrome.appendChild(frame);
+  for (let corner of corners) {
+    chrome.appendChild(corner);
+  }
+
   return wrapper;
 };
 
 
 // TODO: need to take care of style and defs
 
-// Recreate SVG DOM from scene tree.
-
 const sceneRenderer = {
-  build(scene, $parent) {
-    const $node = document.createElementNS(svgns, scene.tag);
-
-    $node.setSVGAttrs(scene.props);
-    $node.setSVGAttr('data-id', scene._id);
-
-    if (scene.tag === 'svg') {
-      // console.log('styles', scene.styles); // TODO: undefined
-      $node.setAttributeNS(xmlns, 'xmlns', svgns);
-      $node.setAttributeNS(svgns, 'data-type', 'root');
-      // $node.setSVGAttr('viewBox', '-100 -100 400 400'); // for 48k
-    }
-
-    $parent.appendChild($node);
-
-    for (let child of scene.children) {
-      sceneRenderer.build(child, $node);
-    }
-
-    return $node;
+  render(scene, $canvas) {
+    canvas.innerHTML = '';
+    this.build(scene, $canvas);
   },
 
-  decorate($node) {
-    if ($node.tagName !== 'svg') {
-      wrap($node);
+  build(node, $parent) {
+    const $node = document.createElementNS(svgns, node.tag);
+    $node.setSVGAttrs(node.props);
+    $node.setSVGAttr('data-id', node._id);
+
+    if (node.tag === 'svg') {
+      $node.setAttributeNS(xmlns, 'xmlns', svgns);
+      $node.setAttributeNS(svgns, 'data-type', 'root');
+      $parent.appendChild($node);
+    } else {
+      const $wrapper = wrap($node, node);
+      $parent.appendChild($wrapper);
     }
 
-    const $children = Array.from($node.children);
-    // ^ don't iterate over $node.children directly!
-    // this results in an infinite loop, because
-    // it's a *live* collection!
-
-    for (let $child of $children) {
-      sceneRenderer.decorate($child);
+    for (let child of node.children) {
+      sceneRenderer.build(child, $node);
     }
   },
 };

@@ -115,11 +115,7 @@ const ui = {
   },
 
   renderScene(state) {
-    const svgns  = "http://www.w3.org/2000/svg";
-    ui.canvasNode.innerHTML = '';
-
-    const $root = sceneRenderer.build(state.doc.scene, ui.canvasNode);
-    sceneRenderer.decorate($root, state.doc.scene);
+    sceneRenderer.render(state.doc.scene, ui.canvasNode);
   },
 
   renderDocList(state) {

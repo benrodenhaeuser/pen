@@ -16,7 +16,8 @@ const ClassList = {
   },
 
   init(classList) {
-    this.set = new Set(classList) || newSet([]);
+    classList = classList ? classList : [];
+    this.set = new Set(classList);
     return this;
   },
 };

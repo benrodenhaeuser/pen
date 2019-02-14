@@ -60,20 +60,22 @@ const Node = {
     });
   },
 
+  // note that these are proper ancestors, i.e., not
+  // including the current node
   ancestors(result = []) {
-    result.push(this);
     if (this.parent === null) {
       return result;
     } else {
+      result.push(this.parent);
       return this.parent.ancestors(result);
     }
   },
 
-  getCTM() {
-    const ancestors = this.ancestors();
+  ancestorTransform() {
     let matrix = Matrix.identity();
 
-    for (let ancestor of ancestors.reverse()) {
+    // reverse ancestors to start from the root ...
+    for (let ancestor of this.ancestors().reverse()) {
       matrix = matrix.multiply(ancestor.props.transform);
     }
 
@@ -155,12 +157,15 @@ const Node = {
     return {
       _id:         this._id,
       parent:      this.parent && this.parent._id || null,
+      // TODO: I don't think we need the second disjunct.
       children:    this.children,
       tag:         this.tag,
       props:       this.props,
+      coords:      this.coords,
     };
   },
 
+  // TODO: we should set a transform matrix and define a class list here.
   defaults() {
     return {
       _id:         createID(),
@@ -168,6 +173,7 @@ const Node = {
       children:    [],
       tag:         null,
       props:       {},
+      coords:      {},
     };
   },
 
