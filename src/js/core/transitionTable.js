@@ -18,10 +18,10 @@ const transitionTable = [
 
   // scale
   [{ from: 'idle',      input: 'initScale'      }, { to: 'scaling'           }],
-  [{ from: 'scaling',   input: 'movePointer'    }, { do: 'scaling'           }],
+  [{ from: 'scaling',   input: 'movePointer'    }, { do: 'scale'             }],
   [{ from: 'scaling',   input: 'release'        }, { to: 'idle'              }],
 
-  // OLD
+  // OLD (mostly irrelevant now)
 
   // create and delete
   [{ from: 'idle',      input: 'createShape'    }, {                         }],

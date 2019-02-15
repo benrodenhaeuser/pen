@@ -6,29 +6,9 @@ let aux = {};
 
 const transformers = {
 
-  // AUX
-
-  // findCorners(state, node) {
-  //   const nw = [node.box.x, node.box.y];
-  //   const ne = [node.box.y + node.box.width, node.box.y];
-  //   const sw = [node.box.x, node.box.y + node.box.height];
-  //   const se = [node.box.x + node.box.width, node.box.y + node.box.height];
-  //
-  //   const ancTransform = node.ancestorTransform();
-  //   const matrix       = ancTransform.multiply(node.transform);
-  //   const [x, y]       = selected.transformPoint(nw);
-
-    // add a node to plot one of the points we found.
-    // const plot  = Object.create(Node).init();
-    // plot.tag    = 'circle';
-    // plot.props  = Object.assign(plot.props, {
-    //   r: 5, cx: x, cy: y, fill: 'red'
-    // });
-    // plot.box = { x: x, y: x, width: 5, height: 5};
-    // state.doc.scene.append(plot);
-  // },
-
   // NEW
+
+  // select/shift
   select(state, input) {
     const selected = state.doc.scene
       .findDescendant((node) => {
@@ -44,29 +24,36 @@ const transformers = {
     aux.sourceY = input.pointer.y;
   },
 
+  shift(state, input) {
+    const selected     = state.doc.scene.selected;
+
+    if (!selected) { return; }
+
+    const targetX      = input.pointer.x;
+    const targetY      = input.pointer.y;
+    const vectorX      = targetX - aux.sourceX;
+    const vectorY      = targetY - aux.sourceY;
+    const shift        = Matrix.translation(vectorX, vectorY);
+    const ancTransform = selected.ancestorTransform();
+    const inv          = ancTransform.invert();
+    const matrix       = inv.multiply(shift).multiply(ancTransform);
+    selected.transform = matrix.multiply(selected.transform);
+    aux.sourceX        = targetX;
+    aux.sourceY        = targetY;
+  },
+
+  // rotate
+
   initRotate(state, input) {
     const selected             = state.doc.scene.selected;
     aux.sourceX                = input.pointer.x;
     aux.sourceY                = input.pointer.y;
-    const box               = selected.box;
+    const box                  = selected.box;
     const centerX              = box.x + box.width / 2;
     const centerY              = box.y + box.height / 2;
     const center               = [centerX, centerY];
     const matrix               = selected.totalTransform();
     [aux.centerX, aux.centerY] = Node.transformPoint(center, matrix);
-
-    // DEBUG: adding a node to visualize the center
-    // const center  = Object.create(Node).init();
-    // center.tag    = 'circle';
-    // center.props  = Object.assign(center.props, {
-    //   r: 5, cx: aux.centerX, cy: aux.centerY, fill: 'red'
-    // });
-    // center.box = { x: centerX, y: centerY, width: 5, height: 5};
-    // selected.root.append(center);
-    // console.log(center);
-
-    // DEBUG: plot one of the corners in real coordinates
-    // this.findCorners(state, selected);
   },
 
   rotate(state, input) {
@@ -87,24 +74,39 @@ const transformers = {
     aux.sourceY        = targetY;
   },
 
-  shift(state, input) {
+  // scale
+
+  // (NOTE: thats the exact same code as for initRotate)
+  initScale(state, input) {
+    const selected             = state.doc.scene.selected;
+    aux.sourceX                = input.pointer.x;
+    aux.sourceY                = input.pointer.y;
+    const box                  = selected.box;
+    const centerX              = box.x + box.width / 2;
+    const centerY              = box.y + box.height / 2;
+    const center               = [centerX, centerY];
+    const matrix               = selected.totalTransform();
+    [aux.centerX, aux.centerY] = Node.transformPoint(center, matrix);
+  },
+
+  scale(state, input) {
     const selected = state.doc.scene.selected;
+    const targetX = input.pointer.x;
+    const targetY = input.pointer.y;
 
-    if (!selected) {
-      return;
-    }
+    const distanceSource = Math.sqrt(Math.pow(aux.sourceX - aux.centerX, 2) + Math.pow(aux.sourceY - aux.centerY, 2));
+    const distanceTarget = Math.sqrt(Math.pow(targetX - aux.centerX, 2) + Math.pow(targetY - aux.centerY, 2));
 
-    const targetX      = input.pointer.x;
-    const targetY      = input.pointer.y;
-    const vectorX      = targetX - aux.sourceX;
-    const vectorY      = targetY - aux.sourceY;
-    const shift        = Matrix.translation(vectorX, vectorY);
+    const scaleFactor = distanceTarget / distanceSource;
+
+    const scaleMatrix = Matrix.scale(scaleFactor, [aux.centerX, aux.centerY]);
     const ancTransform = selected.ancestorTransform();
     const inv          = ancTransform.invert();
-    const matrix       = inv.multiply(shift).multiply(ancTransform);
+    const matrix       = inv.multiply(scaleMatrix).multiply(ancTransform);
     selected.transform = matrix.multiply(selected.transform);
-    aux.sourceX        = targetX;
-    aux.sourceY        = targetY;
+
+    aux.sourceX = targetX;
+    aux.sourceY = targetY;
   },
 
   release(state, input) {
@@ -142,9 +144,13 @@ const transformers = {
       });
 
       if (highlight) {
-        highlight.props.class.add('focus');
-      } else {
-        state.doc.scene.unfocus();
+        const realPointer = Node.transformPoint([input.pointer.x, input.pointer.y], highlight.totalTransform().invert());
+
+        if (realPointer[0] >= highlight.box.x && realPointer[0] <= highlight.box.x + highlight.box.width && realPointer[1] >= highlight.box.y && realPointer[1] <= highlight.box.y + highlight.box.height) {
+          highlight.props.class.add('focus');
+        } else {
+          state.doc.scene.unfocus();
+        }
       }
     }
   },

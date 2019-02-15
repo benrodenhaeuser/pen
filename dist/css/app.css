@@ -125,11 +125,6 @@ svg {
 }
 
 /* temporary */
-[data-type="corner"] {
+body {
   cursor: crosshair;
-}
-
-/* temporary */
-[data-type="wrapper"] {
-  cursor: move;
 }

@@ -1,24 +1,25 @@
 const Matrix = {
   multiply(other) {
-    const thisRows  = this.m.length;
-    const thisCols  = this.m[0].length;
-    const otherRows = other.m.length;
-    const otherCols = other.m[0].length;
-    const m         = new Array(thisRows);
-
-    for (let r = 0; r < thisRows; r += 1) {
-      m[r] = new Array(otherCols);
-
-      for (let c = 0; c < otherCols; c += 1) {
-        m[r][c] = 0;
-
-        for (let i = 0; i < thisCols; i += 1) {
-          m[r][c] += this.m[r][i] * other.m[i][c];
-        }
-      }
-    }
-
+    const m = math.multiply(this.m, other.m);
     return Object.create(Matrix).init(m);
+
+    // const thisRows  = this.m.length;
+    // const thisCols  = this.m[0].length;
+    // const otherRows = other.m.length;
+    // const otherCols = other.m[0].length;
+    // const m         = new Array(thisRows);
+    //
+    // for (let r = 0; r < thisRows; r += 1) {
+    //   m[r] = new Array(otherCols);
+    //
+    //   for (let c = 0; c < otherCols; c += 1) {
+    //     m[r][c] = 0;
+    //
+    //     for (let i = 0; i < thisCols; i += 1) {
+    //       m[r][c] += this.m[r][i] * other.m[i][c];
+    //     }
+    //   }
+    // }
   },
 
   invert() {
