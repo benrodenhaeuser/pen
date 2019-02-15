@@ -38,13 +38,13 @@ const sceneBuilder = {
 
   copyBBox($node, node) {
     const box = $node.getBBox();
-    node.coords = {
+    node.box = {
       x: box.x,
       y: box.y,
       width: box.width,
       height: box.height,
     };
-    // console.log(node.coords);
+    // console.log(node.box);
   },
 
   buildTree($node, node) {

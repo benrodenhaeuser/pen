@@ -16,7 +16,7 @@ const doc = {
 
   toJSON() {
     return {
-      id: this._id,
+      _id: this._id,
       scene: this.scene,
     }
   }

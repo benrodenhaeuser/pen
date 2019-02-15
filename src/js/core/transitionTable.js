@@ -3,21 +3,23 @@ const transitionTable = [
   [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
 
   // NEW
-
-  // selection and focusing
-  // [{ from: 'idle',      input: 'deselect'       }, { to: 'idle'              }],
   [{ from: 'idle',      input: 'selectThrough'  }, { to: 'idle'              }],
   [{ from: 'idle',      input: 'movePointer'    }, { to: 'idle', do: 'focus' }],
 
-  // shift transformation
+  // select/shift
   [{ from: 'idle',      input: 'select'         }, { to: 'shifting'          }],
   [{ from: 'shifting',  input: 'movePointer'    }, { do: 'shift'             }],
   [{ from: 'shifting',  input: 'release'        }, { to: 'idle'              }],
 
-  // shift transformation
+  // rotate
   [{ from: 'idle',      input: 'initRotate'     }, { to: 'rotating'          }],
   [{ from: 'rotating',  input: 'movePointer'    }, { do: 'rotate'            }],
   [{ from: 'rotating',  input: 'release'        }, { to: 'idle'              }],
+
+  // scale
+  [{ from: 'idle',      input: 'initScale'      }, { to: 'scaling'           }],
+  [{ from: 'scaling',   input: 'movePointer'    }, { do: 'scaling'           }],
+  [{ from: 'scaling',   input: 'release'        }, { to: 'idle'              }],
 
   // OLD
 

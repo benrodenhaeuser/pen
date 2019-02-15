@@ -126,190 +126,6 @@
     },
   };
 
-  const createID = () => {
-    const randomString = Math.random().toString(36).substring(2);
-    const timestamp    = (new Date()).getTime().toString(36);
-    return randomString + timestamp;
-  };
-
-  const Node = {
-    findAncestor(predicate) {
-      if (predicate(this)) {
-        return this;
-      } else if (this.parent === null) {
-        return null;
-      } else {
-        return this.parent.findAncestor(predicate);
-      }
-    },
-
-    findDescendant(predicate) {
-      if (predicate(this)) {
-        return this;
-      } else {
-        for (let child of this.children) {
-          let val = child.findDescendant(predicate);
-          if (val) { return val; }
-        }
-      }
-
-      return null;
-    },
-
-    findDescendants(predicate, results = []) {
-      if (predicate(this)) {
-        results.push(this);
-      }
-
-      for (let child of this.children) {
-        child.findDescendants(predicate, results);
-      }
-
-      return results;
-    },
-
-    get root() {
-      return this.findAncestor((node) => {
-        return node.parent === null;
-      });
-    },
-
-    get selected() {
-      return this.root.findDescendant((node) => {
-        return node.props.class.includes('selected');
-      });
-    },
-
-    get frontier() {
-      return this.root.findDescendants((node) => {
-        return node.props.class.includes('frontier');
-      });
-    },
-
-    // note that these are proper ancestors, i.e., not
-    // including the current node
-    ancestors(result = []) {
-      if (this.parent === null) {
-        return result;
-      } else {
-        result.push(this.parent);
-        return this.parent.ancestors(result);
-      }
-    },
-
-    ancestorTransform() {
-      let matrix = Matrix.identity();
-
-      // reverse ancestors to start from the root ...
-      for (let ancestor of this.ancestors().reverse()) {
-        matrix = matrix.multiply(ancestor.props.transform);
-      }
-
-      return matrix;
-    },
-
-    get siblings() {
-      return this.parent.children.filter((node) => {
-        return node !== this;
-      });
-    },
-
-    unsetFrontier() {
-      const frontier = this.root.findDescendants((node) => {
-        return node.props.class.includes('frontier');
-      });
-
-      for (let node of frontier) {
-        node.props.class.remove('frontier');
-      }
-    },
-
-    unfocus() {
-      const focussed = this.root.findDescendants((node) => {
-        return node.props.class.includes('focus');
-      });
-
-      for (let node of focussed) {
-        node.props.class.remove('focus');
-      }
-    },
-
-    setFrontier() {
-      this.unsetFrontier();
-
-      if (this.selected) {
-        this.selected.props.class.add('frontier');
-
-        let node = this.selected;
-
-        do {
-          for (let sibling of node.siblings) {
-            sibling.props.class.add('frontier');
-          }
-          node = node.parent;
-        } while (node.parent !== null);
-      } else {
-        for (let child of this.root.children) {
-          child.props.class.add('frontier');
-        }
-      }
-    },
-
-    deselectAll() {
-      if (this.selected) {
-        this.selected.props.class.remove('selected');
-      }
-      this.setFrontier();
-    },
-
-    select() {
-      this.deselectAll();
-      this.props.class.add('selected');
-      this.setFrontier();
-    },
-
-    append(node) {
-      this.children.push(node);
-      node.parent = this;
-    },
-
-    set(settings) {
-      for (let key of Object.keys(settings)) {
-        this[key] = settings[key];
-      }
-    },
-
-    toJSON() {
-      return {
-        _id:         this._id,
-        parent:      this.parent && this.parent._id || null,
-        // TODO: I don't think we need the second disjunct.
-        children:    this.children,
-        tag:         this.tag,
-        props:       this.props,
-        coords:      this.coords,
-      };
-    },
-
-    // TODO: we should set a transform matrix and define a class list here.
-    defaults() {
-      return {
-        _id:         createID(),
-        parent:      null,
-        children:    [],
-        tag:         null,
-        props:       {},
-        coords:      {},
-      };
-    },
-
-    init(opts = {}) {
-      this.set(this.defaults());
-      this.set(opts);
-      return this;
-    },
-  };
-
   const ClassList = {
     add(className) {
       this.set.add(className);
@@ -330,6 +146,295 @@
     init(classList) {
       classList = classList ? classList : [];
       this.set = new Set(classList);
+      return this;
+    },
+  };
+
+  const createID = () => {
+    const randomString = Math.random().toString(36).substring(2);
+    const timestamp    = (new Date()).getTime().toString(36);
+    return randomString + timestamp;
+  };
+
+  const Node = {
+    findAncestor(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else if (this.parent === null) {
+        return null;
+      } else {
+        return this.parent.findAncestor(predicate);
+      }
+    },
+
+    findAncestors(predicate, resultList = []) {
+      if (this.parent === null) {
+        return resultList;
+      } else {
+        if (predicate(this.parent)) {
+          resultList.push(this.parent);
+        }
+        return this.parent.findAncestors(predicate, resultList);
+      }
+    },
+
+    findDescendant(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else {
+        for (let child of this.children) {
+          let val = child.findDescendant(predicate);
+          if (val) { return val; }
+        }
+      }
+
+      return null;
+    },
+
+    findDescendants(predicate, resultList = []) {
+      if (predicate(this)) {
+        resultList.push(this);
+      }
+
+      for (let child of this.children) {
+        child.findDescendants(predicate, resultList);
+      }
+
+      return resultList;
+    },
+
+    get root() {
+      return this.findAncestor((node) => {
+        return node.parent === null;
+      });
+    },
+
+    get ancestors() {
+      return this.findAncestors(node => true);
+    },
+
+    get descendants() {
+      return this.findDescendants(node => true);
+    },
+
+    get selected() {
+      return this.root.findDescendant((node) => {
+        return node.classList.includes('selected');
+      });
+    },
+
+    get frontier() {
+      return this.root.findDescendants((node) => {
+        return node.classList.includes('frontier');
+      });
+    },
+
+    get classList() {
+      return this.props.class;
+    },
+
+    get transform() {
+      return this.props.transform;
+    },
+
+    set transform(value) {
+      this.props.transform = value;
+    },
+
+    totalTransform() {
+      return this.ancestorTransform().multiply(this.transform);
+    },
+
+    ancestorTransform() {
+      let matrix = Matrix.identity();
+
+      for (let ancestor of this.ancestors.reverse()) {
+        matrix = matrix.multiply(ancestor.transform);
+      }
+
+      return matrix;
+    },
+
+    // for debugging purposes
+    plot(point) {
+      const node = Object.create(Node).init();
+      node.tag = 'circle';
+      node.props = Object.assign(node.props, {
+        r: 5, cx: point[0], cy: point[1], fill: 'red'
+      });
+      node.box = { x: point[0], y: point[1], width: 5, height: 5};
+      this.root.append(node);
+    },
+
+    updateBox() {
+      // store all the children's corners
+      const corners = [];
+
+      for (let child of this.children) {
+        let childCorners = child.findCorners();
+        for (let corner of childCorners) {
+          corner = this.transformPoint(corner, this.totalTransform().invert());
+          corners.push(corner);
+        }
+      }
+
+      if (corners.length === 0) {
+        return;
+      }
+
+      // find min and max:
+      const xValue  = point => point[0];
+      const yValue  = point => point[1];
+      const xValues = corners.map(xValue);
+      const yValues = corners.map(yValue);
+
+      const minX = Math.min(...xValues);
+      const maxX = Math.max(...xValues);
+      const minY = Math.min(...yValues);
+      const maxY = Math.max(...yValues);
+
+      // use min and max to update coordinates:
+      this.box = {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      };
+    },
+
+    findCorners() {
+      const northWest = [
+        this.box.x, this.box.y
+      ];
+
+      const northEast = [
+        this.box.x + this.box.width, this.box.y
+      ];
+
+      const southWest = [
+        this.box.x, this.box.y + this.box.height
+      ];
+
+      const southEast = [
+        this.box.x + this.box.width, this.box.y + this.box.height
+      ];
+
+      // return [northWest, northEast, southWest, southEast];
+
+      return [
+        this.transformPoint(northWest, this.totalTransform()),
+        this.transformPoint(northEast, this.totalTransform()),
+        this.transformPoint(southWest, this.totalTransform()),
+        this.transformPoint(southEast, this.totalTransform()),
+      ];
+    },
+
+    transformPoint(pt, matrix) {
+      const column      = Object.create(Matrix).init([[pt[0]], [pt[1]], [1]]);
+      const transformed = matrix.multiply(column).toArray();
+
+      return [transformed[0][0], transformed[1][0]];
+    },
+
+    get siblings() {
+      return this.parent.children.filter((node) => {
+        return node !== this;
+      });
+    },
+
+    unsetFrontier() {
+      const frontier = this.root.findDescendants((node) => {
+        return node.classList.includes('frontier');
+      });
+
+      for (let node of frontier) {
+        node.classList.remove('frontier');
+      }
+    },
+
+    unfocus() {
+      const focussed = this.root.findDescendants((node) => {
+        return node.classList.includes('focus');
+      });
+
+      for (let node of focussed) {
+        node.classList.remove('focus');
+      }
+    },
+
+    setFrontier() {
+      this.unsetFrontier();
+
+      if (this.selected) {
+        this.selected.classList.add('frontier');
+
+        let node = this.selected;
+
+        do {
+          for (let sibling of node.siblings) {
+            sibling.classList.add('frontier');
+          }
+          node = node.parent;
+        } while (node.parent !== null);
+      } else {
+        for (let child of this.root.children) {
+          child.classList.add('frontier');
+        }
+      }
+    },
+
+    deselectAll() {
+      if (this.selected) {
+        this.selected.classList.remove('selected');
+      }
+      this.setFrontier();
+    },
+
+    select() {
+      this.deselectAll();
+      this.classList.add('selected');
+      this.setFrontier();
+    },
+
+    append(node) {
+      this.children.push(node);
+      node.parent = this;
+    },
+
+    set(opts) {
+      for (let key of Object.keys(opts)) {
+        this[key] = opts[key];
+      }
+    },
+
+    toJSON() {
+      return {
+        _id:      this._id,
+        parent:   this.parent && this.parent._id,
+        children: this.children,
+        tag:      this.tag,
+        props:    this.props,
+        box:      this.box,
+      };
+    },
+
+    defaults() {
+      return {
+        _id:      createID(),
+        box:      { x: 0, y: 0, width: 0, height: 0 },
+        children: [],
+        parent:   null,
+        tag:      null,
+        props:    {
+          transform: Matrix.identity(),
+          class:     Object.create(ClassList).init(),
+        },
+      };
+    },
+
+    init(opts = {}) {
+      this.set(this.defaults());
+      this.set(opts);
       return this;
     },
   };
@@ -370,13 +475,13 @@
 
     copyBBox($node, node) {
       const box = $node.getBBox();
-      node.coords = {
+      node.box = {
         x: box.x,
         y: box.y,
         width: box.width,
         height: box.height,
       };
-      // console.log(node.coords);
+      // console.log(node.box);
     },
 
     buildTree($node, node) {
@@ -433,7 +538,7 @@
 
     toJSON() {
       return {
-        id: this._id,
+        _id: this._id,
         scene: this.scene,
       }
     }
@@ -443,14 +548,29 @@
 
   const transformers = {
 
-    // NEW
+    // AUX
 
-    // transform(point, node) {
-    //   const column = Object.create(Matrix).init([[point[0]], [point[1]], [1]]);
-    //   const transformed = node.getCTM().multiply(column).toArray();
-    //   return [transformed[0][0], transformed[1][0]];
+    // findCorners(state, node) {
+    //   const nw = [node.box.x, node.box.y];
+    //   const ne = [node.box.y + node.box.width, node.box.y];
+    //   const sw = [node.box.x, node.box.y + node.box.height];
+    //   const se = [node.box.x + node.box.width, node.box.y + node.box.height];
+    //
+    //   const ancTransform = node.ancestorTransform();
+    //   const matrix       = ancTransform.multiply(node.transform);
+    //   const [x, y]       = selected.transformPoint(nw);
+
+      // add a node to plot one of the points we found.
+      // const plot  = Object.create(Node).init();
+      // plot.tag    = 'circle';
+      // plot.props  = Object.assign(plot.props, {
+      //   r: 5, cx: x, cy: y, fill: 'red'
+      // });
+      // plot.box = { x: x, y: x, width: 5, height: 5};
+      // state.doc.scene.append(plot);
     // },
 
+    // NEW
     select(state, input) {
       const selected = state.doc.scene
         .findDescendant((node) => {
@@ -467,39 +587,28 @@
     },
 
     initRotate(state, input) {
-      const selected = state.doc.scene.selected;
-      aux.sourceX    = input.pointer.x;
-      aux.sourceY    = input.pointer.y;
-      const coords   = selected.coords;
-      const centerX  = coords.x + coords.width / 2;
-      const centerY  = coords.y + coords.height / 2;
-      // const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
-      // const transformed = selected.props.transform.multiply(column).toArray();
-      // [aux.centerX, aux.centerY] = [transformed[0][0], transformed[1][0]];
+      const selected             = state.doc.scene.selected;
+      aux.sourceX                = input.pointer.x;
+      aux.sourceY                = input.pointer.y;
+      const box               = selected.box;
+      const centerX              = box.x + box.width / 2;
+      const centerY              = box.y + box.height / 2;
+      const center               = [centerX, centerY];
+      const matrix               = selected.totalTransform();
+      [aux.centerX, aux.centerY] = Node.transformPoint(center, matrix);
 
-      const ancTransform = selected.ancestorTransform();
-      const matrix       = ancTransform.multiply(selected.props.transform);
-      // ^ this is the current transform.
-      const column = Object.create(Matrix).init([[centerX], [centerY], [1]]);
-      const transformed = matrix.multiply(column).toArray();
-      [aux.centerX, aux.centerY] = [transformed[0][0], transformed[1][0]];
+      // DEBUG: adding a node to visualize the center
+      // const center  = Object.create(Node).init();
+      // center.tag    = 'circle';
+      // center.props  = Object.assign(center.props, {
+      //   r: 5, cx: aux.centerX, cy: aux.centerY, fill: 'red'
+      // });
+      // center.box = { x: centerX, y: centerY, width: 5, height: 5};
+      // selected.root.append(center);
+      // console.log(center);
 
-      // DEBUG: add a node to visualize the center
-      const center = Object.create(Node).init();
-      center.tag = 'circle';
-      center.props = {
-        r: 5,
-        cx: aux.centerX,
-        cy: aux.centerY,
-        fill: 'red',
-        stroke: 'black',
-        transform: Matrix.identity(),
-        class: Object.create(ClassList).init(),
-      };
-      center.coords = { x: centerX, y: centerY, width: 5, height: 5};
-      selected.root.append(center);
-
-      console.log(aux.centerX, aux.centerY);
+      // DEBUG: plot one of the corners in real coordinates
+      // this.findCorners(state, selected);
     },
 
     rotate(state, input) {
@@ -511,16 +620,13 @@
       const sourceAngle  = Math.atan2(...sourceVector);
       const targetAngle  = Math.atan2(...targetVector);
       const angle        = sourceAngle - targetAngle;
-
       const rotation     = Matrix.rotation(angle, [aux.centerX, aux.centerY]);
       const ancTransform = selected.ancestorTransform();
       const inv          = ancTransform.invert();
       const matrix       = inv.multiply(rotation).multiply(ancTransform);
-
-      selected.props.transform = matrix.multiply(selected.props.transform);
-
-      aux.sourceX = targetX;
-      aux.sourceY = targetY;
+      selected.transform = matrix.multiply(selected.transform);
+      aux.sourceX        = targetX;
+      aux.sourceY        = targetY;
     },
 
     shift(state, input) {
@@ -534,19 +640,20 @@
       const targetY      = input.pointer.y;
       const vectorX      = targetX - aux.sourceX;
       const vectorY      = targetY - aux.sourceY;
-
       const shift        = Matrix.translation(vectorX, vectorY);
       const ancTransform = selected.ancestorTransform();
       const inv          = ancTransform.invert();
       const matrix       = inv.multiply(shift).multiply(ancTransform);
-
-      selected.props.transform = matrix.multiply(selected.props.transform);
-
-      aux.sourceX = targetX;
-      aux.sourceY = targetY;
+      selected.transform = matrix.multiply(selected.transform);
+      aux.sourceX        = targetX;
+      aux.sourceY        = targetY;
     },
 
     release(state, input) {
+      const selected = state.doc.scene.selected;
+      for (let ancestor of selected.ancestors) {
+        ancestor.updateBox();
+      }
       aux = {};
     },
 
@@ -785,21 +892,23 @@
     [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
 
     // NEW
-
-    // selection and focusing
-    // [{ from: 'idle',      input: 'deselect'       }, { to: 'idle'              }],
     [{ from: 'idle',      input: 'selectThrough'  }, { to: 'idle'              }],
     [{ from: 'idle',      input: 'movePointer'    }, { to: 'idle', do: 'focus' }],
 
-    // shift transformation
+    // select/shift
     [{ from: 'idle',      input: 'select'         }, { to: 'shifting'          }],
     [{ from: 'shifting',  input: 'movePointer'    }, { do: 'shift'             }],
     [{ from: 'shifting',  input: 'release'        }, { to: 'idle'              }],
 
-    // shift transformation
+    // rotate
     [{ from: 'idle',      input: 'initRotate'     }, { to: 'rotating'          }],
     [{ from: 'rotating',  input: 'movePointer'    }, { do: 'rotate'            }],
     [{ from: 'rotating',  input: 'release'        }, { to: 'idle'              }],
+
+    // scale
+    [{ from: 'idle',      input: 'initScale'      }, { to: 'scaling'           }],
+    [{ from: 'scaling',   input: 'movePointer'    }, { do: 'scaling'           }],
+    [{ from: 'scaling',   input: 'release'        }, { to: 'idle'              }],
 
     // OLD
 
@@ -917,44 +1026,18 @@
     },
   };
 
-  // const markup = `
-  // <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17">
-  //     <defs>
-  //       <style>.cls-1{fill:#2a2a2a;}</style>
-  //     </defs>
-  //
-  //     <title>
-  //       Logo_48_Web_160601
-  //     </title>
-  //
-  //     <g id="four">
-  //       <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
-  //       </g>
-  //
-  //     <g id="eight">
-  //       <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
-  //     </g>
-  //
-  //     <g id="k">
-  //       <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
-  //
-  //       <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
-  //     </g>
-  //   </svg>
-  // `;
-
   const markup = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
 
-    <g id="5">
-      <circle id="4" cx="200" cy="200" r="50"></circle>
-      <g id="3">
-        <rect id="0" x="260" y="250" width="100" height="100"></rect>
-        <rect id="1" x="400" y="250" width="100" height="100"></rect>
+    <g>
+      <circle cx="200" cy="200" r="50"></circle>
+      <g>
+        <rect x="260" y="250" width="100" height="100"></rect>
+        <rect x="400" y="250" width="100" height="100"></rect>
       </g>
     </g>
 
-    <rect id="2" x="400" y="400" width="100" height="100"></rect>
+    <rect x="400" y="400" width="100" height="100"></rect>
   </svg>
 `;
 
@@ -1075,7 +1158,8 @@
     [['click',       'doc-list-entry'   ], 'requestDoc'      ],
     // NEW
     [['mousedown',   'wrapper'          ], 'select'          ],
-    [['mousedown',   'corner'           ], 'initRotate'      ],
+    [['mousedown',   'dot'              ], 'initRotate'      ],
+    [['mousedown',   'corner'           ], 'initScale'       ],
     [['dblclick',    'wrapper'          ], 'selectThrough'   ],
     [['mousemove'                       ], 'movePointer'     ],
     [['mouseup'                         ], 'release'         ],
@@ -1131,12 +1215,17 @@
     const botLCorner = document.createElementNS(svgns, 'rect');
     const topRCorner = document.createElementNS(svgns, 'rect');
     const botRCorner = document.createElementNS(svgns, 'rect');
+    const topLDot    = document.createElementNS(svgns, 'circle');
+    const botLDot    = document.createElementNS(svgns, 'circle');
+    const topRDot    = document.createElementNS(svgns, 'circle');
+    const botRDot    = document.createElementNS(svgns, 'circle');
     const corners    = [topLCorner, botLCorner, topRCorner, botRCorner];
+    const dots       = [topLDot,    botLDot,    topRDot,    botRDot];
 
-    const width     = node.coords.width;
-    const height    = node.coords.height;
-    const x         = node.coords.x;
-    const y         = node.coords.y;
+    const width     = node.box.width;
+    const height    = node.box.height;
+    const x         = node.box.x;
+    const y         = node.box.y;
     const transform = node.props.transform;
     const id        = node._id;
 
@@ -1160,14 +1249,14 @@
 
     frame.setSVGAttrs({
       'data-type':      'frame',
-      x:                 x,                    // alternative:
-      y:                 y,                    // get the bounding box
-      width:             width,                // of the wrapper here
-      height:            height,               
+      x:                 x,
+      y:                 y,
+      width:             width,
+      height:            height,
       stroke:            '#d3d3d3',
       'vector-effect':  'non-scaling-stroke',
       'stroke-width':   '1px',
-      transform:         transform,
+      transform:         transform,            // the frame should be transformed
       fill:             'none',
       'pointer-events': 'none',
       'data-id':        id,
@@ -1192,11 +1281,32 @@
     topRCorner.setSVGAttrs({ x: x + width - 4, y: y - 4          });
     botRCorner.setSVGAttrs({ x: x + width - 4, y: y + height - 4 });
 
+    for (let dot of dots) {
+      dot.setSVGAttrs({
+        'data-type':     'dot',
+        'data-id':       id,
+        transform:       transform,
+        r:               5,
+        stroke:          '#d3d3d3',
+        'vector-effect': 'non-scaling-stroke',
+        'stroke-width':  '1px',
+        fill:            '#FFFFFF',
+      });
+    }
+
+    topLDot.setSVGAttrs({ cx: x - 8,         cy: y - 8          });
+    botLDot.setSVGAttrs({ cx: x - 8,         cy: y + height + 8 });
+    topRDot.setSVGAttrs({ cx: x + width + 8, cy: y - 8          });
+    botRDot.setSVGAttrs({ cx: x + width + 8, cy: y + height + 8 });
+
     wrapper.appendChild($node);
     wrapper.appendChild(chrome);
     chrome.appendChild(frame);
     for (let corner of corners) {
       chrome.appendChild(corner);
+    }
+    for (let dot of dots) {
+      chrome.appendChild(dot);
     }
 
     return wrapper;

@@ -123,3 +123,13 @@ svg {
 .focus ~ g > [data-type="frame"] {
   visibility: visible;
 }
+
+/* temporary */
+[data-type="corner"] {
+  cursor: crosshair;
+}
+
+/* temporary */
+[data-type="wrapper"] {
+  cursor: move;
+}

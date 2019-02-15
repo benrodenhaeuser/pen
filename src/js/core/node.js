@@ -1,4 +1,5 @@
 import { Matrix } from './matrix.js';
+import { ClassList } from './classList.js';
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -17,6 +18,17 @@ const Node = {
     }
   },
 
+  findAncestors(predicate, resultList = []) {
+    if (this.parent === null) {
+      return resultList;
+    } else {
+      if (predicate(this.parent)) {
+        resultList.push(this.parent);
+      }
+      return this.parent.findAncestors(predicate, resultList);
+    }
+  },
+
   findDescendant(predicate) {
     if (predicate(this)) {
       return this;
@@ -30,16 +42,16 @@ const Node = {
     return null;
   },
 
-  findDescendants(predicate, results = []) {
+  findDescendants(predicate, resultList = []) {
     if (predicate(this)) {
-      results.push(this);
+      resultList.push(this);
     }
 
     for (let child of this.children) {
-      child.findDescendants(predicate, results);
+      child.findDescendants(predicate, resultList);
     }
 
-    return results;
+    return resultList;
   },
 
   get root() {
@@ -48,38 +60,131 @@ const Node = {
     });
   },
 
+  get ancestors() {
+    return this.findAncestors(node => true);
+  },
+
+  get descendants() {
+    return this.findDescendants(node => true);
+  },
+
   get selected() {
     return this.root.findDescendant((node) => {
-      return node.props.class.includes('selected');
+      return node.classList.includes('selected');
     });
   },
 
   get frontier() {
     return this.root.findDescendants((node) => {
-      return node.props.class.includes('frontier');
+      return node.classList.includes('frontier');
     });
   },
 
-  // note that these are proper ancestors, i.e., not
-  // including the current node
-  ancestors(result = []) {
-    if (this.parent === null) {
-      return result;
-    } else {
-      result.push(this.parent);
-      return this.parent.ancestors(result);
-    }
+  get classList() {
+    return this.props.class;
+  },
+
+  get transform() {
+    return this.props.transform;
+  },
+
+  set transform(value) {
+    this.props.transform = value;
+  },
+
+  totalTransform() {
+    return this.ancestorTransform().multiply(this.transform);
   },
 
   ancestorTransform() {
     let matrix = Matrix.identity();
 
-    // reverse ancestors to start from the root ...
-    for (let ancestor of this.ancestors().reverse()) {
-      matrix = matrix.multiply(ancestor.props.transform);
+    for (let ancestor of this.ancestors.reverse()) {
+      matrix = matrix.multiply(ancestor.transform);
     }
 
     return matrix;
+  },
+
+  // for debugging purposes
+  plot(point) {
+    const node = Object.create(Node).init();
+    node.tag = 'circle';
+    node.props = Object.assign(node.props, {
+      r: 5, cx: point[0], cy: point[1], fill: 'red'
+    });
+    node.box = { x: point[0], y: point[1], width: 5, height: 5};
+    this.root.append(node);
+  },
+
+  updateBox() {
+    // store all the children's corners
+    const corners = [];
+
+    for (let child of this.children) {
+      let childCorners = child.findCorners();
+      for (let corner of childCorners) {
+        corner = this.transformPoint(corner, this.totalTransform().invert());
+        corners.push(corner);
+      }
+    }
+
+    if (corners.length === 0) {
+      return;
+    }
+
+    // find min and max:
+    const xValue  = point => point[0];
+    const yValue  = point => point[1];
+    const xValues = corners.map(xValue);
+    const yValues = corners.map(yValue);
+
+    const minX = Math.min(...xValues);
+    const maxX = Math.max(...xValues);
+    const minY = Math.min(...yValues);
+    const maxY = Math.max(...yValues);
+
+    // use min and max to update coordinates:
+    this.box = {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    };
+  },
+
+  findCorners() {
+    const northWest = [
+      this.box.x, this.box.y
+    ];
+
+    const northEast = [
+      this.box.x + this.box.width, this.box.y
+    ];
+
+    const southWest = [
+      this.box.x, this.box.y + this.box.height
+    ];
+
+    const southEast = [
+      this.box.x + this.box.width, this.box.y + this.box.height
+    ];
+
+    // return [northWest, northEast, southWest, southEast];
+
+    return [
+      this.transformPoint(northWest, this.totalTransform()),
+      this.transformPoint(northEast, this.totalTransform()),
+      this.transformPoint(southWest, this.totalTransform()),
+      this.transformPoint(southEast, this.totalTransform()),
+    ];
+  },
+
+  transformPoint(pt, matrix) {
+    const column      = Object.create(Matrix).init([[pt[0]], [pt[1]], [1]]);
+    const transformed = matrix.multiply(column).toArray();
+
+    return [transformed[0][0], transformed[1][0]];
   },
 
   get siblings() {
@@ -90,21 +195,21 @@ const Node = {
 
   unsetFrontier() {
     const frontier = this.root.findDescendants((node) => {
-      return node.props.class.includes('frontier');
+      return node.classList.includes('frontier');
     });
 
     for (let node of frontier) {
-      node.props.class.remove('frontier');
+      node.classList.remove('frontier');
     }
   },
 
   unfocus() {
     const focussed = this.root.findDescendants((node) => {
-      return node.props.class.includes('focus');
+      return node.classList.includes('focus');
     });
 
     for (let node of focussed) {
-      node.props.class.remove('focus');
+      node.classList.remove('focus');
     }
   },
 
@@ -112,33 +217,33 @@ const Node = {
     this.unsetFrontier();
 
     if (this.selected) {
-      this.selected.props.class.add('frontier');
+      this.selected.classList.add('frontier');
 
       let node = this.selected;
 
       do {
         for (let sibling of node.siblings) {
-          sibling.props.class.add('frontier');
+          sibling.classList.add('frontier');
         }
         node = node.parent;
       } while (node.parent !== null);
     } else {
       for (let child of this.root.children) {
-        child.props.class.add('frontier');
+        child.classList.add('frontier');
       }
     }
   },
 
   deselectAll() {
     if (this.selected) {
-      this.selected.props.class.remove('selected');
+      this.selected.classList.remove('selected');
     }
     this.setFrontier();
   },
 
   select() {
     this.deselectAll();
-    this.props.class.add('selected');
+    this.classList.add('selected');
     this.setFrontier();
   },
 
@@ -147,33 +252,34 @@ const Node = {
     node.parent = this;
   },
 
-  set(settings) {
-    for (let key of Object.keys(settings)) {
-      this[key] = settings[key];
+  set(opts) {
+    for (let key of Object.keys(opts)) {
+      this[key] = opts[key];
     }
   },
 
   toJSON() {
     return {
-      _id:         this._id,
-      parent:      this.parent && this.parent._id || null,
-      // TODO: I don't think we need the second disjunct.
-      children:    this.children,
-      tag:         this.tag,
-      props:       this.props,
-      coords:      this.coords,
+      _id:      this._id,
+      parent:   this.parent && this.parent._id,
+      children: this.children,
+      tag:      this.tag,
+      props:    this.props,
+      box:      this.box,
     };
   },
 
-  // TODO: we should set a transform matrix and define a class list here.
   defaults() {
     return {
-      _id:         createID(),
-      parent:      null,
-      children:    [],
-      tag:         null,
-      props:       {},
-      coords:      {},
+      _id:      createID(),
+      box:      { x: 0, y: 0, width: 0, height: 0 },
+      children: [],
+      parent:   null,
+      tag:      null,
+      props:    {
+        transform: Matrix.identity(),
+        class:     Object.create(ClassList).init(),
+      },
     };
   },
 

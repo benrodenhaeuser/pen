@@ -23,12 +23,17 @@ const wrap = ($node, node) => {
   const botLCorner = document.createElementNS(svgns, 'rect');
   const topRCorner = document.createElementNS(svgns, 'rect');
   const botRCorner = document.createElementNS(svgns, 'rect');
+  const topLDot    = document.createElementNS(svgns, 'circle');
+  const botLDot    = document.createElementNS(svgns, 'circle');
+  const topRDot    = document.createElementNS(svgns, 'circle');
+  const botRDot    = document.createElementNS(svgns, 'circle');
   const corners    = [topLCorner, botLCorner, topRCorner, botRCorner];
+  const dots       = [topLDot,    botLDot,    topRDot,    botRDot];
 
-  const width     = node.coords.width;
-  const height    = node.coords.height;
-  const x         = node.coords.x;
-  const y         = node.coords.y;
+  const width     = node.box.width;
+  const height    = node.box.height;
+  const x         = node.box.x;
+  const y         = node.box.y;
   const transform = node.props.transform;
   const id        = node._id;
 
@@ -52,14 +57,14 @@ const wrap = ($node, node) => {
 
   frame.setSVGAttrs({
     'data-type':      'frame',
-    x:                 x,                    // alternative:
-    y:                 y,                    // get the bounding box
-    width:             width,                // of the wrapper here
-    height:            height,               
+    x:                 x,
+    y:                 y,
+    width:             width,
+    height:            height,
     stroke:            '#d3d3d3',
     'vector-effect':  'non-scaling-stroke',
     'stroke-width':   '1px',
-    transform:         transform,
+    transform:         transform,            // the frame should be transformed
     fill:             'none',
     'pointer-events': 'none',
     'data-id':        id,
@@ -84,11 +89,32 @@ const wrap = ($node, node) => {
   topRCorner.setSVGAttrs({ x: x + width - 4, y: y - 4          });
   botRCorner.setSVGAttrs({ x: x + width - 4, y: y + height - 4 });
 
+  for (let dot of dots) {
+    dot.setSVGAttrs({
+      'data-type':     'dot',
+      'data-id':       id,
+      transform:       transform,
+      r:               5,
+      stroke:          '#d3d3d3',
+      'vector-effect': 'non-scaling-stroke',
+      'stroke-width':  '1px',
+      fill:            '#FFFFFF',
+    });
+  }
+
+  topLDot.setSVGAttrs({ cx: x - 8,         cy: y - 8          });
+  botLDot.setSVGAttrs({ cx: x - 8,         cy: y + height + 8 });
+  topRDot.setSVGAttrs({ cx: x + width + 8, cy: y - 8          });
+  botRDot.setSVGAttrs({ cx: x + width + 8, cy: y + height + 8 });
+
   wrapper.appendChild($node);
   wrapper.appendChild(chrome);
   chrome.appendChild(frame);
   for (let corner of corners) {
     chrome.appendChild(corner);
+  }
+  for (let dot of dots) {
+    chrome.appendChild(dot);
   }
 
   return wrapper;

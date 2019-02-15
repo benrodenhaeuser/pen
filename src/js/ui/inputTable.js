@@ -6,7 +6,8 @@ const inputTable = [
   [['click',       'doc-list-entry'   ], 'requestDoc'      ],
   // NEW
   [['mousedown',   'wrapper'          ], 'select'          ],
-  [['mousedown',   'corner'           ], 'initRotate'      ],
+  [['mousedown',   'dot'              ], 'initRotate'      ],
+  [['mousedown',   'corner'           ], 'initScale'       ],
   [['dblclick',    'wrapper'          ], 'selectThrough'   ],
   [['mousemove'                       ], 'movePointer'     ],
   [['mouseup'                         ], 'release'         ],
