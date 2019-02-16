@@ -1,6 +1,6 @@
-const Matrix = {
+import { Vector } from './vector.js';
 
-  // create/initialize
+const Matrix = {
 
   create(m) {
     return Object.create(Matrix).init(m);
@@ -21,8 +21,6 @@ const Matrix = {
     return Matrix.create(m);
   },
 
-  // typecasting
-
   toJSON() {
     return this.toAttributeString();
   },
@@ -42,8 +40,6 @@ const Matrix = {
     return this.m;
   },
 
-  // operations on matrices
-
   multiply(other) {
     const m = math.multiply(this.m, other.m);
     return Matrix.create(m);
@@ -53,8 +49,6 @@ const Matrix = {
     const m = JSON.parse(JSON.stringify(this.m));
     return Matrix.create(math.inv(m));
   },
-
-  // special 3x3 matrices
 
   identity() {
     const m = JSON.parse(JSON.stringify(
@@ -69,37 +63,32 @@ const Matrix = {
   },
 
   rotation(angle, origin) {
-    const [originX, originY] = origin;
     const sin                = Math.sin(angle);
     const cos                = Math.cos(angle);
 
     const m = [
-      [cos, -sin, -originX * cos + originY * sin + originX],
-      [sin,  cos, -originX * sin - originY * cos + originY],
+      [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
+      [sin,  cos, -origin.x * sin - origin.y * cos + origin.y],
       [0,    0,    1                                      ]
     ];
 
     return Matrix.create(m);
   },
 
-  translation(...vector) {
-    const [vectorX, vectorY] = vector;
-
+  translation(vector) {
     const m = [
-      [1, 0, vectorX],
-      [0, 1, vectorY],
+      [1, 0, vector.x],
+      [0, 1, vector.y],
       [0, 0, 1      ]
     ];
 
     return Matrix.create(m);
   },
 
-  scale(factor, origin = [0, 0]) {
-    const [originX, originY] = origin;
-
+  scale(factor, origin = Vector.create(0, 0)) {
     const m = [
-      [factor, 0,      originX - factor * originX],
-      [0,      factor, originY - factor * originY],
+      [factor, 0,      origin.x - factor * origin.x],
+      [0,      factor, origin.y - factor * origin.y],
       [0,      0,      1                         ]
     ];
 

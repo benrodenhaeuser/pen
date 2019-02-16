@@ -1,6 +1,7 @@
 import { Node } from './node.js';
 import { Matrix } from './matrix.js';
 import { ClassList } from './classList.js';
+import { Vector } from './vector.js';
 
 const sceneBuilder = {
   processAttributes($node, node) {

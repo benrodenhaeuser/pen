@@ -37,10 +37,14 @@ const wrap = ($node, node) => {
   const transform   = node.props.transform;
   const id          = node._id;
 
+  // $node
+
   $node.setSVGAttrs({
     'data-type': 'content',
     'pointer-events': 'none',
   });
+
+  // $wrapper
 
   wrapper.setSVGAttrs({
     'data-type':      'wrapper',
@@ -48,12 +52,16 @@ const wrap = ($node, node) => {
     'data-id':        id,
   });
 
+  // $chrome
+
   chrome.setSVGAttrs({
     'data-type': 'chrome',
     'data-id': id,
     'pointer-events': 'visiblePainted',
     'visibility': 'hidden',
   });
+
+  // $frame
 
   frame.setSVGAttrs({
     'data-type':      'frame',
@@ -70,11 +78,12 @@ const wrap = ($node, node) => {
     'data-id':        id,
   });
 
+  // $corners and $dots
 
-  // Calculate lengths of corners and dots:
   const adjust = (value) => {
-    return value * (1 / node.scale) * (1 / sceneRenderer.initialScale);
+    return value / (node.globalScale * sceneRenderer.documentScale);
   }
+
   const baseSideLength = 8;
   const baseDiameter   = 9;
   const sideLength     = adjust(baseSideLength);
@@ -117,14 +126,15 @@ const wrap = ($node, node) => {
 
   for (let dot of dots) {
     dot.setSVGAttrs({
-      'data-type':     'dot',
-      'data-id':       id,
-      transform:       transform,
-      r:               radius,
-      stroke:          '#d3d3d3',
-      'vector-effect': 'non-scaling-stroke',
-      'stroke-width':  '1px',
-      fill:            '#FFFFFF',
+      'data-type':      'dot',
+      'data-id':        id,
+      transform:        transform,
+      r:                radius,
+      stroke:           '#d3d3d3',
+      'vector-effect':  'non-scaling-stroke',
+      'stroke-width':   '1px',
+      fill:             '#FFFFFF',
+      // 'pointer-events': all,
     });
   }
 
@@ -148,6 +158,8 @@ const wrap = ($node, node) => {
     cy: y + height + diameter,
   });
 
+  // glue it together under $wrapper
+
   wrapper.appendChild($node);
   wrapper.appendChild(chrome);
   chrome.appendChild(frame);
@@ -160,7 +172,6 @@ const wrap = ($node, node) => {
 
   return wrapper;
 };
-
 
 // TODO: need to take care of style and defs
 const sceneRenderer = {
@@ -184,7 +195,7 @@ const sceneRenderer = {
       $node.setAttributeNS(svgns, 'data-type', 'root');
       $parent.appendChild($node);
       const viewBoxWidth = Number(node.props.viewBox.split(' ')[2]);
-      this.initialScale = this.canvasWidth / viewBoxWidth;
+      this.documentScale = this.canvasWidth / viewBoxWidth;
     } else {
       const $wrapper = wrap($node, node);
       $parent.appendChild($wrapper);

@@ -52,7 +52,6 @@ const core = {
       docs: { ids: [], selectedID: null },
     };
 
-    transformers.init();
     this.periphery = [];
     return this;
   },

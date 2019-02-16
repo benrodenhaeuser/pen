@@ -23,7 +23,7 @@ const transitionTable = [
 
   // OLD (mostly irrelevant now)
 
-  // create and delete
+  // create and delete (PART OF THIS IS STILL RELEVANT)
   [{ from: 'idle',      input: 'createShape'    }, {                         }],
   [{ from: 'idle',      input: 'createDoc'      }, {                         }],
   [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
@@ -52,7 +52,7 @@ const transitionTable = [
   [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'resizeFrame'       }],
   [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
 
-  // animate
+  // animate (THIS MIGHT STILL BE RELEVANT)
   [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
   [{ from: 'animating', input: 'animate'        }, { to: 'animating'         }],
   [{ from: 'animating', input: 'edit'           }, { to: 'idle'              }],

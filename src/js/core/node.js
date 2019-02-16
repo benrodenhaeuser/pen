@@ -1,5 +1,6 @@
 import { Matrix } from './matrix.js';
 import { ClassList } from './classList.js';
+import { Vector } from './vector.js';
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -267,13 +268,13 @@ const Node = {
 
   toJSON() {
     return {
-      _id:      this._id, // copied
-      parent:   this.parent && this.parent._id, // important
-      children: this.children, // copied
-      tag:      this.tag, // copied
-      props:    this.props, // copied
-      box:      this.box, // copied
-      scale:    this.globalScaleFactor(), // important
+      _id:         this._id,
+      parent:      this.parent && this.parent._id,
+      children:    this.children,
+      tag:         this.tag,
+      props:       this.props,
+      box:         this.box,
+      globalScale: this.globalScaleFactor(),
     };
   },
 
