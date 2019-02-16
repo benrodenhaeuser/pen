@@ -13,7 +13,7 @@ const sceneBuilder = {
     // store `transform` as a Matrix object:
     if ($node.transform && $node.transform.baseVal && $node.transform.baseVal.consolidate()) {
       const $matrix = $node.transform.baseVal.consolidate().matrix;
-      node.props.transform = Object.create(Matrix).fromDOMMatrix($matrix);
+      node.props.transform = Matrix.createFromDOMMatrix($matrix);
     } else {
       node.props.transform = Matrix.identity();
     }
@@ -44,7 +44,6 @@ const sceneBuilder = {
       width: box.width,
       height: box.height,
     };
-    // console.log(node.box);
   },
 
   buildTree($node, node) {
@@ -53,11 +52,11 @@ const sceneBuilder = {
 
     this.copyBBox($node, node);
 
-    const $graphics = Array.from($node.children).filter((child) => {
+    const $graphicsChildren = Array.from($node.children).filter((child) => {
       return child instanceof SVGGElement || child instanceof SVGGeometryElement
     });
 
-    for (let $child of $graphics) {
+    for (let $child of $graphicsChildren) {
       const child = Object.create(Node).init();
       node.append(child);
       this.buildTree($child, child);

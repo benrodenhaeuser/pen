@@ -30,12 +30,12 @@ const wrap = ($node, node) => {
   const corners    = [topLCorner, botLCorner, topRCorner, botRCorner];
   const dots       = [topLDot,    botLDot,    topRDot,    botRDot];
 
-  const width     = node.box.width;
-  const height    = node.box.height;
-  const x         = node.box.x;
-  const y         = node.box.y;
-  const transform = node.props.transform;
-  const id        = node._id;
+  const width       = node.box.width;
+  const height      = node.box.height;
+  const x           = node.box.x;
+  const y           = node.box.y;
+  const transform   = node.props.transform;
+  const id          = node._id;
 
   $node.setSVGAttrs({
     'data-type': 'content',
@@ -64,19 +64,30 @@ const wrap = ($node, node) => {
     stroke:            '#d3d3d3',
     'vector-effect':  'non-scaling-stroke',
     'stroke-width':   '1px',
-    transform:         transform,            // the frame should be transformed
+    transform:         transform,
     fill:             'none',
     'pointer-events': 'none',
     'data-id':        id,
   });
+
+
+  // Calculate lengths of corners and dots:
+  const adjust = (value) => {
+    return value * (1 / node.scale) * (1 / sceneRenderer.initialScale);
+  }
+  const baseSideLength = 8;
+  const baseDiameter   = 9;
+  const sideLength     = adjust(baseSideLength);
+  const diameter       = adjust(baseDiameter);
+  const radius         = diameter / 2;
 
   for (let corner of corners) {
     corner.setSVGAttrs({
       'data-type':     'corner',
       'data-id':       id,
       transform:       transform,
-      width:           8,
-      height:          8,
+      width:           sideLength,
+      height:          sideLength,
       stroke:          '#d3d3d3',
       'vector-effect': 'non-scaling-stroke',
       'stroke-width':  '1px',
@@ -84,17 +95,32 @@ const wrap = ($node, node) => {
     });
   }
 
-  topLCorner.setSVGAttrs({ x: x - 4,         y: y - 4          });
-  botLCorner.setSVGAttrs({ x: x - 4,         y: y + height - 4 });
-  topRCorner.setSVGAttrs({ x: x + width - 4, y: y - 4          });
-  botRCorner.setSVGAttrs({ x: x + width - 4, y: y + height - 4 });
+  topLCorner.setSVGAttrs({
+    x: x - sideLength / 2,
+    y: y - sideLength / 2,
+  });
+
+  botLCorner.setSVGAttrs({
+    x: x - sideLength / 2,
+    y: y + height - sideLength / 2,
+  });
+
+  topRCorner.setSVGAttrs({
+    x: x + width - sideLength / 2,
+    y: y - sideLength / 2,
+  });
+
+  botRCorner.setSVGAttrs({
+    x: x + width - sideLength / 2,
+    y: y + height - sideLength / 2,
+  });
 
   for (let dot of dots) {
     dot.setSVGAttrs({
       'data-type':     'dot',
       'data-id':       id,
       transform:       transform,
-      r:               5,
+      r:               radius,
       stroke:          '#d3d3d3',
       'vector-effect': 'non-scaling-stroke',
       'stroke-width':  '1px',
@@ -102,10 +128,25 @@ const wrap = ($node, node) => {
     });
   }
 
-  topLDot.setSVGAttrs({ cx: x - 8,         cy: y - 8          });
-  botLDot.setSVGAttrs({ cx: x - 8,         cy: y + height + 8 });
-  topRDot.setSVGAttrs({ cx: x + width + 8, cy: y - 8          });
-  botRDot.setSVGAttrs({ cx: x + width + 8, cy: y + height + 8 });
+  topLDot.setSVGAttrs({
+    cx: x - diameter,
+    cy: y - diameter,
+  });
+
+  botLDot.setSVGAttrs({
+    cx: x - diameter,
+    cy: y + height + diameter,
+  });
+
+  topRDot.setSVGAttrs({
+    cx: x + width + diameter,
+    cy: y - diameter,
+  });
+
+  botRDot.setSVGAttrs({
+    cx: x + width + diameter,
+    cy: y + height + diameter,
+  });
 
   wrapper.appendChild($node);
   wrapper.appendChild(chrome);
@@ -122,8 +163,12 @@ const wrap = ($node, node) => {
 
 
 // TODO: need to take care of style and defs
-
 const sceneRenderer = {
+  get canvasWidth() {
+    const canvasNode = document.querySelector('#canvas');
+    return canvasNode.clientWidth;
+  },
+
   render(scene, $canvas) {
     canvas.innerHTML = '';
     this.build(scene, $canvas);
@@ -138,6 +183,8 @@ const sceneRenderer = {
       $node.setAttributeNS(xmlns, 'xmlns', svgns);
       $node.setAttributeNS(svgns, 'data-type', 'root');
       $parent.appendChild($node);
+      const viewBoxWidth = Number(node.props.viewBox.split(' ')[2]);
+      this.initialScale = this.canvasWidth / viewBoxWidth;
     } else {
       const $wrapper = wrap($node, node);
       $parent.appendChild($wrapper);
@@ -150,6 +197,3 @@ const sceneRenderer = {
 };
 
 export { sceneRenderer };
-
-
-// Need to reorganize this in such a way that we have access to the pair ($node, node) throughout

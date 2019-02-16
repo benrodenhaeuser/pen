@@ -106,6 +106,15 @@ const Node = {
     return matrix;
   },
 
+  globalScaleFactor() {
+    const total  = this.totalTransform();
+    const a      = total.m[0][0];
+    const b      = total.m[1][0];
+    const factor = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+
+    return factor;
+  },
+
   // for debugging purposes
   plot(point) {
     const node = Object.create(Node).init();
@@ -170,8 +179,6 @@ const Node = {
       this.box.x + this.box.width, this.box.y + this.box.height
     ];
 
-    // return [northWest, northEast, southWest, southEast];
-
     return [
       this.transformPoint(northWest, this.totalTransform()),
       this.transformPoint(northEast, this.totalTransform()),
@@ -181,7 +188,7 @@ const Node = {
   },
 
   transformPoint(pt, matrix) {
-    const column      = Object.create(Matrix).init([[pt[0]], [pt[1]], [1]]);
+    const column      = Matrix.create([[pt[0]], [pt[1]], [1]]);
     const transformed = matrix.multiply(column).toArray();
 
     return [transformed[0][0], transformed[1][0]];
@@ -260,22 +267,23 @@ const Node = {
 
   toJSON() {
     return {
-      _id:      this._id,
-      parent:   this.parent && this.parent._id,
-      children: this.children,
-      tag:      this.tag,
-      props:    this.props,
-      box:      this.box,
+      _id:      this._id, // copied
+      parent:   this.parent && this.parent._id, // important
+      children: this.children, // copied
+      tag:      this.tag, // copied
+      props:    this.props, // copied
+      box:      this.box, // copied
+      scale:    this.globalScaleFactor(), // important
     };
   },
 
   defaults() {
     return {
-      _id:      createID(),
-      box:      { x: 0, y: 0, width: 0, height: 0 },
-      children: [],
-      parent:   null,
-      tag:      null,
+      _id:         createID(),
+      children:    [],
+      parent:      null,
+      tag:         null,
+      box:         { x: 0, y: 0, width: 0, height: 0 },
       props:    {
         transform: Matrix.identity(),
         class:     Object.create(ClassList).init(),

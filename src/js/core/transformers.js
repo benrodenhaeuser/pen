@@ -20,6 +20,7 @@ const transformers = {
 
     selected ? selected.select() : state.doc.scene.deselectAll();
 
+    // record the source:
     aux.sourceX = input.pointer.x;
     aux.sourceY = input.pointer.y;
   },
@@ -45,9 +46,13 @@ const transformers = {
   // rotate
 
   initRotate(state, input) {
+
+    // record the source:
     const selected             = state.doc.scene.selected;
     aux.sourceX                = input.pointer.x;
     aux.sourceY                = input.pointer.y;
+
+    // record the center:
     const box                  = selected.box;
     const centerX              = box.x + box.width / 2;
     const centerY              = box.y + box.height / 2;
@@ -78,9 +83,13 @@ const transformers = {
 
   // (NOTE: thats the exact same code as for initRotate)
   initScale(state, input) {
+
+    // record the source:
     const selected             = state.doc.scene.selected;
     aux.sourceX                = input.pointer.x;
     aux.sourceY                = input.pointer.y;
+
+    // record the center:
     const box                  = selected.box;
     const centerX              = box.x + box.width / 2;
     const centerY              = box.y + box.height / 2;
@@ -97,9 +106,8 @@ const transformers = {
     const distanceSource = Math.sqrt(Math.pow(aux.sourceX - aux.centerX, 2) + Math.pow(aux.sourceY - aux.centerY, 2));
     const distanceTarget = Math.sqrt(Math.pow(targetX - aux.centerX, 2) + Math.pow(targetY - aux.centerY, 2));
 
-    const scaleFactor = distanceTarget / distanceSource;
-
-    const scaleMatrix = Matrix.scale(scaleFactor, [aux.centerX, aux.centerY]);
+    const scaleFactor  = distanceTarget / distanceSource;
+    const scaleMatrix  = Matrix.scale(scaleFactor, [aux.centerX, aux.centerY]);
     const ancTransform = selected.ancestorTransform();
     const inv          = ancTransform.invert();
     const matrix       = inv.multiply(scaleMatrix).multiply(ancTransform);
@@ -107,13 +115,26 @@ const transformers = {
 
     aux.sourceX = targetX;
     aux.sourceY = targetY;
+
+    // I think for the inversion, we need the scale matrix
+    // Matrix.scale(scaleFactor / 1, [aux.centerX, aux.centerY]);
+    // but won't that make them stationary?
+    // const antiScaleMatrix = Matrix.scale(1 / scaleFactor, [aux.centerX, aux.centerY]);
+    // console.log(antiScaleMatrix.toJSON());
+    // console.log(selected.transform.toJSON());
+    //
+    // const corrected = selected.transform.multiply(antiScaleMatrix);
+    // selected.uiTransform = corrected;
+    // this seems to have no effect, why?
   },
 
   release(state, input) {
     const selected = state.doc.scene.selected;
+
     for (let ancestor of selected.ancestors) {
       ancestor.updateBox();
     }
+
     aux = {};
   },
 

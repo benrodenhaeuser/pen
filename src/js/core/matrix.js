@@ -1,31 +1,60 @@
 const Matrix = {
+
+  // create/initialize
+
+  create(m) {
+    return Object.create(Matrix).init(m);
+  },
+
+  init(m) {
+    this.m = m;
+    return this;
+  },
+
+  createFromDOMMatrix($matrix) {
+    const m = [
+      [$matrix.a, $matrix.c, $matrix.e],
+      [$matrix.b, $matrix.d, $matrix.f],
+      [0,         0,         1        ]
+    ];
+
+    return Matrix.create(m);
+  },
+
+  // typecasting
+
+  toJSON() {
+    return this.toAttributeString();
+  },
+
+  toAttributeString() {
+    return `matrix(${this.toVector()})`;
+  },
+
+  toVector() {
+    return [
+      this.m[0][0], this.m[1][0], this.m[0][1],
+      this.m[1][1], this.m[0][2], this.m[1][2]
+    ];
+  },
+
+  toArray() {
+    return this.m;
+  },
+
+  // operations on matrices
+
   multiply(other) {
     const m = math.multiply(this.m, other.m);
-    return Object.create(Matrix).init(m);
-
-    // const thisRows  = this.m.length;
-    // const thisCols  = this.m[0].length;
-    // const otherRows = other.m.length;
-    // const otherCols = other.m[0].length;
-    // const m         = new Array(thisRows);
-    //
-    // for (let r = 0; r < thisRows; r += 1) {
-    //   m[r] = new Array(otherCols);
-    //
-    //   for (let c = 0; c < otherCols; c += 1) {
-    //     m[r][c] = 0;
-    //
-    //     for (let i = 0; i < thisCols; i += 1) {
-    //       m[r][c] += this.m[r][i] * other.m[i][c];
-    //     }
-    //   }
-    // }
+    return Matrix.create(m);
   },
 
   invert() {
     const m = JSON.parse(JSON.stringify(this.m));
-    return Object.create(Matrix).init(math.inv(m));
+    return Matrix.create(math.inv(m));
   },
+
+  // special 3x3 matrices
 
   identity() {
     const m = JSON.parse(JSON.stringify(
@@ -36,7 +65,7 @@ const Matrix = {
       ]
     ));
 
-    return Object.create(Matrix).init(m);
+    return Matrix.create(m);
   },
 
   rotation(angle, origin) {
@@ -50,7 +79,7 @@ const Matrix = {
       [0,    0,    1                                      ]
     ];
 
-    return Object.create(Matrix).init(m);
+    return Matrix.create(m);
   },
 
   translation(...vector) {
@@ -62,10 +91,10 @@ const Matrix = {
       [0, 0, 1      ]
     ];
 
-    return Object.create(Matrix).init(m);
+    return Matrix.create(m);
   },
 
-  scale(factor, origin) {
+  scale(factor, origin = [0, 0]) {
     const [originX, originY] = origin;
 
     const m = [
@@ -74,42 +103,7 @@ const Matrix = {
       [0,      0,      1                         ]
     ];
 
-    return Object.create(Matrix).init(m);
-  },
-
-  // TODO: not general enough
-  toVector() {
-    return [
-      this.m[0][0], this.m[1][0], this.m[0][1],
-      this.m[1][1], this.m[0][2], this.m[1][2]
-    ];
-  },
-
-  toArray() {
-    return this.m;
-  },
-
-  fromDOMMatrix($matrix) {
-    this.m = [
-      [$matrix.a, $matrix.c, $matrix.e],
-      [$matrix.b, $matrix.d, $matrix.f],
-      [0,         0,         1        ]
-    ];
-
-    return this;
-  },
-
-  toJSON() {
-    return this.toAttributeString();
-  },
-
-  toAttributeString() {
-    return `matrix(${this.toVector()})`;
-  },
-
-  init(m) {
-    this.m = m;
-    return this;
+    return Matrix.create(m);
   },
 };
 

@@ -13,33 +13,62 @@
   };
 
   const Matrix = {
+
+    // create/initialize
+
+    create(m) {
+      return Object.create(Matrix).init(m);
+    },
+
+    init(m) {
+      this.m = m;
+      return this;
+    },
+
+    createFromDOMMatrix($matrix) {
+      const m = [
+        [$matrix.a, $matrix.c, $matrix.e],
+        [$matrix.b, $matrix.d, $matrix.f],
+        [0,         0,         1        ]
+      ];
+
+      return Matrix.create(m);
+    },
+
+    // typecasting
+
+    toJSON() {
+      return this.toAttributeString();
+    },
+
+    toAttributeString() {
+      return `matrix(${this.toVector()})`;
+    },
+
+    toVector() {
+      return [
+        this.m[0][0], this.m[1][0], this.m[0][1],
+        this.m[1][1], this.m[0][2], this.m[1][2]
+      ];
+    },
+
+    toArray() {
+      return this.m;
+    },
+
+    // operations on matrices
+
     multiply(other) {
       const m = math.multiply(this.m, other.m);
-      return Object.create(Matrix).init(m);
-
-      // const thisRows  = this.m.length;
-      // const thisCols  = this.m[0].length;
-      // const otherRows = other.m.length;
-      // const otherCols = other.m[0].length;
-      // const m         = new Array(thisRows);
-      //
-      // for (let r = 0; r < thisRows; r += 1) {
-      //   m[r] = new Array(otherCols);
-      //
-      //   for (let c = 0; c < otherCols; c += 1) {
-      //     m[r][c] = 0;
-      //
-      //     for (let i = 0; i < thisCols; i += 1) {
-      //       m[r][c] += this.m[r][i] * other.m[i][c];
-      //     }
-      //   }
-      // }
+      return Matrix.create(m);
     },
 
     invert() {
       const m = JSON.parse(JSON.stringify(this.m));
-      return Object.create(Matrix).init(math.inv(m));
+      return Matrix.create(math.inv(m));
     },
+
+    // special 3x3 matrices
 
     identity() {
       const m = JSON.parse(JSON.stringify(
@@ -50,7 +79,7 @@
         ]
       ));
 
-      return Object.create(Matrix).init(m);
+      return Matrix.create(m);
     },
 
     rotation(angle, origin) {
@@ -64,7 +93,7 @@
         [0,    0,    1                                      ]
       ];
 
-      return Object.create(Matrix).init(m);
+      return Matrix.create(m);
     },
 
     translation(...vector) {
@@ -76,10 +105,10 @@
         [0, 0, 1      ]
       ];
 
-      return Object.create(Matrix).init(m);
+      return Matrix.create(m);
     },
 
-    scale(factor, origin) {
+    scale(factor, origin = [0, 0]) {
       const [originX, originY] = origin;
 
       const m = [
@@ -88,42 +117,7 @@
         [0,      0,      1                         ]
       ];
 
-      return Object.create(Matrix).init(m);
-    },
-
-    // TODO: not general enough
-    toVector() {
-      return [
-        this.m[0][0], this.m[1][0], this.m[0][1],
-        this.m[1][1], this.m[0][2], this.m[1][2]
-      ];
-    },
-
-    toArray() {
-      return this.m;
-    },
-
-    fromDOMMatrix($matrix) {
-      this.m = [
-        [$matrix.a, $matrix.c, $matrix.e],
-        [$matrix.b, $matrix.d, $matrix.f],
-        [0,         0,         1        ]
-      ];
-
-      return this;
-    },
-
-    toJSON() {
-      return this.toAttributeString();
-    },
-
-    toAttributeString() {
-      return `matrix(${this.toVector()})`;
-    },
-
-    init(m) {
-      this.m = m;
-      return this;
+      return Matrix.create(m);
     },
   };
 
@@ -256,6 +250,15 @@
       return matrix;
     },
 
+    globalScaleFactor() {
+      const total  = this.totalTransform();
+      const a      = total.m[0][0];
+      const b      = total.m[1][0];
+      const factor = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+
+      return factor;
+    },
+
     // for debugging purposes
     plot(point) {
       const node = Object.create(Node).init();
@@ -320,8 +323,6 @@
         this.box.x + this.box.width, this.box.y + this.box.height
       ];
 
-      // return [northWest, northEast, southWest, southEast];
-
       return [
         this.transformPoint(northWest, this.totalTransform()),
         this.transformPoint(northEast, this.totalTransform()),
@@ -331,7 +332,7 @@
     },
 
     transformPoint(pt, matrix) {
-      const column      = Object.create(Matrix).init([[pt[0]], [pt[1]], [1]]);
+      const column      = Matrix.create([[pt[0]], [pt[1]], [1]]);
       const transformed = matrix.multiply(column).toArray();
 
       return [transformed[0][0], transformed[1][0]];
@@ -410,22 +411,23 @@
 
     toJSON() {
       return {
-        _id:      this._id,
-        parent:   this.parent && this.parent._id,
-        children: this.children,
-        tag:      this.tag,
-        props:    this.props,
-        box:      this.box,
+        _id:      this._id, // copied
+        parent:   this.parent && this.parent._id, // important
+        children: this.children, // copied
+        tag:      this.tag, // copied
+        props:    this.props, // copied
+        box:      this.box, // copied
+        scale:    this.globalScaleFactor(), // important
       };
     },
 
     defaults() {
       return {
-        _id:      createID(),
-        box:      { x: 0, y: 0, width: 0, height: 0 },
-        children: [],
-        parent:   null,
-        tag:      null,
+        _id:         createID(),
+        children:    [],
+        parent:      null,
+        tag:         null,
+        box:         { x: 0, y: 0, width: 0, height: 0 },
         props:    {
           transform: Matrix.identity(),
           class:     Object.create(ClassList).init(),
@@ -451,7 +453,7 @@
       // store `transform` as a Matrix object:
       if ($node.transform && $node.transform.baseVal && $node.transform.baseVal.consolidate()) {
         const $matrix = $node.transform.baseVal.consolidate().matrix;
-        node.props.transform = Object.create(Matrix).fromDOMMatrix($matrix);
+        node.props.transform = Matrix.createFromDOMMatrix($matrix);
       } else {
         node.props.transform = Matrix.identity();
       }
@@ -482,7 +484,6 @@
         width: box.width,
         height: box.height,
       };
-      // console.log(node.box);
     },
 
     buildTree($node, node) {
@@ -491,11 +492,11 @@
 
       this.copyBBox($node, node);
 
-      const $graphics = Array.from($node.children).filter((child) => {
+      const $graphicsChildren = Array.from($node.children).filter((child) => {
         return child instanceof SVGGElement || child instanceof SVGGeometryElement
       });
 
-      for (let $child of $graphics) {
+      for (let $child of $graphicsChildren) {
         const child = Object.create(Node).init();
         node.append(child);
         this.buildTree($child, child);
@@ -563,6 +564,7 @@
 
       selected ? selected.select() : state.doc.scene.deselectAll();
 
+      // record the source:
       aux.sourceX = input.pointer.x;
       aux.sourceY = input.pointer.y;
     },
@@ -588,9 +590,13 @@
     // rotate
 
     initRotate(state, input) {
+
+      // record the source:
       const selected             = state.doc.scene.selected;
       aux.sourceX                = input.pointer.x;
       aux.sourceY                = input.pointer.y;
+
+      // record the center:
       const box                  = selected.box;
       const centerX              = box.x + box.width / 2;
       const centerY              = box.y + box.height / 2;
@@ -621,9 +627,13 @@
 
     // (NOTE: thats the exact same code as for initRotate)
     initScale(state, input) {
+
+      // record the source:
       const selected             = state.doc.scene.selected;
       aux.sourceX                = input.pointer.x;
       aux.sourceY                = input.pointer.y;
+
+      // record the center:
       const box                  = selected.box;
       const centerX              = box.x + box.width / 2;
       const centerY              = box.y + box.height / 2;
@@ -640,9 +650,8 @@
       const distanceSource = Math.sqrt(Math.pow(aux.sourceX - aux.centerX, 2) + Math.pow(aux.sourceY - aux.centerY, 2));
       const distanceTarget = Math.sqrt(Math.pow(targetX - aux.centerX, 2) + Math.pow(targetY - aux.centerY, 2));
 
-      const scaleFactor = distanceTarget / distanceSource;
-
-      const scaleMatrix = Matrix.scale(scaleFactor, [aux.centerX, aux.centerY]);
+      const scaleFactor  = distanceTarget / distanceSource;
+      const scaleMatrix  = Matrix.scale(scaleFactor, [aux.centerX, aux.centerY]);
       const ancTransform = selected.ancestorTransform();
       const inv          = ancTransform.invert();
       const matrix       = inv.multiply(scaleMatrix).multiply(ancTransform);
@@ -650,13 +659,26 @@
 
       aux.sourceX = targetX;
       aux.sourceY = targetY;
+
+      // I think for the inversion, we need the scale matrix
+      // Matrix.scale(scaleFactor / 1, [aux.centerX, aux.centerY]);
+      // but won't that make them stationary?
+      // const antiScaleMatrix = Matrix.scale(1 / scaleFactor, [aux.centerX, aux.centerY]);
+      // console.log(antiScaleMatrix.toJSON());
+      // console.log(selected.transform.toJSON());
+      //
+      // const corrected = selected.transform.multiply(antiScaleMatrix);
+      // selected.uiTransform = corrected;
+      // this seems to have no effect, why?
     },
 
     release(state, input) {
       const selected = state.doc.scene.selected;
+
       for (let ancestor of selected.ancestors) {
         ancestor.updateBox();
       }
+
       aux = {};
     },
 
@@ -1229,12 +1251,12 @@
     const corners    = [topLCorner, botLCorner, topRCorner, botRCorner];
     const dots       = [topLDot,    botLDot,    topRDot,    botRDot];
 
-    const width     = node.box.width;
-    const height    = node.box.height;
-    const x         = node.box.x;
-    const y         = node.box.y;
-    const transform = node.props.transform;
-    const id        = node._id;
+    const width       = node.box.width;
+    const height      = node.box.height;
+    const x           = node.box.x;
+    const y           = node.box.y;
+    const transform   = node.props.transform;
+    const id          = node._id;
 
     $node.setSVGAttrs({
       'data-type': 'content',
@@ -1263,19 +1285,30 @@
       stroke:            '#d3d3d3',
       'vector-effect':  'non-scaling-stroke',
       'stroke-width':   '1px',
-      transform:         transform,            // the frame should be transformed
+      transform:         transform,
       fill:             'none',
       'pointer-events': 'none',
       'data-id':        id,
     });
+
+
+    // Calculate lengths of corners and dots:
+    const adjust = (value) => {
+      return value * (1 / node.scale) * (1 / sceneRenderer.initialScale);
+    };
+    const baseSideLength = 8;
+    const baseDiameter   = 9;
+    const sideLength     = adjust(baseSideLength);
+    const diameter       = adjust(baseDiameter);
+    const radius         = diameter / 2;
 
     for (let corner of corners) {
       corner.setSVGAttrs({
         'data-type':     'corner',
         'data-id':       id,
         transform:       transform,
-        width:           8,
-        height:          8,
+        width:           sideLength,
+        height:          sideLength,
         stroke:          '#d3d3d3',
         'vector-effect': 'non-scaling-stroke',
         'stroke-width':  '1px',
@@ -1283,17 +1316,32 @@
       });
     }
 
-    topLCorner.setSVGAttrs({ x: x - 4,         y: y - 4          });
-    botLCorner.setSVGAttrs({ x: x - 4,         y: y + height - 4 });
-    topRCorner.setSVGAttrs({ x: x + width - 4, y: y - 4          });
-    botRCorner.setSVGAttrs({ x: x + width - 4, y: y + height - 4 });
+    topLCorner.setSVGAttrs({
+      x: x - sideLength / 2,
+      y: y - sideLength / 2,
+    });
+
+    botLCorner.setSVGAttrs({
+      x: x - sideLength / 2,
+      y: y + height - sideLength / 2,
+    });
+
+    topRCorner.setSVGAttrs({
+      x: x + width - sideLength / 2,
+      y: y - sideLength / 2,
+    });
+
+    botRCorner.setSVGAttrs({
+      x: x + width - sideLength / 2,
+      y: y + height - sideLength / 2,
+    });
 
     for (let dot of dots) {
       dot.setSVGAttrs({
         'data-type':     'dot',
         'data-id':       id,
         transform:       transform,
-        r:               5,
+        r:               radius,
         stroke:          '#d3d3d3',
         'vector-effect': 'non-scaling-stroke',
         'stroke-width':  '1px',
@@ -1301,10 +1349,25 @@
       });
     }
 
-    topLDot.setSVGAttrs({ cx: x - 8,         cy: y - 8          });
-    botLDot.setSVGAttrs({ cx: x - 8,         cy: y + height + 8 });
-    topRDot.setSVGAttrs({ cx: x + width + 8, cy: y - 8          });
-    botRDot.setSVGAttrs({ cx: x + width + 8, cy: y + height + 8 });
+    topLDot.setSVGAttrs({
+      cx: x - diameter,
+      cy: y - diameter,
+    });
+
+    botLDot.setSVGAttrs({
+      cx: x - diameter,
+      cy: y + height + diameter,
+    });
+
+    topRDot.setSVGAttrs({
+      cx: x + width + diameter,
+      cy: y - diameter,
+    });
+
+    botRDot.setSVGAttrs({
+      cx: x + width + diameter,
+      cy: y + height + diameter,
+    });
 
     wrapper.appendChild($node);
     wrapper.appendChild(chrome);
@@ -1321,8 +1384,12 @@
 
 
   // TODO: need to take care of style and defs
-
   const sceneRenderer = {
+    get canvasWidth() {
+      const canvasNode = document.querySelector('#canvas');
+      return canvasNode.clientWidth;
+    },
+
     render(scene, $canvas) {
       canvas.innerHTML = '';
       this.build(scene, $canvas);
@@ -1337,6 +1404,8 @@
         $node.setAttributeNS(xmlns, 'xmlns', svgns);
         $node.setAttributeNS(svgns, 'data-type', 'root');
         $parent.appendChild($node);
+        const viewBoxWidth = Number(node.props.viewBox.split(' ')[2]);
+        this.initialScale = this.canvasWidth / viewBoxWidth;
       } else {
         const $wrapper = wrap($node, node);
         $parent.appendChild($wrapper);
@@ -1347,9 +1416,6 @@
       }
     },
   };
-
-
-  // Need to reorganize this in such a way that we have access to the pair ($node, node) throughout
 
   SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(element) {
       return element.getScreenCTM().inverse().multiply(this.getScreenCTM());
