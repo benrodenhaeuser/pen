@@ -2,13 +2,13 @@
   'use strict';
 
   const clock = {
-    tick() {
-      this.time += 1;
+    init(time = 0) {
+      this.time = time;
+      return this;
     },
 
-    init(time) {
-      this.time = time || 0;
-      return this;
+    tick() {
+      this.time += 1;
     },
   };
 
@@ -36,11 +36,17 @@
 
     subtract(other) {
       return Vector.create(this.x - other.x, this.y - other.y);
-    }
+    },
+
+    isWithin(rectangle) {
+      return this.x >= rectangle.x &&
+             this.x <= rectangle.x + rectangle.width &&
+             this.y >= rectangle.y &&
+             this.y <= rectangle.y + rectangle.height;
+    },
   };
 
   const Matrix = {
-
     create(m) {
       return Object.create(Matrix).init(m);
     },
@@ -108,7 +114,7 @@
       const m = [
         [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
         [sin,  cos, -origin.x * sin - origin.y * cos + origin.y],
-        [0,    0,    1                                      ]
+        [0,    0,    1                                         ]
       ];
 
       return Matrix.create(m);
@@ -118,7 +124,7 @@
       const m = [
         [1, 0, vector.x],
         [0, 1, vector.y],
-        [0, 0, 1      ]
+        [0, 0, 1       ]
       ];
 
       return Matrix.create(m);
@@ -128,7 +134,7 @@
       const m = [
         [factor, 0,      origin.x - factor * origin.x],
         [0,      factor, origin.y - factor * origin.y],
-        [0,      0,      1                         ]
+        [0,      0,      1                           ]
       ];
 
       return Matrix.create(m);
@@ -136,26 +142,29 @@
   };
 
   const ClassList = {
-    add(className) {
-      this.set.add(className);
+    create(classNames = []) {
+      return Object.create(ClassList).init(classNames);
     },
 
-    includes(className) {
-      return this.set.has(className);
-    },
-
-    remove(className) {
-      this.set.delete(className);
+    init(classNames) {
+      this.set = new Set(classNames);
+      return this;
     },
 
     toJSON() {
       return Array.from(this.set).join(' ');
     },
 
-    init(classList) {
-      classList = classList ? classList : [];
-      this.set = new Set(classList);
-      return this;
+    includes(className) {
+      return this.set.has(className);
+    },
+
+    add(className) {
+      this.set.add(className);
+    },
+
+    remove(className) {
+      this.set.delete(className);
     },
   };
 
@@ -166,6 +175,42 @@
   };
 
   const Node = {
+    create(opts = {}) {
+      return Object.create(Node).init(opts);
+    },
+
+    init(opts) {
+      this.set(this.defaults());
+      this.set(opts);
+      return this;
+    },
+
+    defaults() {
+      return {
+        _id:         createID(),
+        children:    [],
+        parent:      null,
+        tag:         null,
+        box:         { x: 0, y: 0, width: 0, height: 0 },
+        props:    {
+          transform: Matrix.identity(),
+          class:     ClassList.create(),
+        },
+      };
+    },
+
+    toJSON() {
+      return {
+        _id:         this._id,
+        parent:      this.parent && this.parent._id,
+        children:    this.children,
+        tag:         this.tag,
+        props:       this.props,
+        box:         this.box,
+        globalScale: this.globalScaleFactor(),
+      };
+    },
+
     findAncestor(predicate) {
       if (predicate(this)) {
         return this;
@@ -242,6 +287,10 @@
       return this.props.class;
     },
 
+    set classList(value) {
+      this.props.class = value;
+    },
+
     get transform() {
       return this.props.transform;
     },
@@ -275,7 +324,7 @@
 
     // for debugging purposes
     plot(point) {
-      const node = Object.create(Node).init();
+      const node = Node.create();
       node.tag = 'circle';
       node.props = Object.assign(node.props, {
         r: 5, cx: point[0], cy: point[1], fill: 'red'
@@ -368,7 +417,7 @@
       }
     },
 
-    unfocus() {
+    unfocusAll() {
       const focussed = this.root.findDescendants((node) => {
         return node.classList.includes('focus');
       });
@@ -422,64 +471,27 @@
         this[key] = opts[key];
       }
     },
-
-    toJSON() {
-      return {
-        _id:         this._id,
-        parent:      this.parent && this.parent._id,
-        children:    this.children,
-        tag:         this.tag,
-        props:       this.props,
-        box:         this.box,
-        globalScale: this.globalScaleFactor(),
-      };
-    },
-
-    defaults() {
-      return {
-        _id:         createID(),
-        children:    [],
-        parent:      null,
-        tag:         null,
-        box:         { x: 0, y: 0, width: 0, height: 0 },
-        props:    {
-          transform: Matrix.identity(),
-          class:     Object.create(ClassList).init(),
-        },
-      };
-    },
-
-    init(opts = {}) {
-      this.set(this.defaults());
-      this.set(opts);
-      return this;
-    },
   };
 
   const sceneBuilder = {
-    processAttributes($node, node) {
-      const $attributes = Array.from($node.attributes);
-      for (let $attribute of $attributes) {
-        node.props[$attribute.name] = $attribute.value;
-      }
-      delete node.props.xmlns;
+    createScene(markup) {
+      const $svg = new DOMParser()
+        .parseFromString(markup, "application/xml")
+        .documentElement;
+      const svg = Node.create();
 
-      // store `transform` as a Matrix object:
-      if ($node.transform && $node.transform.baseVal && $node.transform.baseVal.consolidate()) {
-        const $matrix = $node.transform.baseVal.consolidate().matrix;
-        node.props.transform = Matrix.createFromDOMMatrix($matrix);
-      } else {
-        node.props.transform = Matrix.identity();
-      }
+      document.body.appendChild($svg);
+      this.process($svg, svg);
+      $svg.remove();
 
-      // store `class` as a ClassList object:
-      node.props.class = Object.create(ClassList).init(
-        Array.from($node.classList)
-      );
+      return svg;
     },
 
-    copyTagName($node, node) {
-      node.tag = $node.tagName;
+    process($svg, svg) {
+      this.copyStyles($svg, svg);
+      this.copyDefs($svg, svg);
+      this.buildTree($svg, svg);
+      svg.setFrontier();
     },
 
     copyStyles($node, node) {
@@ -490,6 +502,48 @@
       node.defs = Array.from($node.querySelectorAll('style'));
     },
 
+    buildTree($node, node) {
+      this.copyTagName($node, node);
+      this.processAttributes($node, node);
+      this.copyBBox($node, node);
+
+      const $graphicsChildren = Array.from($node.children).filter((child) => {
+        return child instanceof SVGGElement || child instanceof SVGGeometryElement
+      });
+
+      for (let $child of $graphicsChildren) {
+        const child = Node.create();
+        node.append(child);
+        this.buildTree($child, child);
+      }
+    },
+
+    copyTagName($node, node) {
+      node.tag = $node.tagName;
+    },
+
+    processAttributes($node, node) {
+      const $attributes = Array.from($node.attributes);
+      for (let $attribute of $attributes) {
+        node.props[$attribute.name] = $attribute.value;
+      }
+      delete node.props.xmlns;
+
+      // $node might already have a transform applied:
+      if (
+        $node.transform &&
+        $node.transform.baseVal &&
+        $node.transform.baseVal.consolidate()
+      ) {
+        const $matrix = $node.transform.baseVal.consolidate().matrix;
+        node.transform = Matrix.createFromDOMMatrix($matrix);
+      }
+
+      node.classList = ClassList.create(
+        Array.from($node.classList)
+      );
+    },
+
     copyBBox($node, node) {
       const box = $node.getBBox();
       node.box = {
@@ -498,43 +552,6 @@
         width: box.width,
         height: box.height,
       };
-    },
-
-    buildTree($node, node) {
-      this.copyTagName($node, node);
-      this.processAttributes($node, node);
-
-      this.copyBBox($node, node);
-
-      const $graphicsChildren = Array.from($node.children).filter((child) => {
-        return child instanceof SVGGElement || child instanceof SVGGeometryElement
-      });
-
-      for (let $child of $graphicsChildren) {
-        const child = Object.create(Node).init();
-        node.append(child);
-        this.buildTree($child, child);
-      }
-    },
-
-    process($svg, svg) {
-      this.copyStyles($svg, svg);
-      this.copyDefs($svg, svg);
-      this.buildTree($svg, svg);
-      svg.setFrontier();
-    },
-
-    createScene(markup) {
-      const $svg = new DOMParser()
-        .parseFromString(markup, "application/xml")
-        .documentElement;
-      const svg = Object.create(Node).init();
-
-      document.body.appendChild($svg);
-      this.process($svg, svg);
-      $svg.remove();
-
-      return svg;
     },
   };
 
@@ -562,7 +579,7 @@
 
   let aux = {};
 
-  const transformers = {
+  const actions = {
     select(state, input) {
       const selected = state.doc.scene
         .findDescendant((node) => {
@@ -572,8 +589,15 @@
           return node.props.class.includes('frontier');
         });
 
-      selected ? selected.select() : state.doc.scene.deselectAll();
+      if (selected) {
+        selected.select();
+        this.initShift(state, input);
+      } else {
+        state.doc.scene.deselectAll();
+      }
+    },
 
+    initShift(state, input) {
       aux.source = Vector.create(input.pointer.x, input.pointer.y);
     },
 
@@ -676,7 +700,7 @@
       if (selection) {
         selection.select();
         state.doc.scene.setFrontier();
-        state.doc.scene.unfocus();
+        state.doc.scene.unfocusAll();
       }
     },
 
@@ -686,24 +710,19 @@
       });
 
       if (target) {
-        const highlight = target.findAncestor((node) => {
+        const toFocus = target.findAncestor((node) => {
           return node.classList.includes('frontier');
         });
 
-        if (highlight) {
+        if (toFocus) {
           const pointer = Vector
             .create(input.pointer.x, input.pointer.y)
-            .transform(highlight.totalTransform().invert());
+            .transform(toFocus.totalTransform().invert());
 
-          if (
-            pointer.x >= highlight.box.x &&
-            pointer.x <= highlight.box.x + highlight.box.width &&
-            pointer.y >= highlight.box.y &&
-            pointer.y <= highlight.box.y + highlight.box.height
-          ) {
-            highlight.classList.add('focus');
+          if (pointer.isWithin(toFocus.box)) {
+            toFocus.classList.add('focus');
           } else {
-            state.doc.scene.unfocus();
+            state.doc.scene.unfocusAll();
           }
         }
       }
@@ -838,8 +857,8 @@
     },
 
     transform(input, transition) {
-      const transformer = transformers[transition.do] || transformers[input.id];
-      transformer && transformer.bind(transformers)(this.state, input);
+      const action = actions[transition.do] || actions[input.id];
+      action && action.bind(actions)(this.state, input);
 
       this.state.clock.tick();
       this.state.currentInput = input.id;

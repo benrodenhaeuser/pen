@@ -1,11 +1,11 @@
 const clock = {
-  tick() {
-    this.time += 1;
+  init(time = 0) {
+    this.time = time;
+    return this;
   },
 
-  init(time) {
-    this.time = time || 0;
-    return this;
+  tick() {
+    this.time += 1;
   },
 };
 

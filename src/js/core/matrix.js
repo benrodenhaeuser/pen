@@ -1,7 +1,6 @@
 import { Vector } from './vector.js';
 
 const Matrix = {
-
   create(m) {
     return Object.create(Matrix).init(m);
   },
@@ -69,7 +68,7 @@ const Matrix = {
     const m = [
       [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
       [sin,  cos, -origin.x * sin - origin.y * cos + origin.y],
-      [0,    0,    1                                      ]
+      [0,    0,    1                                         ]
     ];
 
     return Matrix.create(m);
@@ -79,7 +78,7 @@ const Matrix = {
     const m = [
       [1, 0, vector.x],
       [0, 1, vector.y],
-      [0, 0, 1      ]
+      [0, 0, 1       ]
     ];
 
     return Matrix.create(m);
@@ -89,7 +88,7 @@ const Matrix = {
     const m = [
       [factor, 0,      origin.x - factor * origin.x],
       [0,      factor, origin.y - factor * origin.y],
-      [0,      0,      1                         ]
+      [0,      0,      1                           ]
     ];
 
     return Matrix.create(m);

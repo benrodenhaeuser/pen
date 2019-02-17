@@ -24,7 +24,14 @@ const Vector = {
 
   subtract(other) {
     return Vector.create(this.x - other.x, this.y - other.y);
-  }
+  },
+
+  isWithin(rectangle) {
+    return this.x >= rectangle.x &&
+           this.x <= rectangle.x + rectangle.width &&
+           this.y >= rectangle.y &&
+           this.y <= rectangle.y + rectangle.height;
+  },
 };
 
 export { Vector };

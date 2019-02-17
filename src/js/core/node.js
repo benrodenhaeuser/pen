@@ -9,6 +9,42 @@ const createID = () => {
 };
 
 const Node = {
+  create(opts = {}) {
+    return Object.create(Node).init(opts);
+  },
+
+  init(opts) {
+    this.set(this.defaults());
+    this.set(opts);
+    return this;
+  },
+
+  defaults() {
+    return {
+      _id:         createID(),
+      children:    [],
+      parent:      null,
+      tag:         null,
+      box:         { x: 0, y: 0, width: 0, height: 0 },
+      props:    {
+        transform: Matrix.identity(),
+        class:     ClassList.create(),
+      },
+    };
+  },
+
+  toJSON() {
+    return {
+      _id:         this._id,
+      parent:      this.parent && this.parent._id,
+      children:    this.children,
+      tag:         this.tag,
+      props:       this.props,
+      box:         this.box,
+      globalScale: this.globalScaleFactor(),
+    };
+  },
+
   findAncestor(predicate) {
     if (predicate(this)) {
       return this;
@@ -85,6 +121,10 @@ const Node = {
     return this.props.class;
   },
 
+  set classList(value) {
+    this.props.class = value;
+  },
+
   get transform() {
     return this.props.transform;
   },
@@ -118,7 +158,7 @@ const Node = {
 
   // for debugging purposes
   plot(point) {
-    const node = Object.create(Node).init();
+    const node = Node.create();
     node.tag = 'circle';
     node.props = Object.assign(node.props, {
       r: 5, cx: point[0], cy: point[1], fill: 'red'
@@ -211,7 +251,7 @@ const Node = {
     }
   },
 
-  unfocus() {
+  unfocusAll() {
     const focussed = this.root.findDescendants((node) => {
       return node.classList.includes('focus');
     });
@@ -264,38 +304,6 @@ const Node = {
     for (let key of Object.keys(opts)) {
       this[key] = opts[key];
     }
-  },
-
-  toJSON() {
-    return {
-      _id:         this._id,
-      parent:      this.parent && this.parent._id,
-      children:    this.children,
-      tag:         this.tag,
-      props:       this.props,
-      box:         this.box,
-      globalScale: this.globalScaleFactor(),
-    };
-  },
-
-  defaults() {
-    return {
-      _id:         createID(),
-      children:    [],
-      parent:      null,
-      tag:         null,
-      box:         { x: 0, y: 0, width: 0, height: 0 },
-      props:    {
-        transform: Matrix.identity(),
-        class:     Object.create(ClassList).init(),
-      },
-    };
-  },
-
-  init(opts = {}) {
-    this.set(this.defaults());
-    this.set(opts);
-    return this;
   },
 };
 

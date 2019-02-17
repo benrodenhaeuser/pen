@@ -5,7 +5,7 @@ import { Vector } from './vector.js';
 
 let aux = {};
 
-const transformers = {
+const actions = {
   select(state, input) {
     const selected = state.doc.scene
       .findDescendant((node) => {
@@ -15,8 +15,15 @@ const transformers = {
         return node.props.class.includes('frontier');
       });
 
-    selected ? selected.select() : state.doc.scene.deselectAll();
+    if (selected) {
+      selected.select();
+      this.initShift(state, input);
+    } else {
+      state.doc.scene.deselectAll();
+    }
+  },
 
+  initShift(state, input) {
     aux.source = Vector.create(input.pointer.x, input.pointer.y);
   },
 
@@ -119,7 +126,7 @@ const transformers = {
     if (selection) {
       selection.select();
       state.doc.scene.setFrontier();
-      state.doc.scene.unfocus();
+      state.doc.scene.unfocusAll();
     }
   },
 
@@ -129,24 +136,19 @@ const transformers = {
     });
 
     if (target) {
-      const highlight = target.findAncestor((node) => {
+      const toFocus = target.findAncestor((node) => {
         return node.classList.includes('frontier');
       });
 
-      if (highlight) {
+      if (toFocus) {
         const pointer = Vector
           .create(input.pointer.x, input.pointer.y)
-          .transform(highlight.totalTransform().invert());
+          .transform(toFocus.totalTransform().invert());
 
-        if (
-          pointer.x >= highlight.box.x &&
-          pointer.x <= highlight.box.x + highlight.box.width &&
-          pointer.y >= highlight.box.y &&
-          pointer.y <= highlight.box.y + highlight.box.height
-        ) {
-          highlight.classList.add('focus');
+        if (pointer.isWithin(toFocus.box)) {
+          toFocus.classList.add('focus');
         } else {
-          state.doc.scene.unfocus();
+          state.doc.scene.unfocusAll();
         }
       }
     }
@@ -173,4 +175,4 @@ const transformers = {
   },
 };
 
-export { transformers };
+export { actions };

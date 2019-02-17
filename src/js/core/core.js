@@ -1,6 +1,6 @@
 import { clock } from './clock.js';
 import { doc } from './doc.js';
-import { transformers } from './transformers.js';
+import { actions } from './actions.js';
 import { transitionTable } from './transitionTable.js';
 
 const core = {
@@ -36,8 +36,8 @@ const core = {
   },
 
   transform(input, transition) {
-    const transformer = transformers[transition.do] || transformers[input.id];
-    transformer && transformer.bind(transformers)(this.state, input);
+    const action = actions[transition.do] || actions[input.id];
+    action && action.bind(actions)(this.state, input);
 
     this.state.clock.tick();
     this.state.currentInput = input.id;
