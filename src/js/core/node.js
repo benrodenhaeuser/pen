@@ -1,6 +1,5 @@
-import { Matrix } from './matrix.js';
+import { Matrix, Vector } from './matrix.js';
 import { ClassList } from './classList.js';
-import { Vector } from './vector.js';
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -133,7 +132,7 @@ const Node = {
     this.props.transform = value;
   },
 
-  totalTransform() {
+  globalTransform() {
     return this.ancestorTransform().multiply(this.transform);
   },
 
@@ -148,7 +147,7 @@ const Node = {
   },
 
   globalScaleFactor() {
-    const total  = this.totalTransform();
+    const total  = this.globalTransform();
     const a      = total.m[0][0];
     const b      = total.m[1][0];
     const factor = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
@@ -174,7 +173,7 @@ const Node = {
     for (let child of this.children) {
       let childCorners = child.findCorners();
       for (let corner of childCorners) {
-        corner = this.transformPoint(corner, this.totalTransform().invert());
+        corner = this.transformPoint(corner, this.globalTransform().invert());
         corners.push(corner);
       }
     }
@@ -221,10 +220,10 @@ const Node = {
     ];
 
     return [
-      this.transformPoint(northWest, this.totalTransform()),
-      this.transformPoint(northEast, this.totalTransform()),
-      this.transformPoint(southWest, this.totalTransform()),
-      this.transformPoint(southEast, this.totalTransform()),
+      this.transformPoint(northWest, this.globalTransform()),
+      this.transformPoint(northEast, this.globalTransform()),
+      this.transformPoint(southWest, this.globalTransform()),
+      this.transformPoint(southEast, this.globalTransform()),
     ];
   },
 

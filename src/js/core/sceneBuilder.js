@@ -1,7 +1,6 @@
 import { Node } from './node.js';
-import { Matrix } from './matrix.js';
+import { Matrix, Vector } from './matrix.js';
 import { ClassList } from './classList.js';
-import { Vector } from './vector.js';
 
 const sceneBuilder = {
   createScene(markup) {

@@ -21,9 +21,9 @@ const transitionTable = [
   [{ from: 'scaling',   input: 'movePointer'    }, { do: 'scale'             }],
   [{ from: 'scaling',   input: 'release'        }, { to: 'idle'              }],
 
-  // OLD (mostly irrelevant now)
+  // OLD
 
-  // create and delete (PART OF THIS IS STILL RELEVANT)
+  // create and delete (part of this might still be relevant)
   [{ from: 'idle',      input: 'createShape'    }, {                         }],
   [{ from: 'idle',      input: 'createDoc'      }, {                         }],
   [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
@@ -32,27 +32,7 @@ const transitionTable = [
   [{                    input: 'requestDoc'     }, { to: 'busy'              }],
   [{ from: 'busy',      input: 'setDoc'         }, { to: 'idle'              }],
 
-  // draw
-  [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
-  [{ from: 'drawing',   input: 'changeCoords'   }, { do: 'sizeFrame'         }],
-  [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', do: 'clean' }],
-
-  // rotate
-  [{ from: 'idle',      input: 'getStartAngle'  }, { to: 'rotating'          }],
-  [{ from: 'rotating',  input: 'changeCoords'   }, { do: 'rotateFrame'       }],
-  [{ from: 'rotating',  input: 'releaseFrame'   }, { to: 'idle'              }],
-
-  // move
-  [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
-  [{ from: 'dragging',  input: 'changeCoords'   }, { do: 'moveFrame'         }],
-  [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
-
-  // resize
-  [{ from: 'idle',      input: 'findOppCorner'     }, { to: 'resizing'          }],
-  [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'resizeFrame'       }],
-  [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
-
-  // animate (THIS MIGHT STILL BE RELEVANT)
+  // animate (part of this might still be relevant)
   [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
   [{ from: 'animating', input: 'animate'        }, { to: 'animating'         }],
   [{ from: 'animating', input: 'edit'           }, { to: 'idle'              }],

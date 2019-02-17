@@ -12,40 +12,6 @@
     },
   };
 
-  const Vector = {
-    create(x, y) {
-      return Object.create(Vector).init(x, y);
-    },
-
-    init(x, y) {
-      this.x = x;
-      this.y = y;
-      return this;
-    },
-
-    transform(matrix) {
-      const column      = Matrix.create([[this.x], [this.y], [1]]);
-      const transformed = matrix.multiply(column).toArray();
-
-      return Vector.create(transformed[0][0], transformed[1][0]);
-    },
-
-    add(other) {
-      return Vector.create(this.x + other.x, this.y + other.y);
-    },
-
-    subtract(other) {
-      return Vector.create(this.x - other.x, this.y - other.y);
-    },
-
-    isWithin(rectangle) {
-      return this.x >= rectangle.x &&
-             this.x <= rectangle.x + rectangle.width &&
-             this.y >= rectangle.y &&
-             this.y <= rectangle.y + rectangle.height;
-    },
-  };
-
   const Matrix = {
     create(m) {
       return Object.create(Matrix).init(m);
@@ -138,6 +104,40 @@
       ];
 
       return Matrix.create(m);
+    },
+  };
+
+  const Vector = {
+    create(x, y) {
+      return Object.create(Vector).init(x, y);
+    },
+
+    init(x, y) {
+      this.x = x;
+      this.y = y;
+      return this;
+    },
+
+    transform(matrix) {
+      const column      = Matrix.create([[this.x], [this.y], [1]]);
+      const transformed = matrix.multiply(column).toArray();
+
+      return Vector.create(transformed[0][0], transformed[1][0]);
+    },
+
+    add(other) {
+      return Vector.create(this.x + other.x, this.y + other.y);
+    },
+
+    subtract(other) {
+      return Vector.create(this.x - other.x, this.y - other.y);
+    },
+
+    isWithin(rectangle) {
+      return this.x >= rectangle.x &&
+             this.x <= rectangle.x + rectangle.width &&
+             this.y >= rectangle.y &&
+             this.y <= rectangle.y + rectangle.height;
     },
   };
 
@@ -299,7 +299,7 @@
       this.props.transform = value;
     },
 
-    totalTransform() {
+    globalTransform() {
       return this.ancestorTransform().multiply(this.transform);
     },
 
@@ -314,7 +314,7 @@
     },
 
     globalScaleFactor() {
-      const total  = this.totalTransform();
+      const total  = this.globalTransform();
       const a      = total.m[0][0];
       const b      = total.m[1][0];
       const factor = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
@@ -340,7 +340,7 @@
       for (let child of this.children) {
         let childCorners = child.findCorners();
         for (let corner of childCorners) {
-          corner = this.transformPoint(corner, this.totalTransform().invert());
+          corner = this.transformPoint(corner, this.globalTransform().invert());
           corners.push(corner);
         }
       }
@@ -387,10 +387,10 @@
       ];
 
       return [
-        this.transformPoint(northWest, this.totalTransform()),
-        this.transformPoint(northEast, this.totalTransform()),
-        this.transformPoint(southWest, this.totalTransform()),
-        this.transformPoint(southEast, this.totalTransform()),
+        this.transformPoint(northWest, this.globalTransform()),
+        this.transformPoint(northEast, this.globalTransform()),
+        this.transformPoint(southWest, this.globalTransform()),
+        this.transformPoint(southEast, this.globalTransform()),
       ];
     },
 
@@ -613,7 +613,7 @@
       selected.transform = selected
         .ancestorTransform().invert()
         .multiply(translation)
-        .multiply(selected.totalTransform());
+        .multiply(selected.globalTransform());
 
       aux.source = target;
     },
@@ -623,7 +623,7 @@
       aux.source     = Vector.create(input.pointer.x, input.pointer.y);
       const box      = selected.box;
       const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-      aux.center     = center.transform(selected.totalTransform());
+      aux.center     = center.transform(selected.globalTransform());
     },
 
     rotate(state, input) {
@@ -640,7 +640,7 @@
       selected.transform = selected
         .ancestorTransform().invert()
         .multiply(rotation)
-        .multiply(selected.totalTransform());
+        .multiply(selected.globalTransform());
 
       aux.source = target;
     },
@@ -650,7 +650,7 @@
       aux.source     = Vector.create(input.pointer.x, input.pointer.y);
       const box      = selected.box;
       const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-      aux.center     = center.transform(selected.totalTransform());
+      aux.center     = center.transform(selected.globalTransform());
     },
 
     scale(state, input) {
@@ -673,7 +673,7 @@
       selected.transform = selected
         .ancestorTransform().invert()
         .multiply(scaling)
-        .multiply(selected.totalTransform());
+        .multiply(selected.globalTransform());
 
       aux.source = target;
     },
@@ -717,7 +717,7 @@
         if (toFocus) {
           const pointer = Vector
             .create(input.pointer.x, input.pointer.y)
-            .transform(toFocus.totalTransform().invert());
+            .transform(toFocus.globalTransform().invert());
 
           if (pointer.isWithin(toFocus.box)) {
             toFocus.classList.add('focus');
@@ -772,9 +772,9 @@
     [{ from: 'scaling',   input: 'movePointer'    }, { do: 'scale'             }],
     [{ from: 'scaling',   input: 'release'        }, { to: 'idle'              }],
 
-    // OLD (mostly irrelevant now)
+    // OLD
 
-    // create and delete (PART OF THIS IS STILL RELEVANT)
+    // create and delete (part of this might still be relevant)
     [{ from: 'idle',      input: 'createShape'    }, {                         }],
     [{ from: 'idle',      input: 'createDoc'      }, {                         }],
     [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
@@ -783,27 +783,7 @@
     [{                    input: 'requestDoc'     }, { to: 'busy'              }],
     [{ from: 'busy',      input: 'setDoc'         }, { to: 'idle'              }],
 
-    // draw
-    [{ from: 'idle',      input: 'setFrameOrigin' }, { to: 'drawing'           }],
-    [{ from: 'drawing',   input: 'changeCoords'   }, { do: 'sizeFrame'         }],
-    [{ from: 'drawing',   input: 'releaseFrame'   }, { to: 'idle', do: 'clean' }],
-
-    // rotate
-    [{ from: 'idle',      input: 'getStartAngle'  }, { to: 'rotating'          }],
-    [{ from: 'rotating',  input: 'changeCoords'   }, { do: 'rotateFrame'       }],
-    [{ from: 'rotating',  input: 'releaseFrame'   }, { to: 'idle'              }],
-
-    // move
-    [{ from: 'idle',      input: 'getFrameOrigin' }, { to: 'dragging'          }],
-    [{ from: 'dragging',  input: 'changeCoords'   }, { do: 'moveFrame'         }],
-    [{ from: 'dragging',  input: 'releaseFrame'   }, { to: 'idle'              }],
-
-    // resize
-    [{ from: 'idle',      input: 'findOppCorner'     }, { to: 'resizing'          }],
-    [{ from: 'resizing',  input: 'changeCoords'   }, { do: 'resizeFrame'       }],
-    [{ from: 'resizing',  input: 'releaseFrame'   }, { to: 'idle'              }],
-
-    // animate (THIS MIGHT STILL BE RELEVANT)
+    // animate (part of this might still be relevant)
     [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
     [{ from: 'animating', input: 'animate'        }, { to: 'animating'         }],
     [{ from: 'animating', input: 'edit'           }, { to: 'idle'              }],
@@ -1013,11 +993,8 @@
 
   const inputTable = [
     // event type     pointer target        input
-    [['click',       'newShapeButton'   ], 'createShape'     ],
-    [['click',       'newDocButton'     ], 'createDoc'       ],
-    [['click',       'animateButton'    ], 'animate'         ],
-    [['click',       'doc-list-entry'   ], 'requestDoc'      ],
     // NEW
+
     [['mousedown',   'wrapper'          ], 'select'          ],
     [['mousedown',   'dot'              ], 'initRotate'      ],
     [['mousedown',   'corner'           ], 'initScale'       ],
@@ -1025,6 +1002,12 @@
     [['mousemove'                       ], 'movePointer'     ],
     [['mouseup'                         ], 'release'         ],
 
+    // OLD (some still relevant, some not)
+
+    // [['click',       'newShapeButton'   ], 'createShape'     ],
+    // [['click',       'newDocButton'     ], 'createDoc'       ],
+    // [['click',       'animateButton'    ], 'animate'         ],
+    // [['click',       'doc-list-entry'   ], 'requestDoc'      ],
     // [['click',       'deleteLink'       ], 'deleteFrame'     ],
     // [['click',       'canvas'           ], 'edit'            ],
     // [['mousedown',   'frame'            ], 'getFrameOrigin'  ],

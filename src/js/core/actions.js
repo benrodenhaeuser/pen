@@ -1,7 +1,4 @@
-import { Matrix } from './matrix.js';
-import { Node } from './node.js';
-import { ClassList } from './classList.js';
-import { Vector } from './vector.js';
+import { Matrix, Vector } from './matrix.js';
 
 let aux = {};
 
@@ -39,7 +36,7 @@ const actions = {
     selected.transform = selected
       .ancestorTransform().invert()
       .multiply(translation)
-      .multiply(selected.totalTransform());
+      .multiply(selected.globalTransform());
 
     aux.source = target;
   },
@@ -49,7 +46,7 @@ const actions = {
     aux.source     = Vector.create(input.pointer.x, input.pointer.y);
     const box      = selected.box;
     const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-    aux.center     = center.transform(selected.totalTransform());
+    aux.center     = center.transform(selected.globalTransform());
   },
 
   rotate(state, input) {
@@ -66,7 +63,7 @@ const actions = {
     selected.transform = selected
       .ancestorTransform().invert()
       .multiply(rotation)
-      .multiply(selected.totalTransform());
+      .multiply(selected.globalTransform());
 
     aux.source = target;
   },
@@ -76,7 +73,7 @@ const actions = {
     aux.source     = Vector.create(input.pointer.x, input.pointer.y);
     const box      = selected.box;
     const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-    aux.center     = center.transform(selected.totalTransform());
+    aux.center     = center.transform(selected.globalTransform());
   },
 
   scale(state, input) {
@@ -99,7 +96,7 @@ const actions = {
     selected.transform = selected
       .ancestorTransform().invert()
       .multiply(scaling)
-      .multiply(selected.totalTransform());
+      .multiply(selected.globalTransform());
 
     aux.source = target;
   },
@@ -143,7 +140,7 @@ const actions = {
       if (toFocus) {
         const pointer = Vector
           .create(input.pointer.x, input.pointer.y)
-          .transform(toFocus.totalTransform().invert());
+          .transform(toFocus.globalTransform().invert());
 
         if (pointer.isWithin(toFocus.box)) {
           toFocus.classList.add('focus');

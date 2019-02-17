@@ -1,10 +1,7 @@
 const inputTable = [
   // event type     pointer target        input
-  [['click',       'newShapeButton'   ], 'createShape'     ],
-  [['click',       'newDocButton'     ], 'createDoc'       ],
-  [['click',       'animateButton'    ], 'animate'         ],
-  [['click',       'doc-list-entry'   ], 'requestDoc'      ],
   // NEW
+
   [['mousedown',   'wrapper'          ], 'select'          ],
   [['mousedown',   'dot'              ], 'initRotate'      ],
   [['mousedown',   'corner'           ], 'initScale'       ],
@@ -12,6 +9,12 @@ const inputTable = [
   [['mousemove'                       ], 'movePointer'     ],
   [['mouseup'                         ], 'release'         ],
 
+  // OLD (some still relevant, some not)
+
+  // [['click',       'newShapeButton'   ], 'createShape'     ],
+  // [['click',       'newDocButton'     ], 'createDoc'       ],
+  // [['click',       'animateButton'    ], 'animate'         ],
+  // [['click',       'doc-list-entry'   ], 'requestDoc'      ],
   // [['click',       'deleteLink'       ], 'deleteFrame'     ],
   // [['click',       'canvas'           ], 'edit'            ],
   // [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
