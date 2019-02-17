@@ -32,71 +32,67 @@ const transformers = {
     selected.transform = selected
       .ancestorTransform().invert()
       .multiply(translation)
-      .multiply(selected.ancestorTransform())
-      .multiply(selected.transform);
+      .multiply(selected.totalTransform());
 
     aux.source = target;
   },
 
   initRotate(state, input) {
     const selected = state.doc.scene.selected;
-    aux.source = Vector.create(input.pointer.x, input.pointer.y);
-    const box = selected.box;
-    const center = Vector.create(box.x + box.width / 2, box.y + box.height / 2);
-    aux.center = center.transform(selected.totalTransform());
+    aux.source     = Vector.create(input.pointer.x, input.pointer.y);
+    const box      = selected.box;
+    const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
+    aux.center     = center.transform(selected.totalTransform());
   },
 
   rotate(state, input) {
-    const selected = state.doc.scene.selected;
-    const target = Vector.create(input.pointer.x, input.pointer.y);
-    const sourceToCenter = aux.source.subtract(aux.center);
-    const targetToCenter = target.subtract(aux.center);
+    const selected          = state.doc.scene.selected;
+    const target            = Vector.create(input.pointer.x, input.pointer.y);
+    const sourceMinusCenter = aux.source.subtract(aux.center);
+    const targetMinusCenter = target.subtract(aux.center);
 
-    const sourceAngle = Math.atan2(...[sourceToCenter.x, sourceToCenter.y]);
-    const targetAngle = Math.atan2(...[targetToCenter.x, targetToCenter.y]);
-    const angle = sourceAngle - targetAngle;
-    const rotation = Matrix.rotation(angle, aux.center);
+    const sourceAngle = Math.atan2(sourceMinusCenter.y, sourceMinusCenter.x);
+    const targetAngle = Math.atan2(targetMinusCenter.y, targetMinusCenter.x);
+    const angle       = targetAngle - sourceAngle;
+    const rotation    = Matrix.rotation(angle, aux.center);
 
     selected.transform = selected
       .ancestorTransform().invert()
       .multiply(rotation)
-      .multiply(selected.ancestorTransform())
-      .multiply(selected.transform);
+      .multiply(selected.totalTransform());
 
     aux.source = target;
   },
 
-  // (NOTE: that is the exact same code as for initRotate)
   initScale(state, input) {
     const selected = state.doc.scene.selected;
-    aux.source = Vector.create(input.pointer.x, input.pointer.y);
-    const box = selected.box;
-    const center = Vector.create(box.x + box.width / 2, box.y + box.height / 2);
-    aux.center = center.transform(selected.totalTransform());
+    aux.source     = Vector.create(input.pointer.x, input.pointer.y);
+    const box      = selected.box;
+    const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
+    aux.center     = center.transform(selected.totalTransform());
   },
 
   scale(state, input) {
-    const selected = state.doc.scene.selected;
-    const target = Vector.create(input.pointer.x, input.pointer.y);
-    const sourceToCenter = aux.source.subtract(aux.center);
-    const targetToCenter = target.subtract(aux.center);
+    const selected          = state.doc.scene.selected;
+    const target            = Vector.create(input.pointer.x, input.pointer.y);
+    const sourceMinusCenter = aux.source.subtract(aux.center);
+    const targetMinusCenter = target.subtract(aux.center);
 
     const sourceDist = Math.sqrt(
-      Math.pow(sourceToCenter.x, 2) +
-      Math.pow(sourceToCenter.y, 2)
+      Math.pow(sourceMinusCenter.x, 2) +
+      Math.pow(sourceMinusCenter.y, 2)
     );
     const targetDist = Math.sqrt(
-      Math.pow(targetToCenter.x, 2) +
-      Math.pow(targetToCenter.y, 2)
+      Math.pow(targetMinusCenter.x, 2) +
+      Math.pow(targetMinusCenter.y, 2)
     );
-    const factor = targetDist / sourceDist;
-    const scaling = Matrix.scale(factor, aux.center);
+    const factor     = targetDist / sourceDist;
+    const scaling    = Matrix.scale(factor, aux.center);
 
     selected.transform = selected
       .ancestorTransform().invert()
       .multiply(scaling)
-      .multiply(selected.ancestorTransform())
-      .multiply(selected.transform);
+      .multiply(selected.totalTransform());
 
     aux.source = target;
   },
@@ -134,7 +130,7 @@ const transformers = {
 
     if (target) {
       const highlight = target.findAncestor((node) => {
-        return node.props.class.includes('frontier');
+        return node.classList.includes('frontier');
       });
 
       if (highlight) {
@@ -148,7 +144,7 @@ const transformers = {
           pointer.y >= highlight.box.y &&
           pointer.y <= highlight.box.y + highlight.box.height
         ) {
-          highlight.props.class.add('focus');
+          highlight.classList.add('focus');
         } else {
           state.doc.scene.unfocus();
         }
