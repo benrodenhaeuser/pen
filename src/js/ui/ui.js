@@ -64,6 +64,7 @@ const ui = {
     });
   },
 
+  // check what has changed
   sync(state) {
     const changes = (state1, state2) => {
       const keys = Object.keys(state1);
@@ -87,6 +88,7 @@ const ui = {
     this.previousState = state;
   },
 
+  // map changed state keys to method calls
   render: {
     doc(state) {
       ui.renderScene(state);
@@ -114,6 +116,7 @@ const ui = {
     },
   },
 
+  // methods doing changes
   renderScene(state) {
     sceneRenderer.render(state.doc.scene, ui.canvasNode);
   },

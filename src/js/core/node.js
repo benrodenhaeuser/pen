@@ -44,6 +44,17 @@ const Node = {
     };
   },
 
+  set(opts) {
+    for (let key of Object.keys(opts)) {
+      this[key] = opts[key];
+    }
+  },
+
+  append(node) {
+    this.children.push(node);
+    node.parent = this;
+  },
+
   findAncestor(predicate) {
     if (predicate(this)) {
       return this;
@@ -155,7 +166,7 @@ const Node = {
     return factor;
   },
 
-  // for debugging purposes
+  // plot point for debugging
   plot(point) {
     const node = Node.create();
     node.tag = 'circle';
@@ -166,6 +177,7 @@ const Node = {
     this.root.append(node);
   },
 
+  // TODO: clean up this segment of the code
   updateBox() {
     // store all the children's corners
     const corners = [];
@@ -203,6 +215,18 @@ const Node = {
   },
 
   findCorners() {
+    // return [
+    //   Vector.create(this.box.x, this.box.y),
+    //   Vector.create(this.box.x + this.box.width, this.box.y),
+    //   Vector.create(this.box.x, this.box.y + this.box.height),
+    //   Vector.create(
+    //     this.box.x + this.box.width,
+    //     this.box.y + this.box.height
+    //   )
+    // ].map((corner) => {
+    //   corner.tranform(this.globalTransform());
+    // });
+
     const northWest = [
       this.box.x, this.box.y
     ];
@@ -227,6 +251,7 @@ const Node = {
     ];
   },
 
+  // TODO: remove
   transformPoint(pt, matrix) {
     const column      = Matrix.create([[pt[0]], [pt[1]], [1]]);
     const transformed = matrix.multiply(column).toArray();
@@ -292,17 +317,6 @@ const Node = {
     this.deselectAll();
     this.classList.add('selected');
     this.setFrontier();
-  },
-
-  append(node) {
-    this.children.push(node);
-    node.parent = this;
-  },
-
-  set(opts) {
-    for (let key of Object.keys(opts)) {
-      this[key] = opts[key];
-    }
   },
 };
 

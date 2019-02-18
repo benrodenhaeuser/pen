@@ -1,4 +1,4 @@
-// TODO frameTemplate makes svg node by simply copying svg markup into the template.
+// OLD
 
 const frameTemplate = (index, shape, frame) => {
   const template = document.createElement('template');
