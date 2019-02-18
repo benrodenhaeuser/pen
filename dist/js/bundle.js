@@ -282,6 +282,16 @@
       return this.findDescendants(node => true);
     },
 
+    get siblings() {
+      return this.parent.children.filter((node) => {
+        return node !== this;
+      });
+    },
+
+    get leaves() {
+      // TODO
+    },
+
     get selected() {
       return this.root.findDescendant((node) => {
         return node.classList.includes('selected');
@@ -344,35 +354,29 @@
       this.root.append(node);
     },
 
-    // TODO: clean up this segment of the code
     updateBox() {
-      // store all the children's corners
-      const corners = [];
+      const childrenCorners = [];
 
       for (let child of this.children) {
-        let childCorners = child.findCorners();
-        for (let corner of childCorners) {
-          corner = this.transformPoint(corner, this.globalTransform().invert());
-          corners.push(corner);
+        for (let corner of child.corners) {
+          childrenCorners.push(corner.transform(child.transform));
         }
       }
 
-      if (corners.length === 0) {
+      if (childrenCorners.length === 0) {
         return;
       }
 
-      // find min and max:
-      const xValue  = point => point[0];
-      const yValue  = point => point[1];
-      const xValues = corners.map(xValue);
-      const yValues = corners.map(yValue);
+      const xValue  = vector => vector.x;
+      const xValues = childrenCorners.map(xValue);
+      const minX    = Math.min(...xValues);
+      const maxX    = Math.max(...xValues);
 
-      const minX = Math.min(...xValues);
-      const maxX = Math.max(...xValues);
-      const minY = Math.min(...yValues);
-      const maxY = Math.max(...yValues);
+      const yValue  = vector => vector.y;
+      const yValues = childrenCorners.map(yValue);
+      const minY    = Math.min(...yValues);
+      const maxY    = Math.max(...yValues);
 
-      // use min and max to update coordinates:
       this.box = {
         x: minX,
         y: minY,
@@ -381,55 +385,13 @@
       };
     },
 
-    findCorners() {
-      // return [
-      //   Vector.create(this.box.x, this.box.y),
-      //   Vector.create(this.box.x + this.box.width, this.box.y),
-      //   Vector.create(this.box.x, this.box.y + this.box.height),
-      //   Vector.create(
-      //     this.box.x + this.box.width,
-      //     this.box.y + this.box.height
-      //   )
-      // ].map((corner) => {
-      //   corner.tranform(this.globalTransform());
-      // });
-
-      const northWest = [
-        this.box.x, this.box.y
-      ];
-
-      const northEast = [
-        this.box.x + this.box.width, this.box.y
-      ];
-
-      const southWest = [
-        this.box.x, this.box.y + this.box.height
-      ];
-
-      const southEast = [
-        this.box.x + this.box.width, this.box.y + this.box.height
-      ];
-
+    get corners() {
       return [
-        this.transformPoint(northWest, this.globalTransform()),
-        this.transformPoint(northEast, this.globalTransform()),
-        this.transformPoint(southWest, this.globalTransform()),
-        this.transformPoint(southEast, this.globalTransform()),
-      ];
-    },
-
-    // TODO: remove
-    transformPoint(pt, matrix) {
-      const column      = Matrix.create([[pt[0]], [pt[1]], [1]]);
-      const transformed = matrix.multiply(column).toArray();
-
-      return [transformed[0][0], transformed[1][0]];
-    },
-
-    get siblings() {
-      return this.parent.children.filter((node) => {
-        return node !== this;
-      });
+        Vector.create(this.box.x, this.box.y),
+        Vector.create(this.box.x + this.box.width, this.box.y),
+        Vector.create(this.box.x, this.box.y + this.box.height),
+        Vector.create(this.box.x + this.box.width, this.box.y + this.box.height)
+      ]
     },
 
     unsetFrontier() {
