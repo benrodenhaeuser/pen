@@ -6,19 +6,19 @@ SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformTo
     return element.getScreenCTM().inverse().multiply(this.getScreenCTM());
 };
 
+const getSVGCoords = (x, y) => {
+  const svg = document.querySelector('svg');
+  let point = svg.createSVGPoint();
+  point.x   = x;
+  point.y   = y;
+  point     = point.matrixTransform(svg.getScreenCTM().inverse());
+
+  return [point.x, point.y];
+};
+
 const ui = {
   bindEvents(processInput) {
     this.canvasNode = document.querySelector('#canvas');
-
-    const getSVGCoords = (x, y) => {
-      const svg = document.querySelector('svg');
-      let point = svg.createSVGPoint();
-      point.x   = x;
-      point.y   = y;
-      point     = point.matrixTransform(svg.getScreenCTM().inverse());
-
-      return [point.x, point.y];
-    };
 
     const pointerData = (event) => {
       const [x, y] = getSVGCoords(event.clientX, event.clientY);

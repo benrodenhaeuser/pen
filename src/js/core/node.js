@@ -102,10 +102,13 @@ const Node = {
   },
 
   get root() {
-    return this.findAncestor((node) => {
-      return node.parent === null;
-    });
+    return this.findAncestor(node => node.parent === null);
   },
+
+  get leaves() {
+    return this.findDescendants(node => node.children.length === 0);
+  },
+
 
   get ancestors() {
     return this.findAncestors(node => true);
@@ -116,13 +119,7 @@ const Node = {
   },
 
   get siblings() {
-    return this.parent.children.filter((node) => {
-      return node !== this;
-    });
-  },
-
-  get leaves() {
-    // TODO
+    return this.parent.children.filter(node => node !== this);
   },
 
   get selected() {
@@ -135,6 +132,15 @@ const Node = {
     return this.root.findDescendants((node) => {
       return node.classList.includes('frontier');
     });
+  },
+
+  get corners() {
+    return [
+      Vector.create(this.box.x, this.box.y),
+      Vector.create(this.box.x + this.box.width, this.box.y),
+      Vector.create(this.box.x, this.box.y + this.box.height),
+      Vector.create(this.box.x + this.box.width, this.box.y + this.box.height)
+    ]
   },
 
   get classList() {
@@ -171,20 +177,8 @@ const Node = {
     const total  = this.globalTransform();
     const a      = total.m[0][0];
     const b      = total.m[1][0];
-    const factor = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
 
-    return factor;
-  },
-
-  // plot point for debugging
-  plot(point) {
-    const node = Node.create();
-    node.tag = 'circle';
-    node.props = Object.assign(node.props, {
-      r: 5, cx: point[0], cy: point[1], fill: 'red'
-    });
-    node.box = { x: point[0], y: point[1], width: 5, height: 5};
-    this.root.append(node);
+    return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },
 
   updateBox() {
@@ -218,35 +212,6 @@ const Node = {
     };
   },
 
-  get corners() {
-    return [
-      Vector.create(this.box.x, this.box.y),
-      Vector.create(this.box.x + this.box.width, this.box.y),
-      Vector.create(this.box.x, this.box.y + this.box.height),
-      Vector.create(this.box.x + this.box.width, this.box.y + this.box.height)
-    ]
-  },
-
-  unsetFrontier() {
-    const frontier = this.root.findDescendants((node) => {
-      return node.classList.includes('frontier');
-    });
-
-    for (let node of frontier) {
-      node.classList.remove('frontier');
-    }
-  },
-
-  unfocusAll() {
-    const focussed = this.root.findDescendants((node) => {
-      return node.classList.includes('focus');
-    });
-
-    for (let node of focussed) {
-      node.classList.remove('focus');
-    }
-  },
-
   setFrontier() {
     this.unsetFrontier();
 
@@ -268,11 +233,28 @@ const Node = {
     }
   },
 
-  deselectAll() {
-    if (this.selected) {
-      this.selected.classList.remove('selected');
+  unsetFrontier() {
+    const frontier = this.root.findDescendants((node) => {
+      return node.classList.includes('frontier');
+    });
+
+    for (let node of frontier) {
+      node.classList.remove('frontier');
     }
-    this.setFrontier();
+  },
+
+  focus() {
+    this.classList.add('focus');
+  },
+
+  unfocusAll() {
+    const focussed = this.root.findDescendants((node) => {
+      return node.classList.includes('focus');
+    });
+
+    for (let node of focussed) {
+      node.classList.remove('focus');
+    }
   },
 
   select() {
@@ -280,6 +262,24 @@ const Node = {
     this.classList.add('selected');
     this.setFrontier();
   },
+
+  deselectAll() {
+    if (this.selected) {
+      this.selected.classList.remove('selected');
+    }
+    this.setFrontier();
+  },
+
+  // plot point for debugging
+  // plot(point) {
+  //   const node = Node.create();
+  //   node.tag = 'circle';
+  //   node.props = Object.assign(node.props, {
+  //     r: 5, cx: point[0], cy: point[1], fill: 'red'
+  //   });
+  //   node.box = { x: point[0], y: point[1], width: 5, height: 5};
+  //   this.root.append(node);
+  // },
 };
 
 export { Node };

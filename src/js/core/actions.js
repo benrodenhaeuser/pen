@@ -128,6 +128,8 @@ const actions = {
   },
 
   focus(state, input) {
+    state.doc.scene.unfocusAll(); // expensive but effective
+
     const target = state.doc.scene.findDescendant((node) => {
       return node._id === input.pointer.targetID;
     });
@@ -143,12 +145,12 @@ const actions = {
           .transform(toFocus.globalTransform().invert());
 
         if (pointer.isWithin(toFocus.box)) {
-          toFocus.classList.add('focus');
-        } else {
-          state.doc.scene.unfocusAll();
+          toFocus.focus();
         }
       }
     }
+
+    console.log(state.doc.scene.leaves);
   },
 
   // OLD (probably useless):
