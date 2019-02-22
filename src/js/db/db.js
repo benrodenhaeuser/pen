@@ -5,8 +5,8 @@ const db = {
 
       request.addEventListener('load', function() {
         processInput({
-          id: 'docSaved',
-          data: {}
+          type: 'docSaved',
+          data: {},
         });
       });
 
@@ -19,10 +19,10 @@ const db = {
 
       request.addEventListener('load', function() {
         processInput({
-          id: 'setDoc',
+          type: 'setDoc',
           data: {
             doc: request.response
-          }
+          },
         });
       });
 
@@ -36,10 +36,10 @@ const db = {
 
       request.addEventListener('load', function() {
         processInput({
-          id: 'updateDocList',
+          type: 'updateDocList',
           data: {
             docIDs: request.response
-          }
+          },
         });
       });
 

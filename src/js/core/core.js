@@ -1,7 +1,7 @@
 import { clock } from './clock.js';
 import { doc } from './doc.js';
 import { actions } from './actions.js';
-import { transitionTable } from './transitionTable.js';
+import { table } from './table.js';
 
 const core = {
   get stateData() {
@@ -15,7 +15,7 @@ const core = {
     }
   },
 
-  // TODO: write a proper function to initalize state from stateData
+  // TODO: not functional right now
   setState(stateData) {
     this.state = stateData;
     this.state.doc = doc.init(stateData.doc);
@@ -26,22 +26,28 @@ const core = {
     // ^ TODO: call syncPeriphery here, and make that method more flexible
   },
 
-  processInput(input) {
-    const transition = transitionTable.get([this.state.id, input.id]);
+  // TODO: processInput is not a good name
 
+  processInput(input) {
+    const transition = table.get(this.state, input);
+    console.log('from: ', this.state.id, input, transition);
     if (transition) {
-      this.transform(input, transition);
+      this.doTransition(input, transition);
       this.syncPeriphery();
     }
   },
 
-  transform(input, transition) {
-    const action = actions[transition.do] || actions[input.id];
+  // TODO: transform is not a good name
+
+  doTransition(input, transition) {
+    const action = actions[transition.do];
     action && action.bind(actions)(this.state, input);
+    // ^ means it's fine if we don't find an action
+    //   TODO: maybe it shouldn't be fine?
 
     this.state.clock.tick();
-    this.state.currentInput = input.id;
-    this.state.id = transition.to || this.state.id;
+    this.state.currentInput = input.type;
+    this.state.id = transition.to;
   },
 
   init() {
@@ -56,13 +62,9 @@ const core = {
     return this;
   },
 
-  // TODO: why do we need this function? why can't we just do:
-  //   this.processInput({ id: 'kickoff' });
-  // ?
   kickoff() {
     this.syncPeriphery();
-    this.processInput({ id: 'kickoff' });
-    // ^ TODO: this involves two syncs, is that really necessary?
+    this.processInput({ type: 'kickoff' });
   },
 };
 

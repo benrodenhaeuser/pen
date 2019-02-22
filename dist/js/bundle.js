@@ -731,58 +731,142 @@
     },
   };
 
-  const transitionTable = [
-    // kickoff
-    [{ from: 'start',     input: 'kickoff'        }, { to: 'idle'              }],
+  const table = [
+    {
+      from: 'start',
+      input: { type: 'kickoff' },
+      do: 'kickoff',
+      to: 'idle',
+    },
 
-    // NEW
-    [{ from: 'idle',      input: 'selectThrough'  }, { to: 'idle'              }],
-    [{ from: 'idle',      input: 'movePointer'    }, { to: 'idle', do: 'focus' }],
+    {
+      from: 'idle',
+      input: { type: 'mousemove' },
+      do: 'focus',
+      to: 'idle',
+    },
 
-    // select/shift
-    [{ from: 'idle',      input: 'select'         }, { to: 'shifting'          }],
-    [{ from: 'shifting',  input: 'movePointer'    }, { do: 'shift'             }],
-    [{ from: 'shifting',  input: 'release'        }, { to: 'idle'              }],
+    {
+      from: 'idle',
+      input: { type: 'dblclick', target: 'wrapper' },
+      do: 'selectThrough',
+      to: 'idle',
+    },
 
-    // rotate
-    [{ from: 'idle',      input: 'initRotate'     }, { to: 'rotating'          }],
-    [{ from: 'rotating',  input: 'movePointer'    }, { do: 'rotate'            }],
-    [{ from: 'rotating',  input: 'release'        }, { to: 'idle'              }],
+    {
+      from: 'idle',
+      input: { type: 'mousedown', target: 'wrapper'},
+      do: 'select',
+      to: 'shifting',  // move
+    },
 
-    // scale
-    [{ from: 'idle',      input: 'initScale'      }, { to: 'scaling'           }],
-    [{ from: 'scaling',   input: 'movePointer'    }, { do: 'scale'             }],
-    [{ from: 'scaling',   input: 'release'        }, { to: 'idle'              }],
+    {
+      from: 'shifting', // move
+      input: { type: 'mousemove' },
+      do: 'shift', // move
+      to: 'shifting',
+    },
 
-    // OLD
+    {
+      from: 'shifting',
+      input: { type: 'mouseup' },
+      do: 'release',
+      to: 'idle',
+    },
 
-    // create and delete (part of this might still be relevant)
-    [{ from: 'idle',      input: 'createShape'    }, {                         }],
-    [{ from: 'idle',      input: 'createDoc'      }, {                         }],
-    [{ from: 'idle',      input: 'deleteFrame'    }, {                         }],
-    [{                    input: 'docSaved'       }, {                         }],
-    [{                    input: 'updateDocList'  }, {                         }],
-    [{                    input: 'requestDoc'     }, { to: 'busy'              }],
-    [{ from: 'busy',      input: 'setDoc'         }, { to: 'idle'              }],
+    {
+      from: 'idle',
+      input: { type: 'mousedown', target: 'dot' },
+      do: 'initRotate',
+      to: 'rotating',
+    },
 
-    // animate (part of this might still be relevant)
-    [{ from: 'idle',      input: 'animate'        }, { to: 'animating'         }],
-    [{ from: 'animating', input: 'animate'        }, { to: 'animating'         }],
-    [{ from: 'animating', input: 'edit'           }, { to: 'idle'              }],
-    [{ from: 'animating', input: 'createDoc'      }, { to: 'idle'              }],
-    [{ from: 'animating', input: 'createShape'    }, { to: 'idle'              }],
+    {
+      from: 'rotating',
+      input: { type: 'mousemove' },
+      do: 'rotate',
+      to: 'rotating',
+    },
+
+    {
+      from: 'rotating',
+      input: { type: 'mouseup' },
+      do: 'release',
+      to: 'idle',
+    },
+
+    {
+      from: 'idle',
+      input: { type: 'mousedown', target: 'corner' },
+      do: 'initScale',
+      to: 'scaling',
+    },
+
+    {
+      from: 'scaling',
+      input: { type: 'mousemove' },
+      do: 'scale',
+      to: 'scaling',
+    },
+
+    {
+      from: 'scaling',
+      input: { type: 'mouseup' },
+      do: 'release',
+      to: 'idle',
+    },
+
+    // OLD (but in new format!)
+
+    {
+      input: { type: 'click', target: 'doc-list-entry' },
+      do: 'requestDoc',
+    },
+
+    {
+      input: { type: 'docSaved' },
+      do: 'docSaved',
+    },
+
+    {
+      input: { type: 'updateDocList' },
+      do: 'updateDocList',
+    },
+
+    {
+      input: { type: 'requestDoc' },
+      do: 'requestDoc',
+      to: 'busy'
+    },
+
+    {
+      from: 'busy',
+      input: { type: 'setDoc' },
+      do: 'setDoc',
+      to: 'idle',
+    },
   ];
 
-  transitionTable.get = function(key) {
-    const match = (pair) => {
-      return (pair[0].from === key[0] || !pair[0].from) &&
-        pair[0].input === key[1];
+  table.get = function(state, input) {
+    const isMatch = (row) => {
+      const from   = row.from;
+      const type   = row.input.type;
+      const target = row.input.target;
+
+      const stateMatch  = from === state.id || from === undefined;
+      const typeMatch   = type === input.type;
+      const targetMatch = target === input.target || target === undefined;
+
+      return stateMatch && typeMatch && targetMatch;
     };
 
-    const pair = transitionTable.find(match);
+    const match = table.find(isMatch);
 
-    if (pair) {
-      return pair[1];
+    if (match) {
+      return {
+        do: match.do,
+        to: match.to || state.id,
+      };
     }
   };
 
@@ -798,7 +882,7 @@
       }
     },
 
-    // TODO: write a proper function to initalize state from stateData
+    // TODO: not functional right now
     setState(stateData) {
       this.state = stateData;
       this.state.doc = doc.init(stateData.doc);
@@ -809,22 +893,28 @@
       // ^ TODO: call syncPeriphery here, and make that method more flexible
     },
 
-    processInput(input) {
-      const transition = transitionTable.get([this.state.id, input.id]);
+    // TODO: processInput is not a good name
 
+    processInput(input) {
+      const transition = table.get(this.state, input);
+      console.log('from: ', this.state.id, input, transition);
       if (transition) {
-        this.transform(input, transition);
+        this.doTransition(input, transition);
         this.syncPeriphery();
       }
     },
 
-    transform(input, transition) {
-      const action = actions[transition.do] || actions[input.id];
+    // TODO: transform is not a good name
+
+    doTransition(input, transition) {
+      const action = actions[transition.do];
       action && action.bind(actions)(this.state, input);
+      // ^ means it's fine if we don't find an action
+      //   TODO: maybe it shouldn't be fine?
 
       this.state.clock.tick();
-      this.state.currentInput = input.id;
-      this.state.id = transition.to || this.state.id;
+      this.state.currentInput = input.type;
+      this.state.id = transition.to;
     },
 
     init() {
@@ -839,13 +929,9 @@
       return this;
     },
 
-    // TODO: why do we need this function? why can't we just do:
-    //   this.processInput({ id: 'kickoff' });
-    // ?
     kickoff() {
       this.syncPeriphery();
-      this.processInput({ id: 'kickoff' });
-      // ^ TODO: this involves two syncs, is that really necessary?
+      this.processInput({ type: 'kickoff' });
     },
   };
 
@@ -970,57 +1056,6 @@
       }
 
       return node;
-    }
-  };
-
-  const inputTable = [
-    // event type     pointer target        input
-    // NEW
-
-    [['mousedown',   'wrapper'          ], 'select'          ],
-    
-    // notice that the next two inputs are only possible
-    // if the shape is selected, because otherwise
-    // neither dots nor corners will be visible:
-    [['mousedown',   'dot'              ], 'initRotate'      ],
-    [['mousedown',   'corner'           ], 'initScale'       ],
-
-    // I think this could be more specifically geared towards
-    // highlighted wrappers:
-    [['dblclick',    'wrapper'          ], 'selectThrough'   ],
-    [['mousemove'                       ], 'movePointer'     ],
-    [['mouseup'                         ], 'release'         ],
-
-
-    // OLD (some still relevant, some not)
-
-    // [['click',       'newShapeButton'   ], 'createShape'     ],
-    // [['click',       'newDocButton'     ], 'createDoc'       ],
-    // [['click',       'animateButton'    ], 'animate'         ],
-    // [['click',       'doc-list-entry'   ], 'requestDoc'      ],
-    // [['click',       'deleteLink'       ], 'deleteFrame'     ],
-    // [['click',       'canvas'           ], 'edit'            ],
-    // [['mousedown',   'frame'            ], 'getFrameOrigin'  ],
-    // [['mousedown',   'top-left-corner'  ], 'findOppCorner'   ],
-    // [['mousedown',   'top-right-corner' ], 'findOppCorner'   ],
-    // [['mousedown',   'bot-left-corner'  ], 'findOppCorner'   ],
-    // [['mousedown',   'bot-right-corner' ], 'findOppCorner'   ],
-    // [['mousedown',   'canvas'           ], 'setFrameOrigin'  ],
-    // [['mousedown',   'rotate-handle'    ], 'getStartAngle'   ],
-    // [['mousemove'                       ], 'changeCoords'    ],
-    // [['mouseup'                         ], 'releaseFrame'    ],
-  ];
-
-  inputTable.get = function(key) {
-    const match = (pair) => {
-      return pair[0][0] === key[0] &&
-        (pair[0][1] === key[1] || pair[0][1] === undefined);
-    };
-
-    const pair = inputTable.find(match);
-
-    if (pair) {
-      return pair[1];
     }
   };
 
@@ -1216,6 +1251,7 @@
     return [point.x, point.y];
   };
 
+
   const ui = {
     bindEvents(processInput) {
       this.canvasNode = document.querySelector('#canvas');
@@ -1226,45 +1262,31 @@
         return {
           x:        x,
           y:        y,
-          target:   event.target.dataset.type,
           targetID: event.target.dataset.id,
         };
       };
 
-      for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
-        this.canvasNode.addEventListener(eventType, (event) => {
+      const eventTypes = [
+        'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
+      ];
+
+      for (let eventType of eventTypes) {
+        ui.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
+          if (event.type === 'click' && event.detail > 1) {
+            return;
+          }
 
           processInput({
-            id:      inputTable.get([eventType, event.target.dataset.type]),
+            type: event.type,
+            target: event.target.dataset.type,
             pointer: pointerData(event),
           });
         });
       }
-
-      document.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (event.detail > 1) {
-          return;
-        }
-
-        processInput({
-          id:      inputTable.get(['click', event.target.dataset.type]),
-          pointer: pointerData(event)
-        });
-      });
-
-      document.addEventListener('dblclick', (event) => {
-        event.preventDefault();
-
-        processInput({
-          id:      inputTable.get(['dblclick', event.target.dataset.type]),
-          pointer: pointerData(event)
-        });
-      });
     },
 
-    // check what has changed
+    // check what has changed (TODO: this is cumbersome!)
     sync(state) {
       const changes = (state1, state2) => {
         const keys = Object.keys(state1);
@@ -1285,7 +1307,7 @@
         this.render[changed] && this.render[changed](state);
       }
 
-      this.previousState = state;
+      this.previousState = state; // logs the state - we can use that when making an input
     },
 
     // map changed state keys to method calls
@@ -1418,8 +1440,8 @@
 
         request.addEventListener('load', function() {
           processInput({
-            id: 'docSaved',
-            data: {}
+            type: 'docSaved',
+            data: {},
           });
         });
 
@@ -1432,10 +1454,10 @@
 
         request.addEventListener('load', function() {
           processInput({
-            id: 'setDoc',
+            type: 'setDoc',
             data: {
               doc: request.response
-            }
+            },
           });
         });
 
@@ -1449,10 +1471,10 @@
 
         request.addEventListener('load', function() {
           processInput({
-            id: 'updateDocList',
+            type: 'updateDocList',
             data: {
               docIDs: request.response
-            }
+            },
           });
         });
 

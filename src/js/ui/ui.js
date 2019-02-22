@@ -1,5 +1,4 @@
 import { nodeFactory } from './nodeFactory.js';
-import { inputTable } from './inputTable.js';
 import { sceneRenderer } from './sceneRenderer.js';
 
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(element) {
@@ -16,6 +15,7 @@ const getSVGCoords = (x, y) => {
   return [point.x, point.y];
 };
 
+
 const ui = {
   bindEvents(processInput) {
     this.canvasNode = document.querySelector('#canvas');
@@ -26,45 +26,31 @@ const ui = {
       return {
         x:        x,
         y:        y,
-        target:   event.target.dataset.type,
         targetID: event.target.dataset.id,
       };
     };
 
-    for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
-      this.canvasNode.addEventListener(eventType, (event) => {
+    const eventTypes = [
+      'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
+    ];
+
+    for (let eventType of eventTypes) {
+      ui.canvasNode.addEventListener(eventType, (event) => {
         event.preventDefault();
+        if (event.type === 'click' && event.detail > 1) {
+          return;
+        }
 
         processInput({
-          id:      inputTable.get([eventType, event.target.dataset.type]),
+          type: event.type,
+          target: event.target.dataset.type,
           pointer: pointerData(event),
         });
       });
     }
-
-    document.addEventListener('click', (event) => {
-      event.preventDefault();
-      if (event.detail > 1) {
-        return;
-      }
-
-      processInput({
-        id:      inputTable.get(['click', event.target.dataset.type]),
-        pointer: pointerData(event)
-      });
-    });
-
-    document.addEventListener('dblclick', (event) => {
-      event.preventDefault();
-
-      processInput({
-        id:      inputTable.get(['dblclick', event.target.dataset.type]),
-        pointer: pointerData(event)
-      });
-    });
   },
 
-  // check what has changed
+  // check what has changed (TODO: this is cumbersome!)
   sync(state) {
     const changes = (state1, state2) => {
       const keys = Object.keys(state1);
@@ -85,7 +71,7 @@ const ui = {
       this.render[changed] && this.render[changed](state);
     }
 
-    this.previousState = state;
+    this.previousState = state; // logs the state - we can use that when making an input
   },
 
   // map changed state keys to method calls
