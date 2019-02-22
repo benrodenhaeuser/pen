@@ -13,18 +13,20 @@ const Node = {
   },
 
   init(opts) {
-    this.set(this.defaults());
+    this.set(this.defaults);
     this.set(opts);
+
     return this;
   },
 
-  defaults() {
+  get defaults() {
     return {
       _id:         createID(),
       children:    [],
       parent:      null,
       tag:         null,
       box:         { x: 0, y: 0, width: 0, height: 0 },
+      motion:      {},
       props:    {
         transform: Matrix.identity(),
         class:     ClassList.create(),
@@ -35,11 +37,12 @@ const Node = {
   toJSON() {
     return {
       _id:         this._id,
-      parent:      this.parent && this.parent._id,
       children:    this.children,
+      parent:      this.parent && this.parent._id,
       tag:         this.tag,
-      props:       this.props,
       box:         this.box,
+      motion:      this.motion,
+      props:       this.props,
       globalScale: this.globalScaleFactor(),
     };
   },
@@ -53,6 +56,39 @@ const Node = {
   append(node) {
     this.children.push(node);
     node.parent = this;
+  },
+
+  get root() {
+    return this.findAncestor(node => node.parent === null);
+  },
+
+  get leaves() {
+    return this.findDescendants(node => node.children.length === 0);
+  },
+
+
+  get ancestors() {
+    return this.findAncestors(node => true);
+  },
+
+  get descendants() {
+    return this.findDescendants(node => true);
+  },
+
+  get siblings() {
+    return this.parent.children.filter(node => node !== this);
+  },
+
+  get selected() {
+    return this.root.findDescendant((node) => {
+      return node.classList.includes('selected');
+    });
+  },
+
+  get frontier() {
+    return this.root.findDescendants((node) => {
+      return node.classList.includes('frontier');
+    });
   },
 
   findAncestor(predicate) {
@@ -99,39 +135,6 @@ const Node = {
     }
 
     return resultList;
-  },
-
-  get root() {
-    return this.findAncestor(node => node.parent === null);
-  },
-
-  get leaves() {
-    return this.findDescendants(node => node.children.length === 0);
-  },
-
-
-  get ancestors() {
-    return this.findAncestors(node => true);
-  },
-
-  get descendants() {
-    return this.findDescendants(node => true);
-  },
-
-  get siblings() {
-    return this.parent.children.filter(node => node !== this);
-  },
-
-  get selected() {
-    return this.root.findDescendant((node) => {
-      return node.classList.includes('selected');
-    });
-  },
-
-  get frontier() {
-    return this.root.findDescendants((node) => {
-      return node.classList.includes('frontier');
-    });
   },
 
   get corners() {
@@ -213,7 +216,7 @@ const Node = {
   },
 
   setFrontier() {
-    this.unsetFrontier();
+    this.removeFrontier();
 
     if (this.selected) {
       this.selected.classList.add('frontier');
@@ -233,7 +236,7 @@ const Node = {
     }
   },
 
-  unsetFrontier() {
+  removeFrontier() {
     const frontier = this.root.findDescendants((node) => {
       return node.classList.includes('frontier');
     });

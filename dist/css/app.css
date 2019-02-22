@@ -1,3 +1,5 @@
+/* HTML */
+
 body {
   display: grid;
   grid-template-columns: 165px auto 165px;
@@ -99,21 +101,57 @@ li.selected a, li.selected a:hover {
   padding: 10px;
 }
 
-/* NEW  */
+/* SVG */
 
 svg {
   width: 100%;
   outline: 1px solid red;
 }
 
+[data-type="content"] {
+  pointer-events: none;
+}
+
+[data-type="wrapper"] {
+  pointer-events: bounding-box;
+}
+
+[data-type="chrome"] {
+  pointer-events: visiblePainted;
+  visibility: hidden;
+}
+
+[data-type="corner"] {
+  stroke: #d3d3d3;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1px;
+  fill: #FFFFFF;
+  -webkit-filter: drop-shadow(0 1px 1.5px #000); 
+}
+
+[data-type="dot"] {
+  stroke: #d3d3d3;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1px;
+  fill: #FFFFFF;
+}
+
+[data-type="frame"] {
+  stroke: #d3d3d3;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1px;
+  fill: none;
+  pointer-events: none;
+}
+
 .focus ~ [data-type="chrome"] > [data-type="frame"] {
   stroke: #5DADE2;
-  stroke-width: 5px;
+  stroke-width: 3px;
 }
 
 .selected ~ [data-type="chrome"] > [data-type="frame"] {
-  stroke: yellow;
-  stroke-width: 5px;
+  stroke: #d3d3d3;
+  stroke-width: 1px;
 }
 
 .selected ~ [data-type="chrome"] {

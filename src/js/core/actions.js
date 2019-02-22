@@ -149,8 +149,6 @@ const actions = {
         }
       }
     }
-
-    console.log(state.doc.scene.leaves);
   },
 
   // OLD (probably useless):

@@ -3,11 +3,19 @@ const inputTable = [
   // NEW
 
   [['mousedown',   'wrapper'          ], 'select'          ],
+  
+  // notice that the next two inputs are only possible
+  // if the shape is selected, because otherwise
+  // neither dots nor corners will be visible:
   [['mousedown',   'dot'              ], 'initRotate'      ],
   [['mousedown',   'corner'           ], 'initScale'       ],
+
+  // I think this could be more specifically geared towards
+  // highlighted wrappers:
   [['dblclick',    'wrapper'          ], 'selectThrough'   ],
   [['mousemove'                       ], 'movePointer'     ],
   [['mouseup'                         ], 'release'         ],
+
 
   // OLD (some still relevant, some not)
 
