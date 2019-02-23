@@ -1,4 +1,5 @@
 import { Matrix, Vector } from './matrix.js';
+import { SVGPathData, encodeSVGPath } from 'svg-pathdata';
 
 let aux = {};
 
@@ -151,7 +152,11 @@ const actions = {
     }
   },
 
-  // OLD (probably useless):
+  deselect(state, event) {
+    state.doc.scene.deselectAll();
+  },
+
+  // OLD (partially useless?):
 
   createDoc(state, input) {
     state.doc.init();
@@ -170,6 +175,14 @@ const actions = {
   setDoc(state, input) {
     state.doc.init(input.data.doc);
   },
+
+  // Pen tool
+
+  initPen(state, event) {
+    console.log('starting to draw with pen');
+  },
+
+
 };
 
 export { actions };

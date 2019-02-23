@@ -1,3 +1,6 @@
+// may omit 'from', 'input.target', 'to' and `do`
+// 'input.type' is mandatory
+
 const table = [
   {
     from: 'start',
@@ -25,6 +28,13 @@ const table = [
     input: { type: 'mousedown', target: 'wrapper'},
     do: 'select',
     to: 'shifting',  // move
+  },
+
+  {
+    from: 'idle',
+    input: { type: 'mousedown', target: 'root' },
+    do: 'deselect',
+    to: 'idle',
   },
 
   {
@@ -83,6 +93,23 @@ const table = [
     to: 'idle',
   },
 
+
+  // PEN
+
+  {
+    from: 'idle',
+    input: { type: 'click', target: 'usePen' },
+    do: 'deselect',
+    to: 'pen',
+  },
+
+  {
+    from: 'pen',
+    input: { type: 'mousedown' },
+    do: 'initPen',
+    to: 'pen'
+  },
+
   // OLD (but in new format!)
 
   {
@@ -92,7 +119,6 @@ const table = [
 
   {
     input: { type: 'docSaved' },
-    do: 'docSaved',
   },
 
   {

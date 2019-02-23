@@ -1,6 +1,10 @@
 {
   "devDependencies": {
-    "rollup": "^0.68.0",
     "gulp": "latest",
+    "rollup": "^0.68.0",
+    "rollup-plugin-node-resolve": "^4.0.1"
+  },
+  "dependencies": {
+    "svg-pathdata": "^5.0.2"
   }
 }

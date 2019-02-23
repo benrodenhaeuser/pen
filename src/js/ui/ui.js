@@ -42,12 +42,22 @@ const ui = {
         }
 
         processInput({
-          type: event.type,
-          target: event.target.dataset.type,
+          type:    event.type,
+          target:  event.target.dataset.type,
           pointer: pointerData(event),
         });
       });
     }
+
+    document.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      processInput({
+        type:    event.type,
+        target:  event.target.dataset.type,
+        pointer: pointerData(event),
+      });
+    });
   },
 
   // check what has changed (TODO: this is cumbersome!)
