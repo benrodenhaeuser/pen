@@ -1394,18 +1394,9 @@
         };
       };
 
-      const eventTypes = [
-        'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
-      ];
-
-      for (let eventType of eventTypes) {
-        ui.canvasNode.addEventListener(eventType, (event) => {
+      for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
+        this.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
-
-          // TODO: something goes wrong here ...
-          if (event.type === 'click' && event.detail > 1) {
-            return;
-          }
 
           compute({
             type:    event.type,
@@ -1415,15 +1406,32 @@
         });
       }
 
-      // document.addEventListener('click', (event) => {
-      //   event.preventDefault();
-      //
-      //   compute({
-      //     type:    event.type,
-      //     target:  event.target.dataset.type,
-      //     pointer: pointerData(event),
-      //   });
-      // });
+      document.addEventListener('click', (event) => {
+        console.log('firing click'); // never fires
+
+        event.preventDefault();
+        if (event.detail > 1) {
+          return;
+        }
+
+        compute({
+          type:    event.type,
+          target:  event.target.dataset.type,
+          pointer: pointerData(event),
+        });
+      });
+
+      document.addEventListener('dblclick', (event) => {
+        console.log('firing dblclick'); // never fires
+
+        event.preventDefault();
+
+        compute({
+          type:    event.type,
+          target:  event.target.dataset.type,
+          pointer: pointerData(event),
+        });
+      });
     },
 
     // check what has changed (TODO: this is cumbersome!)
