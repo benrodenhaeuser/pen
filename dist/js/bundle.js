@@ -1398,10 +1398,20 @@
         };
       };
 
-      for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
-        this.canvasNode.addEventListener(eventType, (event) => {
+      const eventTypes = [
+        'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
+      ];
+
+      for (let eventType of eventTypes) {
+        ui.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
-          if (event.type === 'mousedown' && event.detail > 1) {
+
+          if ((
+              event.type === 'click' ||
+              event.type === 'mousedown' ||
+              event.type === 'mouseup'
+            ) && event.detail > 1
+          ) {
             return;
           }
 
@@ -1413,29 +1423,44 @@
         });
       }
 
-      document.addEventListener('click', (event) => {
-
-        event.preventDefault();
-        if (event.detail > 1) {
-          return;
-        }
-
-        compute({
-          type:    event.type,
-          target:  event.target.dataset.type,
-          pointer: pointerData(event),
-        });
-      });
-
-      document.addEventListener('dblclick', (event) => {
-        event.preventDefault();
-
-        compute({
-          type:    event.type,
-          target:  event.target.dataset.type,
-          pointer: pointerData(event),
-        });
-      });
+      // for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
+      //   this.canvasNode.addEventListener(eventType, (event) => {
+      //     event.preventDefault();
+      //     if (event.type === 'mousedown' && event.detail > 1) {
+      //       return;
+      //     }
+      //
+      //     compute({
+      //       type:    event.type,
+      //       target:  event.target.dataset.type,
+      //       pointer: pointerData(event),
+      //     });
+      //   });
+      // }
+      //
+      // document.addEventListener('click', (event) => {
+      //
+      //   event.preventDefault();
+      //   if (event.detail > 1) {
+      //     return;
+      //   }
+      //
+      //   compute({
+      //     type:    event.type,
+      //     target:  event.target.dataset.type,
+      //     pointer: pointerData(event),
+      //   });
+      // });
+      //
+      // document.addEventListener('dblclick', (event) => {
+      //   event.preventDefault();
+      //
+      //   compute({
+      //     type:    event.type,
+      //     target:  event.target.dataset.type,
+      //     pointer: pointerData(event),
+      //   });
+      // });
     },
 
     // check what has changed (TODO: this is cumbersome!)
