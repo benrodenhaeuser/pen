@@ -720,7 +720,7 @@
 
   const actions = {
     select(state, input) {
-      const selected = state.doc.scene
+      const toSelect = state.doc.scene
         .findDescendant((node) => {
           return node._id === input.pointer.targetID;
         })
@@ -728,8 +728,8 @@
           return node.props.class.includes('frontier');
         });
 
-      if (selected) {
-        selected.select();
+      if (toSelect) {
+        toSelect.select();
         this.initShift(state, input);
       } else {
         state.doc.scene.deselectAll();
@@ -828,6 +828,8 @@
     },
 
     selectThrough(state, input) {
+      console.log('selecting through');
+
       const target = state.doc.scene.findDescendant((node) => {
         return node._id === input.pointer.targetID;
       });
@@ -1044,7 +1046,11 @@
     <g>
       <g>
         <rect x="260" y="250" width="100" height="100"></rect>
-        <rect x="400" y="250" width="100" height="100"></rect>
+
+        <g>
+          <rect x="400" y="260" width="100" height="100"></rect>
+          <rect x="550" y="260" width="100" height="100"></rect>
+        </g>
       </g>
     </g>
 
@@ -1397,6 +1403,9 @@
       for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
         this.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
+          if (event.type === 'mousedown' && event.detail > 1) {
+            return;
+          }
 
           compute({
             type:    event.type,
@@ -1407,7 +1416,6 @@
       }
 
       document.addEventListener('click', (event) => {
-        console.log('firing click'); // never fires
 
         event.preventDefault();
         if (event.detail > 1) {
@@ -1422,8 +1430,6 @@
       });
 
       document.addEventListener('dblclick', (event) => {
-        console.log('firing dblclick'); // never fires
-
         event.preventDefault();
 
         compute({

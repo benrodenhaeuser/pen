@@ -98,7 +98,11 @@ const markup = `
     <g>
       <g>
         <rect x="260" y="250" width="100" height="100"></rect>
-        <rect x="400" y="250" width="100" height="100"></rect>
+
+        <g>
+          <rect x="400" y="260" width="100" height="100"></rect>
+          <rect x="550" y="260" width="100" height="100"></rect>
+        </g>
       </g>
     </g>
 

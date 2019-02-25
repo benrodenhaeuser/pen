@@ -5,7 +5,7 @@ let aux = {};
 
 const actions = {
   select(state, input) {
-    const selected = state.doc.scene
+    const toSelect = state.doc.scene
       .findDescendant((node) => {
         return node._id === input.pointer.targetID;
       })
@@ -13,8 +13,8 @@ const actions = {
         return node.props.class.includes('frontier');
       });
 
-    if (selected) {
-      selected.select();
+    if (toSelect) {
+      toSelect.select();
       this.initShift(state, input);
     } else {
       state.doc.scene.deselectAll();
@@ -113,6 +113,8 @@ const actions = {
   },
 
   selectThrough(state, input) {
+    console.log('selecting through');
+
     const target = state.doc.scene.findDescendant((node) => {
       return node._id === input.pointer.targetID;
     });

@@ -29,6 +29,9 @@ const ui = {
     for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
       this.canvasNode.addEventListener(eventType, (event) => {
         event.preventDefault();
+        if (event.type === 'mousedown' && event.detail > 1) {
+          return;
+        }
 
         compute({
           type:    event.type,
@@ -39,7 +42,6 @@ const ui = {
     }
 
     document.addEventListener('click', (event) => {
-      console.log('firing click'); // never fires
 
       event.preventDefault();
       if (event.detail > 1) {
@@ -54,8 +56,6 @@ const ui = {
     });
 
     document.addEventListener('dblclick', (event) => {
-      console.log('firing dblclick'); // never fires
-
       event.preventDefault();
 
       compute({
