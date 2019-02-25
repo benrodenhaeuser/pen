@@ -39,8 +39,7 @@ const ui = {
       ui.canvasNode.addEventListener(eventType, (event) => {
         event.preventDefault();
 
-        if (suppressedRepetition.includes(event.type)) && event.detail > 1
-        ) {
+        if (suppressedRepetition.includes(event.type) && event.detail > 1) {
           return;
         }
 

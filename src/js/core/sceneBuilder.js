@@ -51,6 +51,7 @@ const sceneBuilder = {
   buildTree($node, node) {
     // TODO: we take into account nodes of type `svg`, `g` and `path` here
     // But there may be others! (e.g., clip paths)
+    // TODO: the node-type handling logic here is very confusing!
     if ($node.tagName === 'svg' || $node.tagName === 'g') {
       this.copyTagName($node, node);
     } else {
@@ -109,13 +110,14 @@ const sceneBuilder = {
 
     // if we have tagged the node as a path, we need to convert the shape to a path (might be a rect):
     if (node.tag === 'path') {
-      this.setDAttribute($node, node);
+      this.storePath($node, node);
+      delete node.props.d;
     }
   },
 
   // TODO: assuming $node is a rectangle or a path for now
   // add and process 'circle' and other basic shapes here
-  setDAttribute($node, node) {
+  storePath($node, node) {
     const tag = $node.tagName;
     let   pathData;
 

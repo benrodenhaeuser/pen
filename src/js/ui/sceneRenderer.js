@@ -203,6 +203,26 @@ const wrap = ($node, node) => {
   $wrapper.appendChild($node);
   $wrapper.appendChild($chrome);
 
+  // TODO: improve organization
+  if (node.path) {
+    for (let segment of node.path) {
+        for (let control of segment.controls) {
+          const $handle = document.createElementNS(svgns, 'circle');
+          $handle.setSVGAttrs({
+            'data-type': 'handle',
+            'data-id':   control._id,
+            transform:   transform,
+            r:           radius,
+            cx:          control.x,
+            cy:          control.y,
+            fill:        'black',
+            stroke:      '#5DADE2',
+          });
+          $chrome.appendChild($handle);
+        }
+    }
+  }
+
   return $wrapper;
 };
 

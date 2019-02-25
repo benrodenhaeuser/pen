@@ -96,15 +96,15 @@ const markup = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
 
     <g>
-      <rect x="260" y="250" width="100" height="100"></rect>
+      <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
 
       <g>
-        <rect x="400" y="260" width="100" height="100"></rect>
-        <rect x="550" y="260" width="100" height="100"></rect>
+        <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+        <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
       </g>
     </g>
 
-    <rect x="600" y="600" width="100" height="100"></rect>
+    <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
   </svg>
 `;
 

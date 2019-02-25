@@ -595,6 +595,7 @@
     buildTree($node, node) {
       // TODO: we take into account nodes of type `svg`, `g` and `path` here
       // But there may be others! (e.g., clip paths)
+      // TODO: the node-type handling logic here is very confusing!
       if ($node.tagName === 'svg' || $node.tagName === 'g') {
         this.copyTagName($node, node);
       } else {
@@ -653,13 +654,14 @@
 
       // if we have tagged the node as a path, we need to convert the shape to a path (might be a rect):
       if (node.tag === 'path') {
-        this.setDAttribute($node, node);
+        this.storePath($node, node);
+        delete node.props.d;
       }
     },
 
     // TODO: assuming $node is a rectangle or a path for now
     // add and process 'circle' and other basic shapes here
-    setDAttribute($node, node) {
+    storePath($node, node) {
       const tag = $node.tagName;
       let   pathData;
 
@@ -1044,15 +1046,15 @@
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
 
     <g>
-      <rect x="260" y="250" width="100" height="100"></rect>
+      <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
 
       <g>
-        <rect x="400" y="260" width="100" height="100"></rect>
-        <rect x="550" y="260" width="100" height="100"></rect>
+        <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+        <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
       </g>
     </g>
 
-    <rect x="600" y="600" width="100" height="100"></rect>
+    <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
   </svg>
 `;
 
@@ -1370,6 +1372,26 @@
     $wrapper.appendChild($node);
     $wrapper.appendChild($chrome);
 
+    // TODO: improve organization
+    if (node.path) {
+      for (let segment of node.path) {
+          for (let control of segment.controls) {
+            const $handle = document.createElementNS(svgns, 'circle');
+            $handle.setSVGAttrs({
+              'data-type': 'handle',
+              'data-id':   control._id,
+              transform:   transform,
+              r:           radius,
+              cx:          control.x,
+              cy:          control.y,
+              fill:        'black',
+              stroke:      '#5DADE2',
+            });
+            $chrome.appendChild($handle);
+          }
+      }
+    }
+
     return $wrapper;
   };
 
@@ -1402,16 +1424,16 @@
         'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
       ];
 
+      // TODO: improve presentation
+      const suppressedRepetition = [
+        'mousedown', 'mouseup', 'click'
+      ];
+
       for (let eventType of eventTypes) {
         ui.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
 
-          if ((
-              event.type === 'click' ||
-              event.type === 'mousedown' ||
-              event.type === 'mouseup'
-            ) && event.detail > 1
-          ) {
+          if (suppressedRepetition.includes(event.type) && event.detail > 1) {
             return;
           }
 
@@ -1422,45 +1444,6 @@
           });
         });
       }
-
-      // for (let eventType of ['mousedown', 'mousemove', 'mouseup']) {
-      //   this.canvasNode.addEventListener(eventType, (event) => {
-      //     event.preventDefault();
-      //     if (event.type === 'mousedown' && event.detail > 1) {
-      //       return;
-      //     }
-      //
-      //     compute({
-      //       type:    event.type,
-      //       target:  event.target.dataset.type,
-      //       pointer: pointerData(event),
-      //     });
-      //   });
-      // }
-      //
-      // document.addEventListener('click', (event) => {
-      //
-      //   event.preventDefault();
-      //   if (event.detail > 1) {
-      //     return;
-      //   }
-      //
-      //   compute({
-      //     type:    event.type,
-      //     target:  event.target.dataset.type,
-      //     pointer: pointerData(event),
-      //   });
-      // });
-      //
-      // document.addEventListener('dblclick', (event) => {
-      //   event.preventDefault();
-      //
-      //   compute({
-      //     type:    event.type,
-      //     target:  event.target.dataset.type,
-      //     pointer: pointerData(event),
-      //   });
-      // });
     },
 
     // check what has changed (TODO: this is cumbersome!)
