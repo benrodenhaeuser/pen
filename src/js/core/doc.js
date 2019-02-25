@@ -11,9 +11,6 @@ const doc = {
     this._id   = createID();
     this.scene = sceneBuilder.createScene(markup);
 
-    // replace this.scene with this.scenes array
-    // and this.sceneIndex (indexing into this.scenes).
-
     return this;
   },
 

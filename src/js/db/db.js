@@ -1,10 +1,10 @@
 const db = {
-  bindEvents(processInput) {
+  bindEvents(compute) {
     window.addEventListener('upsert', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        processInput({
+        compute({
           type: 'docSaved',
           data: {},
         });
@@ -18,7 +18,7 @@ const db = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        processInput({
+        compute({
           type: 'setDoc',
           data: {
             doc: request.response
@@ -35,7 +35,7 @@ const db = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        processInput({
+        compute({
           type: 'updateDocList',
           data: {
             docIDs: request.response

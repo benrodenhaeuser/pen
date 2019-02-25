@@ -26,8 +26,8 @@ const Node = {
       parent:      null,
       tag:         null,
       box:         { x: 0, y: 0, width: 0, height: 0 },
-      motion:      {},
-      props:    {
+      path:        null,
+      props:       {
         transform: Matrix.identity(),
         class:     ClassList.create(),
       },
@@ -41,7 +41,7 @@ const Node = {
       parent:      this.parent && this.parent._id,
       tag:         this.tag,
       box:         this.box,
-      motion:      this.motion,
+      path:        this.path,
       props:       this.props,
       globalScale: this.globalScaleFactor(),
     };

@@ -1,6 +1,21 @@
 const svgns = 'http://www.w3.org/2000/svg';
 const xmlns = 'http://www.w3.org/2000/xmlns/';
 
+// TODO: put in a utility module somewhere?
+SVGElement.prototype.getSVGAttr = function(...args) {
+  return this.getAttributeNS.apply(this, [null].concat(args));
+};
+
+SVGElement.prototype.setSVGAttr = function(...args) {
+  return this.setAttributeNS.apply(this, [null].concat(args));
+};
+
+SVGElement.prototype.setSVGAttrs = function(obj) {
+  for (let key of Object.keys(obj)) {
+    this.setSVGAttr(key, obj[key]);
+  }
+};
+
 // TODO: need to take care of style and defs
 const sceneRenderer = {
   render(scene, $canvas) {
@@ -10,6 +25,13 @@ const sceneRenderer = {
 
   build(node, $parent) {
     const $node = document.createElementNS(svgns, node.tag);
+
+    if (node.path) {
+      node.props.d = encodeAsSVGPath(node.path);
+    }
+
+    // TODO: we will also need node.path elsewhere
+
     $node.setSVGAttrs(node.props);
     $node.setSVGAttr('data-id', node._id);
 
@@ -35,18 +57,26 @@ const sceneRenderer = {
   },
 };
 
-SVGElement.prototype.getSVGAttr = function(...args) {
-  return this.getAttributeNS.apply(this, [null].concat(args));
-};
+const encodeAsSVGPath = (path) => {
+  let d = '';
 
-SVGElement.prototype.setSVGAttr = function(...args) {
-  return this.setAttributeNS.apply(this, [null].concat(args));
-};
+  for (let segment of path) {
+    if (segment.type === 'move') {
+      d += 'M ';
+    } else if (segment.controls.length === 1) {
+      d += 'L '
+    } else if (segment.controls.length === 2) {
+      d += 'Q '
+    } else if (segment.controls.length === 3) {
+      d += 'C '
+    }
 
-SVGElement.prototype.setSVGAttrs = function(obj) {
-  for (let key of Object.keys(obj)) {
-    this.setSVGAttr(key, obj[key]);
+    for (let control of segment.controls) {
+      d += String(control.x) + ' ' + String(control.y) + ' ';
+    }
   }
+
+  return d;
 };
 
 const antiScale = (node, length) => {

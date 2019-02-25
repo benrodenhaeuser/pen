@@ -1,10 +1,6 @@
 import { nodeFactory } from './nodeFactory.js';
 import { sceneRenderer } from './sceneRenderer.js';
 
-SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(element) {
-    return element.getScreenCTM().inverse().multiply(this.getScreenCTM());
-};
-
 const getSVGCoords = (x, y) => {
   const svg = document.querySelector('svg');
   let point = svg.createSVGPoint();
@@ -17,7 +13,7 @@ const getSVGCoords = (x, y) => {
 
 
 const ui = {
-  bindEvents(processInput) {
+  bindEvents(compute) {
     this.canvasNode = document.querySelector('#canvas');
 
     const pointerData = (event) => {
@@ -37,11 +33,13 @@ const ui = {
     for (let eventType of eventTypes) {
       ui.canvasNode.addEventListener(eventType, (event) => {
         event.preventDefault();
+
+        // TODO: something goes wrong here ...
         if (event.type === 'click' && event.detail > 1) {
           return;
         }
 
-        processInput({
+        compute({
           type:    event.type,
           target:  event.target.dataset.type,
           pointer: pointerData(event),
@@ -49,15 +47,15 @@ const ui = {
       });
     }
 
-    document.addEventListener('click', (event) => {
-      event.preventDefault();
-
-      processInput({
-        type:    event.type,
-        target:  event.target.dataset.type,
-        pointer: pointerData(event),
-      });
-    });
+    // document.addEventListener('click', (event) => {
+    //   event.preventDefault();
+    //
+    //   compute({
+    //     type:    event.type,
+    //     target:  event.target.dataset.type,
+    //     pointer: pointerData(event),
+    //   });
+    // });
   },
 
   // check what has changed (TODO: this is cumbersome!)
