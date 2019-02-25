@@ -58,7 +58,7 @@ const Path = {
       .transform(SVGPathDataTransformer.NORMALIZE_ST())  // no S
       .transform(SVGPathDataTransformer.A_TO_C())        // no A
       .toAbs()                                           // no relative commands
-      .transform(SVGPathDataTransformer.ROUND(10));      // TODO: just for debugging
+      .transform(SVGPathDataTransformer.ROUND(2));      // TODO: just for debugging
 
     return pathDataObject.commands;
   },

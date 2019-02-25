@@ -215,8 +215,10 @@ const wrap = ($node, node) => {
             r:           radius,
             cx:          control.x,
             cy:          control.y,
-            fill:        'black',
+            fill:        'none',
             stroke:      '#5DADE2',
+            'vector-effect': 'non-scaling-stroke',
+            'stroke-width': '1px',
           });
           $chrome.appendChild($handle);
         }
