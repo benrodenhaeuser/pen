@@ -108,17 +108,13 @@ svg {
   outline: 1px solid red;
 }
 
+/* TODO: can we avoid this? */
 [data-type="content"] {
-  pointer-events: none;
+  /* pointer-events: none; */
 }
 
 [data-type="wrapper"] {
   pointer-events: bounding-box;
-}
-
-[data-type="chrome"] {
-  pointer-events: visiblePainted;
-  visibility: hidden;
 }
 
 [data-type="corner"] {
@@ -126,11 +122,18 @@ svg {
   vector-effect: non-scaling-stroke;
   stroke-width: 1px;
   fill: #FFFFFF;
-  -webkit-filter: drop-shadow(0 1px 1.5px #000); 
+  -webkit-filter: drop-shadow(0 1px 1.5px #000);
 }
 
 [data-type="dot"] {
   stroke: #d3d3d3;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1px;
+  fill: #FFFFFF;
+}
+
+[data-type="control"] {
+  stroke: #5DADE2;
   vector-effect: non-scaling-stroke;
   stroke-width: 1px;
   fill: #FFFFFF;
@@ -144,17 +147,31 @@ svg {
   pointer-events: none;
 }
 
-.focus ~ [data-type="chrome"] > [data-type="frame"] {
+[data-type="outerUI"] {
+  pointer-events: visiblePainted;
+  visibility: hidden;
+}
+
+[data-type="innerUI"] {
+  pointer-events: visible;
+  visibility: hidden;
+}
+
+.focus ~ [data-type="outerUI"] > [data-type="frame"] {
   stroke: #5DADE2;
   stroke-width: 3px;
 }
 
-.selected ~ [data-type="chrome"] > [data-type="frame"] {
+.selected ~ [data-type="outerUI"] > [data-type="frame"] {
   stroke: #d3d3d3;
   stroke-width: 1px;
 }
 
-.selected ~ [data-type="chrome"] {
+.selected ~ [data-type="outerUI"] {
+  visibility: visible;
+}
+
+.editing ~ [data-type="innerUI"] {
   visibility: visible;
 }
 

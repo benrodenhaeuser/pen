@@ -23,7 +23,6 @@ const Path = {
         );
       } else {
         const controls = [];
-        let handle1, handle2;
 
         if (command.x1) {
           controls.push(Vector.createWithID(command.x1, command.y1));

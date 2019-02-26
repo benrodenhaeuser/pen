@@ -15,14 +15,10 @@ const actions = {
 
     if (toSelect) {
       toSelect.select();
-      this.initShift(state, input);
+      aux.source = Vector.create(input.pointer.x, input.pointer.y);;
     } else {
       state.doc.scene.deselectAll();
     }
-  },
-
-  initShift(state, input) {
-    aux.source = Vector.create(input.pointer.x, input.pointer.y);
   },
 
   shift(state, input) {
@@ -83,15 +79,15 @@ const actions = {
     const sourceMinusCenter = aux.source.subtract(aux.center);
     const targetMinusCenter = target.subtract(aux.center);
 
-    const sourceDist = Math.sqrt(
+    const sourceDistance = Math.sqrt(
       Math.pow(sourceMinusCenter.x, 2) +
       Math.pow(sourceMinusCenter.y, 2)
     );
-    const targetDist = Math.sqrt(
+    const targetDistance = Math.sqrt(
       Math.pow(targetMinusCenter.x, 2) +
       Math.pow(targetMinusCenter.y, 2)
     );
-    const factor     = targetDist / sourceDist;
+    const factor     = targetDistance / sourceDistance;
     const scaling    = Matrix.scale(factor, aux.center);
 
     selected.transform = selected
@@ -113,20 +109,24 @@ const actions = {
   },
 
   selectThrough(state, input) {
-    console.log('selecting through');
-
     const target = state.doc.scene.findDescendant((node) => {
       return node._id === input.pointer.targetID;
     });
 
-    const selection = target.findAncestor((node) => {
-      return node.parent && node.parent.props.class.includes('frontier');
-    });
-
-    if (selection) {
-      selection.select();
-      state.doc.scene.setFrontier();
+    if (target.isSelected()) {
+      target.edit();
       state.doc.scene.unfocusAll();
+      state.id = 'pen'; // hack
+    } else {
+      const toSelect = target.findAncestor((node) => {
+        return node.parent && node.parent.props.class.includes('frontier');
+      });
+
+      if (toSelect) {
+        toSelect.select();
+        state.doc.scene.setFrontier();
+        state.doc.scene.unfocusAll();
+      }
     }
   },
 

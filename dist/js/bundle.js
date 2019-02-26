@@ -268,6 +268,10 @@
       });
     },
 
+    isSelected() {
+      return this.classList.includes('selected');
+    },
+
     get frontier() {
       return this.root.findDescendants((node) => {
         return node.classList.includes('frontier');
@@ -449,6 +453,12 @@
       this.setFrontier();
     },
 
+    edit() {
+      this.deselectAll();
+      this.setFrontier();
+      this.classList.add('editing');
+    },
+
     deselectAll() {
       if (this.selected) {
         this.selected.classList.remove('selected');
@@ -473,6 +483,18 @@
   const Segment = {
     create(type, controls) {
       return Object.create(Segment).init(type, controls);
+    },
+
+    get anchor() {
+      return this.controls[this.controls.length - 1];
+    },
+
+    get handles() {
+      const notLast = (control, index) => {
+        return !!this.controls[index + 1]
+      };
+
+      return this.controls.filter(notLast);
     },
 
     init(type, controls) {
@@ -732,14 +754,9 @@
 
       if (toSelect) {
         toSelect.select();
-        this.initShift(state, input);
-      } else {
+        aux.source = Vector.create(input.pointer.x, input.pointer.y);    } else {
         state.doc.scene.deselectAll();
       }
-    },
-
-    initShift(state, input) {
-      aux.source = Vector.create(input.pointer.x, input.pointer.y);
     },
 
     shift(state, input) {
@@ -800,15 +817,15 @@
       const sourceMinusCenter = aux.source.subtract(aux.center);
       const targetMinusCenter = target.subtract(aux.center);
 
-      const sourceDist = Math.sqrt(
+      const sourceDistance = Math.sqrt(
         Math.pow(sourceMinusCenter.x, 2) +
         Math.pow(sourceMinusCenter.y, 2)
       );
-      const targetDist = Math.sqrt(
+      const targetDistance = Math.sqrt(
         Math.pow(targetMinusCenter.x, 2) +
         Math.pow(targetMinusCenter.y, 2)
       );
-      const factor     = targetDist / sourceDist;
+      const factor     = targetDistance / sourceDistance;
       const scaling    = Matrix.scale(factor, aux.center);
 
       selected.transform = selected
@@ -830,20 +847,24 @@
     },
 
     selectThrough(state, input) {
-      console.log('selecting through');
-
       const target = state.doc.scene.findDescendant((node) => {
         return node._id === input.pointer.targetID;
       });
 
-      const selection = target.findAncestor((node) => {
-        return node.parent && node.parent.props.class.includes('frontier');
-      });
-
-      if (selection) {
-        selection.select();
-        state.doc.scene.setFrontier();
+      if (target.isSelected()) {
+        target.edit();
         state.doc.scene.unfocusAll();
+        state.id = 'pen'; // hack
+      } else {
+        const toSelect = target.findAncestor((node) => {
+          return node.parent && node.parent.props.class.includes('frontier');
+        });
+
+        if (toSelect) {
+          toSelect.select();
+          state.doc.scene.setFrontier();
+          state.doc.scene.unfocusAll();
+        }
       }
     },
 
@@ -910,8 +931,8 @@
   const config = [
     { from: 'start', type: 'kickoff', do: 'kickoff', to: 'idle' },
     { from: 'idle', type: 'mousemove', do: 'focus' },
-    { from: 'idle', type: 'dblclick', target: 'wrapper', do: 'selectThrough' },
-    { from: 'idle', type: 'mousedown', target: 'wrapper', do: 'select', to: 'shifting' },
+    { from: 'idle', type: 'dblclick', target: 'content', do: 'selectThrough' },
+    { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
     { from: 'idle', type: 'mousedown', target: 'root', do: 'deselect' },
     { from: 'shifting', type: 'mousemove', do: 'shift' },
     { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
@@ -921,13 +942,13 @@
     { from: 'idle', type: 'mousedown', target: 'corner', do: 'initScale', to: 'scaling' },
     { from: 'scaling', type: 'mousemove', do: 'scale' },
     { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
-    { from: 'idle', type: 'click', target: 'usePen', do: 'deselect', to: 'pen' },
-    { from: 'pen', type: 'mousedown', do: 'initPen' },
     { type: 'click', target: 'doc-list-entry', do: 'requestDoc' },
     { type: 'docSaved' },
     { type: 'updateDocList', do: 'updateDocList' },
     { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
     { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
+    // { from: 'idle', type: 'click', target: 'usePen', do: 'deselect', to: 'pen' },
+    // { from: 'pen', type: 'mousedown', do: 'initPen' },
   ];
 
   config.get = function(state, input) {
@@ -946,6 +967,7 @@
     const match = config.find(isMatch);
 
     if (match) {
+      // console.log(input.target); // note that inputs from db don't have a target
       return {
         do: match.do,
         to: match.to || state.id,
@@ -979,21 +1001,21 @@
 
     compute(input) {
       const transition = config.get(this.state, input);
-      console.log('from: ', this.state.id, input, transition);
+      console.log('from: ', this.state.id, input, transition); // DEBUG
       if (transition) {
         this.makeTransition(input, transition);
+        console.log(this.state.id);
         this.sync();
       }
     },
 
     makeTransition(input, transition) {
-      const action = actions[transition.do];
-      action && action.bind(actions)(this.state, input);
-      // ^ means it's fine if we don't find an action
-
       this.state.clock.tick();
       this.state.currentInput = input.type;
       this.state.id = transition.to;
+
+      const action = actions[transition.do];
+      action && action.bind(actions)(this.state, input);
     },
 
     init() {
@@ -1014,26 +1036,54 @@
     },
   };
 
-  // hard-coded svg:
 
   const markup = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
 
-    <g id="four">
-      <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
-      </g>
+    <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
 
-    <g id="eight">
-      <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
-    </g>
+    <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
 
-    <g id="k">
+    <g>
       <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
 
       <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
     </g>
   </svg>
 `;
+
+  // const markup = `
+  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  //
+  //     <g>
+  //       <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //
+  //       <g>
+  //         <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //         <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //       </g>
+  //     </g>
+  //
+  //     <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //   </svg>
+  // `;
+
+  // const markup = `
+  //   <svg id="a3dbc277-3d4c-49ea-bad0-b2ae645587b1" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  //     <defs>
+  //       <style>
+  //         .b6f794bd-c28e-4c2b-862b-87d53a963a38 {
+  //           fill: #1d1d1b;
+  //           stroke: #1d1d1b;
+  //           stroke-miterlimit: 3.86;
+  //           stroke-width: 1.35px;
+  //         }
+  //       </style>
+  //     </defs>
+  //     <title>Little Bus</title>
+  //     <path class="b6f794bd-c28e-4c2b-862b-87d53a963a38" d="M355.24,70.65l-77.31.66L93.69,179l-3.32,40.31L49.4,249l-4.64,62.08s.39,8.81,10.6,3.3C64,309.78,60,302.49,60,302.49l54.13,11.92s11.82,29.72,27.06,5.31l138.06-88.48s4.64,15.8,17.23,9.18,7.95-27.73,7.95-27.73l46.17-36.34ZM65.32,288.3A7.62,7.62,0,1,1,73,280.68,7.62,7.62,0,0,1,65.32,288.3Zm63.05,11.64a7.62,7.62,0,1,1,7.61-7.62A7.62,7.62,0,0,1,128.37,299.94Zm49.81-65.48L102.29,220l1.33-33.69,78.54,8Zm21.87,37-2-78.55L215.85,181l3.31,79.3Zm29.71-52.8-2-39.66,27.06-16.46,2.65,40.22Zm36.34-25.75-2.65-36.33,22.42-15.9,3.32,35Zm29.71-21.86-2-37.66,21.11-15.8,1.32,37.66Zm47.6-33.68L323.54,150l-.66-37L344.07,99.7Z"/>
+  //   </svg>
+  // `;
 
   const log = {
     bindEvents(setState) {
@@ -1162,6 +1212,8 @@
     }
   };
 
+  // TODO: this code is a mess
+
   // TODO: need to take care of style and defs
   const sceneRenderer = {
     render(scene, $canvas) {
@@ -1175,8 +1227,6 @@
       if (node.path) {
         node.props.d = encodeAsSVGPath(node.path);
       }
-
-      // TODO: we will also need node.path elsewhere
 
       $node.setSVGAttrs(node.props);
       $node.setSVGAttr('data-id', node._id);
@@ -1231,7 +1281,7 @@
 
   const wrap = ($node, node) => {
     const $wrapper       = document.createElementNS(svgns, 'g');
-    const $chrome        = document.createElementNS(svgns, 'g');
+    const $outerUI       = document.createElementNS(svgns, 'g');
     const $frame         = document.createElementNS(svgns, 'rect');
     const topLCorner     = document.createElementNS(svgns, 'rect');
     const botLCorner     = document.createElementNS(svgns, 'rect');
@@ -1264,8 +1314,8 @@
       'data-id':        id,
     });
 
-    $chrome.setSVGAttrs({
-      'data-type': 'chrome',
+    $outerUI.setSVGAttrs({
+      'data-type': 'outerUI',
       'data-id': id,
     });
 
@@ -1338,38 +1388,42 @@
       cy: y + height + diameter,
     });
 
-    $chrome.appendChild($frame);
+    $outerUI.appendChild($frame);
     for (let corner of corners) {
-      $chrome.appendChild(corner);
+      $outerUI.appendChild(corner);
     }
     for (let dot of dots) {
-      $chrome.appendChild(dot);
+      $outerUI.appendChild(dot);
     }
 
     $wrapper.appendChild($node);
-    $wrapper.appendChild($chrome);
 
-    // TODO: improve organization
+    // append the control points of each path segment:
     if (node.path) {
+      const $innerUI = document.createElementNS(svgns, 'g');
+      $innerUI.setSVGAttrs({
+        'data-type': 'innerUI',
+        'data-id':   id,
+      });
+
       for (let segment of node.path) {
-          for (let control of segment.controls) {
-            const $handle = document.createElementNS(svgns, 'circle');
-            $handle.setSVGAttrs({
-              'data-type': 'handle',
-              'data-id':   control._id,
-              transform:   transform,
-              r:           radius,
-              cx:          control.x,
-              cy:          control.y,
-              fill:        'none',
-              stroke:      '#5DADE2',
-              'vector-effect': 'non-scaling-stroke',
-              'stroke-width': '1px',
-            });
-            $chrome.appendChild($handle);
-          }
+        for (let control of segment.controls) {
+          const $control = document.createElementNS(svgns, 'circle');
+          $control.setSVGAttrs({
+            'data-type': 'control',
+            'data-id':   control._id, // Important: each control has individual id
+            transform:   transform,
+            r:           radius * 0.75,
+            cx:          control.x,
+            cy:          control.y,
+          });
+          $innerUI.appendChild($control);
+        }
       }
+      $wrapper.appendChild($innerUI);
     }
+
+    $wrapper.appendChild($outerUI);
 
     return $wrapper;
   };
@@ -1383,7 +1437,6 @@
 
     return [point.x, point.y];
   };
-
 
   const ui = {
     bindEvents(compute) {
@@ -1411,6 +1464,8 @@
       for (let eventType of eventTypes) {
         ui.canvasNode.addEventListener(eventType, (event) => {
           event.preventDefault();
+
+          console.log(event.target.dataset.type);
 
           if (suppressedRepetition.includes(event.type) && event.detail > 1) {
             return;

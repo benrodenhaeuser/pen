@@ -85,6 +85,10 @@ const Node = {
     });
   },
 
+  isSelected() {
+    return this.classList.includes('selected');
+  },
+
   get frontier() {
     return this.root.findDescendants((node) => {
       return node.classList.includes('frontier');
@@ -264,6 +268,12 @@ const Node = {
     this.deselectAll();
     this.classList.add('selected');
     this.setFrontier();
+  },
+
+  edit() {
+    this.deselectAll();
+    this.setFrontier();
+    this.classList.add('editing');
   },
 
   deselectAll() {

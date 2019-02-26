@@ -11,7 +11,6 @@ const getSVGCoords = (x, y) => {
   return [point.x, point.y];
 };
 
-
 const ui = {
   bindEvents(compute) {
     this.canvasNode = document.querySelector('#canvas');
@@ -38,6 +37,8 @@ const ui = {
     for (let eventType of eventTypes) {
       ui.canvasNode.addEventListener(eventType, (event) => {
         event.preventDefault();
+
+        console.log(event.target.dataset.type);
 
         if (suppressedRepetition.includes(event.type) && event.detail > 1) {
           return;

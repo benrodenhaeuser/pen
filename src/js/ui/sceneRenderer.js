@@ -16,6 +16,8 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
   }
 };
 
+// TODO: this code is a mess
+
 // TODO: need to take care of style and defs
 const sceneRenderer = {
   render(scene, $canvas) {
@@ -29,8 +31,6 @@ const sceneRenderer = {
     if (node.path) {
       node.props.d = encodeAsSVGPath(node.path);
     }
-
-    // TODO: we will also need node.path elsewhere
 
     $node.setSVGAttrs(node.props);
     $node.setSVGAttr('data-id', node._id);
@@ -85,7 +85,7 @@ const antiScale = (node, length) => {
 
 const wrap = ($node, node) => {
   const $wrapper       = document.createElementNS(svgns, 'g');
-  const $chrome        = document.createElementNS(svgns, 'g');
+  const $outerUI       = document.createElementNS(svgns, 'g');
   const $frame         = document.createElementNS(svgns, 'rect');
   const topLCorner     = document.createElementNS(svgns, 'rect');
   const botLCorner     = document.createElementNS(svgns, 'rect');
@@ -118,8 +118,8 @@ const wrap = ($node, node) => {
     'data-id':        id,
   });
 
-  $chrome.setSVGAttrs({
-    'data-type': 'chrome',
+  $outerUI.setSVGAttrs({
+    'data-type': 'outerUI',
     'data-id': id,
   });
 
@@ -192,38 +192,42 @@ const wrap = ($node, node) => {
     cy: y + height + diameter,
   });
 
-  $chrome.appendChild($frame);
+  $outerUI.appendChild($frame);
   for (let corner of corners) {
-    $chrome.appendChild(corner);
+    $outerUI.appendChild(corner);
   }
   for (let dot of dots) {
-    $chrome.appendChild(dot);
+    $outerUI.appendChild(dot);
   }
 
   $wrapper.appendChild($node);
-  $wrapper.appendChild($chrome);
 
-  // TODO: improve organization
+  // append the control points of each path segment:
   if (node.path) {
+    const $innerUI = document.createElementNS(svgns, 'g');
+    $innerUI.setSVGAttrs({
+      'data-type': 'innerUI',
+      'data-id':   id,
+    });
+
     for (let segment of node.path) {
-        for (let control of segment.controls) {
-          const $handle = document.createElementNS(svgns, 'circle');
-          $handle.setSVGAttrs({
-            'data-type': 'handle',
-            'data-id':   control._id,
-            transform:   transform,
-            r:           radius,
-            cx:          control.x,
-            cy:          control.y,
-            fill:        'none',
-            stroke:      '#5DADE2',
-            'vector-effect': 'non-scaling-stroke',
-            'stroke-width': '1px',
-          });
-          $chrome.appendChild($handle);
-        }
+      for (let control of segment.controls) {
+        const $control = document.createElementNS(svgns, 'circle');
+        $control.setSVGAttrs({
+          'data-type': 'control',
+          'data-id':   control._id, // Important: each control has individual id
+          transform:   transform,
+          r:           radius * 0.75,
+          cx:          control.x,
+          cy:          control.y,
+        });
+        $innerUI.appendChild($control);
+      }
     }
+    $wrapper.appendChild($innerUI);
   }
+
+  $wrapper.appendChild($outerUI);
 
   return $wrapper;
 };
