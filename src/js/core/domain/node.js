@@ -42,6 +42,10 @@ const Node = {
       tag:         this.tag,
       box:         this.box,
       path:        this.path,
+      // ^ TODO: could be a getter that
+      // prepares our internal path
+      // format for rendering
+      // by the ui
       props:       this.props,
       globalScale: this.globalScaleFactor(),
     };

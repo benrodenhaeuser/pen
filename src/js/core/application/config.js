@@ -4,7 +4,8 @@
 const config = [
   { from: 'start', type: 'kickoff', do: 'kickoff', to: 'idle' },
   { from: 'idle', type: 'mousemove', do: 'focus' },
-  { from: 'idle', type: 'dblclick', target: 'content', do: 'selectThrough' },
+  { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
+  // ^ TODO fix this
   { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
   { from: 'idle', type: 'mousedown', target: 'root', do: 'deselect' },
   { from: 'shifting', type: 'mousemove', do: 'shift' },

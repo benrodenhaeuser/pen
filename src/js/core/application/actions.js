@@ -1,5 +1,4 @@
-import { Matrix, Vector } from './matrix.js';
-import { SVGPathData, encodeSVGPath } from 'svg-pathdata';
+import { Matrix, Vector } from '../domain/matrix.js';
 
 let aux = {};
 
@@ -108,7 +107,7 @@ const actions = {
     aux = {};
   },
 
-  selectThrough(state, input) {
+  deepSelect(state, input) {
     const target = state.doc.scene.findDescendant((node) => {
       return node._id === input.pointer.targetID;
     });
@@ -116,7 +115,7 @@ const actions = {
     if (target.isSelected()) {
       target.edit();
       state.doc.scene.unfocusAll();
-      state.id = 'pen'; // hack
+      // state.id = 'pen'; // hack!
     } else {
       const toSelect = target.findAncestor((node) => {
         return node.parent && node.parent.props.class.includes('frontier');

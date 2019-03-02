@@ -1,7 +1,3 @@
-const svgns = 'http://www.w3.org/2000/svg';
-const xmlns = 'http://www.w3.org/2000/xmlns/';
-
-// TODO: put in a utility module somewhere?
 SVGElement.prototype.getSVGAttr = function(...args) {
   return this.getAttributeNS.apply(this, [null].concat(args));
 };
@@ -16,9 +12,19 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
   }
 };
 
-// TODO: this code is a mess
+const svgns = 'http://www.w3.org/2000/svg';
+const xmlns = 'http://www.w3.org/2000/xmlns/';
 
-// TODO: need to take care of style and defs
+const LENGTHS_IN_PX = {
+  cornerSideLength: 8,
+  dotDiameter:      9,
+  controlDiameter:  6,
+};
+
+const scale = (node, length) => {
+  return length / (node.globalScale * sceneRenderer.documentScale);
+};
+
 const sceneRenderer = {
   render(scene, $canvas) {
     canvas.innerHTML = '';
@@ -29,7 +35,7 @@ const sceneRenderer = {
     const $node = document.createElementNS(svgns, node.tag);
 
     if (node.path) {
-      node.props.d = encodeAsSVGPath(node.path);
+      node.props.d = encodeSVGPath(node.path);
     }
 
     $node.setSVGAttrs(node.props);
@@ -57,173 +63,52 @@ const sceneRenderer = {
   },
 };
 
-const encodeAsSVGPath = (path) => {
+const encodeSVGPath = (path) => {
   let d = '';
 
-  for (let segment of path) {
-    if (segment.type === 'move') {
-      d += 'M ';
-    } else if (segment.controls.length === 1) {
-      d += 'L '
-    } else if (segment.controls.length === 2) {
-      d += 'Q '
-    } else if (segment.controls.length === 3) {
-      d += 'C '
-    }
+  for (let spline of path) {
+    const moveto = spline[0];
+    d += `M ${moveto.anchor.x} ${moveto.anchor.y}`;
 
-    for (let control of segment.controls) {
-      d += String(control.x) + ' ' + String(control.y) + ' ';
+    for (let i = 1; i < spline.length; i += 1) {
+      const curr = spline[i];
+      const prev = spline[i - 1];
+
+      if (prev.handleOut && curr.handleIn) {
+        d += ' C';
+      } else if (curr.handleIn) { // TODO: correct?
+        d += ' Q';
+      } else {
+        d += ' L';
+      }
+
+      if (prev.handleOut) {
+        d += ` ${prev.handleOut.x} ${prev.handleOut.y}`;
+      }
+
+      if (curr.handleIn) {
+        d += ` ${curr.handleIn.x} ${curr.handleIn.y}`;
+      }
+
+      d += ` ${curr.anchor.x} ${curr.anchor.y}`;
     }
   }
 
   return d;
 };
 
-const antiScale = (node, length) => {
-  return length / (node.globalScale * sceneRenderer.documentScale);
-};
-
 const wrap = ($node, node) => {
-  const $wrapper       = document.createElementNS(svgns, 'g');
-  const $outerUI       = document.createElementNS(svgns, 'g');
-  const $frame         = document.createElementNS(svgns, 'rect');
-  const topLCorner     = document.createElementNS(svgns, 'rect');
-  const botLCorner     = document.createElementNS(svgns, 'rect');
-  const topRCorner     = document.createElementNS(svgns, 'rect');
-  const botRCorner     = document.createElementNS(svgns, 'rect');
-  const topLDot        = document.createElementNS(svgns, 'circle');
-  const botLDot        = document.createElementNS(svgns, 'circle');
-  const topRDot        = document.createElementNS(svgns, 'circle');
-  const botRDot        = document.createElementNS(svgns, 'circle');
-  const corners        = [topLCorner, botLCorner, topRCorner, botRCorner];
-  const dots           = [topLDot,    botLDot,    topRDot,    botRDot];
-  const width          = node.box.width;
-  const height         = node.box.height;
-  const x              = node.box.x;
-  const y              = node.box.y;
-  const transform      = node.props.transform;
-  const id             = node._id;
-  const baseSideLength = 8;
-  const baseDiameter   = 9;
-  const sideLength     = antiScale(node, baseSideLength);
-  const diameter       = antiScale(node, baseDiameter);
-  const radius         = diameter / 2;
-
   $node.setSVGAttrs({
     'data-type': 'content',
   });
 
-  $wrapper.setSVGAttrs({
-    'data-type':      'wrapper',
-    'data-id':        id,
-  });
-
-  $outerUI.setSVGAttrs({
-    'data-type': 'outerUI',
-    'data-id': id,
-  });
-
-  $frame.setSVGAttrs({
-    'data-type':      'frame',
-    x:                x,
-    y:                y,
-    width:            width,
-    height:           height,
-    transform:        transform,
-    'data-id':        id,
-  });
-
-  for (let corner of corners) {
-    corner.setSVGAttrs({
-      'data-type':     'corner',
-      'data-id':       id,
-      transform:       transform,
-      width:           sideLength,
-      height:          sideLength,
-    });
-  }
-
-  topLCorner.setSVGAttrs({
-    x: x - sideLength / 2,
-    y: y - sideLength / 2,
-  });
-
-  botLCorner.setSVGAttrs({
-    x: x - sideLength / 2,
-    y: y + height - sideLength / 2,
-  });
-
-  topRCorner.setSVGAttrs({
-    x: x + width - sideLength / 2,
-    y: y - sideLength / 2,
-  });
-
-  botRCorner.setSVGAttrs({
-    x: x + width - sideLength / 2,
-    y: y + height - sideLength / 2,
-  });
-
-  for (let dot of dots) {
-    dot.setSVGAttrs({
-      'data-type':      'dot',
-      'data-id':        id,
-      transform:        transform,
-      r:                radius,
-    });
-  }
-
-  topLDot.setSVGAttrs({
-    cx: x - diameter,
-    cy: y - diameter,
-  });
-
-  botLDot.setSVGAttrs({
-    cx: x - diameter,
-    cy: y + height + diameter,
-  });
-
-  topRDot.setSVGAttrs({
-    cx: x + width + diameter,
-    cy: y - diameter,
-  });
-
-  botRDot.setSVGAttrs({
-    cx: x + width + diameter,
-    cy: y + height + diameter,
-  });
-
-  $outerUI.appendChild($frame);
-  for (let corner of corners) {
-    $outerUI.appendChild(corner);
-  }
-  for (let dot of dots) {
-    $outerUI.appendChild(dot);
-  }
+  const $wrapper = wrapper(node);
+  const $outerUI = outerUI(node);
 
   $wrapper.appendChild($node);
 
-  // append the control points of each path segment:
   if (node.path) {
-    const $innerUI = document.createElementNS(svgns, 'g');
-    $innerUI.setSVGAttrs({
-      'data-type': 'innerUI',
-      'data-id':   id,
-    });
-
-    for (let segment of node.path) {
-      for (let control of segment.controls) {
-        const $control = document.createElementNS(svgns, 'circle');
-        $control.setSVGAttrs({
-          'data-type': 'control',
-          'data-id':   control._id, // Important: each control has individual id
-          transform:   transform,
-          r:           radius * 0.75,
-          cx:          control.x,
-          cy:          control.y,
-        });
-        $innerUI.appendChild($control);
-      }
-    }
+    const $innerUI = innerUI(node);
     $wrapper.appendChild($innerUI);
   }
 
@@ -231,5 +116,190 @@ const wrap = ($node, node) => {
 
   return $wrapper;
 };
+
+const wrapper = (node) => {
+  const $wrapper = document.createElementNS(svgns, 'g');
+
+  $wrapper.setSVGAttrs({
+    'data-type': 'wrapper',
+    'data-id':   node._id,
+  });
+
+  return $wrapper;
+};
+
+const outerUI = (node) => {
+  const $outerUI = document.createElementNS(svgns, 'g');
+
+  $outerUI.setSVGAttrs({
+    'data-type': 'outerUI',
+    'data-id': node._id,
+  });
+
+  const $frame   = frame(node);
+  const $corners = corners(node);
+  const $dots    = dots(node);
+
+  $outerUI.appendChild($frame);
+  for (let corner of $corners) {
+    $outerUI.appendChild(corner);
+  }
+  for (let dot of $dots) {
+    $outerUI.appendChild(dot);
+  }
+
+  return $outerUI;
+};
+
+const corners = (node) => {
+  const $topLCorner = document.createElementNS(svgns, 'rect');
+  const $botLCorner = document.createElementNS(svgns, 'rect');
+  const $topRCorner = document.createElementNS(svgns, 'rect');
+  const $botRCorner = document.createElementNS(svgns, 'rect');
+  const $corners    = [$topLCorner, $botLCorner, $topRCorner, $botRCorner];
+  const length      = scale(node, LENGTHS_IN_PX.cornerSideLength);
+
+  for (let corner of $corners) {
+    corner.setSVGAttrs({
+      'data-type': 'corner',
+      'data-id':   node._id,
+      transform:   node.props.transform,
+      width:       length,
+      height:      length,
+    });
+  }
+
+  $topLCorner.setSVGAttrs({
+    x: node.box.x - length / 2,
+    y: node.box.y - length / 2,
+  });
+
+  $botLCorner.setSVGAttrs({
+    x: node.box.x - length / 2,
+    y: node.box.y + node.box.height - length / 2,
+  });
+
+  $topRCorner.setSVGAttrs({
+    x: node.box.x + node.box.width - length / 2,
+    y: node.box.y - length / 2,
+  });
+
+  $botRCorner.setSVGAttrs({
+    x: node.box.x + node.box.width - length / 2,
+    y: node.box.y + node.box.height - length / 2,
+  });
+
+  return $corners;
+};
+
+const dots = (node) => {
+  const $topLDot  = document.createElementNS(svgns, 'circle');
+  const $botLDot  = document.createElementNS(svgns, 'circle');
+  const $topRDot  = document.createElementNS(svgns, 'circle');
+  const $botRDot  = document.createElementNS(svgns, 'circle');
+  const $dots     = [$topLDot, $botLDot, $topRDot, $botRDot];
+  const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
+
+  for (let $dot of $dots) {
+    $dot.setSVGAttrs({
+      'data-type':      'dot',
+      'data-id':        node._id,
+      transform:        node.props.transform,
+      r:                diameter / 2,
+    });
+  }
+
+  $topLDot.setSVGAttrs({
+    cx: node.box.x - diameter,
+    cy: node.box.y - diameter,
+  });
+
+  $botLDot.setSVGAttrs({
+    cx: node.box.x - diameter,
+    cy: node.box.y + node.box.height + diameter,
+  });
+
+  $topRDot.setSVGAttrs({
+    cx: node.box.x + node.box.width + diameter,
+    cy: node.box.y - diameter,
+  });
+
+  $botRDot.setSVGAttrs({
+    cx: node.box.x + node.box.width + diameter,
+    cy: node.box.y + node.box.height + diameter,
+  });
+
+  return $dots;
+};
+
+const frame = (node) => {
+  const $frame = document.createElementNS(svgns, 'rect');
+
+  $frame.setSVGAttrs({
+    'data-type':  'frame',
+    x:            node.box.x,
+    y:            node.box.y,
+    width:        node.box.width,
+    height:       node.box.height,
+    transform:    node.props.transform,
+    'data-id':    node._id,
+  });
+
+  return $frame;
+};
+
+const innerUI = (node) => {
+  const $innerUI = document.createElementNS(svgns, 'g');
+
+  $innerUI.setSVGAttrs({
+    'data-type': 'innerUI',
+    'data-id':   node._id,
+  });
+
+  const $controls = controls(node);
+
+  for (let $control of $controls) {
+    $innerUI.appendChild($control);
+  }
+
+  return $innerUI;
+};
+
+const controls = (node) => {
+  const $controls = [];
+  const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
+
+  for (let spline of node.path) {
+    for (let segment of spline) {
+
+      $controls.push(control(node, diameter, segment.anchor.x, segment.anchor.y));
+
+      if (segment.handleIn) {
+        $controls.push(control(node, diameter, segment.handleIn.x, segment.handleIn.y));
+      }
+
+      if (segment.handleOut) {
+        $controls.push(control(node, diameter, segment.handleOut.x, segment.handleOut.y));
+      }
+    }
+  }
+
+  return $controls;
+};
+
+const control = (node, diameter, x, y) => {
+  const $control = document.createElementNS(svgns, 'circle');
+
+  $control.setSVGAttrs({
+    'data-type': 'control',
+    'data-id':   control._id,
+    transform:   node.props.transform,
+    r:           diameter / 2,
+    cx:          x,
+    cy:          y,
+  });
+
+  return $control;
+}
 
 export { sceneRenderer };

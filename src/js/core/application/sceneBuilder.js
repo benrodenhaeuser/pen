@@ -1,7 +1,7 @@
-import { Node } from './node.js';
-import { Matrix, Vector } from './matrix.js';
-import { Path } from './path.js'
-import { ClassList } from './classList.js';
+import { Node } from '../domain/node.js';
+import { Matrix, Vector } from '../domain/matrix.js';
+import { Path } from '../domain/path.js'
+import { ClassList } from '../domain/classList.js';
 
 
 // TODO: put in a utility module somewhere?
@@ -19,6 +19,8 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
   }
 };
 
+
+// build a scene graph from svg markup
 const sceneBuilder = {
   createScene(markup) {
     const $svg = new DOMParser()
@@ -49,9 +51,9 @@ const sceneBuilder = {
   },
 
   buildTree($node, node) {
-    // TODO: we take into account nodes of type `svg`, `g` and `path` here
-    // But there may be others! (e.g., clip paths)
-    // TODO: the node-type handling logic here is very confusing!
+    // TODO: the logic here is that we $node may be the svg root, a group
+    // or a shape. If it's a shape, we tag our internal node as path because
+    // we want to store pathData derived from the svg.
     if ($node.tagName === 'svg' || $node.tagName === 'g') {
       this.copyTagName($node, node);
     } else {
@@ -93,7 +95,8 @@ const sceneBuilder = {
     }
     delete node.props.xmlns;
 
-    // $node might already have a transform applied.
+    // TODO: hard to read?
+    // idea: $node might already have a transform applied.
     // in this case, we override our default Matrix.identity():
     if (
       $node.transform &&
@@ -108,47 +111,38 @@ const sceneBuilder = {
       Array.from($node.classList)
     );
 
-    // if we have tagged the node as a path, we need to convert the shape to a path (might be a rect):
+    // TODO: hard to read
+    // what it means is that we have tagged our internal node as 'path'
+    // because we want to create a path from whatever svg shape $node is
     if (node.tag === 'path') {
       this.storePath($node, node);
-      delete node.props.d;
     }
   },
 
-  // TODO: assuming $node is a rectangle or a path for now
-  // add and process 'circle' and other basic shapes here
+  // store whatever shape $node is as a path
   storePath($node, node) {
     const tag = $node.tagName;
     let   pathData;
 
-    if (tag === 'rect') {
-      const x      = Number($node.getSVGAttr('x'));
-      const y      = Number($node.getSVGAttr('y'));
-      const width  = Number($node.getSVGAttr('width'));
-      const height = Number($node.getSVGAttr('height'));
+    switch (tag) {
+      case 'rect':
+        node.path = Path.createFromRect(
+          Number($node.getSVGAttr('x')),
+          Number($node.getSVGAttr('y')),
+          Number($node.getSVGAttr('width')),
+          Number($node.getSVGAttr('height'))
+        );
 
-      delete node.props.x;
-      delete node.props.y;
-      delete node.props.width;
-      delete node.props.height;
+        for (let prop of ['x', 'y', 'width', 'height']) {
+          delete node.props[prop];
+        }
+        break;
 
-      const CLOSE  = 1;
-      const MOVE   = 2;
-      const HLINE  = 4;
-      const VLINE  = 8;
-
-      pathData = [
-        { type: MOVE,  relative: false, x: x, y: y },
-        { type: HLINE, relative: false, x: x + width },
-        { type: VLINE, relative: false, y: y + height },
-        { type: HLINE, relative: false, x: x },
-        { type: CLOSE }
-      ];
-    } else if (tag === 'path') {
-      pathData = $node.getSVGAttr('d');
+      case 'path':
+        node.path = Path.createFromSVGpath($node.getSVGAttr('d'));
+        delete node.props.d;
+        break;
     }
-
-    node.path = Path.create(pathData);
   },
 };
 
