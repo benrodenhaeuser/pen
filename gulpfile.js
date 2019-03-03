@@ -1,23 +1,11 @@
-var gulp   = require('gulp');
-var rollup = require('rollup');
+var gulp    = require('gulp');
+var rollup  = require('rollup');
 var resolve = require('rollup-plugin-node-resolve');
-
-// import resolve from 'rollup-plugin-node-resolve';
-
-// export default {
-//   input: 'src/main.js',
-//   output: {
-//     file: 'bundle.js',
-//     format: 'cjs'
-//   },
-//
-// };
-
 
 gulp.task('rollup', () => {
   return rollup.rollup({
     input: './src/js/app.js',
-    plugins: [ resolve() ]
+    plugins: [resolve()]
   }).then(bundle => {
     return bundle.write({
       file: './dist/js/bundle.js',

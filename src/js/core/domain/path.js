@@ -20,6 +20,9 @@ const Path = {
     return this.create(this.commands(d));
   },
 
+  // TODO: we should not only construct paths from svg path data, but also from
+  //       splines
+
   create(commands) {
     return Object.create(Path).init(commands);
   },
@@ -50,6 +53,10 @@ const Path = {
       .transform(SVGPathDataTransformer.A_TO_C())        // no A (arcs)
       .toAbs()                                           // no relative commands
       .commands;
+  },
+
+  bBox() {
+    // TODO: bounding box of the path
   },
 
   toJSON() {

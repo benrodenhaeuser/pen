@@ -1,5 +1,8 @@
+// build a scene graph from svg markup
+
 import { Node } from '../domain/node.js';
-import { Matrix, Vector } from '../domain/matrix.js';
+import { Matrix } from '../domain/matrix.js';
+import { Vector } from '../domain/vector.js';
 import { Path } from '../domain/path.js'
 import { ClassList } from '../domain/classList.js';
 
@@ -19,8 +22,6 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
   }
 };
 
-
-// build a scene graph from svg markup
 const sceneBuilder = {
   createScene(markup) {
     const $svg = new DOMParser()

@@ -1,3 +1,5 @@
+import { Vector } from './vector.js';
+
 // TODO: put in a utility module somewhere
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -38,6 +40,13 @@ const Matrix = {
       this.m[0][0], this.m[1][0], this.m[0][1],
       this.m[1][1], this.m[0][2], this.m[1][2]
     ];
+  },
+
+  transform(vector) {
+    const column      = Matrix.create([[vector.x], [vector.y], [1]]);
+    const transformed = this.multiply(column).toArray();
+
+    return Vector.create(transformed[0][0], transformed[1][0]);
   },
 
   toArray() {
@@ -100,47 +109,4 @@ const Matrix = {
   },
 };
 
-const Vector = {
-  create(x, y) {
-    return Object.create(Vector).init(x, y);
-  },
-
-  createWithID(x,y) {
-    return Vector.create(x, y).addID();
-  },
-
-  init(x, y) {
-    this.x = x;
-    this.y = y;
-    return this;
-  },
-
-  transform(matrix) {
-    const column      = Matrix.create([[this.x], [this.y], [1]]);
-    const transformed = matrix.multiply(column).toArray();
-
-    return Vector.create(transformed[0][0], transformed[1][0]);
-  },
-
-  add(other) {
-    return Vector.create(this.x + other.x, this.y + other.y);
-  },
-
-  subtract(other) {
-    return Vector.create(this.x - other.x, this.y - other.y);
-  },
-
-  isWithin(rectangle) {
-    return this.x >= rectangle.x &&
-           this.x <= rectangle.x + rectangle.width &&
-           this.y >= rectangle.y &&
-           this.y <= rectangle.y + rectangle.height;
-  },
-
-  addID() {
-    this._id = createID();
-    return this;
-  },
-};
-
-export { Matrix, Vector };
+export { Matrix };

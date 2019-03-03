@@ -1,5 +1,5 @@
 import { Segment } from './segment.js';
-import { Vector } from './matrix.js';
+import { Vector } from './vector.js';
 
 const Spline = {
   create(segments = []) {
@@ -42,6 +42,14 @@ const Spline = {
     }
 
     return segments;
+  },
+
+  curves() {
+    // TODO: Bezier curve representation of spline
+  },
+
+  bbox() {
+    // TODO: bounding box of the spline
   },
 
   toJSON() {

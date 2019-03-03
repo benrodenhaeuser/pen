@@ -1,3 +1,5 @@
+// log is more like a 'history', so the name 'log' is quite confusing
+
 const log = {
   bindEvents(setState) {
     window.addEventListener('popstate', (event) => {

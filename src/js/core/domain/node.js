@@ -1,5 +1,8 @@
-import { Matrix, Vector } from './matrix.js';
+import { Matrix } from './matrix.js';
+import { Vector } from './vector.js';
 import { ClassList } from './classList.js';
+
+// TODO: adapt bounding box code
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -18,6 +21,15 @@ const Node = {
 
     return this;
   },
+
+  // TODO: is using `props` a good idea?
+  // From the "internal" perspective of the scene graph,
+  // this useage does not make any sense.
+  // It would make perhaps more sense to arrange our properties
+  // in the desired way on export.
+
+  // What could be useful, though, is to store svg attributes (if we start from an
+  // existing svg) in props. But this should be called svg-props perhaps?
 
   get defaults() {
     return {

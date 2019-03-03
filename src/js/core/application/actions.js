@@ -1,4 +1,5 @@
-import { Matrix, Vector } from '../domain/matrix.js';
+import { Matrix } from '../domain/matrix.js';
+import { Vector } from '../domain/vector.js';
 
 let aux = {};
 

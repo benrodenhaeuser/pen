@@ -1,4 +1,4 @@
-import { sceneBuilder } from './sceneBuilder.js';
+import { sceneBuilder } from '../domain/sceneBuilder.js';
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
