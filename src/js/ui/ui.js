@@ -178,7 +178,7 @@ const ui = {
   renderFlash(message) {
     const flash = document.createElement('p');
     flash.innerHTML = message;
-    flash.classList.add('flash');
+    flash.classes.add('flash');
     window.setTimeout(() => document.body.appendChild(flash), 500);
     window.setTimeout(() => flash.remove(), 1500);
   },

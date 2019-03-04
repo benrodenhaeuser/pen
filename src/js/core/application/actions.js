@@ -139,7 +139,7 @@ const actions = {
 
     if (target) {
       const toFocus = target.findAncestor((node) => {
-        return node.classList.includes('frontier');
+        return node.classes.includes('frontier');
       });
 
       if (toFocus) {

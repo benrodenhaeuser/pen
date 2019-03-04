@@ -1,6 +1,6 @@
-const ClassList = {
+const Classes = {
   create(classNames = []) {
-    return Object.create(ClassList).init(classNames);
+    return Object.create(Classes).init(classNames);
   },
 
   init(classNames) {
@@ -25,4 +25,4 @@ const ClassList = {
   },
 };
 
-export { ClassList };
+export { Classes };

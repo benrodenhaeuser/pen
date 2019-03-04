@@ -1,7 +1,7 @@
 import { Matrix }    from './matrix.js';
 import { Vector }    from './vector.js';
 import { Rectangle } from './rectangle.js';
-import { ClassList } from './classList.js';
+import { Classes }   from './classes.js';
 
 // TODO: adapt bounding box code
 
@@ -33,7 +33,7 @@ const Node = {
       box:         Rectangle.create(),
       props:       {
         transform: Matrix.identity(),
-        class:     ClassList.create(),
+        class:     Classes.create(),
       },
     };
   },
@@ -88,17 +88,17 @@ const Node = {
 
   get selected() {
     return this.root.findDescendant((node) => {
-      return node.classList.includes('selected');
+      return node.classes.includes('selected');
     });
   },
 
   isSelected() {
-    return this.classList.includes('selected');
+    return this.classes.includes('selected');
   },
 
   get frontier() {
     return this.root.findDescendants((node) => {
-      return node.classList.includes('frontier');
+      return node.classes.includes('frontier');
     });
   },
 
@@ -148,11 +148,11 @@ const Node = {
     return resultList;
   },
 
-  get classList() {
+  get classes() {
     return this.props.class;
   },
 
-  set classList(value) {
+  set classes(value) {
     this.props.class = value;
   },
 
@@ -240,62 +240,62 @@ const Node = {
     this.removeFrontier();
 
     if (this.selected) {
-      this.selected.classList.add('frontier');
+      this.selected.classes.add('frontier');
 
       let node = this.selected;
 
       do {
         for (let sibling of node.siblings) {
-          sibling.classList.add('frontier');
+          sibling.classes.add('frontier');
         }
         node = node.parent;
       } while (node.parent !== null);
     } else {
       for (let child of this.root.children) {
-        child.classList.add('frontier');
+        child.classes.add('frontier');
       }
     }
   },
 
   removeFrontier() {
     const frontier = this.root.findDescendants((node) => {
-      return node.classList.includes('frontier');
+      return node.classes.includes('frontier');
     });
 
     for (let node of frontier) {
-      node.classList.remove('frontier');
+      node.classes.remove('frontier');
     }
   },
 
   focus() {
-    this.classList.add('focus');
+    this.classes.add('focus');
   },
 
   unfocusAll() {
     const focussed = this.root.findDescendants((node) => {
-      return node.classList.includes('focus');
+      return node.classes.includes('focus');
     });
 
     for (let node of focussed) {
-      node.classList.remove('focus');
+      node.classes.remove('focus');
     }
   },
 
   select() {
     this.deselectAll();
-    this.classList.add('selected');
+    this.classes.add('selected');
     this.setFrontier();
   },
 
   edit() {
     this.deselectAll();
     this.setFrontier();
-    this.classList.add('editing');
+    this.classes.add('editing');
   },
 
   deselectAll() {
     if (this.selected) {
-      this.selected.classList.remove('selected');
+      this.selected.classes.remove('selected');
     }
     this.setFrontier();
   },

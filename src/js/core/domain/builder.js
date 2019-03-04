@@ -2,7 +2,7 @@ import { Node }      from './node.js';
 import { Matrix }    from './matrix.js';
 import { Vector }    from './vector.js';
 import { Rectangle } from './rectangle.js';
-import { ClassList } from './classList.js';
+import { Classes }   from './classes.js';
 import { Path }      from './path.js'
 
 // TODO: put in a utility module somewhere?
@@ -103,7 +103,7 @@ const builder = {
       node.transform = Matrix.createFromDOMMatrix($matrix);
     }
 
-    node.classList = ClassList.create(
+    node.classes = Classes.create(
       Array.from($node.classList)
     );
 

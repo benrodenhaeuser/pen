@@ -299,7 +299,7 @@
 
       if (target) {
         const toFocus = target.findAncestor((node) => {
-          return node.classList.includes('frontier');
+          return node.classes.includes('frontier');
         });
 
         if (toFocus) {
@@ -481,9 +481,9 @@
 
   };
 
-  const ClassList = {
+  const Classes = {
     create(classNames = []) {
-      return Object.create(ClassList).init(classNames);
+      return Object.create(Classes).init(classNames);
     },
 
     init(classNames) {
@@ -538,7 +538,7 @@
         box:         Rectangle.create(),
         props:       {
           transform: Matrix.identity(),
-          class:     ClassList.create(),
+          class:     Classes.create(),
         },
       };
     },
@@ -593,17 +593,17 @@
 
     get selected() {
       return this.root.findDescendant((node) => {
-        return node.classList.includes('selected');
+        return node.classes.includes('selected');
       });
     },
 
     isSelected() {
-      return this.classList.includes('selected');
+      return this.classes.includes('selected');
     },
 
     get frontier() {
       return this.root.findDescendants((node) => {
-        return node.classList.includes('frontier');
+        return node.classes.includes('frontier');
       });
     },
 
@@ -653,11 +653,11 @@
       return resultList;
     },
 
-    get classList() {
+    get classes() {
       return this.props.class;
     },
 
-    set classList(value) {
+    set classes(value) {
       this.props.class = value;
     },
 
@@ -745,62 +745,62 @@
       this.removeFrontier();
 
       if (this.selected) {
-        this.selected.classList.add('frontier');
+        this.selected.classes.add('frontier');
 
         let node = this.selected;
 
         do {
           for (let sibling of node.siblings) {
-            sibling.classList.add('frontier');
+            sibling.classes.add('frontier');
           }
           node = node.parent;
         } while (node.parent !== null);
       } else {
         for (let child of this.root.children) {
-          child.classList.add('frontier');
+          child.classes.add('frontier');
         }
       }
     },
 
     removeFrontier() {
       const frontier = this.root.findDescendants((node) => {
-        return node.classList.includes('frontier');
+        return node.classes.includes('frontier');
       });
 
       for (let node of frontier) {
-        node.classList.remove('frontier');
+        node.classes.remove('frontier');
       }
     },
 
     focus() {
-      this.classList.add('focus');
+      this.classes.add('focus');
     },
 
     unfocusAll() {
       const focussed = this.root.findDescendants((node) => {
-        return node.classList.includes('focus');
+        return node.classes.includes('focus');
       });
 
       for (let node of focussed) {
-        node.classList.remove('focus');
+        node.classes.remove('focus');
       }
     },
 
     select() {
       this.deselectAll();
-      this.classList.add('selected');
+      this.classes.add('selected');
       this.setFrontier();
     },
 
     edit() {
       this.deselectAll();
       this.setFrontier();
-      this.classList.add('editing');
+      this.classes.add('editing');
     },
 
     deselectAll() {
       if (this.selected) {
-        this.selected.classList.remove('selected');
+        this.selected.classes.remove('selected');
       }
       this.setFrontier();
     },
@@ -833,9 +833,1802 @@
     },
   };
 
-  // Bezier.js library by Pomax, https://github.com/Pomax/bezierjs
+  /**
+    A javascript Bezier curve library by Pomax.
+    Based on http://pomax.github.io/bezierinfo
+    This code is MIT licensed.
+  **/
 
-  var Bezier=function(t){function r(i){if(n[i])return n[i].exports;var e=n[i]={exports:{},id:i,loaded:!1};return t[i].call(e.exports,e,e.exports,r),e.loaded=!0,e.exports}var n={};return r.m=t,r.c=n,r.p="",r(0)}([function(t,r,n){t.exports=n(1);},function(t,r,n){var i="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol?"symbol":typeof t};!function(){function r(t,r,n,i,e){"undefined"==typeof e&&(e=.5);var o=l.projectionratio(e,t),s=1-o,u={x:o*r.x+s*i.x,y:o*r.y+s*i.y},a=l.abcratio(e,t),f={x:n.x+(n.x-u.x)/a,y:n.y+(n.y-u.y)/a};return {A:f,B:n,C:u}}var e=Math.abs,o=Math.min,s=Math.max,u=Math.cos,a=Math.sin,f=Math.acos,c=Math.sqrt,h=Math.PI,x={x:0,y:0,z:0},l=n(2),y=n(3),p=function(t){var r=t&&t.forEach?t:[].slice.call(arguments),n=!1;if("object"===i(r[0])){n=r.length;var o=[];r.forEach(function(t){["x","y","z"].forEach(function(r){"undefined"!=typeof t[r]&&o.push(t[r]);});}),r=o;}var s=!1,u=r.length;if(n){if(n>4){if(1!==arguments.length)throw new Error("Only new Bezier(point[]) is accepted for 4th and higher order curves");s=!0;}}else if(6!==u&&8!==u&&9!==u&&12!==u&&1!==arguments.length)throw new Error("Only new Bezier(point[]) is accepted for 4th and higher order curves");var a=!s&&(9===u||12===u)||t&&t[0]&&"undefined"!=typeof t[0].z;this._3d=a;for(var f=[],c=0,h=a?3:2;u>c;c+=h){var x={x:r[c],y:r[c+1]};a&&(x.z=r[c+2]),f.push(x);}this.order=f.length-1,this.points=f;var y=["x","y"];a&&y.push("z"),this.dims=y,this.dimlen=y.length,function(t){for(var r=t.order,n=t.points,i=l.align(n,{p1:n[0],p2:n[r]}),o=0;o<i.length;o++)if(e(i[o].y)>1e-4)return void(t._linear=!1);t._linear=!0;}(this),this._t1=0,this._t2=1,this.update();},v=n(4);p.SVGtoBeziers=function(t){return v(p,t)},p.quadraticFromPoints=function(t,n,i,e){if("undefined"==typeof e&&(e=.5),0===e)return new p(n,n,i);if(1===e)return new p(t,n,n);var o=r(2,t,n,i,e);return new p(t,o.A,i)},p.cubicFromPoints=function(t,n,i,e,o){"undefined"==typeof e&&(e=.5);var s=r(3,t,n,i,e);"undefined"==typeof o&&(o=l.dist(n,s.C));var u=o*(1-e)/e,a=l.dist(t,i),f=(i.x-t.x)/a,c=(i.y-t.y)/a,h=o*f,x=o*c,y=u*f,v=u*c,d={x:n.x-h,y:n.y-x},m={x:n.x+y,y:n.y+v},g=s.A,z={x:g.x+(d.x-g.x)/(1-e),y:g.y+(d.y-g.y)/(1-e)},b={x:g.x+(m.x-g.x)/e,y:g.y+(m.y-g.y)/e},_={x:t.x+(z.x-t.x)/e,y:t.y+(z.y-t.y)/e},w={x:i.x+(b.x-i.x)/(1-e),y:i.y+(b.y-i.y)/(1-e)};return new p(t,_,w,i)};var d=function(){return l};p.getUtils=d,p.PolyBezier=y,p.prototype={getUtils:d,valueOf:function(){return this.toString()},toString:function(){return l.pointsToString(this.points)},toSVG:function(t){if(this._3d)return !1;for(var r=this.points,n=r[0].x,i=r[0].y,e=["M",n,i,2===this.order?"Q":"C"],o=1,s=r.length;s>o;o++)e.push(r[o].x),e.push(r[o].y);return e.join(" ")},update:function(){this._lut=[],this.dpoints=l.derive(this.points,this._3d),this.computedirection();},computedirection:function(){var t=this.points,r=l.angle(t[0],t[this.order],t[1]);this.clockwise=r>0;},length:function(){return l.length(this.derivative.bind(this))},_lut:[],getLUT:function(t){if(t=t||100,this._lut.length===t)return this._lut;this._lut=[],t--;for(var r=0;t>=r;r++)this._lut.push(this.compute(r/t));return this._lut},on:function(t,r){r=r||5;for(var n,i=this.getLUT(),e=[],o=0,s=0;s<i.length;s++)n=i[s],l.dist(n,t)<r&&(e.push(n),o+=s/i.length);return e.length?o/=e.length:!1},project:function(t){var r=this.getLUT(),n=r.length-1,i=l.closest(r,t),e=i.mdist,o=i.mpos;if(0===o||o===n){var s=o/n,u=this.compute(s);return u.t=s,u.d=e,u}var a,s,f,c,h=(o-1)/n,x=(o+1)/n,y=.1/n;for(e+=1,s=h,a=s;x+y>s;s+=y)f=this.compute(s),c=l.dist(t,f),e>c&&(e=c,a=s);return f=this.compute(a),f.t=a,f.d=e,f},get:function(t){return this.compute(t)},point:function(t){return this.points[t]},compute:function(t){return l.compute(t,this.points,this._3d)},raise:function(){for(var t,r,n,i=this.points,e=[i[0]],o=i.length,t=1;o>t;t++)r=i[t],n=i[t-1],e[t]={x:(o-t)/o*r.x+t/o*n.x,y:(o-t)/o*r.y+t/o*n.y};return e[o]=i[o-1],new p(e)},derivative:function(t){var r,n,i=1-t,e=0,o=this.dpoints[0];2===this.order&&(o=[o[0],o[1],x],r=i,n=t),3===this.order&&(r=i*i,n=i*t*2,e=t*t);var s={x:r*o[0].x+n*o[1].x+e*o[2].x,y:r*o[0].y+n*o[1].y+e*o[2].y};return this._3d&&(s.z=r*o[0].z+n*o[1].z+e*o[2].z),s},curvature:function(t){return l.curvature(t,this.points,this._3d)},inflections:function(){return l.inflections(this.points)},normal:function(t){return this._3d?this.__normal3(t):this.__normal2(t)},__normal2:function(t){var r=this.derivative(t),n=c(r.x*r.x+r.y*r.y);return {x:-r.y/n,y:r.x/n}},__normal3:function(t){var r=this.derivative(t),n=this.derivative(t+.01),i=c(r.x*r.x+r.y*r.y+r.z*r.z),e=c(n.x*n.x+n.y*n.y+n.z*n.z);r.x/=i,r.y/=i,r.z/=i,n.x/=e,n.y/=e,n.z/=e;var o={x:n.y*r.z-n.z*r.y,y:n.z*r.x-n.x*r.z,z:n.x*r.y-n.y*r.x},s=c(o.x*o.x+o.y*o.y+o.z*o.z);o.x/=s,o.y/=s,o.z/=s;var u=[o.x*o.x,o.x*o.y-o.z,o.x*o.z+o.y,o.x*o.y+o.z,o.y*o.y,o.y*o.z-o.x,o.x*o.z-o.y,o.y*o.z+o.x,o.z*o.z],a={x:u[0]*r.x+u[1]*r.y+u[2]*r.z,y:u[3]*r.x+u[4]*r.y+u[5]*r.z,z:u[6]*r.x+u[7]*r.y+u[8]*r.z};return a},hull:function(t){var r,n=this.points,i=[],e=[],o=0,s=0,u=0;for(e[o++]=n[0],e[o++]=n[1],e[o++]=n[2],3===this.order&&(e[o++]=n[3]);n.length>1;){for(i=[],s=0,u=n.length-1;u>s;s++)r=l.lerp(t,n[s],n[s+1]),e[o++]=r,i.push(r);n=i;}return e},split:function(t,r){if(0===t&&r)return this.split(r).left;if(1===r)return this.split(t).right;var n=this.hull(t),i={left:new p(2===this.order?[n[0],n[3],n[5]]:[n[0],n[4],n[7],n[9]]),right:new p(2===this.order?[n[5],n[4],n[2]]:[n[9],n[8],n[6],n[3]]),span:n};if(i.left._t1=l.map(0,0,1,this._t1,this._t2),i.left._t2=l.map(t,0,1,this._t1,this._t2),i.right._t1=l.map(t,0,1,this._t1,this._t2),i.right._t2=l.map(1,0,1,this._t1,this._t2),!r)return i;r=l.map(r,t,1,0,1);var e=i.right.split(r);return e.left},extrema:function(){var t,r,n=this.dims,i={},e=[];return n.forEach(function(n){r=function(t){return t[n]},t=this.dpoints[0].map(r),i[n]=l.droots(t),3===this.order&&(t=this.dpoints[1].map(r),i[n]=i[n].concat(l.droots(t))),i[n]=i[n].filter(function(t){return t>=0&&1>=t}),e=e.concat(i[n].sort(l.numberSort));}.bind(this)),e=e.sort(l.numberSort).filter(function(t,r){return e.indexOf(t)===r}),i.values=e,i},bbox:function(){var t=this.extrema(),r={};return this.dims.forEach(function(n){r[n]=l.getminmax(this,n,t[n]);}.bind(this)),r},overlaps:function(t){var r=this.bbox(),n=t.bbox();return l.bboxoverlap(r,n)},offset:function(t,r){if("undefined"!=typeof r){var n=this.get(t),i=this.normal(t),e={c:n,n:i,x:n.x+i.x*r,y:n.y+i.y*r};return this._3d&&(e.z=n.z+i.z*r),e}if(this._linear){var o=this.normal(0),s=this.points.map(function(r){var n={x:r.x+t*o.x,y:r.y+t*o.y};return r.z&&i.z&&(n.z=r.z+t*o.z),n});return [new p(s)]}var u=this.reduce();return u.map(function(r){return r.scale(t)})},simple:function(){if(3===this.order){var t=l.angle(this.points[0],this.points[3],this.points[1]),r=l.angle(this.points[0],this.points[3],this.points[2]);if(t>0&&0>r||0>t&&r>0)return !1}var n=this.normal(0),i=this.normal(1),o=n.x*i.x+n.y*i.y;this._3d&&(o+=n.z*i.z);var s=e(f(o));return h/3>s},reduce:function(){var t,r,n=0,i=0,o=.01,s=[],u=[],a=this.extrema().values;for(-1===a.indexOf(0)&&(a=[0].concat(a)),-1===a.indexOf(1)&&a.push(1),n=a[0],t=1;t<a.length;t++)i=a[t],r=this.split(n,i),r._t1=n,r._t2=i,s.push(r),n=i;return s.forEach(function(t){for(n=0,i=0;1>=i;)for(i=n+o;1+o>=i;i+=o)if(r=t.split(n,i),!r.simple()){if(i-=o,e(n-i)<o)return [];r=t.split(n,i),r._t1=l.map(n,0,1,t._t1,t._t2),r._t2=l.map(i,0,1,t._t1,t._t2),u.push(r),n=i;break}1>n&&(r=t.split(n,1),r._t1=l.map(n,0,1,t._t1,t._t2),r._t2=t._t2,u.push(r));}),u},scale:function(t){var r=this.order,n=!1;if("function"==typeof t&&(n=t),n&&2===r)return this.raise().scale(n);var i=this.clockwise,e=n?n(0):t,o=n?n(1):t,s=[this.offset(0,10),this.offset(1,10)],u=l.lli4(s[0],s[0].c,s[1],s[1].c);if(!u)throw new Error("cannot scale this curve. Try reducing it first.");var a=this.points,f=[];return [0,1].forEach(function(t){var n=f[t*r]=l.copy(a[t*r]);n.x+=(t?o:e)*s[t].n.x,n.y+=(t?o:e)*s[t].n.y;}.bind(this)),n?([0,1].forEach(function(e){if(2!==this.order||!e){var o=a[e+1],s={x:o.x-u.x,y:o.y-u.y},h=n?n((e+1)/r):t;n&&!i&&(h=-h);var x=c(s.x*s.x+s.y*s.y);s.x/=x,s.y/=x,f[e+1]={x:o.x+h*s.x,y:o.y+h*s.y};}}.bind(this)),new p(f)):([0,1].forEach(function(t){if(2!==this.order||!t){var n=f[t*r],i=this.derivative(t),e={x:n.x+i.x,y:n.y+i.y};f[t+1]=l.lli4(n,e,u,a[t+1]);}}.bind(this)),new p(f))},outline:function(t,r,n,i){function e(t,r,n,i,e){return function(o){var s=i/n,u=(i+e)/n,a=r-t;return l.map(o,0,1,t+s*a,t+u*a)}}r="undefined"==typeof r?t:r;var o,s=this.reduce(),u=s.length,a=[],f=[],c=0,h=this.length(),x="undefined"!=typeof n&&"undefined"!=typeof i;s.forEach(function(o){_=o.length(),x?(a.push(o.scale(e(t,n,h,c,_))),f.push(o.scale(e(-r,-i,h,c,_)))):(a.push(o.scale(t)),f.push(o.scale(-r))),c+=_;}),f=f.map(function(t){return o=t.points,o[3]?t.points=[o[3],o[2],o[1],o[0]]:t.points=[o[2],o[1],o[0]],t}).reverse();var p=a[0].points[0],v=a[u-1].points[a[u-1].points.length-1],d=f[u-1].points[f[u-1].points.length-1],m=f[0].points[0],g=l.makeline(d,p),z=l.makeline(v,m),b=[g].concat(a).concat([z]).concat(f),_=b.length;return new y(b)},outlineshapes:function(t,r,n){r=r||t;for(var i=this.outline(t,r).curves,e=[],o=1,s=i.length;s/2>o;o++){var u=l.makeshape(i[o],i[s-o],n);u.startcap.virtual=o>1,u.endcap.virtual=s/2-1>o,e.push(u);}return e},intersects:function(t,r){return t?t.p1&&t.p2?this.lineIntersects(t):(t instanceof p&&(t=t.reduce()),this.curveintersects(this.reduce(),t,r)):this.selfintersects(r)},lineIntersects:function(t){var r=o(t.p1.x,t.p2.x),n=o(t.p1.y,t.p2.y),i=s(t.p1.x,t.p2.x),e=s(t.p1.y,t.p2.y),u=this;return l.roots(this.points,t).filter(function(t){var o=u.get(t);return l.between(o.x,r,i)&&l.between(o.y,n,e)})},selfintersects:function(t){var r,n,i,e,o=this.reduce(),s=o.length-2,u=[];for(r=0;s>r;r++)i=o.slice(r,r+1),e=o.slice(r+2),n=this.curveintersects(i,e,t),u=u.concat(n);return u},curveintersects:function(t,r,n){var i=[];t.forEach(function(t){r.forEach(function(r){t.overlaps(r)&&i.push({left:t,right:r});});});var e=[];return i.forEach(function(t){var r=l.pairiteration(t.left,t.right,n);r.length>0&&(e=e.concat(r));}),e},arcs:function(t){t=t||.5;var r=[];return this._iterate(t,r)},_error:function(t,r,n,i){var o=(i-n)/4,s=this.get(n+o),u=this.get(i-o),a=l.dist(t,r),f=l.dist(t,s),c=l.dist(t,u);return e(f-a)+e(c-a)},_iterate:function(t,r){var n,i=0,e=1;do{n=0,e=1;var o,s,f,c,h,x=this.get(i),y=!1,p=!1,v=e,d=1;do{p=y,c=f,v=(i+e)/2,o=this.get(v),s=this.get(e),f=l.getccenter(x,o,s),f.interval={start:i,end:e};var g=this._error(f,x,i,e);if(y=t>=g,h=p&&!y,h||(d=e),y){if(e>=1){if(f.interval.end=d=1,c=f,e>1){var z={x:f.x+f.r*u(f.e),y:f.y+f.r*a(f.e)};f.e+=l.angle({x:f.x,y:f.y},z,this.get(1));}break}e+=(e-i)/2;}else e=v;}while(!h&&n++<100);if(n>=100)break;c=c?c:f,r.push(c),i=d;}while(1>e);return r}},t.exports=p;}();},function(t,r,n){!function(){var r=Math.abs,i=Math.cos,e=Math.sin,o=Math.acos,s=Math.atan2,u=Math.sqrt,a=Math.pow,f=function(t){return 0>t?-a(-t,1/3):a(t,1/3)},c=Math.PI,h=2*c,x=c/2,l=1e-6,y=Number.MAX_SAFE_INTEGER||9007199254740991,p=Number.MIN_SAFE_INTEGER||-9007199254740991,v={x:0,y:0,z:0},d={Tvalues:[-.06405689286260563,.06405689286260563,-.1911188674736163,.1911188674736163,-.3150426796961634,.3150426796961634,-.4337935076260451,.4337935076260451,-.5454214713888396,.5454214713888396,-.6480936519369755,.6480936519369755,-.7401241915785544,.7401241915785544,-.820001985973903,.820001985973903,-.8864155270044011,.8864155270044011,-.9382745520027328,.9382745520027328,-.9747285559713095,.9747285559713095,-.9951872199970213,.9951872199970213],Cvalues:[.12793819534675216,.12793819534675216,.1258374563468283,.1258374563468283,.12167047292780339,.12167047292780339,.1155056680537256,.1155056680537256,.10744427011596563,.10744427011596563,.09761865210411388,.09761865210411388,.08619016153195327,.08619016153195327,.0733464814110803,.0733464814110803,.05929858491543678,.05929858491543678,.04427743881741981,.04427743881741981,.028531388628933663,.028531388628933663,.0123412297999872,.0123412297999872],arcfn:function(t,r){var n=r(t),i=n.x*n.x+n.y*n.y;return "undefined"!=typeof n.z&&(i+=n.z*n.z),u(i)},compute:function(t,r,n){if(0===t)return r[0];var i=r.length-1;if(1===t)return r[i];var e=r,o=1-t;if(0===i)return r[0];if(1===i)return x={x:o*e[0].x+t*e[1].x,y:o*e[0].y+t*e[1].y},n&&(x.z=o*e[0].z+t*e[1].z),x;if(4>i){var s,u,a,f=o*o,c=t*t,h=0;2===i?(e=[e[0],e[1],e[2],v],s=f,u=o*t*2,a=c):3===i&&(s=f*o,u=f*t*3,a=o*c*3,h=t*c);var x={x:s*e[0].x+u*e[1].x+a*e[2].x+h*e[3].x,y:s*e[0].y+u*e[1].y+a*e[2].y+h*e[3].y};return n&&(x.z=s*e[0].z+u*e[1].z+a*e[2].z+h*e[3].z),x}for(var l=JSON.parse(JSON.stringify(r));l.length>1;){for(var y=0;y<l.length-1;y++)l[y]={x:l[y].x+(l[y+1].x-l[y].x)*t,y:l[y].y+(l[y+1].y-l[y].y)*t},"undefined"!=typeof l[y].z&&(l[y]=l[y].z+(l[y+1].z-l[y].z)*t);l.splice(l.length-1,1);}return l[0]},derive:function(t,r){for(var n=[],i=t,e=i.length,o=e-1;e>1;e--,o--){for(var s,u=[],a=0;o>a;a++)s={x:o*(i[a+1].x-i[a].x),y:o*(i[a+1].y-i[a].y)},r&&(s.z=o*(i[a+1].z-i[a].z)),u.push(s);n.push(u),i=u;}return n},between:function(t,r,n){return t>=r&&n>=t||d.approximately(t,r)||d.approximately(t,n)},approximately:function(t,n,i){return r(t-n)<=(i||l)},length:function(t){var r,n,i=.5,e=0,o=d.Tvalues.length;for(r=0;o>r;r++)n=i*d.Tvalues[r]+i,e+=d.Cvalues[r]*d.arcfn(n,t);return i*e},map:function(t,r,n,i,e){var o=n-r,s=e-i,u=t-r,a=u/o;return i+s*a},lerp:function(t,r,n){var i={x:r.x+t*(n.x-r.x),y:r.y+t*(n.y-r.y)};return r.z&&n.z&&(i.z=r.z+t*(n.z-r.z)),i},pointToString:function(t){var r=t.x+"/"+t.y;return "undefined"!=typeof t.z&&(r+="/"+t.z),r},pointsToString:function(t){return "["+t.map(d.pointToString).join(", ")+"]"},copy:function(t){return JSON.parse(JSON.stringify(t))},angle:function(t,r,n){var i=r.x-t.x,e=r.y-t.y,o=n.x-t.x,u=n.y-t.y,a=i*u-e*o,f=i*o+e*u;return s(a,f)},round:function(t,r){var n=""+t,i=n.indexOf(".");return parseFloat(n.substring(0,i+1+r))},dist:function(t,r){var n=t.x-r.x,i=t.y-r.y;return u(n*n+i*i)},closest:function(t,r){var n,i,e=a(2,63);return t.forEach(function(t,o){i=d.dist(r,t),e>i&&(e=i,n=o);}),{mdist:e,mpos:n}},abcratio:function(t,n){if(2!==n&&3!==n)return !1;if("undefined"==typeof t)t=.5;else if(0===t||1===t)return t;var i=a(t,n)+a(1-t,n),e=i-1;return r(e/i)},projectionratio:function(t,r){if(2!==r&&3!==r)return !1;if("undefined"==typeof t)t=.5;else if(0===t||1===t)return t;var n=a(1-t,r),i=a(t,r)+n;return n/i},lli8:function(t,r,n,i,e,o,s,u){var a=(t*i-r*n)*(e-s)-(t-n)*(e*u-o*s),f=(t*i-r*n)*(o-u)-(r-i)*(e*u-o*s),c=(t-n)*(o-u)-(r-i)*(e-s);return 0==c?!1:{x:a/c,y:f/c}},lli4:function(t,r,n,i){var e=t.x,o=t.y,s=r.x,u=r.y,a=n.x,f=n.y,c=i.x,h=i.y;return d.lli8(e,o,s,u,a,f,c,h)},lli:function(t,r){return d.lli4(t,t.c,r,r.c)},makeline:function(t,r){var i=n(1),e=t.x,o=t.y,s=r.x,u=r.y,a=(s-e)/3,f=(u-o)/3;return new i(e,o,e+a,o+f,e+2*a,o+2*f,s,u)},findbbox:function(t){var r=y,n=y,i=p,e=p;return t.forEach(function(t){var o=t.bbox();r>o.x.min&&(r=o.x.min),n>o.y.min&&(n=o.y.min),i<o.x.max&&(i=o.x.max),e<o.y.max&&(e=o.y.max);}),{x:{min:r,mid:(r+i)/2,max:i,size:i-r},y:{min:n,mid:(n+e)/2,max:e,size:e-n}}},shapeintersections:function(t,r,n,i,e){if(!d.bboxoverlap(r,i))return [];var o=[],s=[t.startcap,t.forward,t.back,t.endcap],u=[n.startcap,n.forward,n.back,n.endcap];return s.forEach(function(r){r.virtual||u.forEach(function(i){if(!i.virtual){var s=r.intersects(i,e);s.length>0&&(s.c1=r,s.c2=i,s.s1=t,s.s2=n,o.push(s));}});}),o},makeshape:function(t,r,n){var i=r.points.length,e=t.points.length,o=d.makeline(r.points[i-1],t.points[0]),s=d.makeline(t.points[e-1],r.points[0]),u={startcap:o,forward:t,back:r,endcap:s,bbox:d.findbbox([o,t,r,s])},a=d;return u.intersections=function(t){return a.shapeintersections(u,u.bbox,t,t.bbox,n)},u},getminmax:function(t,r,n){if(!n)return {min:0,max:0};var i,e,o=y,s=p;-1===n.indexOf(0)&&(n=[0].concat(n)),-1===n.indexOf(1)&&n.push(1);for(var u=0,a=n.length;a>u;u++)i=n[u],e=t.get(i),e[r]<o&&(o=e[r]),e[r]>s&&(s=e[r]);return {min:o,mid:(o+s)/2,max:s,size:s-o}},align:function(t,r){var n=r.p1.x,o=r.p1.y,u=-s(r.p2.y-o,r.p2.x-n),a=function(t){return {x:(t.x-n)*i(u)-(t.y-o)*e(u),y:(t.x-n)*e(u)+(t.y-o)*i(u)}};return t.map(a)},roots:function(t,r){r=r||{p1:{x:0,y:0},p2:{x:1,y:0}};var n=t.length-1,e=d.align(t,r),s=function(t){return t>=0&&1>=t};if(2===n){var a=e[0].y,c=e[1].y,x=e[2].y,l=a-2*c+x;if(0!==l){var y=-u(c*c-a*x),p=-a+c,v=-(y+p)/l,m=-(-y+p)/l;return [v,m].filter(s)}return c!==x&&0===l?[(2*c-x)/(2*c-2*x)].filter(s):[]}var g=e[0].y,z=e[1].y,b=e[2].y,_=e[3].y,l=-g+3*z-3*b+_,a=3*g-6*z+3*b,c=-3*g+3*z,x=g;if(d.approximately(l,0)){if(d.approximately(a,0))return d.approximately(c,0)?[]:[-x/c].filter(s);var w=u(c*c-4*a*x),E=2*a;return [(w-c)/E,(-c-w)/E].filter(s)}a/=l,c/=l,x/=l;var M,v,S,k,j,e=(3*c-a*a)/3,O=e/3,w=(2*a*a*a-9*a*c+27*x)/27,T=w/2,C=T*T+O*O*O;if(0>C){var L=-e/3,N=L*L*L,A=u(N),B=-w/(2*A),F=-1>B?-1:B>1?1:B,I=o(F),q=f(A),P=2*q;return S=P*i(I/3)-a/3,k=P*i((I+h)/3)-a/3,j=P*i((I+2*h)/3)-a/3,[S,k,j].filter(s)}if(0===C)return M=0>T?f(-T):-f(T),S=2*M-a/3,k=-M-a/3,[S,k].filter(s);var Q=u(C);return M=f(-T+Q),v=f(T+Q),[M-v-a/3].filter(s)},droots:function(t){if(3===t.length){var r=t[0],n=t[1],i=t[2],e=r-2*n+i;if(0!==e){var o=-u(n*n-r*i),s=-r+n,a=-(o+s)/e,f=-(-o+s)/e;return [a,f]}return n!==i&&0===e?[(2*n-i)/(2*(n-i))]:[]}if(2===t.length){var r=t[0],n=t[1];return r!==n?[r/(r-n)]:[]}},curvature:function(t,r,n){var i,e,o=d.derive(r),s=o[0],f=o[1],c=d.compute(t,s),h=d.compute(t,f);return n?(i=u(a(c.y*h.z-h.y*c.z,2)+a(c.z*h.x-h.z*c.x,2)+a(c.x*h.y-h.x*c.y,2)),e=a(c.x*c.x+c.y*c.y+c.z*c.z,2/3)):(i=c.x*h.y-c.y*h.x,e=a(c.x*c.x+c.y*c.y,2/3)),0===i||0===e?{k:0,r:0}:{k:i/e,r:e/i}},inflections:function(t){if(t.length<4)return [];var r=d.align(t,{p1:t[0],p2:t.slice(-1)[0]}),n=r[2].x*r[1].y,i=r[3].x*r[1].y,e=r[1].x*r[2].y,o=r[3].x*r[2].y,s=18*(-3*n+2*i+3*e-o),u=18*(3*n-i-3*e),a=18*(e-n);if(d.approximately(s,0)){if(!d.approximately(u,0)){var f=-a/u;if(f>=0&&1>=f)return [f]}return []}var c=u*u-4*s*a,h=Math.sqrt(c),o=2*s;return d.approximately(o,0)?[]:[(h-u)/o,-(u+h)/o].filter(function(t){return t>=0&&1>=t})},bboxoverlap:function(t,n){var i,e,o,s,u,a=["x","y"],f=a.length;for(i=0;f>i;i++)if(e=a[i],o=t[e].mid,s=n[e].mid,u=(t[e].size+n[e].size)/2,r(o-s)>=u)return !1;return !0},expandbox:function(t,r){r.x.min<t.x.min&&(t.x.min=r.x.min),r.y.min<t.y.min&&(t.y.min=r.y.min),r.z&&r.z.min<t.z.min&&(t.z.min=r.z.min),r.x.max>t.x.max&&(t.x.max=r.x.max),r.y.max>t.y.max&&(t.y.max=r.y.max),r.z&&r.z.max>t.z.max&&(t.z.max=r.z.max),t.x.mid=(t.x.min+t.x.max)/2,t.y.mid=(t.y.min+t.y.max)/2,t.z&&(t.z.mid=(t.z.min+t.z.max)/2),t.x.size=t.x.max-t.x.min,t.y.size=t.y.max-t.y.min,t.z&&(t.z.size=t.z.max-t.z.min);},pairiteration:function(t,r,n){var i=t.bbox(),e=r.bbox(),o=1e5,s=n||.5;if(i.x.size+i.y.size<s&&e.x.size+e.y.size<s)return [(o*(t._t1+t._t2)/2|0)/o+"/"+(o*(r._t1+r._t2)/2|0)/o];var u=t.split(.5),a=r.split(.5),f=[{left:u.left,right:a.left},{left:u.left,right:a.right},{left:u.right,right:a.right},{left:u.right,right:a.left}];f=f.filter(function(t){return d.bboxoverlap(t.left.bbox(),t.right.bbox())});var c=[];return 0===f.length?c:(f.forEach(function(t){c=c.concat(d.pairiteration(t.left,t.right,s));}),c=c.filter(function(t,r){return c.indexOf(t)===r}))},getccenter:function(t,r,n){var o,u=r.x-t.x,a=r.y-t.y,f=n.x-r.x,c=n.y-r.y,l=u*i(x)-a*e(x),y=u*e(x)+a*i(x),p=f*i(x)-c*e(x),v=f*e(x)+c*i(x),m=(t.x+r.x)/2,g=(t.y+r.y)/2,z=(r.x+n.x)/2,b=(r.y+n.y)/2,_=m+l,w=g+y,E=z+p,M=b+v,S=d.lli8(m,g,_,w,z,b,E,M),k=d.dist(S,t),j=s(t.y-S.y,t.x-S.x),O=s(r.y-S.y,r.x-S.x),T=s(n.y-S.y,n.x-S.x);return T>j?((j>O||O>T)&&(j+=h),j>T&&(o=T,T=j,j=o)):O>T&&j>O?(o=T,T=j,j=o):T+=h,S.s=j,S.e=T,S.r=k,S},numberSort:function(t,r){return t-r}};t.exports=d;}();},function(t,r,n){!function(){var r=n(2),i=function(t){this.curves=[],this._3d=!1,t&&(this.curves=t,this._3d=this.curves[0]._3d);};i.prototype={valueOf:function(){return this.toString()},toString:function(){return "["+this.curves.map(function(t){return r.pointsToString(t.points)}).join(", ")+"]"},addCurve:function(t){this.curves.push(t),this._3d=this._3d||t._3d;},length:function(){return this.curves.map(function(t){return t.length()}).reduce(function(t,r){return t+r})},curve:function(t){return this.curves[t]},bbox:function e(){for(var t=this.curves,e=t[0].bbox(),n=1;n<t.length;n++)r.expandbox(e,t[n].bbox());return e},offset:function o(t){var o=[];return this.curves.forEach(function(r){o=o.concat(r.offset(t));}),new i(o)}},t.exports=i;}();},function(t,r,n){function i(t,r,n){if("Z"!==r){if("M"===r)return void(s={x:n[0],y:n[1]});var i=[!1,s.x,s.y].concat(n),e=t.bind.apply(t,i),o=new e,u=n.slice(-2);return s={x:u[0],y:u[1]},o}}function e(t,r){for(var n,e,s,u=o(r).split(" "),a=new RegExp("[MLCQZ]",""),f=[],c={C:6,Q:4,L:2,M:2};u.length;)n=u.splice(0,1)[0],a.test(n)&&(s=u.splice(0,c[n]).map(parseFloat),e=i(t,n,s),e&&f.push(e));return new t.PolyBezier(f)}var o=n(5),s={x:!1,y:!1};t.exports=e;},function(t,r){function n(t){t=t.replace(/,/g," ").replace(/-/g," - ").replace(/-\s+/g,"-").replace(/([a-zA-Z])/g," $1 ");var r,n,i,e,o,s,u=t.replace(/([a-zA-Z])\s?/g,"|$1").split("|"),a=u.length,f=[],c=0,h=0,x=0,l=0,y=0,p=0,v=0,d=0,m="";for(r=1;a>r;r++)if(n=u[r],i=n.substring(0,1),e=i.toLowerCase(),f=n.replace(i,"").trim().split(" "),f=f.filter(function(t){return ""!==t}).map(parseFloat),o=f.length,"m"===e){if(m+="M ","m"===i?(x+=f[0],l+=f[1]):(x=f[0],l=f[1]),c=x,h=l,m+=x+" "+l+" ",o>2)for(s=0;o>s;s+=2)"m"===i?(x+=f[s],l+=f[s+1]):(x=f[s],l=f[s+1]),m+=["L",x,l,""].join(" ");}else if("l"===e)for(s=0;o>s;s+=2)"l"===i?(x+=f[s],l+=f[s+1]):(x=f[s],l=f[s+1]),m+=["L",x,l,""].join(" ");else if("h"===e)for(s=0;o>s;s++)"h"===i?x+=f[s]:x=f[s],m+=["L",x,l,""].join(" ");else if("v"===e)for(s=0;o>s;s++)"v"===i?l+=f[s]:l=f[s],m+=["L",x,l,""].join(" ");else if("q"===e)for(s=0;o>s;s+=4)"q"===i?(y=x+f[s],p=l+f[s+1],x+=f[s+2],l+=f[s+3]):(y=f[s],p=f[s+1],x=f[s+2],l=f[s+3]),m+=["Q",y,p,x,l,""].join(" ");else if("t"===e)for(s=0;o>s;s+=2)y=x+(x-y),p=l+(l-p),"t"===i?(x+=f[s],l+=f[s+1]):(x=f[s],l=f[s+1]),m+=["Q",y,p,x,l,""].join(" ");else if("c"===e)for(s=0;o>s;s+=6)"c"===i?(y=x+f[s],p=l+f[s+1],v=x+f[s+2],d=l+f[s+3],x+=f[s+4],l+=f[s+5]):(y=f[s],p=f[s+1],v=f[s+2],d=f[s+3],x=f[s+4],l=f[s+5]),m+=["C",y,p,v,d,x,l,""].join(" ");else if("s"===e)for(s=0;o>s;s+=4)y=x+(x-v),p=l+(l-d),"s"===i?(v=x+f[s],d=l+f[s+1],x+=f[s+2],l+=f[s+3]):(v=f[s],d=f[s+1],x=f[s+2],l=f[s+3]),m+=["C",y,p,v,d,x,l,""].join(" ");else"z"===e&&(m+="Z ",x=c,l=h);return m.trim()}t.exports=n;}]);
+  // math-inlining.
+  var abs = Math.abs,
+    cos = Math.cos,
+    sin = Math.sin,
+    acos = Math.acos,
+    atan2 = Math.atan2,
+    sqrt = Math.sqrt,
+    pow = Math.pow,
+    // cube root function yielding real roots
+    crt = function(v) {
+      return v < 0 ? -pow(-v, 1 / 3) : pow(v, 1 / 3);
+    },
+    // trig constants
+    pi = Math.PI,
+    tau = 2 * pi,
+    quart = pi / 2,
+    // float precision significant decimal
+    epsilon = 0.000001,
+    // extremas used in bbox calculation and similar algorithms
+    nMax = Number.MAX_SAFE_INTEGER || 9007199254740991,
+    nMin = Number.MIN_SAFE_INTEGER || -9007199254740991,
+    // a zero coordinate, which is surprisingly useful
+    ZERO = { x: 0, y: 0, z: 0 };
+
+  // Bezier utility functions
+  var utils = {
+    // Legendre-Gauss abscissae with n=24 (x_i values, defined at i=n as the roots of the nth order Legendre polynomial Pn(x))
+    Tvalues: [
+      -0.0640568928626056260850430826247450385909,
+      0.0640568928626056260850430826247450385909,
+      -0.1911188674736163091586398207570696318404,
+      0.1911188674736163091586398207570696318404,
+      -0.3150426796961633743867932913198102407864,
+      0.3150426796961633743867932913198102407864,
+      -0.4337935076260451384870842319133497124524,
+      0.4337935076260451384870842319133497124524,
+      -0.5454214713888395356583756172183723700107,
+      0.5454214713888395356583756172183723700107,
+      -0.6480936519369755692524957869107476266696,
+      0.6480936519369755692524957869107476266696,
+      -0.7401241915785543642438281030999784255232,
+      0.7401241915785543642438281030999784255232,
+      -0.8200019859739029219539498726697452080761,
+      0.8200019859739029219539498726697452080761,
+      -0.8864155270044010342131543419821967550873,
+      0.8864155270044010342131543419821967550873,
+      -0.9382745520027327585236490017087214496548,
+      0.9382745520027327585236490017087214496548,
+      -0.9747285559713094981983919930081690617411,
+      0.9747285559713094981983919930081690617411,
+      -0.9951872199970213601799974097007368118745,
+      0.9951872199970213601799974097007368118745
+    ],
+
+    // Legendre-Gauss weights with n=24 (w_i values, defined by a function linked to in the Bezier primer article)
+    Cvalues: [
+      0.1279381953467521569740561652246953718517,
+      0.1279381953467521569740561652246953718517,
+      0.1258374563468282961213753825111836887264,
+      0.1258374563468282961213753825111836887264,
+      0.121670472927803391204463153476262425607,
+      0.121670472927803391204463153476262425607,
+      0.1155056680537256013533444839067835598622,
+      0.1155056680537256013533444839067835598622,
+      0.1074442701159656347825773424466062227946,
+      0.1074442701159656347825773424466062227946,
+      0.0976186521041138882698806644642471544279,
+      0.0976186521041138882698806644642471544279,
+      0.086190161531953275917185202983742667185,
+      0.086190161531953275917185202983742667185,
+      0.0733464814110803057340336152531165181193,
+      0.0733464814110803057340336152531165181193,
+      0.0592985849154367807463677585001085845412,
+      0.0592985849154367807463677585001085845412,
+      0.0442774388174198061686027482113382288593,
+      0.0442774388174198061686027482113382288593,
+      0.0285313886289336631813078159518782864491,
+      0.0285313886289336631813078159518782864491,
+      0.0123412297999871995468056670700372915759,
+      0.0123412297999871995468056670700372915759
+    ],
+
+    arcfn: function(t, derivativeFn) {
+      var d = derivativeFn(t);
+      var l = d.x * d.x + d.y * d.y;
+      if (typeof d.z !== "undefined") {
+        l += d.z * d.z;
+      }
+      return sqrt(l);
+    },
+
+    compute: function(t, points, _3d) {
+      // shortcuts
+      if (t === 0) {
+        return points[0];
+      }
+
+      var order = points.length-1;
+
+      if (t === 1) {
+        return points[order];
+      }
+
+      var p = points;
+      var mt = 1 - t;
+
+      // constant?
+      if (order === 0) {
+        return points[0];
+      }
+
+      // linear?
+      if (order === 1) {
+        ret = {
+          x: mt * p[0].x + t * p[1].x,
+          y: mt * p[0].y + t * p[1].y
+        };
+        if (_3d) {
+          ret.z = mt * p[0].z + t * p[1].z;
+        }
+        return ret;
+      }
+
+      // quadratic/cubic curve?
+      if (order < 4) {
+        var mt2 = mt * mt,
+          t2 = t * t,
+          a,
+          b,
+          c,
+          d = 0;
+        if (order === 2) {
+          p = [p[0], p[1], p[2], ZERO];
+          a = mt2;
+          b = mt * t * 2;
+          c = t2;
+        } else if (order === 3) {
+          a = mt2 * mt;
+          b = mt2 * t * 3;
+          c = mt * t2 * 3;
+          d = t * t2;
+        }
+        var ret = {
+          x: a * p[0].x + b * p[1].x + c * p[2].x + d * p[3].x,
+          y: a * p[0].y + b * p[1].y + c * p[2].y + d * p[3].y
+        };
+        if (_3d) {
+          ret.z = a * p[0].z + b * p[1].z + c * p[2].z + d * p[3].z;
+        }
+        return ret;
+      }
+
+      // higher order curves: use de Casteljau's computation
+      var dCpts = JSON.parse(JSON.stringify(points));
+      while (dCpts.length > 1) {
+        for (var i = 0; i < dCpts.length - 1; i++) {
+          dCpts[i] = {
+            x: dCpts[i].x + (dCpts[i + 1].x - dCpts[i].x) * t,
+            y: dCpts[i].y + (dCpts[i + 1].y - dCpts[i].y) * t
+          };
+          if (typeof dCpts[i].z !== "undefined") {
+            dCpts[i] = dCpts[i].z + (dCpts[i + 1].z - dCpts[i].z) * t;
+          }
+        }
+        dCpts.splice(dCpts.length - 1, 1);
+      }
+      return dCpts[0];
+    },
+
+    derive: function (points, _3d) {
+      var dpoints = [];
+      for (var p = points, d = p.length, c = d - 1; d > 1; d--, c--) {
+        var list = [];
+        for (var j = 0, dpt; j < c; j++) {
+          dpt = {
+            x: c * (p[j + 1].x - p[j].x),
+            y: c * (p[j + 1].y - p[j].y)
+          };
+          if (_3d) {
+            dpt.z = c * (p[j + 1].z - p[j].z);
+          }
+          list.push(dpt);
+        }
+        dpoints.push(list);
+        p = list;
+      }
+      return dpoints;
+    },
+
+    between: function(v, m, M) {
+      return (
+        (m <= v && v <= M) ||
+        utils.approximately(v, m) ||
+        utils.approximately(v, M)
+      );
+    },
+
+    approximately: function(a, b, precision) {
+      return abs(a - b) <= (precision || epsilon);
+    },
+
+    length: function(derivativeFn) {
+      var z = 0.5,
+        sum = 0,
+        len = utils.Tvalues.length,
+        i,
+        t;
+      for (i = 0; i < len; i++) {
+        t = z * utils.Tvalues[i] + z;
+        sum += utils.Cvalues[i] * utils.arcfn(t, derivativeFn);
+      }
+      return z * sum;
+    },
+
+    map: function(v, ds, de, ts, te) {
+      var d1 = de - ds,
+        d2 = te - ts,
+        v2 = v - ds,
+        r = v2 / d1;
+      return ts + d2 * r;
+    },
+
+    lerp: function(r, v1, v2) {
+      var ret = {
+        x: v1.x + r * (v2.x - v1.x),
+        y: v1.y + r * (v2.y - v1.y)
+      };
+      if (!!v1.z && !!v2.z) {
+        ret.z = v1.z + r * (v2.z - v1.z);
+      }
+      return ret;
+    },
+
+    pointToString: function(p) {
+      var s = p.x + "/" + p.y;
+      if (typeof p.z !== "undefined") {
+        s += "/" + p.z;
+      }
+      return s;
+    },
+
+    pointsToString: function(points) {
+      return "[" + points.map(utils.pointToString).join(", ") + "]";
+    },
+
+    copy: function(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    },
+
+    angle: function(o, v1, v2) {
+      var dx1 = v1.x - o.x,
+        dy1 = v1.y - o.y,
+        dx2 = v2.x - o.x,
+        dy2 = v2.y - o.y,
+        cross = dx1 * dy2 - dy1 * dx2,
+        dot = dx1 * dx2 + dy1 * dy2;
+      return atan2(cross, dot);
+    },
+
+    // round as string, to avoid rounding errors
+    round: function(v, d) {
+      var s = "" + v;
+      var pos = s.indexOf(".");
+      return parseFloat(s.substring(0, pos + 1 + d));
+    },
+
+    dist: function(p1, p2) {
+      var dx = p1.x - p2.x,
+        dy = p1.y - p2.y;
+      return sqrt(dx * dx + dy * dy);
+    },
+
+    closest: function(LUT, point) {
+      var mdist = pow(2, 63),
+        mpos,
+        d;
+      LUT.forEach(function(p, idx) {
+        d = utils.dist(point, p);
+        if (d < mdist) {
+          mdist = d;
+          mpos = idx;
+        }
+      });
+      return { mdist: mdist, mpos: mpos };
+    },
+
+    abcratio: function(t, n) {
+      // see ratio(t) note on http://pomax.github.io/bezierinfo/#abc
+      if (n !== 2 && n !== 3) {
+        return false;
+      }
+      if (typeof t === "undefined") {
+        t = 0.5;
+      } else if (t === 0 || t === 1) {
+        return t;
+      }
+      var bottom = pow(t, n) + pow(1 - t, n),
+        top = bottom - 1;
+      return abs(top / bottom);
+    },
+
+    projectionratio: function(t, n) {
+      // see u(t) note on http://pomax.github.io/bezierinfo/#abc
+      if (n !== 2 && n !== 3) {
+        return false;
+      }
+      if (typeof t === "undefined") {
+        t = 0.5;
+      } else if (t === 0 || t === 1) {
+        return t;
+      }
+      var top = pow(1 - t, n),
+        bottom = pow(t, n) + top;
+      return top / bottom;
+    },
+
+    lli8: function(x1, y1, x2, y2, x3, y3, x4, y4) {
+      var nx =
+          (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4),
+        ny = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4),
+        d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+      if (d == 0) {
+        return false;
+      }
+      return { x: nx / d, y: ny / d };
+    },
+
+    lli4: function(p1, p2, p3, p4) {
+      var x1 = p1.x,
+        y1 = p1.y,
+        x2 = p2.x,
+        y2 = p2.y,
+        x3 = p3.x,
+        y3 = p3.y,
+        x4 = p4.x,
+        y4 = p4.y;
+      return utils.lli8(x1, y1, x2, y2, x3, y3, x4, y4);
+    },
+
+    lli: function(v1, v2) {
+      return utils.lli4(v1, v1.c, v2, v2.c);
+    },
+
+    makeline: function(p1, p2) {
+      var x1 = p1.x,
+        y1 = p1.y,
+        x2 = p2.x,
+        y2 = p2.y,
+        dx = (x2 - x1) / 3,
+        dy = (y2 - y1) / 3;
+      return new Bezier(
+        x1,
+        y1,
+        x1 + dx,
+        y1 + dy,
+        x1 + 2 * dx,
+        y1 + 2 * dy,
+        x2,
+        y2
+      );
+    },
+
+    findbbox: function(sections) {
+      var mx = nMax,
+        my = nMax,
+        MX = nMin,
+        MY = nMin;
+      sections.forEach(function(s) {
+        var bbox = s.bbox();
+        if (mx > bbox.x.min) mx = bbox.x.min;
+        if (my > bbox.y.min) my = bbox.y.min;
+        if (MX < bbox.x.max) MX = bbox.x.max;
+        if (MY < bbox.y.max) MY = bbox.y.max;
+      });
+      return {
+        x: { min: mx, mid: (mx + MX) / 2, max: MX, size: MX - mx },
+        y: { min: my, mid: (my + MY) / 2, max: MY, size: MY - my }
+      };
+    },
+
+    shapeintersections: function(
+      s1,
+      bbox1,
+      s2,
+      bbox2,
+      curveIntersectionThreshold
+    ) {
+      if (!utils.bboxoverlap(bbox1, bbox2)) return [];
+      var intersections = [];
+      var a1 = [s1.startcap, s1.forward, s1.back, s1.endcap];
+      var a2 = [s2.startcap, s2.forward, s2.back, s2.endcap];
+      a1.forEach(function(l1) {
+        if (l1.virtual) return;
+        a2.forEach(function(l2) {
+          if (l2.virtual) return;
+          var iss = l1.intersects(l2, curveIntersectionThreshold);
+          if (iss.length > 0) {
+            iss.c1 = l1;
+            iss.c2 = l2;
+            iss.s1 = s1;
+            iss.s2 = s2;
+            intersections.push(iss);
+          }
+        });
+      });
+      return intersections;
+    },
+
+    makeshape: function(forward, back, curveIntersectionThreshold) {
+      var bpl = back.points.length;
+      var fpl = forward.points.length;
+      var start = utils.makeline(back.points[bpl - 1], forward.points[0]);
+      var end = utils.makeline(forward.points[fpl - 1], back.points[0]);
+      var shape = {
+        startcap: start,
+        forward: forward,
+        back: back,
+        endcap: end,
+        bbox: utils.findbbox([start, forward, back, end])
+      };
+      var self = utils;
+      shape.intersections = function(s2) {
+        return self.shapeintersections(
+          shape,
+          shape.bbox,
+          s2,
+          s2.bbox,
+          curveIntersectionThreshold
+        );
+      };
+      return shape;
+    },
+
+    getminmax: function(curve, d, list) {
+      if (!list) return { min: 0, max: 0 };
+      var min = nMax,
+        max = nMin,
+        t,
+        c;
+      if (list.indexOf(0) === -1) {
+        list = [0].concat(list);
+      }
+      if (list.indexOf(1) === -1) {
+        list.push(1);
+      }
+      for (var i = 0, len = list.length; i < len; i++) {
+        t = list[i];
+        c = curve.get(t);
+        if (c[d] < min) {
+          min = c[d];
+        }
+        if (c[d] > max) {
+          max = c[d];
+        }
+      }
+      return { min: min, mid: (min + max) / 2, max: max, size: max - min };
+    },
+
+    align: function(points, line) {
+      var tx = line.p1.x,
+        ty = line.p1.y,
+        a = -atan2(line.p2.y - ty, line.p2.x - tx),
+        d = function(v) {
+          return {
+            x: (v.x - tx) * cos(a) - (v.y - ty) * sin(a),
+            y: (v.x - tx) * sin(a) + (v.y - ty) * cos(a)
+          };
+        };
+      return points.map(d);
+    },
+
+    roots: function(points, line) {
+      line = line || { p1: { x: 0, y: 0 }, p2: { x: 1, y: 0 } };
+      var order = points.length - 1;
+      var p = utils.align(points, line);
+      var reduce = function(t) {
+        return 0 <= t && t <= 1;
+      };
+
+      if (order === 2) {
+        var a = p[0].y,
+          b = p[1].y,
+          c = p[2].y,
+          d = a - 2 * b + c;
+        if (d !== 0) {
+          var m1 = -sqrt(b * b - a * c),
+            m2 = -a + b,
+            v1 = -(m1 + m2) / d,
+            v2 = -(-m1 + m2) / d;
+          return [v1, v2].filter(reduce);
+        } else if (b !== c && d === 0) {
+          return [(2*b - c)/(2*b - 2*c)].filter(reduce);
+        }
+        return [];
+      }
+
+      // see http://www.trans4mind.com/personal_development/mathematics/polynomials/cubicAlgebra.htm
+      var pa = p[0].y,
+        pb = p[1].y,
+        pc = p[2].y,
+        pd = p[3].y,
+        d = -pa + 3 * pb - 3 * pc + pd,
+        a = 3 * pa - 6 * pb + 3 * pc,
+        b = -3 * pa + 3 * pb,
+        c = pa;
+
+      if (utils.approximately(d, 0)) {
+        // this is not a cubic curve.
+        if (utils.approximately(a, 0)) {
+          // in fact, this is not a quadratic curve either.
+          if (utils.approximately(b, 0)) {
+            // in fact in fact, there are no solutions.
+            return [];
+          }
+          // linear solution:
+          return [-c / b].filter(reduce);
+        }
+        // quadratic solution:
+        var q = sqrt(b * b - 4 * a * c),
+          a2 = 2 * a;
+        return [(q - b) / a2, (-b - q) / a2].filter(reduce);
+      }
+
+      // at this point, we know we need a cubic solution:
+
+      a /= d;
+      b /= d;
+      c /= d;
+
+      var p = (3 * b - a * a) / 3,
+        p3 = p / 3,
+        q = (2 * a * a * a - 9 * a * b + 27 * c) / 27,
+        q2 = q / 2,
+        discriminant = q2 * q2 + p3 * p3 * p3,
+        u1,
+        v1,
+        x1,
+        x2,
+        x3;
+      if (discriminant < 0) {
+        var mp3 = -p / 3,
+          mp33 = mp3 * mp3 * mp3,
+          r = sqrt(mp33),
+          t = -q / (2 * r),
+          cosphi = t < -1 ? -1 : t > 1 ? 1 : t,
+          phi = acos(cosphi),
+          crtr = crt(r),
+          t1 = 2 * crtr;
+        x1 = t1 * cos(phi / 3) - a / 3;
+        x2 = t1 * cos((phi + tau) / 3) - a / 3;
+        x3 = t1 * cos((phi + 2 * tau) / 3) - a / 3;
+        return [x1, x2, x3].filter(reduce);
+      } else if (discriminant === 0) {
+        u1 = q2 < 0 ? crt(-q2) : -crt(q2);
+        x1 = 2 * u1 - a / 3;
+        x2 = -u1 - a / 3;
+        return [x1, x2].filter(reduce);
+      } else {
+        var sd = sqrt(discriminant);
+        u1 = crt(-q2 + sd);
+        v1 = crt(q2 + sd);
+        return [u1 - v1 - a / 3].filter(reduce);
+      }
+    },
+
+    droots: function(p) {
+      // quadratic roots are easy
+      if (p.length === 3) {
+        var a = p[0],
+          b = p[1],
+          c = p[2],
+          d = a - 2 * b + c;
+        if (d !== 0) {
+          var m1 = -sqrt(b * b - a * c),
+            m2 = -a + b,
+            v1 = -(m1 + m2) / d,
+            v2 = -(-m1 + m2) / d;
+          return [v1, v2];
+        } else if (b !== c && d === 0) {
+          return [(2 * b - c) / (2 * (b - c))];
+        }
+        return [];
+      }
+
+      // linear roots are even easier
+      if (p.length === 2) {
+        var a = p[0],
+          b = p[1];
+        if (a !== b) {
+          return [a / (a - b)];
+        }
+        return [];
+      }
+    },
+
+    curvature: function(t, points, _3d) {
+      var dpoints = utils.derive(points);
+      var d1 = dpoints[0];
+      var d2 = dpoints[1];
+
+      //
+      // We're using the following formula for curvature:
+      //
+      //              x'y" - y'x"
+      //   k(t) = ------------------
+      //           (x'² + y'²)^(2/3)
+      //
+      // from https://en.wikipedia.org/wiki/Radius_of_curvature#Definition
+      //
+      // With it corresponding 3D counterpart:
+      //
+      //          sqrt( (y'z" - y"z')² + (z'x" - z"x')² + (x'y" - x"y')²)
+      //   k(t) = -------------------------------------------------------
+      //                     (x'² + y'² + z'²)^(2/3)
+      //
+      var d = utils.compute(t, d1);
+      var dd = utils.compute(t, d2);
+      var num, dnm;
+      if (_3d) {
+        num = sqrt(
+          pow(d.y*dd.z - dd.y*d.z, 2) +
+          pow(d.z*dd.x - dd.z*d.x, 2) +
+          pow(d.x*dd.y - dd.x*d.y, 2)
+        );
+        dnm = pow(d.x*d.x + d.y*d.y + d.z*d.z, 2/3);
+      } else {
+        num = d.x*dd.y - d.y*dd.x;
+        dnm = pow(d.x*d.x + d.y*d.y, 2/3);
+      }
+
+      if (num === 0 || dnm === 0) {
+        return { k:0, r:0 };
+      }
+
+      return { k: num/dnm, r: dnm/num };
+    },
+
+    inflections: function(points) {
+      if (points.length < 4) return [];
+
+      // FIXME: TODO: add in inflection abstraction for quartic+ curves?
+
+      var p = utils.align(points, { p1: points[0], p2: points.slice(-1)[0] }),
+        a = p[2].x * p[1].y,
+        b = p[3].x * p[1].y,
+        c = p[1].x * p[2].y,
+        d = p[3].x * p[2].y,
+        v1 = 18 * (-3 * a + 2 * b + 3 * c - d),
+        v2 = 18 * (3 * a - b - 3 * c),
+        v3 = 18 * (c - a);
+
+      if (utils.approximately(v1, 0)) {
+        if (!utils.approximately(v2, 0)) {
+          var t = -v3 / v2;
+          if (0 <= t && t <= 1) return [t];
+        }
+        return [];
+      }
+
+      var trm = v2 * v2 - 4 * v1 * v3,
+        sq = Math.sqrt(trm),
+        d = 2 * v1;
+
+      if (utils.approximately(d, 0)) return [];
+
+      return [(sq - v2) / d, -(v2 + sq) / d].filter(function(r) {
+        return 0 <= r && r <= 1;
+      });
+    },
+
+    bboxoverlap: function(b1, b2) {
+      var dims = ["x", "y"],
+        len = dims.length,
+        i,
+        dim,
+        l,
+        t,
+        d;
+      for (i = 0; i < len; i++) {
+        dim = dims[i];
+        l = b1[dim].mid;
+        t = b2[dim].mid;
+        d = (b1[dim].size + b2[dim].size) / 2;
+        if (abs(l - t) >= d) return false;
+      }
+      return true;
+    },
+
+    expandbox: function(bbox, _bbox) {
+      if (_bbox.x.min < bbox.x.min) {
+        bbox.x.min = _bbox.x.min;
+      }
+      if (_bbox.y.min < bbox.y.min) {
+        bbox.y.min = _bbox.y.min;
+      }
+      if (_bbox.z && _bbox.z.min < bbox.z.min) {
+        bbox.z.min = _bbox.z.min;
+      }
+      if (_bbox.x.max > bbox.x.max) {
+        bbox.x.max = _bbox.x.max;
+      }
+      if (_bbox.y.max > bbox.y.max) {
+        bbox.y.max = _bbox.y.max;
+      }
+      if (_bbox.z && _bbox.z.max > bbox.z.max) {
+        bbox.z.max = _bbox.z.max;
+      }
+      bbox.x.mid = (bbox.x.min + bbox.x.max) / 2;
+      bbox.y.mid = (bbox.y.min + bbox.y.max) / 2;
+      if (bbox.z) {
+        bbox.z.mid = (bbox.z.min + bbox.z.max) / 2;
+      }
+      bbox.x.size = bbox.x.max - bbox.x.min;
+      bbox.y.size = bbox.y.max - bbox.y.min;
+      if (bbox.z) {
+        bbox.z.size = bbox.z.max - bbox.z.min;
+      }
+    },
+
+    pairiteration: function(c1, c2, curveIntersectionThreshold) {
+      var c1b = c1.bbox(),
+        c2b = c2.bbox(),
+        r = 100000,
+        threshold = curveIntersectionThreshold || 0.5;
+      if (
+        c1b.x.size + c1b.y.size < threshold &&
+        c2b.x.size + c2b.y.size < threshold
+      ) {
+        return [
+          ((r * (c1._t1 + c1._t2) / 2) | 0) / r +
+            "/" +
+            ((r * (c2._t1 + c2._t2) / 2) | 0) / r
+        ];
+      }
+      var cc1 = c1.split(0.5),
+        cc2 = c2.split(0.5),
+        pairs = [
+          { left: cc1.left, right: cc2.left },
+          { left: cc1.left, right: cc2.right },
+          { left: cc1.right, right: cc2.right },
+          { left: cc1.right, right: cc2.left }
+        ];
+      pairs = pairs.filter(function(pair) {
+        return utils.bboxoverlap(pair.left.bbox(), pair.right.bbox());
+      });
+      var results = [];
+      if (pairs.length === 0) return results;
+      pairs.forEach(function(pair) {
+        results = results.concat(
+          utils.pairiteration(pair.left, pair.right, threshold)
+        );
+      });
+      results = results.filter(function(v, i) {
+        return results.indexOf(v) === i;
+      });
+      return results;
+    },
+
+    getccenter: function(p1, p2, p3) {
+      var dx1 = p2.x - p1.x,
+        dy1 = p2.y - p1.y,
+        dx2 = p3.x - p2.x,
+        dy2 = p3.y - p2.y;
+      var dx1p = dx1 * cos(quart) - dy1 * sin(quart),
+        dy1p = dx1 * sin(quart) + dy1 * cos(quart),
+        dx2p = dx2 * cos(quart) - dy2 * sin(quart),
+        dy2p = dx2 * sin(quart) + dy2 * cos(quart);
+      // chord midpoints
+      var mx1 = (p1.x + p2.x) / 2,
+        my1 = (p1.y + p2.y) / 2,
+        mx2 = (p2.x + p3.x) / 2,
+        my2 = (p2.y + p3.y) / 2;
+      // midpoint offsets
+      var mx1n = mx1 + dx1p,
+        my1n = my1 + dy1p,
+        mx2n = mx2 + dx2p,
+        my2n = my2 + dy2p;
+      // intersection of these lines:
+      var arc = utils.lli8(mx1, my1, mx1n, my1n, mx2, my2, mx2n, my2n),
+        r = utils.dist(arc, p1),
+        // arc start/end values, over mid point:
+        s = atan2(p1.y - arc.y, p1.x - arc.x),
+        m = atan2(p2.y - arc.y, p2.x - arc.x),
+        e = atan2(p3.y - arc.y, p3.x - arc.x),
+        _;
+      // determine arc direction (cw/ccw correction)
+      if (s < e) {
+        // if s<m<e, arc(s, e)
+        // if m<s<e, arc(e, s + tau)
+        // if s<e<m, arc(e, s + tau)
+        if (s > m || m > e) {
+          s += tau;
+        }
+        if (s > e) {
+          _ = e;
+          e = s;
+          s = _;
+        }
+      } else {
+        // if e<m<s, arc(e, s)
+        // if m<e<s, arc(s, e + tau)
+        // if e<s<m, arc(s, e + tau)
+        if (e < m && m < s) {
+          _ = e;
+          e = s;
+          s = _;
+        } else {
+          e += tau;
+        }
+      }
+      // assign and done.
+      arc.s = s;
+      arc.e = e;
+      arc.r = r;
+      return arc;
+    },
+
+    numberSort: function(a, b) {
+      return a - b;
+    }
+  };
+
+  /**
+    A javascript Bezier curve library by Pomax.
+    Based on http://pomax.github.io/bezierinfo
+    This code is MIT licensed.
+  **/
+
+  var PolyBezier = function(curves) {
+    this.curves = [];
+    this._3d = false;
+    if (!!curves) {
+      this.curves = curves;
+      this._3d = this.curves[0]._3d;
+    }
+  };
+
+  PolyBezier.prototype = {
+    valueOf: function() {
+      return this.toString();
+    },
+    toString: function() {
+      return (
+        "[" +
+        this.curves
+          .map(function(curve) {
+            return utils.pointsToString(curve.points);
+          })
+          .join(", ") +
+        "]"
+      );
+    },
+    addCurve: function(curve) {
+      this.curves.push(curve);
+      this._3d = this._3d || curve._3d;
+    },
+    length: function() {
+      return this.curves
+        .map(function(v) {
+          return v.length();
+        })
+        .reduce(function(a, b) {
+          return a + b;
+        });
+    },
+    curve: function(idx) {
+      return this.curves[idx];
+    },
+    bbox: function() {
+      var c = this.curves;
+      var bbox = c[0].bbox();
+      for (var i = 1; i < c.length; i++) {
+        utils.expandbox(bbox, c[i].bbox());
+      }
+      return bbox;
+    },
+    offset: function(d) {
+      var offset = [];
+      this.curves.forEach(function(v) {
+        offset = offset.concat(v.offset(d));
+      });
+      return new PolyBezier(offset);
+    }
+  };
+
+  /**
+    A javascript Bezier curve library by Pomax.
+    Based on http://pomax.github.io/bezierinfo
+    This code is MIT licensed.
+  **/
+
+  // math-inlining.
+  var abs$1 = Math.abs,
+    min = Math.min,
+    max = Math.max,
+    cos$1 = Math.cos,
+    sin$1 = Math.sin,
+    acos$1 = Math.acos,
+    sqrt$1 = Math.sqrt,
+    pi$1 = Math.PI,
+    // a zero coordinate, which is surprisingly useful
+    ZERO$1 = { x: 0, y: 0, z: 0 };
+
+  /**
+   * Bezier curve constructor. The constructor argument can be one of three things:
+   *
+   * 1. array/4 of {x:..., y:..., z:...}, z optional
+   * 2. numerical array/8 ordered x1,y1,x2,y2,x3,y3,x4,y4
+   * 3. numerical array/12 ordered x1,y1,z1,x2,y2,z2,x3,y3,z3,x4,y4,z4
+   *
+   */
+  var Bezier = function(coords) {
+    var args = coords && coords.forEach ? coords : [].slice.call(arguments);
+    var coordlen = false;
+    if (typeof args[0] === "object") {
+      coordlen = args.length;
+      var newargs = [];
+      args.forEach(function(point) {
+        ["x", "y", "z"].forEach(function(d) {
+          if (typeof point[d] !== "undefined") {
+            newargs.push(point[d]);
+          }
+        });
+      });
+      args = newargs;
+    }
+    var higher = false;
+    var len = args.length;
+    if (coordlen) {
+      if (coordlen > 4) {
+        if (arguments.length !== 1) {
+          throw new Error(
+            "Only new Bezier(point[]) is accepted for 4th and higher order curves"
+          );
+        }
+        higher = true;
+      }
+    } else {
+      if (len !== 6 && len !== 8 && len !== 9 && len !== 12) {
+        if (arguments.length !== 1) {
+          throw new Error(
+            "Only new Bezier(point[]) is accepted for 4th and higher order curves"
+          );
+        }
+      }
+    }
+    var _3d =
+      (!higher && (len === 9 || len === 12)) ||
+      (coords && coords[0] && typeof coords[0].z !== "undefined");
+    this._3d = _3d;
+    var points = [];
+    for (var idx = 0, step = _3d ? 3 : 2; idx < len; idx += step) {
+      var point = {
+        x: args[idx],
+        y: args[idx + 1]
+      };
+      if (_3d) {
+        point.z = args[idx + 2];
+      }
+      points.push(point);
+    }
+    this.order = points.length - 1;
+    this.points = points;
+    var dims = ["x", "y"];
+    if (_3d) dims.push("z");
+    this.dims = dims;
+    this.dimlen = dims.length;
+
+    (function(curve) {
+      var order = curve.order;
+      var points = curve.points;
+      var a = utils.align(points, { p1: points[0], p2: points[order] });
+      for (var i = 0; i < a.length; i++) {
+        if (abs$1(a[i].y) > 0.0001) {
+          curve._linear = false;
+          return;
+        }
+      }
+      curve._linear = true;
+    })(this);
+
+    this._t1 = 0;
+    this._t2 = 1;
+    this.update();
+  };
+
+  Bezier.quadraticFromPoints = function(p1, p2, p3, t) {
+    if (typeof t === "undefined") {
+      t = 0.5;
+    }
+    // shortcuts, although they're really dumb
+    if (t === 0) {
+      return new Bezier(p2, p2, p3);
+    }
+    if (t === 1) {
+      return new Bezier(p1, p2, p2);
+    }
+    // real fitting.
+    var abc = getABC(2, p1, p2, p3, t);
+    return new Bezier(p1, abc.A, p3);
+  };
+
+  Bezier.cubicFromPoints = function(S, B, E, t, d1) {
+    if (typeof t === "undefined") {
+      t = 0.5;
+    }
+    var abc = getABC(3, S, B, E, t);
+    if (typeof d1 === "undefined") {
+      d1 = utils.dist(B, abc.C);
+    }
+    var d2 = d1 * (1 - t) / t;
+
+    var selen = utils.dist(S, E),
+      lx = (E.x - S.x) / selen,
+      ly = (E.y - S.y) / selen,
+      bx1 = d1 * lx,
+      by1 = d1 * ly,
+      bx2 = d2 * lx,
+      by2 = d2 * ly;
+    // derivation of new hull coordinates
+    var e1 = { x: B.x - bx1, y: B.y - by1 },
+      e2 = { x: B.x + bx2, y: B.y + by2 },
+      A = abc.A,
+      v1 = { x: A.x + (e1.x - A.x) / (1 - t), y: A.y + (e1.y - A.y) / (1 - t) },
+      v2 = { x: A.x + (e2.x - A.x) / t, y: A.y + (e2.y - A.y) / t },
+      nc1 = { x: S.x + (v1.x - S.x) / t, y: S.y + (v1.y - S.y) / t },
+      nc2 = {
+        x: E.x + (v2.x - E.x) / (1 - t),
+        y: E.y + (v2.y - E.y) / (1 - t)
+      };
+    // ...done
+    return new Bezier(S, nc1, nc2, E);
+  };
+
+  var getUtils = function() {
+    return utils;
+  };
+
+  Bezier.getUtils = getUtils;
+
+  Bezier.PolyBezier = PolyBezier;
+
+  Bezier.prototype = {
+    getUtils: getUtils,
+    valueOf: function() {
+      return this.toString();
+    },
+    toString: function() {
+      return utils.pointsToString(this.points);
+    },
+    toSVG: function(relative) {
+      if (this._3d) return false;
+      var p = this.points,
+        x = p[0].x,
+        y = p[0].y,
+        s = ["M", x, y, this.order === 2 ? "Q" : "C"];
+      for (var i = 1, last = p.length; i < last; i++) {
+        s.push(p[i].x);
+        s.push(p[i].y);
+      }
+      return s.join(" ");
+    },
+    update: function() {
+      // invalidate any precomputed LUT
+      this._lut = [];
+      this.dpoints = utils.derive(this.points, this._3d);
+      this.computedirection();
+    },
+    computedirection: function() {
+      var points = this.points;
+      var angle = utils.angle(points[0], points[this.order], points[1]);
+      this.clockwise = angle > 0;
+    },
+    length: function() {
+      return utils.length(this.derivative.bind(this));
+    },
+    _lut: [],
+    getLUT: function(steps) {
+      steps = steps || 100;
+      if (this._lut.length === steps) {
+        return this._lut;
+      }
+      this._lut = [];
+      // We want a range from 0 to 1 inclusive, so
+      // we decrement and then use <= rather than <:
+      steps--;
+      for (var t = 0; t <= steps; t++) {
+        this._lut.push(this.compute(t / steps));
+      }
+      return this._lut;
+    },
+    on: function(point, error) {
+      error = error || 5;
+      var lut = this.getLUT(),
+        hits = [],
+        c,
+        t = 0;
+      for (var i = 0; i < lut.length; i++) {
+        c = lut[i];
+        if (utils.dist(c, point) < error) {
+          hits.push(c);
+          t += i / lut.length;
+        }
+      }
+      if (!hits.length) return false;
+      return (t /= hits.length);
+    },
+    project: function(point) {
+      // step 1: coarse check
+      var LUT = this.getLUT(),
+        l = LUT.length - 1,
+        closest = utils.closest(LUT, point),
+        mdist = closest.mdist,
+        mpos = closest.mpos;
+      if (mpos === 0 || mpos === l) {
+        var t = mpos / l,
+          pt = this.compute(t);
+        pt.t = t;
+        pt.d = mdist;
+        return pt;
+      }
+
+      // step 2: fine check
+      var ft,
+        t,
+        p,
+        d,
+        t1 = (mpos - 1) / l,
+        t2 = (mpos + 1) / l,
+        step = 0.1 / l;
+      mdist += 1;
+      for (t = t1, ft = t; t < t2 + step; t += step) {
+        p = this.compute(t);
+        d = utils.dist(point, p);
+        if (d < mdist) {
+          mdist = d;
+          ft = t;
+        }
+      }
+      p = this.compute(ft);
+      p.t = ft;
+      p.d = mdist;
+      return p;
+    },
+    get: function(t) {
+      return this.compute(t);
+    },
+    point: function(idx) {
+      return this.points[idx];
+    },
+    compute: function(t) {
+      return utils.compute(t, this.points, this._3d);
+    },
+    raise: function() {
+      var p = this.points,
+        np = [p[0]],
+        i,
+        k = p.length,
+        pi,
+        pim;
+      for (var i = 1; i < k; i++) {
+        pi = p[i];
+        pim = p[i - 1];
+        np[i] = {
+          x: (k - i) / k * pi.x + i / k * pim.x,
+          y: (k - i) / k * pi.y + i / k * pim.y
+        };
+      }
+      np[k] = p[k - 1];
+      return new Bezier(np);
+    },
+    derivative: function(t) {
+      var mt = 1 - t,
+        a,
+        b,
+        c = 0,
+        p = this.dpoints[0];
+      if (this.order === 2) {
+        p = [p[0], p[1], ZERO$1];
+        a = mt;
+        b = t;
+      }
+      if (this.order === 3) {
+        a = mt * mt;
+        b = mt * t * 2;
+        c = t * t;
+      }
+      var ret = {
+        x: a * p[0].x + b * p[1].x + c * p[2].x,
+        y: a * p[0].y + b * p[1].y + c * p[2].y
+      };
+      if (this._3d) {
+        ret.z = a * p[0].z + b * p[1].z + c * p[2].z;
+      }
+      return ret;
+    },
+    curvature: function(t) {
+      return utils.curvature(t, this.points, this._3d);
+    },
+    inflections: function() {
+      return utils.inflections(this.points);
+    },
+    normal: function(t) {
+      return this._3d ? this.__normal3(t) : this.__normal2(t);
+    },
+    __normal2: function(t) {
+      var d = this.derivative(t);
+      var q = sqrt$1(d.x * d.x + d.y * d.y);
+      return { x: -d.y / q, y: d.x / q };
+    },
+    __normal3: function(t) {
+      // see http://stackoverflow.com/questions/25453159
+      var r1 = this.derivative(t),
+        r2 = this.derivative(t + 0.01),
+        q1 = sqrt$1(r1.x * r1.x + r1.y * r1.y + r1.z * r1.z),
+        q2 = sqrt$1(r2.x * r2.x + r2.y * r2.y + r2.z * r2.z);
+      r1.x /= q1;
+      r1.y /= q1;
+      r1.z /= q1;
+      r2.x /= q2;
+      r2.y /= q2;
+      r2.z /= q2;
+      // cross product
+      var c = {
+        x: r2.y * r1.z - r2.z * r1.y,
+        y: r2.z * r1.x - r2.x * r1.z,
+        z: r2.x * r1.y - r2.y * r1.x
+      };
+      var m = sqrt$1(c.x * c.x + c.y * c.y + c.z * c.z);
+      c.x /= m;
+      c.y /= m;
+      c.z /= m;
+      // rotation matrix
+      var R = [
+        c.x * c.x,
+        c.x * c.y - c.z,
+        c.x * c.z + c.y,
+        c.x * c.y + c.z,
+        c.y * c.y,
+        c.y * c.z - c.x,
+        c.x * c.z - c.y,
+        c.y * c.z + c.x,
+        c.z * c.z
+      ];
+      // normal vector:
+      var n = {
+        x: R[0] * r1.x + R[1] * r1.y + R[2] * r1.z,
+        y: R[3] * r1.x + R[4] * r1.y + R[5] * r1.z,
+        z: R[6] * r1.x + R[7] * r1.y + R[8] * r1.z
+      };
+      return n;
+    },
+    hull: function(t) {
+      var p = this.points,
+        _p = [],
+        pt,
+        q = [],
+        idx = 0,
+        i = 0,
+        l = 0;
+      q[idx++] = p[0];
+      q[idx++] = p[1];
+      q[idx++] = p[2];
+      if (this.order === 3) {
+        q[idx++] = p[3];
+      }
+      // we lerp between all points at each iteration, until we have 1 point left.
+      while (p.length > 1) {
+        _p = [];
+        for (i = 0, l = p.length - 1; i < l; i++) {
+          pt = utils.lerp(t, p[i], p[i + 1]);
+          q[idx++] = pt;
+          _p.push(pt);
+        }
+        p = _p;
+      }
+      return q;
+    },
+    split: function(t1, t2) {
+      // shortcuts
+      if (t1 === 0 && !!t2) {
+        return this.split(t2).left;
+      }
+      if (t2 === 1) {
+        return this.split(t1).right;
+      }
+
+      // no shortcut: use "de Casteljau" iteration.
+      var q = this.hull(t1);
+      var result = {
+        left:
+          this.order === 2
+            ? new Bezier([q[0], q[3], q[5]])
+            : new Bezier([q[0], q[4], q[7], q[9]]),
+        right:
+          this.order === 2
+            ? new Bezier([q[5], q[4], q[2]])
+            : new Bezier([q[9], q[8], q[6], q[3]]),
+        span: q
+      };
+
+      // make sure we bind _t1/_t2 information!
+      result.left._t1 = utils.map(0, 0, 1, this._t1, this._t2);
+      result.left._t2 = utils.map(t1, 0, 1, this._t1, this._t2);
+      result.right._t1 = utils.map(t1, 0, 1, this._t1, this._t2);
+      result.right._t2 = utils.map(1, 0, 1, this._t1, this._t2);
+
+      // if we have no t2, we're done
+      if (!t2) {
+        return result;
+      }
+
+      // if we have a t2, split again:
+      t2 = utils.map(t2, t1, 1, 0, 1);
+      var subsplit = result.right.split(t2);
+      return subsplit.left;
+    },
+    extrema: function() {
+      var dims = this.dims,
+        result = {},
+        roots = [],
+        p,
+        mfn;
+      dims.forEach(
+        function(dim) {
+          mfn = function(v) {
+            return v[dim];
+          };
+          p = this.dpoints[0].map(mfn);
+          result[dim] = utils.droots(p);
+          if (this.order === 3) {
+            p = this.dpoints[1].map(mfn);
+            result[dim] = result[dim].concat(utils.droots(p));
+          }
+          result[dim] = result[dim].filter(function(t) {
+            return t >= 0 && t <= 1;
+          });
+          roots = roots.concat(result[dim].sort(utils.numberSort));
+        }.bind(this)
+      );
+      roots = roots.sort(utils.numberSort).filter(function(v, idx) {
+        return roots.indexOf(v) === idx;
+      });
+      result.values = roots;
+      return result;
+    },
+    bbox: function() {
+      var extrema = this.extrema(),
+        result = {};
+      this.dims.forEach(
+        function(d) {
+          result[d] = utils.getminmax(this, d, extrema[d]);
+        }.bind(this)
+      );
+      return result;
+    },
+    overlaps: function(curve) {
+      var lbbox = this.bbox(),
+        tbbox = curve.bbox();
+      return utils.bboxoverlap(lbbox, tbbox);
+    },
+    offset: function(t, d) {
+      if (typeof d !== "undefined") {
+        var c = this.get(t);
+        var n = this.normal(t);
+        var ret = {
+          c: c,
+          n: n,
+          x: c.x + n.x * d,
+          y: c.y + n.y * d
+        };
+        if (this._3d) {
+          ret.z = c.z + n.z * d;
+        }
+        return ret;
+      }
+      if (this._linear) {
+        var nv = this.normal(0);
+        var coords = this.points.map(function(p) {
+          var ret = {
+            x: p.x + t * nv.x,
+            y: p.y + t * nv.y
+          };
+          if (p.z && n.z) {
+            ret.z = p.z + t * nv.z;
+          }
+          return ret;
+        });
+        return [new Bezier(coords)];
+      }
+      var reduced = this.reduce();
+      return reduced.map(function(s) {
+        return s.scale(t);
+      });
+    },
+    simple: function() {
+      if (this.order === 3) {
+        var a1 = utils.angle(this.points[0], this.points[3], this.points[1]);
+        var a2 = utils.angle(this.points[0], this.points[3], this.points[2]);
+        if ((a1 > 0 && a2 < 0) || (a1 < 0 && a2 > 0)) return false;
+      }
+      var n1 = this.normal(0);
+      var n2 = this.normal(1);
+      var s = n1.x * n2.x + n1.y * n2.y;
+      if (this._3d) {
+        s += n1.z * n2.z;
+      }
+      var angle = abs$1(acos$1(s));
+      return angle < pi$1 / 3;
+    },
+    reduce: function() {
+      var i,
+        t1 = 0,
+        t2 = 0,
+        step = 0.01,
+        segment,
+        pass1 = [],
+        pass2 = [];
+      // first pass: split on extrema
+      var extrema = this.extrema().values;
+      if (extrema.indexOf(0) === -1) {
+        extrema = [0].concat(extrema);
+      }
+      if (extrema.indexOf(1) === -1) {
+        extrema.push(1);
+      }
+
+      for (t1 = extrema[0], i = 1; i < extrema.length; i++) {
+        t2 = extrema[i];
+        segment = this.split(t1, t2);
+        segment._t1 = t1;
+        segment._t2 = t2;
+        pass1.push(segment);
+        t1 = t2;
+      }
+
+      // second pass: further reduce these segments to simple segments
+      pass1.forEach(function(p1) {
+        t1 = 0;
+        t2 = 0;
+        while (t2 <= 1) {
+          for (t2 = t1 + step; t2 <= 1 + step; t2 += step) {
+            segment = p1.split(t1, t2);
+            if (!segment.simple()) {
+              t2 -= step;
+              if (abs$1(t1 - t2) < step) {
+                // we can never form a reduction
+                return [];
+              }
+              segment = p1.split(t1, t2);
+              segment._t1 = utils.map(t1, 0, 1, p1._t1, p1._t2);
+              segment._t2 = utils.map(t2, 0, 1, p1._t1, p1._t2);
+              pass2.push(segment);
+              t1 = t2;
+              break;
+            }
+          }
+        }
+        if (t1 < 1) {
+          segment = p1.split(t1, 1);
+          segment._t1 = utils.map(t1, 0, 1, p1._t1, p1._t2);
+          segment._t2 = p1._t2;
+          pass2.push(segment);
+        }
+      });
+      return pass2;
+    },
+    scale: function(d) {
+      var order = this.order;
+      var distanceFn = false;
+      if (typeof d === "function") {
+        distanceFn = d;
+      }
+      if (distanceFn && order === 2) {
+        return this.raise().scale(distanceFn);
+      }
+
+      // TODO: add special handling for degenerate (=linear) curves.
+      var clockwise = this.clockwise;
+      var r1 = distanceFn ? distanceFn(0) : d;
+      var r2 = distanceFn ? distanceFn(1) : d;
+      var v = [this.offset(0, 10), this.offset(1, 10)];
+      var o = utils.lli4(v[0], v[0].c, v[1], v[1].c);
+      if (!o) {
+        throw new Error("cannot scale this curve. Try reducing it first.");
+      }
+      // move all points by distance 'd' wrt the origin 'o'
+      var points = this.points,
+        np = [];
+
+      // move end points by fixed distance along normal.
+      [0, 1].forEach(
+        function(t) {
+          var p = (np[t * order] = utils.copy(points[t * order]));
+          p.x += (t ? r2 : r1) * v[t].n.x;
+          p.y += (t ? r2 : r1) * v[t].n.y;
+        }.bind(this)
+      );
+
+      if (!distanceFn) {
+        // move control points to lie on the intersection of the offset
+        // derivative vector, and the origin-through-control vector
+        [0, 1].forEach(
+          function(t) {
+            if (this.order === 2 && !!t) return;
+            var p = np[t * order];
+            var d = this.derivative(t);
+            var p2 = { x: p.x + d.x, y: p.y + d.y };
+            np[t + 1] = utils.lli4(p, p2, o, points[t + 1]);
+          }.bind(this)
+        );
+        return new Bezier(np);
+      }
+
+      // move control points by "however much necessary to
+      // ensure the correct tangent to endpoint".
+      [0, 1].forEach(
+        function(t) {
+          if (this.order === 2 && !!t) return;
+          var p = points[t + 1];
+          var ov = {
+            x: p.x - o.x,
+            y: p.y - o.y
+          };
+          var rc = distanceFn ? distanceFn((t + 1) / order) : d;
+          if (distanceFn && !clockwise) rc = -rc;
+          var m = sqrt$1(ov.x * ov.x + ov.y * ov.y);
+          ov.x /= m;
+          ov.y /= m;
+          np[t + 1] = {
+            x: p.x + rc * ov.x,
+            y: p.y + rc * ov.y
+          };
+        }.bind(this)
+      );
+      return new Bezier(np);
+    },
+    outline: function(d1, d2, d3, d4) {
+      d2 = typeof d2 === "undefined" ? d1 : d2;
+      var reduced = this.reduce(),
+        len = reduced.length,
+        fcurves = [],
+        bcurves = [],
+        p,
+        alen = 0,
+        tlen = this.length();
+
+      var graduated = typeof d3 !== "undefined" && typeof d4 !== "undefined";
+
+      function linearDistanceFunction(s, e, tlen, alen, slen) {
+        return function(v) {
+          var f1 = alen / tlen,
+            f2 = (alen + slen) / tlen,
+            d = e - s;
+          return utils.map(v, 0, 1, s + f1 * d, s + f2 * d);
+        };
+      }
+
+      // form curve oulines
+      reduced.forEach(function(segment) {
+        slen = segment.length();
+        if (graduated) {
+          fcurves.push(
+            segment.scale(linearDistanceFunction(d1, d3, tlen, alen, slen))
+          );
+          bcurves.push(
+            segment.scale(linearDistanceFunction(-d2, -d4, tlen, alen, slen))
+          );
+        } else {
+          fcurves.push(segment.scale(d1));
+          bcurves.push(segment.scale(-d2));
+        }
+        alen += slen;
+      });
+
+      // reverse the "return" outline
+      bcurves = bcurves
+        .map(function(s) {
+          p = s.points;
+          if (p[3]) {
+            s.points = [p[3], p[2], p[1], p[0]];
+          } else {
+            s.points = [p[2], p[1], p[0]];
+          }
+          return s;
+        })
+        .reverse();
+
+      // form the endcaps as lines
+      var fs = fcurves[0].points[0],
+        fe = fcurves[len - 1].points[fcurves[len - 1].points.length - 1],
+        bs = bcurves[len - 1].points[bcurves[len - 1].points.length - 1],
+        be = bcurves[0].points[0],
+        ls = utils.makeline(bs, fs),
+        le = utils.makeline(fe, be),
+        segments = [ls]
+          .concat(fcurves)
+          .concat([le])
+          .concat(bcurves),
+        slen = segments.length;
+
+      return new PolyBezier(segments);
+    },
+    outlineshapes: function(d1, d2, curveIntersectionThreshold) {
+      d2 = d2 || d1;
+      var outline = this.outline(d1, d2).curves;
+      var shapes = [];
+      for (var i = 1, len = outline.length; i < len / 2; i++) {
+        var shape = utils.makeshape(
+          outline[i],
+          outline[len - i],
+          curveIntersectionThreshold
+        );
+        shape.startcap.virtual = i > 1;
+        shape.endcap.virtual = i < len / 2 - 1;
+        shapes.push(shape);
+      }
+      return shapes;
+    },
+    intersects: function(curve, curveIntersectionThreshold) {
+      if (!curve) return this.selfintersects(curveIntersectionThreshold);
+      if (curve.p1 && curve.p2) {
+        return this.lineIntersects(curve);
+      }
+      if (curve instanceof Bezier) {
+        curve = curve.reduce();
+      }
+      return this.curveintersects(
+        this.reduce(),
+        curve,
+        curveIntersectionThreshold
+      );
+    },
+    lineIntersects: function(line) {
+      var mx = min(line.p1.x, line.p2.x),
+        my = min(line.p1.y, line.p2.y),
+        MX = max(line.p1.x, line.p2.x),
+        MY = max(line.p1.y, line.p2.y),
+        self = this;
+      return utils.roots(this.points, line).filter(function(t) {
+        var p = self.get(t);
+        return utils.between(p.x, mx, MX) && utils.between(p.y, my, MY);
+      });
+    },
+    selfintersects: function(curveIntersectionThreshold) {
+      var reduced = this.reduce();
+      // "simple" curves cannot intersect with their direct
+      // neighbour, so for each segment X we check whether
+      // it intersects [0:x-2][x+2:last].
+      var i,
+        len = reduced.length - 2,
+        results = [],
+        result,
+        left,
+        right;
+      for (i = 0; i < len; i++) {
+        left = reduced.slice(i, i + 1);
+        right = reduced.slice(i + 2);
+        result = this.curveintersects(left, right, curveIntersectionThreshold);
+        results = results.concat(result);
+      }
+      return results;
+    },
+    curveintersects: function(c1, c2, curveIntersectionThreshold) {
+      var pairs = [];
+      // step 1: pair off any overlapping segments
+      c1.forEach(function(l) {
+        c2.forEach(function(r) {
+          if (l.overlaps(r)) {
+            pairs.push({ left: l, right: r });
+          }
+        });
+      });
+      // step 2: for each pairing, run through the convergence algorithm.
+      var intersections = [];
+      pairs.forEach(function(pair) {
+        var result = utils.pairiteration(
+          pair.left,
+          pair.right,
+          curveIntersectionThreshold
+        );
+        if (result.length > 0) {
+          intersections = intersections.concat(result);
+        }
+      });
+      return intersections;
+    },
+    arcs: function(errorThreshold) {
+      errorThreshold = errorThreshold || 0.5;
+      var circles = [];
+      return this._iterate(errorThreshold, circles);
+    },
+    _error: function(pc, np1, s, e) {
+      var q = (e - s) / 4,
+        c1 = this.get(s + q),
+        c2 = this.get(e - q),
+        ref = utils.dist(pc, np1),
+        d1 = utils.dist(pc, c1),
+        d2 = utils.dist(pc, c2);
+      return abs$1(d1 - ref) + abs$1(d2 - ref);
+    },
+    _iterate: function(errorThreshold, circles) {
+      var t_s = 0,
+        t_e = 1,
+        safety;
+      // we do a binary search to find the "good `t` closest to no-longer-good"
+      do {
+        safety = 0;
+
+        // step 1: start with the maximum possible arc
+        t_e = 1;
+
+        // points:
+        var np1 = this.get(t_s),
+          np2,
+          np3,
+          arc,
+          prev_arc;
+
+        // booleans:
+        var curr_good = false,
+          prev_good = false,
+          done;
+
+        // numbers:
+        var t_m = t_e,
+          prev_e = 1;
+
+        // step 2: find the best possible arc
+        do {
+          prev_good = curr_good;
+          prev_arc = arc;
+          t_m = (t_s + t_e) / 2;
+
+          np2 = this.get(t_m);
+          np3 = this.get(t_e);
+
+          arc = utils.getccenter(np1, np2, np3);
+
+          //also save the t values
+          arc.interval = {
+            start: t_s,
+            end: t_e
+          };
+
+          var error = this._error(arc, np1, t_s, t_e);
+          curr_good = error <= errorThreshold;
+
+          done = prev_good && !curr_good;
+          if (!done) prev_e = t_e;
+
+          // this arc is fine: we can move 'e' up to see if we can find a wider arc
+          if (curr_good) {
+            // if e is already at max, then we're done for this arc.
+            if (t_e >= 1) {
+              // make sure we cap at t=1
+              arc.interval.end = prev_e = 1;
+              prev_arc = arc;
+              // if we capped the arc segment to t=1 we also need to make sure that
+              // the arc's end angle is correct with respect to the bezier end point.
+              if (t_e > 1) {
+                var d = {
+                  x: arc.x + arc.r * cos$1(arc.e),
+                  y: arc.y + arc.r * sin$1(arc.e)
+                };
+                arc.e += utils.angle({ x: arc.x, y: arc.y }, d, this.get(1));
+              }
+              break;
+            }
+            // if not, move it up by half the iteration distance
+            t_e = t_e + (t_e - t_s) / 2;
+          } else {
+            // this is a bad arc: we need to move 'e' down to find a good arc
+            t_e = t_m;
+          }
+        } while (!done && safety++ < 100);
+
+        if (safety >= 100) {
+          break;
+        }
+
+        // console.log("L835: [F] arc found", t_s, prev_e, prev_arc.x, prev_arc.y, prev_arc.s, prev_arc.e);
+
+        prev_arc = prev_arc ? prev_arc : arc;
+        circles.push(prev_arc);
+        t_s = prev_e;
+      } while (t_e < 1);
+      return circles;
+    }
+  };
 
   const Curve = {
     create(anchor1, anchor2, handle1, handle2) {
@@ -1147,7 +2940,7 @@
         node.transform = Matrix.createFromDOMMatrix($matrix);
       }
 
-      node.classList = ClassList.create(
+      node.classes = Classes.create(
         Array.from($node.classList)
       );
 
@@ -1855,7 +3648,7 @@
     renderFlash(message) {
       const flash = document.createElement('p');
       flash.innerHTML = message;
-      flash.classList.add('flash');
+      flash.classes.add('flash');
       window.setTimeout(() => document.body.appendChild(flash), 500);
       window.setTimeout(() => flash.remove(), 1500);
     },

@@ -1,6 +1,6 @@
 import { Rectangle } from './rectangle.js';
 import { Vector }    from './vector.js';
-import { Bezier }    from '../../ext/bezier.js';
+import { Bezier }    from '../../ext/bezier/bezier.js';
 
 const Curve = {
   create(anchor1, anchor2, handle1, handle2) {
