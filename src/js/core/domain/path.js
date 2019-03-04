@@ -1,5 +1,7 @@
-import { SVGPathData, SVGPathDataTransformer } from 'svg-pathdata';
-import { Spline } from './spline.js';
+import { SVGPathData }            from 'svg-pathdata';
+import { SVGPathDataTransformer } from 'svg-pathdata';
+import { Rectangle }              from './rectangle.js';
+import { Spline }                 from './spline.js';
 
 const MOVE = 2; // constant used by svg-pathdata module
 
@@ -56,7 +58,14 @@ const Path = {
   },
 
   bBox() {
-    // TODO: compute bounding box of the path from bounding boxes of splines
+    const splines = this.splines;
+    let pathBox   = splines[0].bBox();
+
+    for (let i = 1; i < this.splines.length; i += 1) {
+      const splineBox = this.splines[i].bBox();
+      pathBox = Rectangle.getBoundingRect(pathBox, splineBox);
+    }
+    return pathBox;
   },
 
   toJSON() {

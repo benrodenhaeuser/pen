@@ -1,5 +1,6 @@
-import { Matrix } from './matrix.js';
-import { Vector } from './vector.js';
+import { Matrix }    from './matrix.js';
+import { Vector }    from './vector.js';
+import { Rectangle } from './rectangle.js';
 import { ClassList } from './classList.js';
 
 // TODO: adapt bounding box code
@@ -28,8 +29,8 @@ const Node = {
       children:    [],
       parent:      null,
       tag:         null,
-      box:         { x: 0, y: 0, width: 0, height: 0 },
       path:        null,
+      box:         Rectangle.create(),
       props:       {
         transform: Matrix.identity(),
         class:     ClassList.create(),
@@ -69,6 +70,9 @@ const Node = {
     return this.findDescendants(node => node.children.length === 0);
   },
 
+  isLeaf() {
+    return this.children.length === 0;
+  },
 
   get ancestors() {
     return this.findAncestors(node => true);
@@ -144,15 +148,6 @@ const Node = {
     return resultList;
   },
 
-  get corners() {
-    return [
-      Vector.create(this.box.x, this.box.y),
-      Vector.create(this.box.x + this.box.width, this.box.y),
-      Vector.create(this.box.x, this.box.y + this.box.height),
-      Vector.create(this.box.x + this.box.width, this.box.y + this.box.height)
-    ]
-  },
-
   get classList() {
     return this.props.class;
   },
@@ -191,35 +186,54 @@ const Node = {
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },
 
-  updateBox() {
-    const childrenCorners = [];
+  // TODO: note that this method memoizes the calculation!
+  // so it's more like store bBox ... but it also returns the box :-)
+  computeBBox() {
+    if (this.isLeaf()) {
+      console.log(this.path.bBox());
+      this.box = this.path.bBox();
+    } else {
+      const corners = [];
+
+      for (let child of this.children) {
+        for (let corner of child.computeBBox().corners()) {
+          corners.push(corner.transform(child.transform));
+        }
+      }
+
+      const xValue  = vector => vector.x;
+      const xValues = corners.map(xValue);
+      const yValue  = vector => vector.y;
+      const yValues = corners.map(yValue);
+
+      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+      this.box = Rectangle.createFromMinMax(min, max);
+    }
+
+    return this.box;
+  },
+
+  // TODO: repetitive with the previous method
+  updateBBox() {
+    const corners = [];
 
     for (let child of this.children) {
-      for (let corner of child.corners) {
-        childrenCorners.push(corner.transform(child.transform));
+      for (let corner of child.box.corners()) {
+        corners.push(corner.transform(child.transform));
       }
     }
 
-    if (childrenCorners.length === 0) {
-      return;
-    }
-
     const xValue  = vector => vector.x;
-    const xValues = childrenCorners.map(xValue);
-    const minX    = Math.min(...xValues);
-    const maxX    = Math.max(...xValues);
-
+    const xValues = corners.map(xValue);
     const yValue  = vector => vector.y;
-    const yValues = childrenCorners.map(yValue);
-    const minY    = Math.min(...yValues);
-    const maxY    = Math.max(...yValues);
+    const yValues = corners.map(yValue);
 
-    this.box = {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    };
+    const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+    const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+    this.box = Rectangle.createFromMinMax(min, max);
   },
 
   setFrontier() {

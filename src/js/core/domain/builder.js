@@ -1,11 +1,9 @@
-// build a scene graph from svg markup
-
-import { Node } from '../domain/node.js';
-import { Matrix } from '../domain/matrix.js';
-import { Vector } from '../domain/vector.js';
-import { Path } from '../domain/path.js'
-import { ClassList } from '../domain/classList.js';
-
+import { Node }      from './node.js';
+import { Matrix }    from './matrix.js';
+import { Vector }    from './vector.js';
+import { Rectangle } from './rectangle.js';
+import { ClassList } from './classList.js';
+import { Path }      from './path.js'
 
 // TODO: put in a utility module somewhere?
 SVGElement.prototype.getSVGAttr = function(...args) {
@@ -22,25 +20,25 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
   }
 };
 
-const sceneBuilder = {
-  createScene(markup) {
+const builder = {
+  importSVG(markup) {
     const $svg = new DOMParser()
       .parseFromString(markup, "application/xml")
       .documentElement;
-    const scene = Node.create();
 
-    document.body.appendChild($svg);
-    this.build($svg, scene);
-    $svg.remove();
-
-    return scene;
+    return this.buildScene($svg);
   },
 
-  build($svg, scene) {
+  buildScene($svg) {
+    const scene = Node.create();
+
     this.copyStyles($svg, scene);
     this.copyDefs($svg, scene);
     this.buildTree($svg, scene);
+    scene.computeBBox();
     scene.setFrontier();
+
+    return scene;
   },
 
   copyStyles($node, node) {
@@ -62,7 +60,7 @@ const sceneBuilder = {
     }
 
     this.processAttributes($node, node);
-    this.copyBBox($node, node);
+    // this.copyBBox($node, node);
 
     const $graphicsChildren = Array.from($node.children).filter((child) => {
       return child instanceof SVGGElement || child instanceof SVGGeometryElement
@@ -79,15 +77,12 @@ const sceneBuilder = {
     node.tag = $node.tagName;
   },
 
-  copyBBox($node, node) {
-    const box = $node.getBBox();
-    node.box = {
-      x: box.x,
-      y: box.y,
-      width: box.width,
-      height: box.height,
-    };
-  },
+  // copyBBox($node, node) {
+  //   const box    = $node.getBBox();
+  //   const origin = Vector.create(box.x, box.y);
+  //   const size   = Vector.create(box.width, box.height);
+  //   node.box     = Rectangle.create(origin, size);
+  // },
 
   processAttributes($node, node) {
     const $attributes = Array.from($node.attributes);
@@ -147,4 +142,4 @@ const sceneBuilder = {
   },
 };
 
-export { sceneBuilder };
+export { builder };

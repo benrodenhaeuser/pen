@@ -1,5 +1,8 @@
-import { Segment } from './segment.js';
-import { Vector } from './vector.js';
+import { Segment }   from './segment.js';
+import { Vector }    from './vector.js';
+import { Curve }     from './curve.js';
+import { Rectangle } from './rectangle.js';
+
 
 const Spline = {
   create(segments = []) {
@@ -45,12 +48,29 @@ const Spline = {
   },
 
   curves() {
-    // TODO: turn spline segments into curves
-    // every consecutive pair of segments gives rise to a curve
+    const theCurves = [];
+
+    for (let i = 0; i < this.segments.length - 1; i += 1) {
+      const start = this.segments[i];
+      const end = this.segments[i + 1];
+
+      theCurves.push(Curve.createFromSegments(start, end));
+    }
+
+    return theCurves;
   },
 
-  bbox() {
-    // TODO: compute the bbox of all the curves in the spline
+  bBox() {
+    const curves  = this.curves();
+    let splineBox = curves[0].bBox();
+
+    for (let i = 1; i < curves.length; i += 1) {
+      const curveBox = curves[i].bBox();
+      splineBox = Rectangle.getBoundingRect(splineBox, curveBox);
+    }
+
+    console.log(splineBox);
+    return splineBox;
   },
 
   toJSON() {

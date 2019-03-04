@@ -1,5 +1,5 @@
 const Vector = {
-  create(x, y) {
+  create(x = 0, y = 0) {
     return Object.create(Vector).init(x, y);
   },
 
@@ -27,6 +27,10 @@ const Vector = {
 
   subtract(other) {
     return Vector.create(this.x - other.x, this.y - other.y);
+  },
+
+  abs() {
+    return Vector.create(Math.abs(this.x), Math.abs(this.y));
   },
 
   isWithin(rectangle) {

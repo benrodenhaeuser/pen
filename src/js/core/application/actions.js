@@ -102,7 +102,7 @@ const actions = {
     const selected = state.scene.selected;
 
     for (let ancestor of selected.ancestors) {
-      ancestor.updateBox();
+      ancestor.updateBBox();
     }
 
     aux = {};
