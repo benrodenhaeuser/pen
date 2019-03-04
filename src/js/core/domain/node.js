@@ -22,15 +22,6 @@ const Node = {
     return this;
   },
 
-  // TODO: is using `props` a good idea?
-  // From the "internal" perspective of the scene graph,
-  // this useage does not make any sense.
-  // It would make perhaps more sense to arrange our properties
-  // in the desired way on export.
-
-  // What could be useful, though, is to store svg attributes (if we start from an
-  // existing svg) in props. But this should be called svg-props perhaps?
-
   get defaults() {
     return {
       _id:         createID(),
@@ -54,10 +45,6 @@ const Node = {
       tag:         this.tag,
       box:         this.box,
       path:        this.path,
-      // ^ TODO: could be a getter that
-      // prepares our internal path
-      // format for rendering
-      // by the ui
       props:       this.props,
       globalScale: this.globalScaleFactor(),
     };

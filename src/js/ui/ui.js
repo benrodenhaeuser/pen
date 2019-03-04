@@ -79,7 +79,7 @@ const ui = {
 
   // map changed state keys to method calls
   render: {
-    doc(state) {
+    scene(state) {
       ui.renderScene(state);
       // ui.renderInspector(state); // TODO ==> later
     },
@@ -105,9 +105,9 @@ const ui = {
     },
   },
 
-  // methods doing changes
+  // methods performing sync actions in the ui
   renderScene(state) {
-    sceneRenderer.render(state.doc.scene, ui.canvasNode);
+    sceneRenderer.render(state.scene, ui.canvasNode);
   },
 
   renderDocList(state) {

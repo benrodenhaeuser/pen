@@ -46,13 +46,11 @@ const Curve = {
     return (this.handle1 !== undefined) && (this.handle2 !== undefined);
   },
 
-  // TODO: we would prefer a rectangle here, I think, rather than what Bezier.js returns
   bBox() {
     if (this.isLine()) {
       return;
     }
 
-    // Taking advantage of the Bezier.js library:
     return new Bezier(...this.coords()).bbox();
 
   },

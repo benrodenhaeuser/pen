@@ -5,7 +5,7 @@ let aux = {};
 
 const actions = {
   select(state, input) {
-    const toSelect = state.doc.scene
+    const toSelect = state.scene
       .findDescendant((node) => {
         return node._id === input.pointer.targetID;
       })
@@ -17,12 +17,12 @@ const actions = {
       toSelect.select();
       aux.source = Vector.create(input.pointer.x, input.pointer.y);;
     } else {
-      state.doc.scene.deselectAll();
+      state.scene.deselectAll();
     }
   },
 
   shift(state, input) {
-    const selected = state.doc.scene.selected;
+    const selected = state.scene.selected;
 
     if (!selected) { return; }
 
@@ -39,7 +39,7 @@ const actions = {
   },
 
   initRotate(state, input) {
-    const selected = state.doc.scene.selected;
+    const selected = state.scene.selected;
     aux.source     = Vector.create(input.pointer.x, input.pointer.y);
     const box      = selected.box;
     const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
@@ -47,7 +47,7 @@ const actions = {
   },
 
   rotate(state, input) {
-    const selected          = state.doc.scene.selected;
+    const selected          = state.scene.selected;
     const target            = Vector.create(input.pointer.x, input.pointer.y);
     const sourceMinusCenter = aux.source.subtract(aux.center);
     const targetMinusCenter = target.subtract(aux.center);
@@ -66,7 +66,7 @@ const actions = {
   },
 
   initScale(state, input) {
-    const selected = state.doc.scene.selected;
+    const selected = state.scene.selected;
     aux.source     = Vector.create(input.pointer.x, input.pointer.y);
     const box      = selected.box;
     const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
@@ -74,7 +74,7 @@ const actions = {
   },
 
   scale(state, input) {
-    const selected          = state.doc.scene.selected;
+    const selected          = state.scene.selected;
     const target            = Vector.create(input.pointer.x, input.pointer.y);
     const sourceMinusCenter = aux.source.subtract(aux.center);
     const targetMinusCenter = target.subtract(aux.center);
@@ -99,7 +99,7 @@ const actions = {
   },
 
   release(state, input) {
-    const selected = state.doc.scene.selected;
+    const selected = state.scene.selected;
 
     for (let ancestor of selected.ancestors) {
       ancestor.updateBox();
@@ -109,13 +109,13 @@ const actions = {
   },
 
   deepSelect(state, input) {
-    const target = state.doc.scene.findDescendant((node) => {
+    const target = state.scene.findDescendant((node) => {
       return node._id === input.pointer.targetID;
     });
 
     if (target.isSelected()) {
       target.edit();
-      state.doc.scene.unfocusAll();
+      state.scene.unfocusAll();
       // state.id = 'pen'; // hack!
     } else {
       const toSelect = target.findAncestor((node) => {
@@ -124,16 +124,16 @@ const actions = {
 
       if (toSelect) {
         toSelect.select();
-        state.doc.scene.setFrontier();
-        state.doc.scene.unfocusAll();
+        state.scene.setFrontier();
+        state.scene.unfocusAll();
       }
     }
   },
 
   focus(state, input) {
-    state.doc.scene.unfocusAll(); // expensive but effective
+    state.scene.unfocusAll(); // expensive but effective
 
-    const target = state.doc.scene.findDescendant((node) => {
+    const target = state.scene.findDescendant((node) => {
       return node._id === input.pointer.targetID;
     });
 
@@ -155,15 +155,15 @@ const actions = {
   },
 
   deselect(state, event) {
-    state.doc.scene.deselectAll();
+    state.scene.deselectAll();
   },
 
   // OLD (partially useless?):
 
   createDoc(state, input) {
-    state.doc.init();
+    state.init();
     state.docs.ids.push(state.doc._id);
-    state.docs.selectedID = state.doc._id;
+    state.docs.selectedID = state._id;
   },
 
   updateDocList(state, input) {
@@ -175,7 +175,7 @@ const actions = {
   },
 
   setDoc(state, input) {
-    state.doc.init(input.data.doc);
+    state.init(input.data.doc);
   },
 
   // Pen tool

@@ -6,15 +6,15 @@ const Spline = {
     return Object.create(Spline).init(segments);
   },
 
-  createFromCommands(commands) {
-    const segments = this.parseCommands(commands);
-    return Spline.create(segments);
-  },
-
   init(segments) {
     this.segments = segments;
 
     return this;
+  },
+
+  createFromCommands(commands) {
+    const segments = this.parseCommands(commands);
+    return Spline.create(segments);
   },
 
   parseCommands(commands) {
@@ -45,11 +45,12 @@ const Spline = {
   },
 
   curves() {
-    // TODO: Bezier curve representation of spline
+    // TODO: turn spline segments into curves
+    // every consecutive pair of segments gives rise to a curve
   },
 
   bbox() {
-    // TODO: bounding box of the spline
+    // TODO: compute the bbox of all the curves in the spline
   },
 
   toJSON() {

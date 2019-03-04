@@ -1,9 +1,11 @@
-import { clock } from './application/clock.js';
-import { doc } from './application/doc.js';
+import { clock }   from './application/clock.js';
 import { actions } from './application/actions.js';
-import { config } from './application/config.js';
-import { Curve } from './domain/curve.js';
-import { Vector } from './domain/vector.js';
+import { config }  from './application/config.js';
+import { sceneBuilder } from './domain/sceneBuilder.js';
+
+// import { doc }     from './domain/doc.js';
+import { Curve }   from './domain/curve.js';
+import { Vector }  from './domain/vector.js';
 
 
 const core = {
@@ -20,6 +22,7 @@ const core = {
   },
 
   // TODO: not functional right now (this method is injected into "log")
+  // (API has also changed quite a bit)
   setState(stateData) {
     this.state = stateData;
     this.state.doc = doc.init(stateData.doc);
@@ -53,7 +56,8 @@ const core = {
     this.state = {
       clock: clock.init(),
       id: 'start',
-      doc: doc.init(markup),
+      scene: sceneBuilder.createScene(markup),
+      // ^ `markup` currently hard-coded
       docs: { ids: [], selectedID: null },
     };
 

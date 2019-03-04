@@ -27,20 +27,20 @@ const sceneBuilder = {
     const $svg = new DOMParser()
       .parseFromString(markup, "application/xml")
       .documentElement;
-    const svg = Node.create();
+    const scene = Node.create();
 
     document.body.appendChild($svg);
-    this.build($svg, svg);
+    this.build($svg, scene);
     $svg.remove();
 
-    return svg;
+    return scene;
   },
 
-  build($svg, svg) {
-    this.copyStyles($svg, svg);
-    this.copyDefs($svg, svg);
-    this.buildTree($svg, svg);
-    svg.setFrontier();
+  build($svg, scene) {
+    this.copyStyles($svg, scene);
+    this.copyDefs($svg, scene);
+    this.buildTree($svg, scene);
+    scene.setFrontier();
   },
 
   copyStyles($node, node) {

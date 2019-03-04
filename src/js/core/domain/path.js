@@ -56,7 +56,7 @@ const Path = {
   },
 
   bBox() {
-    // TODO: bounding box of the path
+    // TODO: compute bounding box of the path from bounding boxes of splines
   },
 
   toJSON() {
