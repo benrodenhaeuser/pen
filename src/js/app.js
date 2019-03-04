@@ -1,7 +1,7 @@
 import { core } from './core/core.js';
-import { log } from './log/log.js';
-import { ui } from './ui/ui.js';
-import { db } from './db/db.js';
+import { log }  from './log/log.js';
+import { ui }   from './ui/ui.js';
+import { db }   from './db/db.js';
 
 const app = {
   init() {

@@ -1,6 +1,9 @@
 import { Matrix } from '../domain/matrix.js';
 import { Vector } from '../domain/vector.js';
 
+// ^ TODO we should not need imports here
+
+
 let aux = {};
 
 const actions = {
