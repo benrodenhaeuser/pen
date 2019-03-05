@@ -52,7 +52,7 @@ const sceneRenderer = {
 
       $parent.appendChild($node);
 
-      this.documentScale = this.canvasWidth / node.box.width;
+      this.documentScale = this.canvasWidth / node.viewBox.width;
     } else {
       const $wrapper = wrap($node, node);
       $parent.appendChild($wrapper);
@@ -241,8 +241,14 @@ const controls = (node) => {
   const $controls = [];
   const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
 
+  console.log(diameter);
+
+  console.log('node.path', node.path); // TODO: flat array -- why is that?
+
   for (let spline of node.path) {
+    console.log(spline);
     for (let segment of spline) {
+      console.log(segment);
 
       $controls.push(control(node, diameter, segment.anchor.x, segment.anchor.y));
 

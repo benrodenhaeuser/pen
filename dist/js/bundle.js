@@ -263,8 +263,6 @@
     },
   };
 
-  // TODO: adapt bounding box code
-
   const createID$2 = () => {
     const randomString = Math.random().toString(36).substring(2);
     const timestamp    = (new Date()).getTime().toString(36);
@@ -311,15 +309,15 @@
         children:    this.children,
         parent:      this.parent && this.parent._id,
         tag:         this.tagName(),
-        box:         this.box,       // { ... }
-        path:        this.props.path, // might be undefined
-        viewBox:     this.props.viewBox, // might be undefined
+        box:         this.box,           // { ... }
+        path:        this.props.path,    // only for SHAPE
+        viewBox:     this.props.viewBox, // only for ROOT
         props:       {
           transform: this.transform, // 'matrix(...)'
           class:     this.class,     // 'class1 class2 ...'
-          d:         this.props.path && this.props.path.encodeSVGPath(), // 'M x y ...' (might be undefined)
+          d:         this.props.path && this.props.path.encodeSVGPath(), // 'M x y ...'
+          // only for SHAPE
         },
-
         globalScale: this.globalScaleFactor(),
       };
     },
@@ -3310,7 +3308,7 @@
 
         $parent.appendChild($node);
 
-        this.documentScale = this.canvasWidth / node.box.width;
+        this.documentScale = this.canvasWidth / node.viewBox.width;
       } else {
         const $wrapper = wrap($node, node);
         $parent.appendChild($wrapper);
@@ -3499,8 +3497,14 @@
     const $controls = [];
     const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
 
+    console.log(diameter);
+
+    console.log('node.path', node.path); // TODO: flat array -- why is that?
+
     for (let spline of node.path) {
+      console.log(spline);
       for (let segment of spline) {
+        console.log(segment);
 
         $controls.push(control(node, diameter, segment.anchor.x, segment.anchor.y));
 
