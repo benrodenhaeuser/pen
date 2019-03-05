@@ -3,7 +3,6 @@ import { Vector }    from './vector.js';
 import { Curve }     from './curve.js';
 import { Rectangle } from './rectangle.js';
 
-
 const Spline = {
   create(segments = []) {
     return Object.create(Spline).init(segments);
@@ -50,7 +49,8 @@ const Spline = {
   curves() {
     const theCurves = [];
 
-    for (let i = 0; i < this.segments.length - 1; i += 1) {
+    // from n segments, we obtain n - 1 curves
+    for (let i = 0; i + 1 < this.segments.length; i += 1) {
       const start = this.segments[i];
       const end = this.segments[i + 1];
 
@@ -61,15 +61,21 @@ const Spline = {
   },
 
   bBox() {
-    const curves  = this.curves();
-    let splineBox = curves[0].bBox();
+    let splineBox;
 
-    for (let i = 1; i < curves.length; i += 1) {
-      const curveBox = curves[i].bBox();
-      splineBox = Rectangle.getBoundingRect(splineBox, curveBox);
+    if (this.segments.length === 1) {
+      splineBox = Rectangle.createFromMinMax(vector.anchor, vector.anchor);
+      // ^ TODO: I think this is difficult to draw, because it has no dimensions.
+    } else {
+      const curves  = this.curves();
+      splineBox = curves[0].bBox();
+
+      for (let i = 1; i < curves.length; i += 1) {
+        const curveBox = curves[i].bBox();
+        splineBox = splineBox.getBoundingRect(curveBox);
+      }
     }
 
-    console.log(splineBox);
     return splineBox;
   },
 

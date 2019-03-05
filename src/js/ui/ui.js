@@ -13,7 +13,12 @@ const getSVGCoords = (x, y) => {
 
 const ui = {
   bindEvents(compute) {
-    this.canvasNode = document.querySelector('#canvas');
+    this.canvasNode  = document.querySelector('#canvas');
+    this.toolbarNode = document.querySelector('#toolbar');
+
+    const eventTypes = [
+      'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
+    ];
 
     const pointerData = (event) => {
       const [x, y] = getSVGCoords(event.clientX, event.clientY);
@@ -25,22 +30,17 @@ const ui = {
       };
     };
 
-    const eventTypes = [
-      'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
-    ];
-
-    // TODO: improve presentation
-    const suppressedRepetition = [
-      'mousedown', 'mouseup', 'click'
-    ];
+    const toSuppress = (event) => {
+      return [
+        'mousedown', 'mouseup', 'click'
+      ].includes(event.type) && event.detail > 1;
+    };
 
     for (let eventType of eventTypes) {
-      ui.canvasNode.addEventListener(eventType, (event) => {
+      document.addEventListener(eventType, (event) => {
         event.preventDefault();
 
-        console.log(event.target.dataset.type);
-
-        if (suppressedRepetition.includes(event.type) && event.detail > 1) {
+        if (toSuppress(event)) {
           return;
         }
 

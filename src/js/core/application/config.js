@@ -5,7 +5,6 @@ const config = [
   { from: 'start', type: 'kickoff', do: 'kickoff', to: 'idle' },
   { from: 'idle', type: 'mousemove', do: 'focus' },
   { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
-  // ^ TODO fix this
   { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
   { from: 'idle', type: 'mousedown', target: 'root', do: 'deselect' },
   { from: 'shifting', type: 'mousemove', do: 'shift' },
@@ -21,8 +20,11 @@ const config = [
   { type: 'updateDocList', do: 'updateDocList' },
   { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
-  // { from: 'idle', type: 'click', target: 'usePen', do: 'deselect', to: 'pen' },
-  // { from: 'pen', type: 'mousedown', do: 'initPen' },
+  // PEN TOOL
+  { from: 'idle', type: 'click', target: 'usePen', do: 'deselect', to: 'pen' },
+  { from: 'pen', type: 'mousedown', do: 'initPen', to: 'pen' },
+  { from: 'pen', type: 'mouseup', to: 'continuePen' },
+  { from: 'continuePen', type: 'mousedown', do: 'addSegment' },
 ];
 
 config.get = function(state, input) {

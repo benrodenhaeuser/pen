@@ -1,8 +1,8 @@
-import { Matrix } from '../domain/matrix.js';
-import { Vector } from '../domain/vector.js';
-
-// ^ TODO we should not need imports here
-
+import { Matrix }  from '../domain/matrix.js';
+import { Vector }  from '../domain/vector.js';
+import { Node }    from '../domain/node.js';
+import { Path }    from '../domain/path.js';
+import { Segment } from '../domain/segment.js';
 
 let aux = {};
 
@@ -119,7 +119,7 @@ const actions = {
     if (target.isSelected()) {
       target.edit();
       state.scene.unfocusAll();
-      // state.id = 'pen'; // hack!
+      state.id = 'pen'; // TODO: hack!
     } else {
       const toSelect = target.findAncestor((node) => {
         return node.parent && node.parent.props.class.includes('frontier');
@@ -161,7 +161,7 @@ const actions = {
     state.scene.deselectAll();
   },
 
-  // OLD (partially useless?):
+  // OLD (still useful?):
 
   createDoc(state, input) {
     state.init();
@@ -183,11 +183,44 @@ const actions = {
 
   // Pen tool
 
-  initPen(state, event) {
+  // mousedown in state 'pen'
+  initPen(state, input) {
     console.log('starting to draw with pen');
+    const node = Node.create();
+    const d = `M ${input.pointer.x} ${input.pointer.y}`;
+    node.path = Path.createFromSVGpath(d);
+    node.tag = 'path';
+    state.scene.append(node);
+    node.edit();
+
+    aux.node = node;
+
+    // overall result: a small dot appears
+
+    // next step is to continue editing
   },
 
+  addSegment(state, input) {
+    console.log('adding a segment');
 
+    const node = aux.node; // not defined?
+    console.log(node.path);
+    const anchor = Vector.create(input.pointer.x, input.pointer.y);
+    const segment = Segment.create({ anchor: anchor });
+    node.path.splines[0].segments.push(segment); // not a function
+    console.log(node.path);
+
+    console.log(state);
+
+    // let's draw a line
+    // create a new segment with a single anchor based on mouse pointer
+    // append the segment to the last spline of the node
+
+    // the anchors are drawn, and the shape is filled (black, by default)
+    // but the line lacks a stroke
+
+
+  },
 };
 
 export { actions };

@@ -22,9 +22,6 @@ const Path = {
     return this.create(this.commands(d));
   },
 
-  // TODO: we should not only construct paths from svg path data, but also from
-  //       splines
-
   create(commands) {
     return Object.create(Path).init(commands);
   },
@@ -63,7 +60,7 @@ const Path = {
 
     for (let i = 1; i < this.splines.length; i += 1) {
       const splineBox = this.splines[i].bBox();
-      pathBox = Rectangle.getBoundingRect(pathBox, splineBox);
+      pathBox = pathBox.getBoundingRect(splineBox);
     }
     return pathBox;
   },

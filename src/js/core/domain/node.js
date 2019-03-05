@@ -17,23 +17,23 @@ const Node = {
   },
 
   init(opts) {
-    this.set(this.defaults);
+    this.set(this.defaults());
     this.set(opts);
 
     return this;
   },
 
-  get defaults() {
+  defaults() {
     return {
       _id:         createID(),
       children:    [],
       parent:      null,
-      tag:         null,
-      path:        null,
+      tag:         null, // REMOVE
+      path:        null, // REMOVE
       box:         Rectangle.create(),
       props:       {
-        transform: Matrix.identity(),
-        class:     Classes.create(),
+        transform: Matrix.identity(), // move to toplevel
+        class:     Classes.create(), // move to toplevel
       },
     };
   },
@@ -62,6 +62,16 @@ const Node = {
     node.parent = this;
   },
 
+  get type() {
+    const types = ['root', 'shape', 'group'];
+
+    for (let elem of types) {
+      if (this[elem] !== undefined) {
+        return elem;
+      }
+    }
+  },
+
   get root() {
     return this.findAncestor(node => node.parent === null);
   },
@@ -72,6 +82,10 @@ const Node = {
 
   isLeaf() {
     return this.children.length === 0;
+  },
+
+  isRoot() {
+    return this.parent === null;
   },
 
   get ancestors() {
@@ -186,17 +200,14 @@ const Node = {
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },
 
-  // TODO: note that this method memoizes the calculation!
-  // so it's more like store bBox ... but it also returns the box :-)
   computeBBox() {
-    if (this.isLeaf()) {
-      console.log(this.path.bBox());
+    if (this.isLeaf() && !this.isRoot()) {
       this.box = this.path.bBox();
     } else {
       const corners = [];
 
       for (let child of this.children) {
-        for (let corner of child.computeBBox().corners()) {
+        for (let corner of child.computeBBox().corners) {
           corners.push(corner.transform(child.transform));
         }
       }
@@ -220,7 +231,7 @@ const Node = {
     const corners = [];
 
     for (let child of this.children) {
-      for (let corner of child.box.corners()) {
+      for (let corner of child.box.corners) {
         corners.push(corner.transform(child.transform));
       }
     }

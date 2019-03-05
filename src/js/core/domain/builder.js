@@ -77,13 +77,6 @@ const builder = {
     node.tag = $node.tagName;
   },
 
-  // copyBBox($node, node) {
-  //   const box    = $node.getBBox();
-  //   const origin = Vector.create(box.x, box.y);
-  //   const size   = Vector.create(box.width, box.height);
-  //   node.box     = Rectangle.create(origin, size);
-  // },
-
   processAttributes($node, node) {
     const $attributes = Array.from($node.attributes);
     for (let $attribute of $attributes) {

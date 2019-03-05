@@ -57,7 +57,7 @@ const Curve = {
       const min  = Vector.create(minX, minY);
       const max  = Vector.create(maxX, maxY);
 
-      console.log(Rectangle.createFromMinMax(min, max));
+      // console.log(Rectangle.createFromMinMax(min, max));
 
       return Rectangle.createFromMinMax(min, max);
     }

@@ -1,6 +1,7 @@
 import { Vector } from './vector.js';
 
 const Rectangle = {
+  // => two vectors (origin, size)
   create(origin = Vector.create(), size = Vector.create()) {
     return Object.create(Rectangle).init(origin, size);
   },
@@ -12,6 +13,7 @@ const Rectangle = {
     return this;
   },
 
+  // => 4 integers
   createFromDimensions(x, y, width, height) {
     const origin = Vector.create(x, y);
     const size   = Vector.create(width, height);
@@ -19,6 +21,7 @@ const Rectangle = {
     return Rectangle.create(origin, size);
   },
 
+  // => two vectors (from, to)
   createFromMinMax(min, max) {
     const origin = Vector.create(min.x, min.y);
     const size   = Vector.create(max.x - min.x, max.y - min.y);
@@ -26,24 +29,11 @@ const Rectangle = {
     return Rectangle.create(origin, size);
   },
 
-  // TODO: better to call on rect1 for consistency?
-  getBoundingRect(rect1, rect2) {
-    let min = Vector.create();
-    let max = Vector.create();
-
-    min.x = Math.min(rect1.min().x, rect2.min().x);
-    min.y = Math.min(rect1.min().y, rect2.min().y);
-    max.x = Math.max(rect1.max().x, rect2.max().x);
-    max.y = Math.max(rect1.max().y, rect2.max().y);
-
-    return Rectangle.createFromMinMax(min, max);
+  get min() {
+    return this.origin;
   },
 
-  min() {
-    return Vector.create(this.origin.x, this.origin.y);
-  },
-
-  max() {
+  get max() {
     return Vector.create(this.origin.x + this.size.x, this.origin.y + this.size.y);
   },
 
@@ -63,13 +53,26 @@ const Rectangle = {
     return this.size.y;
   },
 
-  corners() {
+  get corners() {
     return [
-      this.origin, // NW
-      Vector.create(this.origin.x + this.size.x, this.origin.y), // NE
-      Vector.create(this.origin.x, this.origin.y + this.size.y), // SW
-      Vector.create(this.origin.x + this.size.x, this.origin.y + this.size.y) // SE
+      this.min,                                                               // NW
+      Vector.create(this.origin.x + this.size.x, this.origin.y),              // NE
+      Vector.create(this.origin.x, this.origin.y + this.size.y),              // SW
+      this.max                                                                // SE
     ];
+  },
+
+  // smallest rectangle enclosing this and other
+  getBoundingRect(other) {
+    let min = Vector.create();
+    let max = Vector.create();
+
+    min.x = Math.min(this.min.x, other.min.x);
+    min.y = Math.min(this.min.y, other.min.y);
+    max.x = Math.max(this.max.x, other.max.x);
+    max.y = Math.max(this.max.y, other.max.y);
+
+    return Rectangle.createFromMinMax(min, max);
   },
 
   toJSON() {
@@ -80,7 +83,6 @@ const Rectangle = {
       height: this.size.y,
     };
   },
-
 };
 
 export { Rectangle };
