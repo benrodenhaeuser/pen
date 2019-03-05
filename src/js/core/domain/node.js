@@ -1,7 +1,7 @@
 import { Matrix }    from './matrix.js';
 import { Vector }    from './vector.js';
 import { Rectangle } from './rectangle.js';
-import { Classes }   from './classes.js';
+import { Class }   from './class.js';
 
 // TODO: adapt bounding box code
 
@@ -26,16 +26,23 @@ const Node = {
   defaults() {
     return {
       _id:         createID(),
+      type:        null,
       children:    [],
       parent:      null,
-      tag:         null, // REMOVE
-      path:        null, // REMOVE
       box:         Rectangle.create(),
       props:       {
-        transform: Matrix.identity(), // move to toplevel
-        class:     Classes.create(), // move to toplevel
+        transform: Matrix.identity(),
+        class:     Class.create(),
       },
     };
+  },
+
+  tagName() {
+    return {
+      root:  'svg',
+      shape: 'path',
+      group: 'g'
+    }[this.type];
   },
 
   toJSON() {
@@ -43,10 +50,16 @@ const Node = {
       _id:         this._id,
       children:    this.children,
       parent:      this.parent && this.parent._id,
-      tag:         this.tag,
-      box:         this.box,
-      path:        this.path,
-      props:       this.props,
+      tag:         this.tagName(),
+      box:         this.box,       // { ... }
+      path:        this.props.path, // might be undefined
+      viewBox:     this.props.viewBox, // might be undefined
+      props:       {
+        transform: this.transform, // 'matrix(...)'
+        class:     this.class,     // 'class1 class2 ...'
+        d:         this.props.path && this.props.path.encodeSVGPath(), // 'M x y ...' (might be undefined)
+      },
+
       globalScale: this.globalScaleFactor(),
     };
   },
@@ -62,15 +75,7 @@ const Node = {
     node.parent = this;
   },
 
-  get type() {
-    const types = ['root', 'shape', 'group'];
-
-    for (let elem of types) {
-      if (this[elem] !== undefined) {
-        return elem;
-      }
-    }
-  },
+  // TODO: fewer getters?
 
   get root() {
     return this.findAncestor(node => node.parent === null);
@@ -102,17 +107,17 @@ const Node = {
 
   get selected() {
     return this.root.findDescendant((node) => {
-      return node.classes.includes('selected');
+      return node.class.includes('selected');
     });
   },
 
   isSelected() {
-    return this.classes.includes('selected');
+    return this.class.includes('selected');
   },
 
   get frontier() {
     return this.root.findDescendants((node) => {
-      return node.classes.includes('frontier');
+      return node.class.includes('frontier');
     });
   },
 
@@ -162,11 +167,19 @@ const Node = {
     return resultList;
   },
 
-  get classes() {
+  get path() {
+    return this.props.path;
+  },
+
+  set path(value) {
+    this.props.path = value;
+  },
+
+  get class() {
     return this.props.class;
   },
 
-  set classes(value) {
+  set class(value) {
     this.props.class = value;
   },
 
@@ -251,62 +264,62 @@ const Node = {
     this.removeFrontier();
 
     if (this.selected) {
-      this.selected.classes.add('frontier');
+      this.selected.class.add('frontier');
 
       let node = this.selected;
 
       do {
         for (let sibling of node.siblings) {
-          sibling.classes.add('frontier');
+          sibling.class.add('frontier');
         }
         node = node.parent;
       } while (node.parent !== null);
     } else {
       for (let child of this.root.children) {
-        child.classes.add('frontier');
+        child.class.add('frontier');
       }
     }
   },
 
   removeFrontier() {
     const frontier = this.root.findDescendants((node) => {
-      return node.classes.includes('frontier');
+      return node.class.includes('frontier');
     });
 
     for (let node of frontier) {
-      node.classes.remove('frontier');
+      node.class.remove('frontier');
     }
   },
 
   focus() {
-    this.classes.add('focus');
+    this.class.add('focus');
   },
 
   unfocusAll() {
     const focussed = this.root.findDescendants((node) => {
-      return node.classes.includes('focus');
+      return node.class.includes('focus');
     });
 
     for (let node of focussed) {
-      node.classes.remove('focus');
+      node.class.remove('focus');
     }
   },
 
   select() {
     this.deselectAll();
-    this.classes.add('selected');
+    this.class.add('selected');
     this.setFrontier();
   },
 
   edit() {
     this.deselectAll();
     this.setFrontier();
-    this.classes.add('editing');
+    this.class.add('editing');
   },
 
   deselectAll() {
     if (this.selected) {
-      this.selected.classes.remove('selected');
+      this.selected.class.remove('selected');
     }
     this.setFrontier();
   },

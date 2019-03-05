@@ -65,6 +65,41 @@ const Path = {
     return pathBox;
   },
 
+  encodeSVGPath() {
+    let d = '';
+
+    for (let spline of this.splines) {
+      // console.log(spline);
+      const moveto = spline.segments[0];
+      d += `M ${moveto.anchor.x} ${moveto.anchor.y}`;
+
+      for (let i = 1; i < spline.segments.length; i += 1) {
+        const curr = spline.segments[i];
+        const prev = spline.segments[i - 1];
+
+        if (prev.handleOut && curr.handleIn) {
+          d += ' C';
+        } else if (curr.handleIn) {
+          d += ' Q';
+        } else {
+          d += ' L';
+        }
+
+        if (prev.handleOut) {
+          d += ` ${prev.handleOut.x} ${prev.handleOut.y}`;
+        }
+
+        if (curr.handleIn) {
+          d += ` ${curr.handleIn.x} ${curr.handleIn.y}`;
+        }
+
+        d += ` ${curr.anchor.x} ${curr.anchor.y}`;
+      }
+    }
+
+    return d;
+  },
+
   toJSON() {
     return this.splines; // array
   },

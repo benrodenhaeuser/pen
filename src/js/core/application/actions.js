@@ -142,7 +142,7 @@ const actions = {
 
     if (target) {
       const toFocus = target.findAncestor((node) => {
-        return node.classes.includes('frontier');
+        return node.class.includes('frontier');
       });
 
       if (toFocus) {
@@ -189,7 +189,7 @@ const actions = {
     const node = Node.create();
     const d = `M ${input.pointer.x} ${input.pointer.y}`;
     node.path = Path.createFromSVGpath(d);
-    node.tag = 'path';
+    node.type = 'shape';
     state.scene.append(node);
     node.edit();
 

@@ -77,9 +77,9 @@ const Rectangle = {
 
   toJSON() {
     return {
-      x:      this.origin.x,
-      y:      this.origin.y,
-      width:  this.size.x,
+      x: this.origin.x,
+      y: this.origin.y,
+      width: this.size.x,
       height: this.size.y,
     };
   },

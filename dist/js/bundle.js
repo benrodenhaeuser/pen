@@ -228,17 +228,17 @@
 
     toJSON() {
       return {
-        x:      this.origin.x,
-        y:      this.origin.y,
-        width:  this.size.x,
+        x: this.origin.x,
+        y: this.origin.y,
+        width: this.size.x,
         height: this.size.y,
       };
     },
   };
 
-  const Classes = {
+  const Class = {
     create(classNames = []) {
-      return Object.create(Classes).init(classNames);
+      return Object.create(Class).init(classNames);
     },
 
     init(classNames) {
@@ -286,16 +286,23 @@
     defaults() {
       return {
         _id:         createID$2(),
+        type:        null,
         children:    [],
         parent:      null,
-        tag:         null, // REMOVE
-        path:        null, // REMOVE
         box:         Rectangle.create(),
         props:       {
-          transform: Matrix.identity(), // move to toplevel
-          class:     Classes.create(), // move to toplevel
+          transform: Matrix.identity(),
+          class:     Class.create(),
         },
       };
+    },
+
+    tagName() {
+      return {
+        root:  'svg',
+        shape: 'path',
+        group: 'g'
+      }[this.type];
     },
 
     toJSON() {
@@ -303,10 +310,16 @@
         _id:         this._id,
         children:    this.children,
         parent:      this.parent && this.parent._id,
-        tag:         this.tag,
-        box:         this.box,
-        path:        this.path,
-        props:       this.props,
+        tag:         this.tagName(),
+        box:         this.box,       // { ... }
+        path:        this.props.path, // might be undefined
+        viewBox:     this.props.viewBox, // might be undefined
+        props:       {
+          transform: this.transform, // 'matrix(...)'
+          class:     this.class,     // 'class1 class2 ...'
+          d:         this.props.path && this.props.path.encodeSVGPath(), // 'M x y ...' (might be undefined)
+        },
+
         globalScale: this.globalScaleFactor(),
       };
     },
@@ -322,15 +335,7 @@
       node.parent = this;
     },
 
-    get type() {
-      const types = ['root', 'shape', 'group'];
-
-      for (let elem of types) {
-        if (this[elem] !== undefined) {
-          return elem;
-        }
-      }
-    },
+    // TODO: fewer getters?
 
     get root() {
       return this.findAncestor(node => node.parent === null);
@@ -362,17 +367,17 @@
 
     get selected() {
       return this.root.findDescendant((node) => {
-        return node.classes.includes('selected');
+        return node.class.includes('selected');
       });
     },
 
     isSelected() {
-      return this.classes.includes('selected');
+      return this.class.includes('selected');
     },
 
     get frontier() {
       return this.root.findDescendants((node) => {
-        return node.classes.includes('frontier');
+        return node.class.includes('frontier');
       });
     },
 
@@ -422,11 +427,19 @@
       return resultList;
     },
 
-    get classes() {
+    get path() {
+      return this.props.path;
+    },
+
+    set path(value) {
+      this.props.path = value;
+    },
+
+    get class() {
       return this.props.class;
     },
 
-    set classes(value) {
+    set class(value) {
       this.props.class = value;
     },
 
@@ -511,62 +524,62 @@
       this.removeFrontier();
 
       if (this.selected) {
-        this.selected.classes.add('frontier');
+        this.selected.class.add('frontier');
 
         let node = this.selected;
 
         do {
           for (let sibling of node.siblings) {
-            sibling.classes.add('frontier');
+            sibling.class.add('frontier');
           }
           node = node.parent;
         } while (node.parent !== null);
       } else {
         for (let child of this.root.children) {
-          child.classes.add('frontier');
+          child.class.add('frontier');
         }
       }
     },
 
     removeFrontier() {
       const frontier = this.root.findDescendants((node) => {
-        return node.classes.includes('frontier');
+        return node.class.includes('frontier');
       });
 
       for (let node of frontier) {
-        node.classes.remove('frontier');
+        node.class.remove('frontier');
       }
     },
 
     focus() {
-      this.classes.add('focus');
+      this.class.add('focus');
     },
 
     unfocusAll() {
       const focussed = this.root.findDescendants((node) => {
-        return node.classes.includes('focus');
+        return node.class.includes('focus');
       });
 
       for (let node of focussed) {
-        node.classes.remove('focus');
+        node.class.remove('focus');
       }
     },
 
     select() {
       this.deselectAll();
-      this.classes.add('selected');
+      this.class.add('selected');
       this.setFrontier();
     },
 
     edit() {
       this.deselectAll();
       this.setFrontier();
-      this.classes.add('editing');
+      this.class.add('editing');
     },
 
     deselectAll() {
       if (this.selected) {
-        this.selected.classes.remove('selected');
+        this.selected.class.remove('selected');
       }
       this.setFrontier();
     },
@@ -2607,6 +2620,41 @@
       return pathBox;
     },
 
+    encodeSVGPath() {
+      let d = '';
+
+      for (let spline of this.splines) {
+        // console.log(spline);
+        const moveto = spline.segments[0];
+        d += `M ${moveto.anchor.x} ${moveto.anchor.y}`;
+
+        for (let i = 1; i < spline.segments.length; i += 1) {
+          const curr = spline.segments[i];
+          const prev = spline.segments[i - 1];
+
+          if (prev.handleOut && curr.handleIn) {
+            d += ' C';
+          } else if (curr.handleIn) {
+            d += ' Q';
+          } else {
+            d += ' L';
+          }
+
+          if (prev.handleOut) {
+            d += ` ${prev.handleOut.x} ${prev.handleOut.y}`;
+          }
+
+          if (curr.handleIn) {
+            d += ` ${curr.handleIn.x} ${curr.handleIn.y}`;
+          }
+
+          d += ` ${curr.anchor.x} ${curr.anchor.y}`;
+        }
+      }
+
+      return d;
+    },
+
     toJSON() {
       return this.splines; // array
     },
@@ -2639,9 +2687,10 @@
     buildScene($svg) {
       const scene = Node.create();
 
-      this.copyStyles($svg, scene);
-      this.copyDefs($svg, scene);
+      // this.copyStyles($svg, scene); // TODO
+      // this.copyDefs($svg, scene);   // TODO
       this.buildTree($svg, scene);
+      console.log('about to compute bbox');
       scene.computeBBox();
       scene.setFrontier();
 
@@ -2657,17 +2706,8 @@
     },
 
     buildTree($node, node) {
-      // TODO: the logic here is that we $node may be the svg root, a group
-      // or a shape. If it's a shape, we tag our internal node as path because
-      // we want to store pathData derived from the svg.
-      if ($node.tagName === 'svg' || $node.tagName === 'g') {
-        this.copyTagName($node, node);
-      } else {
-        node.tag = 'path';
-      }
-
+      this.processTagName($node, node);
       this.processAttributes($node, node);
-      // this.copyBBox($node, node);
 
       const $graphicsChildren = Array.from($node.children).filter((child) => {
         return child instanceof SVGGElement || child instanceof SVGGeometryElement
@@ -2680,8 +2720,14 @@
       }
     },
 
-    copyTagName($node, node) {
-      node.tag = $node.tagName;
+    processTagName($node, node) {
+      if ($node.tagName === 'svg') {
+        node.type = 'root';
+      } else if ($node.tagName === 'g') {
+        node.type = 'group';
+      } else {
+        node.type = 'shape';
+      }
     },
 
     processAttributes($node, node) {
@@ -2689,10 +2735,16 @@
       for (let $attribute of $attributes) {
         node.props[$attribute.name] = $attribute.value;
       }
-      delete node.props.xmlns;
 
-      // TODO: hard to read?
-      // idea: $node might already have a transform applied.
+      if ($node.tagName === 'svg') {
+        delete node.props.xmlns;
+        const viewBox = $node.getSVGAttr('viewBox').split(' ');
+        const origin = Vector.create(viewBox[0], viewBox[1]);
+        const size = Vector.create(viewBox[2], viewBox[3]);
+        node.props.viewBox = Rectangle.create(origin, size);
+      }
+
+      // $node might already have a transform applied.
       // in this case, we override our default Matrix.identity():
       if (
         $node.transform &&
@@ -2703,20 +2755,17 @@
         node.transform = Matrix.createFromDOMMatrix($matrix);
       }
 
-      node.classes = Classes.create(
+      node.class = Class.create(
         Array.from($node.classList)
       );
 
-      // TODO: hard to read
-      // what it means is that we have tagged our internal node as 'path'
-      // because we want to create a path from whatever svg shape $node is
-      if (node.tag === 'path') {
-        this.storePath($node, node);
+      // if we are dealing with a shape, we need to capture its drawing instructions
+      if (node.type === 'shape') {
+        this.capturePath($node, node);
       }
     },
 
-    // store whatever shape $node is as a path
-    storePath($node, node) {
+    capturePath($node, node) {
       const tag = $node.tagName;
 
       switch (tag) {
@@ -2889,7 +2938,7 @@
 
       if (target) {
         const toFocus = target.findAncestor((node) => {
-          return node.classes.includes('frontier');
+          return node.class.includes('frontier');
         });
 
         if (toFocus) {
@@ -2936,7 +2985,7 @@
       const node = Node.create();
       const d = `M ${input.pointer.x} ${input.pointer.y}`;
       node.path = Path.createFromSVGpath(d);
-      node.tag = 'path';
+      node.type = 'shape';
       state.scene.append(node);
       node.edit();
 
@@ -3050,6 +3099,7 @@
     compute(input) {
       const transition = config.get(this.state, input);
       console.log('from: ', this.state.id, input, transition); // DEBUG
+      console.log(this.state);
       if (transition) {
         this.makeTransition(input, transition);
         this.sync();
@@ -3115,7 +3165,7 @@
   //     <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
   //   </svg>
   // `;
-  //
+
   // const markup = `
   //   <svg id="a3dbc277-3d4c-49ea-bad0-b2ae645587b1" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
   //     <defs>
@@ -3242,19 +3292,25 @@
     build(node, $parent) {
       const $node = document.createElementNS(svgns, node.tag);
 
-      if (node.path) {
-        node.props.d = encodeSVGPath(node.path);
-      }
-
-      $node.setSVGAttrs(node.props);
-      $node.setSVGAttr('data-id', node._id);
+      $node.setSVGAttrs(node.props);         // copy all the props
+      $node.setSVGAttr('data-id', node._id); // every node has an id
 
       if (node.tag === 'svg') {
         $node.setAttributeNS(xmlns, 'xmlns', svgns);
-        $node.setAttributeNS(svgns, 'data-type', 'root');
+        $node.setSVGAttr('data-type', 'root');
+
+        const viewBox = [
+          node.viewBox.x,
+          node.viewBox.y,
+          node.viewBox.width,
+          node.viewBox.height
+        ].join(' ');
+
+        $node.setSVGAttr('viewBox', viewBox);
+
         $parent.appendChild($node);
-        const viewBoxWidth = Number(node.props.viewBox.split(' ')[2]);
-        this.documentScale = this.canvasWidth / viewBoxWidth;
+
+        this.documentScale = this.canvasWidth / node.box.width;
       } else {
         const $wrapper = wrap($node, node);
         $parent.appendChild($wrapper);
@@ -3269,40 +3325,6 @@
       const canvasNode = document.querySelector('#canvas');
       return canvasNode.clientWidth;
     },
-  };
-
-  const encodeSVGPath = (path) => {
-    let d = '';
-
-    for (let spline of path) {
-      const moveto = spline[0];
-      d += `M ${moveto.anchor.x} ${moveto.anchor.y}`;
-
-      for (let i = 1; i < spline.length; i += 1) {
-        const curr = spline[i];
-        const prev = spline[i - 1];
-
-        if (prev.handleOut && curr.handleIn) {
-          d += ' C';
-        } else if (curr.handleIn) { // TODO: correct?
-          d += ' Q';
-        } else {
-          d += ' L';
-        }
-
-        if (prev.handleOut) {
-          d += ` ${prev.handleOut.x} ${prev.handleOut.y}`;
-        }
-
-        if (curr.handleIn) {
-          d += ` ${curr.handleIn.x} ${curr.handleIn.y}`;
-        }
-
-        d += ` ${curr.anchor.x} ${curr.anchor.y}`;
-      }
-    }
-
-    return d;
   };
 
   const wrap = ($node, node) => {
@@ -3687,7 +3709,7 @@
     renderFlash(message) {
       const flash = document.createElement('p');
       flash.innerHTML = message;
-      flash.classes.add('flash');
+      flash.class.add('flash');
       window.setTimeout(() => document.body.appendChild(flash), 500);
       window.setTimeout(() => flash.remove(), 1500);
     },

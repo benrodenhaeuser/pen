@@ -2,7 +2,7 @@ import { Node }      from './node.js';
 import { Matrix }    from './matrix.js';
 import { Vector }    from './vector.js';
 import { Rectangle } from './rectangle.js';
-import { Classes }   from './classes.js';
+import { Class }     from './class.js';
 import { Path }      from './path.js'
 
 // TODO: put in a utility module somewhere?
@@ -32,9 +32,10 @@ const builder = {
   buildScene($svg) {
     const scene = Node.create();
 
-    this.copyStyles($svg, scene);
-    this.copyDefs($svg, scene);
+    // this.copyStyles($svg, scene); // TODO
+    // this.copyDefs($svg, scene);   // TODO
     this.buildTree($svg, scene);
+    console.log('about to compute bbox');
     scene.computeBBox();
     scene.setFrontier();
 
@@ -50,17 +51,8 @@ const builder = {
   },
 
   buildTree($node, node) {
-    // TODO: the logic here is that we $node may be the svg root, a group
-    // or a shape. If it's a shape, we tag our internal node as path because
-    // we want to store pathData derived from the svg.
-    if ($node.tagName === 'svg' || $node.tagName === 'g') {
-      this.copyTagName($node, node);
-    } else {
-      node.tag = 'path';
-    }
-
+    this.processTagName($node, node);
     this.processAttributes($node, node);
-    // this.copyBBox($node, node);
 
     const $graphicsChildren = Array.from($node.children).filter((child) => {
       return child instanceof SVGGElement || child instanceof SVGGeometryElement
@@ -73,8 +65,14 @@ const builder = {
     }
   },
 
-  copyTagName($node, node) {
-    node.tag = $node.tagName;
+  processTagName($node, node) {
+    if ($node.tagName === 'svg') {
+      node.type = 'root';
+    } else if ($node.tagName === 'g') {
+      node.type = 'group';
+    } else {
+      node.type = 'shape';
+    }
   },
 
   processAttributes($node, node) {
@@ -82,10 +80,16 @@ const builder = {
     for (let $attribute of $attributes) {
       node.props[$attribute.name] = $attribute.value;
     }
-    delete node.props.xmlns;
 
-    // TODO: hard to read?
-    // idea: $node might already have a transform applied.
+    if ($node.tagName === 'svg') {
+      delete node.props.xmlns;
+      const viewBox = $node.getSVGAttr('viewBox').split(' ');
+      const origin = Vector.create(viewBox[0], viewBox[1]);
+      const size = Vector.create(viewBox[2], viewBox[3]);
+      node.props.viewBox = Rectangle.create(origin, size);
+    }
+
+    // $node might already have a transform applied.
     // in this case, we override our default Matrix.identity():
     if (
       $node.transform &&
@@ -96,20 +100,17 @@ const builder = {
       node.transform = Matrix.createFromDOMMatrix($matrix);
     }
 
-    node.classes = Classes.create(
+    node.class = Class.create(
       Array.from($node.classList)
     );
 
-    // TODO: hard to read
-    // what it means is that we have tagged our internal node as 'path'
-    // because we want to create a path from whatever svg shape $node is
-    if (node.tag === 'path') {
-      this.storePath($node, node);
+    // if we are dealing with a shape, we need to capture its drawing instructions
+    if (node.type === 'shape') {
+      this.capturePath($node, node);
     }
   },
 
-  // store whatever shape $node is as a path
-  storePath($node, node) {
+  capturePath($node, node) {
     const tag = $node.tagName;
     let   pathData;
 

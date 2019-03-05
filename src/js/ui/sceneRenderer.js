@@ -34,19 +34,25 @@ const sceneRenderer = {
   build(node, $parent) {
     const $node = document.createElementNS(svgns, node.tag);
 
-    if (node.path) {
-      node.props.d = encodeSVGPath(node.path);
-    }
-
-    $node.setSVGAttrs(node.props);
-    $node.setSVGAttr('data-id', node._id);
+    $node.setSVGAttrs(node.props);         // copy all the props
+    $node.setSVGAttr('data-id', node._id); // every node has an id
 
     if (node.tag === 'svg') {
       $node.setAttributeNS(xmlns, 'xmlns', svgns);
-      $node.setAttributeNS(svgns, 'data-type', 'root');
+      $node.setSVGAttr('data-type', 'root');
+
+      const viewBox = [
+        node.viewBox.x,
+        node.viewBox.y,
+        node.viewBox.width,
+        node.viewBox.height
+      ].join(' ');
+
+      $node.setSVGAttr('viewBox', viewBox);
+
       $parent.appendChild($node);
-      const viewBoxWidth = Number(node.props.viewBox.split(' ')[2]);
-      this.documentScale = this.canvasWidth / viewBoxWidth;
+
+      this.documentScale = this.canvasWidth / node.box.width;
     } else {
       const $wrapper = wrap($node, node);
       $parent.appendChild($wrapper);
@@ -61,40 +67,6 @@ const sceneRenderer = {
     const canvasNode = document.querySelector('#canvas');
     return canvasNode.clientWidth;
   },
-};
-
-const encodeSVGPath = (path) => {
-  let d = '';
-
-  for (let spline of path) {
-    const moveto = spline[0];
-    d += `M ${moveto.anchor.x} ${moveto.anchor.y}`;
-
-    for (let i = 1; i < spline.length; i += 1) {
-      const curr = spline[i];
-      const prev = spline[i - 1];
-
-      if (prev.handleOut && curr.handleIn) {
-        d += ' C';
-      } else if (curr.handleIn) { // TODO: correct?
-        d += ' Q';
-      } else {
-        d += ' L';
-      }
-
-      if (prev.handleOut) {
-        d += ` ${prev.handleOut.x} ${prev.handleOut.y}`;
-      }
-
-      if (curr.handleIn) {
-        d += ` ${curr.handleIn.x} ${curr.handleIn.y}`;
-      }
-
-      d += ` ${curr.anchor.x} ${curr.anchor.y}`;
-    }
-  }
-
-  return d;
 };
 
 const wrap = ($node, node) => {
