@@ -11,7 +11,7 @@ const createID = () => {
 
 const Node = {
   create(opts = {}) {
-    return Object.create(Node).init(opts);
+    return Object.create(this).init(opts);
   },
 
   init(opts) {
@@ -23,42 +23,12 @@ const Node = {
 
   defaults() {
     return {
-      _id:         createID(),
-      type:        null,
-      children:    [],
-      parent:      null,
-      box:         Rectangle.create(),
-      props:       {
-        transform: Matrix.identity(),
-        class:     Class.create(),
-      },
-    };
-  },
-
-  tagName() {
-    return {
-      root:  'svg',
-      shape: 'path',
-      group: 'g'
-    }[this.type];
-  },
-
-  toJSON() {
-    return {
-      _id:         this._id,
-      children:    this.children,
-      parent:      this.parent && this.parent._id,
-      tag:         this.tagName(),
-      box:         this.box,           // { ... }
-      path:        this.props.path,    // only for SHAPE
-      viewBox:     this.props.viewBox, // only for ROOT
-      props:       {
-        transform: this.transform, // 'matrix(...)'
-        class:     this.class,     // 'class1 class2 ...'
-        d:         this.props.path && this.props.path.encodeSVGPath(), // 'M x y ...'
-        // only for SHAPE
-      },
-      globalScale: this.globalScaleFactor(),
+      _id:       createID(),
+      children:  [],
+      parent:    null,
+      transform: Matrix.identity(),
+      class:     Class.create(),
+      props:     {},  // for SVG stuff, rename to attr, or get rid of (?)
     };
   },
 
@@ -73,7 +43,7 @@ const Node = {
     node.parent = this;
   },
 
-  // TODO: fewer getters?
+  // TODO: too many getters?
 
   get root() {
     return this.findAncestor(node => node.parent === null);
@@ -163,30 +133,6 @@ const Node = {
     }
 
     return resultList;
-  },
-
-  get path() {
-    return this.props.path;
-  },
-
-  set path(value) {
-    this.props.path = value;
-  },
-
-  get class() {
-    return this.props.class;
-  },
-
-  set class(value) {
-    this.props.class = value;
-  },
-
-  get transform() {
-    return this.props.transform;
-  },
-
-  set transform(value) {
-    this.props.transform = value;
   },
 
   globalTransform() {
@@ -322,16 +268,59 @@ const Node = {
     this.setFrontier();
   },
 
-  // plot point for debugging
-  // plot(point) {
-  //   const node = Node.create();
-  //   node.tag = 'circle';
-  //   node.props = Object.assign(node.props, {
-  //     r: 5, cx: point[0], cy: point[1], fill: 'red'
-  //   });
-  //   node.box = { x: point[0], y: point[1], width: 5, height: 5};
-  //   this.root.append(node);
-  // },
+  publishDefaults() {
+    return {
+      _id: this._id,
+      children: this.children,
+      parent: this.parent && this.parent._id,
+    };
+  },
 };
 
-export { Node };
+// TODO: we should be more explicit about what constitutes a Root, Shape, Group
+//       which is to say they should have each their own `create` method
+
+const Root = Object.create(Node);
+Root.toJSON = function() {
+  return Object.assign({
+    tag:     'svg',
+    viewBox: this.viewBox,
+    attr: {
+      viewBox: this.viewBox.toString(),
+    },
+  }, this.publishDefaults());
+};
+
+const Shape = Object.create(Node);
+Shape.toJSON = function() {
+  return Object.assign({
+    tag:         'path',
+    box:         this.box || Rectangle.create(),
+    path:        this.path,
+    transform:   this.transform,
+    globalScale: this.globalScaleFactor(),
+    attr: {
+      d:         this.path.toString(),
+      transform: this.transform.toString(),
+      class:     this.class.toString(),
+    },
+  }, this.publishDefaults());
+};
+
+const Group = Object.create(Node);
+Group.toJSON = function() {
+  return Object.assign({
+    tag:         'g',
+    box:         this.box || Rectangle.create(),
+    transform:   this.transform,
+    globalScale: this.globalScaleFactor(),
+    attr: {
+      transform: this.transform.toString(),
+      class:     this.class.toString(),
+    },
+  }, this.publishDefaults());
+};
+
+// TODO: setting this.box || Rectangle.create() should not be necessary
+
+export { Node, Root, Shape, Group };

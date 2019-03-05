@@ -28,10 +28,10 @@ const Matrix = {
   },
 
   toJSON() {
-    return this.toAttributeString();
+    return this.m;
   },
 
-  toAttributeString() {
+  toString() {
     return `matrix(${this.toVector()})`;
   },
 

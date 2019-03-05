@@ -34,21 +34,12 @@ const sceneRenderer = {
   build(node, $parent) {
     const $node = document.createElementNS(svgns, node.tag);
 
-    $node.setSVGAttrs(node.props);         // copy all the props
+    $node.setSVGAttrs(node.attr);          // copy all the attributes
     $node.setSVGAttr('data-id', node._id); // every node has an id
 
     if (node.tag === 'svg') {
       $node.setAttributeNS(xmlns, 'xmlns', svgns);
       $node.setSVGAttr('data-type', 'root');
-
-      const viewBox = [
-        node.viewBox.x,
-        node.viewBox.y,
-        node.viewBox.width,
-        node.viewBox.height
-      ].join(' ');
-
-      $node.setSVGAttr('viewBox', viewBox);
 
       $parent.appendChild($node);
 
@@ -135,7 +126,7 @@ const corners = (node) => {
     corner.setSVGAttrs({
       'data-type': 'corner',
       'data-id':   node._id,
-      transform:   node.props.transform,
+      transform:   node.attr.transform,
       width:       length,
       height:      length,
     });
@@ -176,7 +167,7 @@ const dots = (node) => {
     $dot.setSVGAttrs({
       'data-type':      'dot',
       'data-id':        node._id,
-      transform:        node.props.transform,
+      transform:        node.attr.transform,
       r:                diameter / 2,
     });
   }
@@ -213,7 +204,7 @@ const frame = (node) => {
     y:            node.box.y,
     width:        node.box.width,
     height:       node.box.height,
-    transform:    node.props.transform,
+    transform:    node.attr.transform,
     'data-id':    node._id,
   });
 
@@ -271,7 +262,7 @@ const control = (node, diameter, x, y) => {
   $control.setSVGAttrs({
     'data-type': 'control',
     'data-id':   control._id,
-    transform:   node.props.transform,
+    transform:   node.attr.transform,
     r:           diameter / 2,
     cx:          x,
     cy:          y,

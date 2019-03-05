@@ -1,9 +1,9 @@
-import { Node }      from './node.js';
-import { Matrix }    from './matrix.js';
-import { Vector }    from './vector.js';
-import { Rectangle } from './rectangle.js';
-import { Class }     from './class.js';
-import { Path }      from './path.js'
+import { Root, Shape, Group } from './node.js';
+import { Matrix }             from './matrix.js';
+import { Vector }             from './vector.js';
+import { Rectangle }          from './rectangle.js';
+import { Class }              from './class.js';
+import { Path }               from './path.js'
 
 // TODO: put in a utility module somewhere?
 SVGElement.prototype.getSVGAttr = function(...args) {
@@ -30,12 +30,11 @@ const builder = {
   },
 
   buildScene($svg) {
-    const scene = Node.create();
+    const scene = Root.create();
 
     // this.copyStyles($svg, scene); // TODO
     // this.copyDefs($svg, scene);   // TODO
     this.buildTree($svg, scene);
-    console.log('about to compute bbox');
     scene.computeBBox();
     scene.setFrontier();
 
@@ -51,46 +50,43 @@ const builder = {
   },
 
   buildTree($node, node) {
-    this.processTagName($node, node);
     this.processAttributes($node, node);
 
-    const $graphicsChildren = Array.from($node.children).filter((child) => {
-      return child instanceof SVGGElement || child instanceof SVGGeometryElement
+    const $graphicsChildren = Array.from($node.children).filter(($child) => {
+      return $child instanceof SVGGElement || child instanceof SVGGeometryElement
     });
 
     for (let $child of $graphicsChildren) {
-      const child = Node.create();
+      let child;
+
+      if ($child instanceof SVGGElement) {
+        child = Group.create();
+      } else {
+        child = Shape.create();
+      }
+
       node.append(child);
       this.buildTree($child, child);
     }
   },
 
-  processTagName($node, node) {
-    if ($node.tagName === 'svg') {
-      node.type = 'root';
-    } else if ($node.tagName === 'g') {
-      node.type = 'group';
-    } else {
-      node.type = 'shape';
-    }
-  },
-
   processAttributes($node, node) {
-    const $attributes = Array.from($node.attributes);
-    for (let $attribute of $attributes) {
-      node.props[$attribute.name] = $attribute.value;
-    }
+    // const $attributes = Array.from($node.attributes);
+    // TODO: do we really want this? right now it's not used!
+    // for (let $attribute of $attributes) {
+    //   node.props[$attribute.name] = $attribute.value;
+    // }
 
+    // viewBox
     if ($node.tagName === 'svg') {
       delete node.props.xmlns;
       const viewBox = $node.getSVGAttr('viewBox').split(' ');
       const origin = Vector.create(viewBox[0], viewBox[1]);
       const size = Vector.create(viewBox[2], viewBox[3]);
-      node.props.viewBox = Rectangle.create(origin, size);
+      node.viewBox = Rectangle.create(origin, size);
     }
 
-    // $node might already have a transform applied.
-    // in this case, we override our default Matrix.identity():
+    // transform
     if (
       $node.transform &&
       $node.transform.baseVal &&
@@ -100,11 +96,12 @@ const builder = {
       node.transform = Matrix.createFromDOMMatrix($matrix);
     }
 
+    // classes
     node.class = Class.create(
       Array.from($node.classList)
     );
 
-    // if we are dealing with a shape, we need to capture its drawing instructions
+    // path
     if (node.type === 'shape') {
       this.capturePath($node, node);
     }

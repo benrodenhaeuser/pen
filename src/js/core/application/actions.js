@@ -1,6 +1,6 @@
 import { Matrix }  from '../domain/matrix.js';
 import { Vector }  from '../domain/vector.js';
-import { Node }    from '../domain/node.js';
+import { Node, Shape, Group, Root } from '../domain/node.js';
 import { Path }    from '../domain/path.js';
 import { Segment } from '../domain/segment.js';
 
@@ -186,7 +186,7 @@ const actions = {
   // mousedown in state 'pen'
   initPen(state, input) {
     console.log('starting to draw with pen');
-    const node = Node.create();
+    const node = Shape.create();
     const d = `M ${input.pointer.x} ${input.pointer.y}`;
     node.path = Path.createFromSVGpath(d);
     node.type = 'shape';

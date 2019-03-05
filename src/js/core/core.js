@@ -2,6 +2,7 @@ import { builder } from './domain/builder.js';
 import { clock }   from './application/clock.js';
 import { actions } from './application/actions.js';
 import { config }  from './application/config.js';
+import { Node } from './domain/node.js';
 
 const core = {
   get stateData() {

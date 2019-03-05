@@ -65,7 +65,7 @@ const Path = {
     return pathBox;
   },
 
-  encodeSVGPath() {
+  toString() {
     let d = '';
 
     for (let spline of this.splines) {

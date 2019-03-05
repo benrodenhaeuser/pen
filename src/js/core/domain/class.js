@@ -8,7 +8,7 @@ const Class = {
     return this;
   },
 
-  toJSON() {
+  toString() {
     return Array.from(this.set).join(' ');
   },
 

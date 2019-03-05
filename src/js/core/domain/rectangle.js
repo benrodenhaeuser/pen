@@ -75,6 +75,15 @@ const Rectangle = {
     return Rectangle.createFromMinMax(min, max);
   },
 
+  toString() {
+    return [
+      this.origin.x,
+      this.origin.y,
+      this.size.x,
+      this.size.y,
+    ].join(' ');
+  },
+
   toJSON() {
     return {
       x: this.origin.x,
