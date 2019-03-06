@@ -13,6 +13,11 @@ const Vector = {
     return this;
   },
 
+  addID() {
+    this._id = createID();
+    return this;
+  },
+
   coords() {
     return { x: this.x, y: this.y };
   },
@@ -41,16 +46,11 @@ const Vector = {
   },
 
   angle() {
-    return Math.atan(this.y / this.x);
+    return Math.atan2(this.y, this.x);
   },
 
   length() {
     return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
-  },
-
-  addID() {
-    this._id = createID();
-    return this;
   },
 };
 

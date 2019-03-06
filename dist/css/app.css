@@ -126,10 +126,9 @@ svg {
 }
 
 [data-type="dot"] {
-  stroke: #d3d3d3;
   vector-effect: non-scaling-stroke;
-  stroke-width: 1px;
-  fill: #FFFFFF;
+  fill: none;
+  pointer-events: visible;
 }
 
 [data-type="control"] {
@@ -155,6 +154,14 @@ svg {
 [data-type="innerUI"] {
   pointer-events: visible;
   visibility: hidden;
+}
+
+[data-type="wrapper"] {
+  pointer-events: none;
+}
+
+[data-type="content"] {
+  pointer-events: bounding-box; 
 }
 
 .focus ~ [data-type="outerUI"] > [data-type="frame"] {

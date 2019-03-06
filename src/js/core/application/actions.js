@@ -110,11 +110,16 @@ const actions = {
       });
 
       if (toFocus) {
-        const pointer = Vector
+        // const point = Vector.create(input.pointer.x, input.pointer.y);
+        // if (toFocus.contains(point)) {
+        //   toFocus.focus();
+        // }
+
+        const point = Vector
           .create(input.pointer.x, input.pointer.y)
           .transform(toFocus.globalTransform().invert());
 
-        if (pointer.isWithin(toFocus.box)) {
+        if (point.isWithin(toFocus.box)) {
           toFocus.focus();
         }
       }

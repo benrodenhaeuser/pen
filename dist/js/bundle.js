@@ -16,6 +16,11 @@
       return this;
     },
 
+    addID() {
+      this._id = createID();
+      return this;
+    },
+
     coords() {
       return { x: this.x, y: this.y };
     },
@@ -44,16 +49,11 @@
     },
 
     angle() {
-      return Math.atan(this.y / this.x);
+      return Math.atan2(this.y, this.x);
     },
 
     length() {
       return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
-    },
-
-    addID() {
-      this._id = createID();
-      return this;
     },
   };
 
@@ -296,20 +296,28 @@
     },
 
     init(opts) {
-      this.set(this.defaults());
+      this.set(this.initDefaults());
       this.set(opts);
 
       return this;
     },
 
-    defaults() {
+    initDefaults() {
       return {
         _id:       createID$2(),
         children:  [],
         parent:    null,
         transform: Matrix.identity(),
         class:     Class.create(),
-        props:     {},  // for SVG stuff, rename to attr, or get rid of (?)
+        // props:     {},  //
+      };
+    },
+
+    publishDefaults() {
+      return {
+        _id: this._id,
+        children: this.children,
+        parent: this.parent && this.parent._id,
       };
     },
 
@@ -319,17 +327,18 @@
       }
     },
 
-    append(node) {
-      this.children.push(node);
-      node.parent = this;
-    },
+    // hierarchy
 
     get root() {
-      return this.findAncestor(node => node.parent === null);
+      return this.findAncestor(
+        node => node.parent === null
+      );
     },
 
     get leaves() {
-      return this.findDescendants(node => node.children.length === 0);
+      return this.findDescendants(
+        node => node.children.length === 0
+      );
     },
 
     isLeaf() {
@@ -341,15 +350,21 @@
     },
 
     get ancestors() {
-      return this.findAncestors(node => true);
+      return this.findAncestors(
+        node => true
+      );
     },
 
     get descendants() {
-      return this.findDescendants(node => true);
+      return this.findDescendants(
+        node => true
+      );
     },
 
     get siblings() {
-      return this.parent.children.filter(node => node !== this);
+      return this.parent.children.filter(
+        node => node !== this
+      );
     },
 
     get selected() {
@@ -368,6 +383,8 @@
       });
     },
 
+    // traversal
+
     findAncestor(predicate) {
       if (predicate(this)) {
         return this;
@@ -378,14 +395,14 @@
       }
     },
 
-    findAncestors(predicate, resultList = []) {
+    findAncestors(predicate, ancestors = []) {
       if (this.parent === null) {
-        return resultList;
+        return ancestors;
       } else {
         if (predicate(this.parent)) {
-          resultList.push(this.parent);
+          ancestors.push(this.parent);
         }
-        return this.parent.findAncestors(predicate, resultList);
+        return this.parent.findAncestors(predicate, ancestors);
       }
     },
 
@@ -402,45 +419,32 @@
       return null;
     },
 
+    findDescendants(predicate, descendants = []) {
+      if (predicate(this)) {
+        descendants.push(this);
+      }
+
+      for (let child of this.children) {
+        child.findDescendants(predicate, descendants);
+      }
+
+      return descendants;
+    },
+
     findByID(id) {
       return this.findDescendant((node) => {
         return node._id === id;
       });
     },
 
-    findDescendants(predicate, resultList = []) {
-      if (predicate(this)) {
-        resultList.push(this);
-      }
+    // node creation
 
-      for (let child of this.children) {
-        child.findDescendants(predicate, resultList);
-      }
-
-      return resultList;
+    append(node) {
+      this.children.push(node);
+      node.parent = this;
     },
 
-    globalTransform() {
-      return this.ancestorTransform().multiply(this.transform);
-    },
-
-    ancestorTransform() {
-      let matrix = Matrix.identity();
-
-      for (let ancestor of this.ancestors.reverse()) {
-        matrix = matrix.multiply(ancestor.transform);
-      }
-
-      return matrix;
-    },
-
-    globalScaleFactor() {
-      const total  = this.globalTransform();
-      const a      = total.m[0][0];
-      const b      = total.m[1][0];
-
-      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-    },
+    // bounding box
 
     computeBBox() {
       if (this.isLeaf() && !this.isRoot()) {
@@ -469,6 +473,12 @@
       return this.box;
     },
 
+    contains(point) {
+      return point
+        .transform(this.globalTransform().invert())
+        .isWithin(this.box);
+    },
+
     // TODO: repetitive with the previous method
     updateBBox() {
       const corners = [];
@@ -489,6 +499,8 @@
 
       this.box = Rectangle.createFromMinMax(min, max);
     },
+
+    // setting and removing classes
 
     setFrontier() {
       this.removeFrontier();
@@ -554,12 +566,20 @@
       this.setFrontier();
     },
 
-    publishDefaults() {
-      return {
-        _id: this._id,
-        children: this.children,
-        parent: this.parent && this.parent._id,
-      };
+    // transform
+
+    globalTransform() {
+      return this.ancestorTransform().multiply(this.transform);
+    },
+
+    ancestorTransform() {
+      let matrix = Matrix.identity();
+
+      for (let ancestor of this.ancestors.reverse()) {
+        matrix = matrix.multiply(ancestor.transform);
+      }
+
+      return matrix;
     },
 
     rotate(angle, center) {
@@ -582,10 +602,15 @@
         .multiply(Matrix.translation(offset))
         .multiply(this.globalTransform());
     },
-  };
 
-  // TODO: we should be more explicit about what constitutes a Root, Shape, Group
-  //       which is to say they should have each their own `create` method
+    globalScaleFactor() {
+      const total  = this.globalTransform();
+      const a      = total.m[0][0];
+      const b      = total.m[1][0];
+
+      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+    },
+  };
 
   const Root = Object.create(Node);
   Root.toJSON = function() {
@@ -2766,7 +2791,7 @@
 
       // viewBox
       if ($node.tagName === 'svg') {
-        delete node.props.xmlns;
+        // delete node.props.xmlns;
         const viewBox = $node.getSVGAttr('viewBox').split(' ');
         const origin = Vector.create(viewBox[0], viewBox[1]);
         const size = Vector.create(viewBox[2], viewBox[3]);
@@ -2805,15 +2830,11 @@
             Number($node.getSVGAttr('width')),
             Number($node.getSVGAttr('height'))
           );
-
-          for (let prop of ['x', 'y', 'width', 'height']) {
-            delete node.props[prop];
-          }
           break;
 
         case 'path':
           node.path = Path.createFromSVGpath($node.getSVGAttr('d'));
-          delete node.props.d;
+          // delete node.props.d;
           break;
       }
     },
@@ -2937,11 +2958,16 @@
         });
 
         if (toFocus) {
-          const pointer = Vector
+          // const point = Vector.create(input.pointer.x, input.pointer.y);
+          // if (toFocus.contains(point)) {
+          //   toFocus.focus();
+          // }
+
+          const point = Vector
             .create(input.pointer.x, input.pointer.y)
             .transform(toFocus.globalTransform().invert());
 
-          if (pointer.isWithin(toFocus.box)) {
+          if (point.isWithin(toFocus.box)) {
             toFocus.focus();
           }
         }
@@ -3256,7 +3282,7 @@
 
   const LENGTHS_IN_PX = {
     cornerSideLength: 8,
-    dotDiameter:      9,
+    dotDiameter:      18,
     controlDiameter:  6,
   };
 
@@ -3339,15 +3365,16 @@
     });
 
     const $frame   = frame(node);
-    const $corners = corners(node);
-    const $dots    = dots(node);
+    const $dots    = dots(node);    // rotation
+    const $corners = corners(node); // scaling
 
     $outerUI.appendChild($frame);
-    for (let corner of $corners) {
-      $outerUI.appendChild(corner);
-    }
     for (let dot of $dots) {
       $outerUI.appendChild(dot);
+    }
+
+    for (let corner of $corners) {
+      $outerUI.appendChild(corner);
     }
 
     return $outerUI;
@@ -3401,34 +3428,35 @@
     const $botRDot  = document.createElementNS(svgns, 'circle');
     const $dots     = [$topLDot, $botLDot, $topRDot, $botRDot];
     const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
+    const radius    = diameter / 2;
 
     for (let $dot of $dots) {
       $dot.setSVGAttrs({
         'data-type':      'dot',
         'data-id':        node._id,
         transform:        node.attr.transform,
-        r:                diameter / 2,
+        r:                radius,
       });
     }
 
     $topLDot.setSVGAttrs({
-      cx: node.box.x - diameter,
-      cy: node.box.y - diameter,
+      cx: node.box.x - radius / 2,
+      cy: node.box.y - radius / 2,
     });
 
     $botLDot.setSVGAttrs({
-      cx: node.box.x - diameter,
-      cy: node.box.y + node.box.height + diameter,
+      cx: node.box.x - radius / 2,
+      cy: node.box.y + node.box.height + radius / 2,
     });
 
     $topRDot.setSVGAttrs({
-      cx: node.box.x + node.box.width + diameter,
-      cy: node.box.y - diameter,
+      cx: node.box.x + node.box.width + radius / 2,
+      cy: node.box.y - radius / 2,
     });
 
     $botRDot.setSVGAttrs({
-      cx: node.box.x + node.box.width + diameter,
-      cy: node.box.y + node.box.height + diameter,
+      cx: node.box.x + node.box.width + radius / 2,
+      cy: node.box.y + node.box.height + radius / 2,
     });
 
     return $dots;
@@ -3548,6 +3576,8 @@
       for (let eventType of eventTypes) {
         document.addEventListener(eventType, (event) => {
           event.preventDefault();
+
+          console.log(event.target.dataset.type);
 
           if (toSuppress(event)) {
             return;

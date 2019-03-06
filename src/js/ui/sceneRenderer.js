@@ -17,7 +17,7 @@ const xmlns = 'http://www.w3.org/2000/xmlns/';
 
 const LENGTHS_IN_PX = {
   cornerSideLength: 8,
-  dotDiameter:      9,
+  dotDiameter:      18,
   controlDiameter:  6,
 };
 
@@ -100,15 +100,16 @@ const outerUI = (node) => {
   });
 
   const $frame   = frame(node);
-  const $corners = corners(node);
-  const $dots    = dots(node);
+  const $dots    = dots(node);    // rotation
+  const $corners = corners(node); // scaling
 
   $outerUI.appendChild($frame);
-  for (let corner of $corners) {
-    $outerUI.appendChild(corner);
-  }
   for (let dot of $dots) {
     $outerUI.appendChild(dot);
+  }
+
+  for (let corner of $corners) {
+    $outerUI.appendChild(corner);
   }
 
   return $outerUI;
@@ -162,34 +163,35 @@ const dots = (node) => {
   const $botRDot  = document.createElementNS(svgns, 'circle');
   const $dots     = [$topLDot, $botLDot, $topRDot, $botRDot];
   const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
+  const radius    = diameter / 2;
 
   for (let $dot of $dots) {
     $dot.setSVGAttrs({
       'data-type':      'dot',
       'data-id':        node._id,
       transform:        node.attr.transform,
-      r:                diameter / 2,
+      r:                radius,
     });
   }
 
   $topLDot.setSVGAttrs({
-    cx: node.box.x - diameter,
-    cy: node.box.y - diameter,
+    cx: node.box.x - radius / 2,
+    cy: node.box.y - radius / 2,
   });
 
   $botLDot.setSVGAttrs({
-    cx: node.box.x - diameter,
-    cy: node.box.y + node.box.height + diameter,
+    cx: node.box.x - radius / 2,
+    cy: node.box.y + node.box.height + radius / 2,
   });
 
   $topRDot.setSVGAttrs({
-    cx: node.box.x + node.box.width + diameter,
-    cy: node.box.y - diameter,
+    cx: node.box.x + node.box.width + radius / 2,
+    cy: node.box.y - radius / 2,
   });
 
   $botRDot.setSVGAttrs({
-    cx: node.box.x + node.box.width + diameter,
-    cy: node.box.y + node.box.height + diameter,
+    cx: node.box.x + node.box.width + radius / 2,
+    cy: node.box.y + node.box.height + radius / 2,
   });
 
   return $dots;

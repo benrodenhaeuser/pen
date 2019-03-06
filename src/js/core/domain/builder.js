@@ -79,7 +79,7 @@ const builder = {
 
     // viewBox
     if ($node.tagName === 'svg') {
-      delete node.props.xmlns;
+      // delete node.props.xmlns;
       const viewBox = $node.getSVGAttr('viewBox').split(' ');
       const origin = Vector.create(viewBox[0], viewBox[1]);
       const size = Vector.create(viewBox[2], viewBox[3]);
@@ -121,13 +121,13 @@ const builder = {
         );
 
         for (let prop of ['x', 'y', 'width', 'height']) {
-          delete node.props[prop];
+          // delete node.props[prop];
         }
         break;
 
       case 'path':
         node.path = Path.createFromSVGpath($node.getSVGAttr('d'));
-        delete node.props.d;
+        // delete node.props.d;
         break;
     }
   },

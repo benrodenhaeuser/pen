@@ -15,20 +15,28 @@ const Node = {
   },
 
   init(opts) {
-    this.set(this.defaults());
+    this.set(this.initDefaults());
     this.set(opts);
 
     return this;
   },
 
-  defaults() {
+  initDefaults() {
     return {
       _id:       createID(),
       children:  [],
       parent:    null,
       transform: Matrix.identity(),
       class:     Class.create(),
-      props:     {},  // for SVG stuff, rename to attr, or get rid of (?)
+      // props:     {},  //
+    };
+  },
+
+  publishDefaults() {
+    return {
+      _id: this._id,
+      children: this.children,
+      parent: this.parent && this.parent._id,
     };
   },
 
@@ -38,17 +46,18 @@ const Node = {
     }
   },
 
-  append(node) {
-    this.children.push(node);
-    node.parent = this;
-  },
+  // hierarchy
 
   get root() {
-    return this.findAncestor(node => node.parent === null);
+    return this.findAncestor(
+      node => node.parent === null
+    );
   },
 
   get leaves() {
-    return this.findDescendants(node => node.children.length === 0);
+    return this.findDescendants(
+      node => node.children.length === 0
+    );
   },
 
   isLeaf() {
@@ -60,15 +69,21 @@ const Node = {
   },
 
   get ancestors() {
-    return this.findAncestors(node => true);
+    return this.findAncestors(
+      node => true
+    );
   },
 
   get descendants() {
-    return this.findDescendants(node => true);
+    return this.findDescendants(
+      node => true
+    );
   },
 
   get siblings() {
-    return this.parent.children.filter(node => node !== this);
+    return this.parent.children.filter(
+      node => node !== this
+    );
   },
 
   get selected() {
@@ -87,6 +102,8 @@ const Node = {
     });
   },
 
+  // traversal
+
   findAncestor(predicate) {
     if (predicate(this)) {
       return this;
@@ -97,14 +114,14 @@ const Node = {
     }
   },
 
-  findAncestors(predicate, resultList = []) {
+  findAncestors(predicate, ancestors = []) {
     if (this.parent === null) {
-      return resultList;
+      return ancestors;
     } else {
       if (predicate(this.parent)) {
-        resultList.push(this.parent);
+        ancestors.push(this.parent);
       }
-      return this.parent.findAncestors(predicate, resultList);
+      return this.parent.findAncestors(predicate, ancestors);
     }
   },
 
@@ -121,45 +138,32 @@ const Node = {
     return null;
   },
 
+  findDescendants(predicate, descendants = []) {
+    if (predicate(this)) {
+      descendants.push(this);
+    }
+
+    for (let child of this.children) {
+      child.findDescendants(predicate, descendants);
+    }
+
+    return descendants;
+  },
+
   findByID(id) {
     return this.findDescendant((node) => {
       return node._id === id;
     });
   },
 
-  findDescendants(predicate, resultList = []) {
-    if (predicate(this)) {
-      resultList.push(this);
-    }
+  // node creation
 
-    for (let child of this.children) {
-      child.findDescendants(predicate, resultList);
-    }
-
-    return resultList;
+  append(node) {
+    this.children.push(node);
+    node.parent = this;
   },
 
-  globalTransform() {
-    return this.ancestorTransform().multiply(this.transform);
-  },
-
-  ancestorTransform() {
-    let matrix = Matrix.identity();
-
-    for (let ancestor of this.ancestors.reverse()) {
-      matrix = matrix.multiply(ancestor.transform);
-    }
-
-    return matrix;
-  },
-
-  globalScaleFactor() {
-    const total  = this.globalTransform();
-    const a      = total.m[0][0];
-    const b      = total.m[1][0];
-
-    return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-  },
+  // bounding box
 
   computeBBox() {
     if (this.isLeaf() && !this.isRoot()) {
@@ -188,6 +192,12 @@ const Node = {
     return this.box;
   },
 
+  contains(point) {
+    return point
+      .transform(this.globalTransform().invert())
+      .isWithin(this.box);
+  },
+
   // TODO: repetitive with the previous method
   updateBBox() {
     const corners = [];
@@ -208,6 +218,8 @@ const Node = {
 
     this.box = Rectangle.createFromMinMax(min, max);
   },
+
+  // setting and removing classes
 
   setFrontier() {
     this.removeFrontier();
@@ -273,12 +285,20 @@ const Node = {
     this.setFrontier();
   },
 
-  publishDefaults() {
-    return {
-      _id: this._id,
-      children: this.children,
-      parent: this.parent && this.parent._id,
-    };
+  // transform
+
+  globalTransform() {
+    return this.ancestorTransform().multiply(this.transform);
+  },
+
+  ancestorTransform() {
+    let matrix = Matrix.identity();
+
+    for (let ancestor of this.ancestors.reverse()) {
+      matrix = matrix.multiply(ancestor.transform);
+    }
+
+    return matrix;
   },
 
   rotate(angle, center) {
@@ -301,10 +321,15 @@ const Node = {
       .multiply(Matrix.translation(offset))
       .multiply(this.globalTransform());
   },
-};
 
-// TODO: we should be more explicit about what constitutes a Root, Shape, Group
-//       which is to say they should have each their own `create` method
+  globalScaleFactor() {
+    const total  = this.globalTransform();
+    const a      = total.m[0][0];
+    const b      = total.m[1][0];
+
+    return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+  },
+};
 
 const Root = Object.create(Node);
 Root.toJSON = function() {
