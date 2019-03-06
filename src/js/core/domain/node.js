@@ -43,8 +43,6 @@ const Node = {
     node.parent = this;
   },
 
-  // TODO: too many getters?
-
   get root() {
     return this.findAncestor(node => node.parent === null);
   },
@@ -123,6 +121,12 @@ const Node = {
     return null;
   },
 
+  findByID(id) {
+    return this.findDescendant((node) => {
+      return node._id === id;
+    });
+  },
+
   findDescendants(predicate, resultList = []) {
     if (predicate(this)) {
       resultList.push(this);
@@ -159,6 +163,7 @@ const Node = {
 
   computeBBox() {
     if (this.isLeaf() && !this.isRoot()) {
+      console.log(this);
       this.box = this.path.bBox();
     } else {
       const corners = [];
@@ -275,6 +280,27 @@ const Node = {
       parent: this.parent && this.parent._id,
     };
   },
+
+  rotate(angle, center) {
+    this.transform = this
+      .ancestorTransform().invert()
+      .multiply(Matrix.rotation(angle, center))
+      .multiply(this.globalTransform());
+  },
+
+  scale(factor, center) {
+    this.transform = this
+      .ancestorTransform().invert()
+      .multiply(Matrix.scale(factor, center))
+      .multiply(this.globalTransform());
+  },
+
+  translate(offset) {
+    this.transform = this
+      .ancestorTransform().invert()
+      .multiply(Matrix.translation(offset))
+      .multiply(this.globalTransform());
+  },
 };
 
 // TODO: we should be more explicit about what constitutes a Root, Shape, Group
@@ -295,7 +321,7 @@ const Shape = Object.create(Node);
 Shape.toJSON = function() {
   return Object.assign({
     tag:         'path',
-    box:         this.box || Rectangle.create(),
+    box:         this.box || Rectangle.create(), // TODO
     path:        this.path,
     transform:   this.transform,
     globalScale: this.globalScaleFactor(),
@@ -311,7 +337,7 @@ const Group = Object.create(Node);
 Group.toJSON = function() {
   return Object.assign({
     tag:         'g',
-    box:         this.box || Rectangle.create(),
+    box:         this.box || Rectangle.create(), // TODO
     transform:   this.transform,
     globalScale: this.globalScaleFactor(),
     attr: {
@@ -321,6 +347,4 @@ Group.toJSON = function() {
   }, this.publishDefaults());
 };
 
-// TODO: setting this.box || Rectangle.create() should not be necessary
-
-export { Node, Root, Shape, Group };
+export { Root, Shape, Group };

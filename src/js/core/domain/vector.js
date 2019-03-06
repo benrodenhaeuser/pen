@@ -40,6 +40,14 @@ const Vector = {
            this.y <= rectangle.y + rectangle.height;
   },
 
+  angle() {
+    return Math.atan(this.y / this.x);
+  },
+
+  length() {
+    return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+  },
+
   addID() {
     this._id = createID();
     return this;

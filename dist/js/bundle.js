@@ -43,6 +43,14 @@
              this.y <= rectangle.y + rectangle.height;
     },
 
+    angle() {
+      return Math.atan(this.y / this.x);
+    },
+
+    length() {
+      return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+    },
+
     addID() {
       this._id = createID();
       return this;
@@ -152,7 +160,7 @@
   };
 
   const Rectangle = {
-    // => two vectors (origin, size)
+    // => two vectors (origin and size)
     create(origin = Vector.create(), size = Vector.create()) {
       return Object.create(Rectangle).init(origin, size);
     },
@@ -172,7 +180,7 @@
       return Rectangle.create(origin, size);
     },
 
-    // => two vectors (from, to)
+    // => two vectors (from and to, or equivalently, min and max)
     createFromMinMax(min, max) {
       const origin = Vector.create(min.x, min.y);
       const size   = Vector.create(max.x - min.x, max.y - min.y);
@@ -206,14 +214,18 @@
 
     get corners() {
       return [
-        this.min,                                                               // NW
-        Vector.create(this.origin.x + this.size.x, this.origin.y),              // NE
-        Vector.create(this.origin.x, this.origin.y + this.size.y),              // SW
-        this.max                                                                // SE
+        this.min,                                                  // nw
+        Vector.create(this.origin.x + this.size.x, this.origin.y), // ne
+        Vector.create(this.origin.x, this.origin.y + this.size.y), // sw
+        this.max                                                   // se
       ];
     },
 
-    // smallest rectangle enclosing this and other
+    get center() {
+      return Vector.create(this.x + this.width / 2, this.y + this.height / 2);
+    },
+
+    // smallest rectangle enclosing `this` and `other`
     getBoundingRect(other) {
       let min = Vector.create();
       let max = Vector.create();
@@ -312,8 +324,6 @@
       node.parent = this;
     },
 
-    // TODO: too many getters?
-
     get root() {
       return this.findAncestor(node => node.parent === null);
     },
@@ -392,6 +402,12 @@
       return null;
     },
 
+    findByID(id) {
+      return this.findDescendant((node) => {
+        return node._id === id;
+      });
+    },
+
     findDescendants(predicate, resultList = []) {
       if (predicate(this)) {
         resultList.push(this);
@@ -428,6 +444,7 @@
 
     computeBBox() {
       if (this.isLeaf() && !this.isRoot()) {
+        console.log(this);
         this.box = this.path.bBox();
       } else {
         const corners = [];
@@ -544,6 +561,27 @@
         parent: this.parent && this.parent._id,
       };
     },
+
+    rotate(angle, center) {
+      this.transform = this
+        .ancestorTransform().invert()
+        .multiply(Matrix.rotation(angle, center))
+        .multiply(this.globalTransform());
+    },
+
+    scale(factor, center) {
+      this.transform = this
+        .ancestorTransform().invert()
+        .multiply(Matrix.scale(factor, center))
+        .multiply(this.globalTransform());
+    },
+
+    translate(offset) {
+      this.transform = this
+        .ancestorTransform().invert()
+        .multiply(Matrix.translation(offset))
+        .multiply(this.globalTransform());
+    },
   };
 
   // TODO: we should be more explicit about what constitutes a Root, Shape, Group
@@ -564,7 +602,7 @@
   Shape.toJSON = function() {
     return Object.assign({
       tag:         'path',
-      box:         this.box || Rectangle.create(),
+      box:         this.box || Rectangle.create(), // TODO
       path:        this.path,
       transform:   this.transform,
       globalScale: this.globalScaleFactor(),
@@ -580,7 +618,7 @@
   Group.toJSON = function() {
     return Object.assign({
       tag:         'g',
-      box:         this.box || Rectangle.create(),
+      box:         this.box || Rectangle.create(), // TODO
       transform:   this.transform,
       globalScale: this.globalScaleFactor(),
       attr: {
@@ -2702,7 +2740,7 @@
       this.processAttributes($node, node);
 
       const $graphicsChildren = Array.from($node.children).filter(($child) => {
-        return $child instanceof SVGGElement || child instanceof SVGGeometryElement
+        return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
       });
 
       for (let $child of $graphicsChildren) {
@@ -2751,7 +2789,7 @@
       );
 
       // path
-      if (node.type === 'shape') {
+      if (Object.getPrototypeOf(node) === Shape) {
         this.capturePath($node, node);
       }
     },
@@ -2796,102 +2834,68 @@
 
   const actions = {
     select(state, input) {
-      const toSelect = state.scene
-        .findDescendant((node) => {
-          return node._id === input.pointer.targetID;
-        })
-        .findAncestor((node) => {
-          return node.props.class.includes('frontier');
-        });
+      const target   = state.scene.findByID(input.pointer.targetID);
+      const toSelect = target && target.findAncestor((node) => {
+        return node.class.includes('frontier');
+      });
 
       if (toSelect) {
         toSelect.select();
-        aux.source = Vector.create(input.pointer.x, input.pointer.y);    } else {
+        this.initTransform(state, input);
+      } else {
         state.scene.deselectAll();
       }
+    },
+
+    initTransform(state, input) {
+      const selected = state.scene.selected;
+      aux.from       = Vector.create(input.pointer.x, input.pointer.y);
+      aux.center     = selected.box.center.transform(selected.globalTransform());
     },
 
     shift(state, input) {
       const selected = state.scene.selected;
 
-      if (!selected) { return; }
+      if (!selected) {
+        return;
+      }
 
-      const target      = Vector.create(input.pointer.x, input.pointer.y);
-      const translate   = target.subtract(aux.source);
-      const translation = Matrix.translation(translate);
+      const to   = Vector.create(input.pointer.x, input.pointer.y);
+      const from = aux.from;
 
-      selected.transform = selected
-        .ancestorTransform().invert()
-        .multiply(translation)
-        .multiply(selected.globalTransform());
+      selected.translate(to.subtract(from));
 
-      aux.source = target;
-    },
-
-    initRotate(state, input) {
-      const selected = state.scene.selected;
-      aux.source     = Vector.create(input.pointer.x, input.pointer.y);
-      const box      = selected.box;
-      const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-      aux.center     = center.transform(selected.globalTransform());
+      aux.from = to;
     },
 
     rotate(state, input) {
-      const selected          = state.scene.selected;
-      const target            = Vector.create(input.pointer.x, input.pointer.y);
-      const sourceMinusCenter = aux.source.subtract(aux.center);
-      const targetMinusCenter = target.subtract(aux.center);
+      const to     = Vector.create(input.pointer.x, input.pointer.y);
+      const from   = aux.from;
+      const center = aux.center;
 
-      const sourceAngle = Math.atan2(sourceMinusCenter.y, sourceMinusCenter.x);
-      const targetAngle = Math.atan2(targetMinusCenter.y, targetMinusCenter.x);
-      const angle       = targetAngle - sourceAngle;
-      const rotation    = Matrix.rotation(angle, aux.center);
+      state.scene.selected.rotate(
+        to.subtract(center).angle() - from.subtract(center).angle(),
+        center
+      );
 
-      selected.transform = selected
-        .ancestorTransform().invert()
-        .multiply(rotation)
-        .multiply(selected.globalTransform());
-
-      aux.source = target;
-    },
-
-    initScale(state, input) {
-      const selected = state.scene.selected;
-      aux.source     = Vector.create(input.pointer.x, input.pointer.y);
-      const box      = selected.box;
-      const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-      aux.center     = center.transform(selected.globalTransform());
+      aux.from = to;
     },
 
     scale(state, input) {
-      const selected          = state.scene.selected;
-      const target            = Vector.create(input.pointer.x, input.pointer.y);
-      const sourceMinusCenter = aux.source.subtract(aux.center);
-      const targetMinusCenter = target.subtract(aux.center);
+      const to     = Vector.create(input.pointer.x, input.pointer.y);
+      const from   = aux.from;
+      const center = aux.center;
 
-      const sourceDistance = Math.sqrt(
-        Math.pow(sourceMinusCenter.x, 2) +
-        Math.pow(sourceMinusCenter.y, 2)
-      );
-      const targetDistance = Math.sqrt(
-        Math.pow(targetMinusCenter.x, 2) +
-        Math.pow(targetMinusCenter.y, 2)
-      );
-      const factor     = targetDistance / sourceDistance;
-      const scaling    = Matrix.scale(factor, aux.center);
+      state.scene.selected.scale(
+        to.subtract(center).length() / from.subtract(center).length(),
+        center
+     );
 
-      selected.transform = selected
-        .ancestorTransform().invert()
-        .multiply(scaling)
-        .multiply(selected.globalTransform());
-
-      aux.source = target;
+      aux.from = to;
     },
 
     release(state, input) {
-      const selected = state.scene.selected;
-
-      for (let ancestor of selected.ancestors) {
+      for (let ancestor of state.scene.selected.ancestors) {
         ancestor.updateBBox();
       }
 
@@ -2899,9 +2903,11 @@
     },
 
     deepSelect(state, input) {
-      const target = state.scene.findDescendant((node) => {
-        return node._id === input.pointer.targetID;
-      });
+      const target = state.scene.findByID(input.pointer.targetID);
+
+      if (!target) {
+        return;
+      }
 
       if (target.isSelected()) {
         target.edit();
@@ -2909,7 +2915,7 @@
         state.id = 'pen'; // TODO: hack!
       } else {
         const toSelect = target.findAncestor((node) => {
-          return node.parent && node.parent.props.class.includes('frontier');
+          return node.parent && node.parent.class.includes('frontier');
         });
 
         if (toSelect) {
@@ -2923,9 +2929,7 @@
     focus(state, input) {
       state.scene.unfocusAll(); // expensive but effective
 
-      const target = state.scene.findDescendant((node) => {
-        return node._id === input.pointer.targetID;
-      });
+      const target = state.scene.findByID(input.pointer.targetID);
 
       if (target) {
         const toFocus = target.findAncestor((node) => {
@@ -2968,11 +2972,10 @@
       state.init(input.data.doc);
     },
 
-    // Pen tool
+    // pen tool
 
     // mousedown in state 'pen'
     initPen(state, input) {
-      console.log('starting to draw with pen');
       const node = Shape.create();
       const d = `M ${input.pointer.x} ${input.pointer.y}`;
       node.path = Path.createFromSVGpath(d);
@@ -2981,32 +2984,19 @@
       node.edit();
 
       aux.node = node;
-
-      // overall result: a small dot appears
-
-      // next step is to continue editing
     },
 
     addSegment(state, input) {
-      console.log('adding a segment');
-
-      const node = aux.node; // not defined?
+      const node = aux.node;
       console.log(node.path);
       const anchor = Vector.create(input.pointer.x, input.pointer.y);
       const segment = Segment.create({ anchor: anchor });
-      node.path.splines[0].segments.push(segment); // not a function
+      node.path.splines[0].segments.push(segment);
       console.log(node.path);
 
       console.log(state);
 
-      // let's draw a line
-      // create a new segment with a single anchor based on mouse pointer
-      // append the segment to the last spline of the node
-
-      // the anchors are drawn, and the shape is filled (black, by default)
-      // but the line lacks a stroke
-
-
+      // TODO: the line lacks a stroke
     },
   };
 
@@ -3021,10 +3011,10 @@
     { from: 'idle', type: 'mousedown', target: 'root', do: 'deselect' },
     { from: 'shifting', type: 'mousemove', do: 'shift' },
     { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
-    { from: 'idle', type: 'mousedown', target: 'dot', do: 'initRotate', to: 'rotating' },
+    { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
     { from: 'rotating', type: 'mousemove', do: 'rotate' },
     { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },
-    { from: 'idle', type: 'mousedown', target: 'corner', do: 'initScale', to: 'scaling' },
+    { from: 'idle', type: 'mousedown', target: 'corner', do: 'initTransform', to: 'scaling' },
     { from: 'scaling', type: 'mousemove', do: 'scale' },
     { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
     { type: 'click', target: 'doc-list-entry', do: 'requestDoc' },
@@ -3141,21 +3131,21 @@
   //   </svg>
   // `;
 
-  // const markup = `
-  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-  //
-  //     <g>
-  //       <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  //
-  //       <g>
-  //         <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  //         <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  //       </g>
-  //     </g>
-  //
-  //     <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  //   </svg>
-  // `;
+  const markup = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+
+    <g>
+      <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+
+      <g>
+        <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+        <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+      </g>
+    </g>
+
+    <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  </svg>
+`;
 
   // const markup = `
   //   <svg id="a3dbc277-3d4c-49ea-bad0-b2ae645587b1" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
@@ -3174,10 +3164,10 @@
   //   </svg>
   // `;
 
-  // empty svg
-  const markup = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
-`;
+  // empty svg with viewBox
+  // const markup = `
+  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
+  // `;
 
 
   // const markup = `

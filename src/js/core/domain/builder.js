@@ -53,7 +53,7 @@ const builder = {
     this.processAttributes($node, node);
 
     const $graphicsChildren = Array.from($node.children).filter(($child) => {
-      return $child instanceof SVGGElement || child instanceof SVGGeometryElement
+      return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
     });
 
     for (let $child of $graphicsChildren) {
@@ -102,7 +102,7 @@ const builder = {
     );
 
     // path
-    if (node.type === 'shape') {
+    if (Object.getPrototypeOf(node) === Shape) {
       this.capturePath($node, node);
     }
   },

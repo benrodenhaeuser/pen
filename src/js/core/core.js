@@ -2,7 +2,6 @@ import { builder } from './domain/builder.js';
 import { clock }   from './application/clock.js';
 import { actions } from './application/actions.js';
 import { config }  from './application/config.js';
-import { Node } from './domain/node.js';
 
 const core = {
   get stateData() {
@@ -84,21 +83,21 @@ export { core };
 //   </svg>
 // `;
 
-// const markup = `
-//   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-//
-//     <g>
-//       <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-//
-//       <g>
-//         <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-//         <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-//       </g>
-//     </g>
-//
-//     <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-//   </svg>
-// `;
+const markup = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+
+    <g>
+      <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+
+      <g>
+        <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+        <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+      </g>
+    </g>
+
+    <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  </svg>
+`;
 
 // const markup = `
 //   <svg id="a3dbc277-3d4c-49ea-bad0-b2ae645587b1" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
@@ -117,10 +116,10 @@ export { core };
 //   </svg>
 // `;
 
-// empty svg
-const markup = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
-`;
+// empty svg with viewBox
+// const markup = `
+//   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
+// `;
 
 
 // const markup = `

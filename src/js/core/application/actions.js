@@ -1,6 +1,5 @@
-import { Matrix }  from '../domain/matrix.js';
 import { Vector }  from '../domain/vector.js';
-import { Node, Shape, Group, Root } from '../domain/node.js';
+import { Shape, Group, Root } from '../domain/node.js';
 import { Path }    from '../domain/path.js';
 import { Segment } from '../domain/segment.js';
 
@@ -8,103 +7,68 @@ let aux = {};
 
 const actions = {
   select(state, input) {
-    const toSelect = state.scene
-      .findDescendant((node) => {
-        return node._id === input.pointer.targetID;
-      })
-      .findAncestor((node) => {
-        return node.props.class.includes('frontier');
-      });
+    const target   = state.scene.findByID(input.pointer.targetID);
+    const toSelect = target && target.findAncestor((node) => {
+      return node.class.includes('frontier');
+    });
 
     if (toSelect) {
       toSelect.select();
-      aux.source = Vector.create(input.pointer.x, input.pointer.y);;
+      this.initTransform(state, input);
     } else {
       state.scene.deselectAll();
     }
   },
 
+  initTransform(state, input) {
+    const selected = state.scene.selected;
+    aux.from       = Vector.create(input.pointer.x, input.pointer.y);
+    aux.center     = selected.box.center.transform(selected.globalTransform());
+  },
+
   shift(state, input) {
     const selected = state.scene.selected;
 
-    if (!selected) { return; }
+    if (!selected) {
+      return;
+    }
 
-    const target      = Vector.create(input.pointer.x, input.pointer.y);
-    const translate   = target.subtract(aux.source);
-    const translation = Matrix.translation(translate);
+    const to   = Vector.create(input.pointer.x, input.pointer.y);
+    const from = aux.from;
 
-    selected.transform = selected
-      .ancestorTransform().invert()
-      .multiply(translation)
-      .multiply(selected.globalTransform());
+    selected.translate(to.subtract(from));
 
-    aux.source = target;
-  },
-
-  initRotate(state, input) {
-    const selected = state.scene.selected;
-    aux.source     = Vector.create(input.pointer.x, input.pointer.y);
-    const box      = selected.box;
-    const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-    aux.center     = center.transform(selected.globalTransform());
+    aux.from = to;
   },
 
   rotate(state, input) {
-    const selected          = state.scene.selected;
-    const target            = Vector.create(input.pointer.x, input.pointer.y);
-    const sourceMinusCenter = aux.source.subtract(aux.center);
-    const targetMinusCenter = target.subtract(aux.center);
+    const to     = Vector.create(input.pointer.x, input.pointer.y);
+    const from   = aux.from;
+    const center = aux.center;
 
-    const sourceAngle = Math.atan2(sourceMinusCenter.y, sourceMinusCenter.x);
-    const targetAngle = Math.atan2(targetMinusCenter.y, targetMinusCenter.x);
-    const angle       = targetAngle - sourceAngle;
-    const rotation    = Matrix.rotation(angle, aux.center);
+    state.scene.selected.rotate(
+      to.subtract(center).angle() - from.subtract(center).angle(),
+      center
+    );
 
-    selected.transform = selected
-      .ancestorTransform().invert()
-      .multiply(rotation)
-      .multiply(selected.globalTransform());
-
-    aux.source = target;
-  },
-
-  initScale(state, input) {
-    const selected = state.scene.selected;
-    aux.source     = Vector.create(input.pointer.x, input.pointer.y);
-    const box      = selected.box;
-    const center   = Vector.create(box.x + box.width/2, box.y + box.height/2);
-    aux.center     = center.transform(selected.globalTransform());
+    aux.from = to;
   },
 
   scale(state, input) {
-    const selected          = state.scene.selected;
-    const target            = Vector.create(input.pointer.x, input.pointer.y);
-    const sourceMinusCenter = aux.source.subtract(aux.center);
-    const targetMinusCenter = target.subtract(aux.center);
+    const to     = Vector.create(input.pointer.x, input.pointer.y);
+    const from   = aux.from;
+    const center = aux.center;
 
-    const sourceDistance = Math.sqrt(
-      Math.pow(sourceMinusCenter.x, 2) +
-      Math.pow(sourceMinusCenter.y, 2)
-    );
-    const targetDistance = Math.sqrt(
-      Math.pow(targetMinusCenter.x, 2) +
-      Math.pow(targetMinusCenter.y, 2)
-    );
-    const factor     = targetDistance / sourceDistance;
-    const scaling    = Matrix.scale(factor, aux.center);
+    state.scene.selected.scale(
+      to.subtract(center).length() / from.subtract(center).length(),
+      center
+   );
 
-    selected.transform = selected
-      .ancestorTransform().invert()
-      .multiply(scaling)
-      .multiply(selected.globalTransform());
-
-    aux.source = target;
+    aux.from = to;
   },
 
   release(state, input) {
-    const selected = state.scene.selected;
-
-    for (let ancestor of selected.ancestors) {
+    for (let ancestor of state.scene.selected.ancestors) {
       ancestor.updateBBox();
     }
 
@@ -112,9 +76,11 @@ const actions = {
   },
 
   deepSelect(state, input) {
-    const target = state.scene.findDescendant((node) => {
-      return node._id === input.pointer.targetID;
-    });
+    const target = state.scene.findByID(input.pointer.targetID);
+
+    if (!target) {
+      return;
+    }
 
     if (target.isSelected()) {
       target.edit();
@@ -122,7 +88,7 @@ const actions = {
       state.id = 'pen'; // TODO: hack!
     } else {
       const toSelect = target.findAncestor((node) => {
-        return node.parent && node.parent.props.class.includes('frontier');
+        return node.parent && node.parent.class.includes('frontier');
       });
 
       if (toSelect) {
@@ -136,9 +102,7 @@ const actions = {
   focus(state, input) {
     state.scene.unfocusAll(); // expensive but effective
 
-    const target = state.scene.findDescendant((node) => {
-      return node._id === input.pointer.targetID;
-    });
+    const target = state.scene.findByID(input.pointer.targetID);
 
     if (target) {
       const toFocus = target.findAncestor((node) => {
@@ -181,11 +145,10 @@ const actions = {
     state.init(input.data.doc);
   },
 
-  // Pen tool
+  // pen tool
 
   // mousedown in state 'pen'
   initPen(state, input) {
-    console.log('starting to draw with pen');
     const node = Shape.create();
     const d = `M ${input.pointer.x} ${input.pointer.y}`;
     node.path = Path.createFromSVGpath(d);
@@ -194,32 +157,19 @@ const actions = {
     node.edit();
 
     aux.node = node;
-
-    // overall result: a small dot appears
-
-    // next step is to continue editing
   },
 
   addSegment(state, input) {
-    console.log('adding a segment');
-
-    const node = aux.node; // not defined?
+    const node = aux.node;
     console.log(node.path);
     const anchor = Vector.create(input.pointer.x, input.pointer.y);
     const segment = Segment.create({ anchor: anchor });
-    node.path.splines[0].segments.push(segment); // not a function
+    node.path.splines[0].segments.push(segment);
     console.log(node.path);
 
     console.log(state);
 
-    // let's draw a line
-    // create a new segment with a single anchor based on mouse pointer
-    // append the segment to the last spline of the node
-
-    // the anchors are drawn, and the shape is filled (black, by default)
-    // but the line lacks a stroke
-
-
+    // TODO: the line lacks a stroke
   },
 };
 

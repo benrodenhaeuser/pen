@@ -1,7 +1,7 @@
 import { Vector } from './vector.js';
 
 const Rectangle = {
-  // => two vectors (origin, size)
+  // => two vectors (origin and size)
   create(origin = Vector.create(), size = Vector.create()) {
     return Object.create(Rectangle).init(origin, size);
   },
@@ -21,7 +21,7 @@ const Rectangle = {
     return Rectangle.create(origin, size);
   },
 
-  // => two vectors (from, to)
+  // => two vectors (from and to, or equivalently, min and max)
   createFromMinMax(min, max) {
     const origin = Vector.create(min.x, min.y);
     const size   = Vector.create(max.x - min.x, max.y - min.y);
@@ -55,14 +55,18 @@ const Rectangle = {
 
   get corners() {
     return [
-      this.min,                                                               // NW
-      Vector.create(this.origin.x + this.size.x, this.origin.y),              // NE
-      Vector.create(this.origin.x, this.origin.y + this.size.y),              // SW
-      this.max                                                                // SE
+      this.min,                                                  // nw
+      Vector.create(this.origin.x + this.size.x, this.origin.y), // ne
+      Vector.create(this.origin.x, this.origin.y + this.size.y), // sw
+      this.max                                                   // se
     ];
   },
 
-  // smallest rectangle enclosing this and other
+  get center() {
+    return Vector.create(this.x + this.width / 2, this.y + this.height / 2);
+  },
+
+  // smallest rectangle enclosing `this` and `other`
   getBoundingRect(other) {
     let min = Vector.create();
     let max = Vector.create();
