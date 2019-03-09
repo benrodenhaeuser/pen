@@ -134,23 +134,23 @@ const corners = (node) => {
   }
 
   $topLCorner.setSVGAttrs({
-    x: node.box.x - length / 2,
-    y: node.box.y - length / 2,
+    x: node.bounds.x - length / 2,
+    y: node.bounds.y - length / 2,
   });
 
   $botLCorner.setSVGAttrs({
-    x: node.box.x - length / 2,
-    y: node.box.y + node.box.height - length / 2,
+    x: node.bounds.x - length / 2,
+    y: node.bounds.y + node.bounds.height - length / 2,
   });
 
   $topRCorner.setSVGAttrs({
-    x: node.box.x + node.box.width - length / 2,
-    y: node.box.y - length / 2,
+    x: node.bounds.x + node.bounds.width - length / 2,
+    y: node.bounds.y - length / 2,
   });
 
   $botRCorner.setSVGAttrs({
-    x: node.box.x + node.box.width - length / 2,
-    y: node.box.y + node.box.height - length / 2,
+    x: node.bounds.x + node.bounds.width - length / 2,
+    y: node.bounds.y + node.bounds.height - length / 2,
   });
 
   return $corners;
@@ -175,23 +175,23 @@ const dots = (node) => {
   }
 
   $topLDot.setSVGAttrs({
-    cx: node.box.x - radius / 2,
-    cy: node.box.y - radius / 2,
+    cx: node.bounds.x - radius / 2,
+    cy: node.bounds.y - radius / 2,
   });
 
   $botLDot.setSVGAttrs({
-    cx: node.box.x - radius / 2,
-    cy: node.box.y + node.box.height + radius / 2,
+    cx: node.bounds.x - radius / 2,
+    cy: node.bounds.y + node.bounds.height + radius / 2,
   });
 
   $topRDot.setSVGAttrs({
-    cx: node.box.x + node.box.width + radius / 2,
-    cy: node.box.y - radius / 2,
+    cx: node.bounds.x + node.bounds.width + radius / 2,
+    cy: node.bounds.y - radius / 2,
   });
 
   $botRDot.setSVGAttrs({
-    cx: node.box.x + node.box.width + radius / 2,
-    cy: node.box.y + node.box.height + radius / 2,
+    cx: node.bounds.x + node.bounds.width + radius / 2,
+    cy: node.bounds.y + node.bounds.height + radius / 2,
   });
 
   return $dots;
@@ -202,10 +202,10 @@ const frame = (node) => {
 
   $frame.setSVGAttrs({
     'data-type':  'frame',
-    x:            node.box.x,
-    y:            node.box.y,
-    width:        node.box.width,
-    height:       node.box.height,
+    x:            node.bounds.x,
+    y:            node.bounds.y,
+    width:        node.bounds.width,
+    height:       node.bounds.height,
     transform:    node.attr.transform,
     'data-id':    node._id,
   });

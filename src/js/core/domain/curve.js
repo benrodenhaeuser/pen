@@ -48,7 +48,7 @@ const Curve = {
     return (this.handle1 !== undefined) && (this.handle2 !== undefined);
   },
 
-  bBox() {
+  bounds() {
     if (this.isLine()) {
       const minX = Math.min(this.anchor1.x, this.anchor2.x);
       const minY = Math.min(this.anchor1.y, this.anchor2.y);
@@ -62,9 +62,9 @@ const Curve = {
       return Rectangle.createFromMinMax(min, max);
     }
 
-    const box = new Bezier(...this.coords()).bbox();
-    const min = Vector.create(box.x.min, box.y.min);
-    const max = Vector.create(box.x.max, box.y.max);
+    const bbox = new Bezier(...this.coords()).bbox();
+    const min = Vector.create(bbox.x.min, bbox.y.min);
+    const max = Vector.create(bbox.x.max, bbox.y.max);
 
     return Rectangle.createFromMinMax(min, max);
   },

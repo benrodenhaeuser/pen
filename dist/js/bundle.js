@@ -457,15 +457,15 @@
 
     // bounding box
 
-    computeBBox() {
+    computeBounds() {
       if (this.isLeaf() && !this.isRoot()) {
         console.log(this);
-        this.box = this.path.bBox();
+        this.bounds = this.path.bounds();
       } else {
         const corners = [];
 
         for (let child of this.children) {
-          for (let corner of child.computeBBox().corners) {
+          for (let corner of child.computeBounds().corners) {
             corners.push(corner.transform(child.transform));
           }
         }
@@ -478,24 +478,24 @@
         const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
         const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
 
-        this.box = Rectangle.createFromMinMax(min, max);
+        this.bounds = Rectangle.createFromMinMax(min, max);
       }
 
-      return this.box;
+      return this.bounds;
     },
 
     contains(point) {
       return point
         .transform(this.globalTransform().invert())
-        .isWithin(this.box);
+        .isWithin(this.bounds);
     },
 
     // TODO: repetitive with the previous method
-    updateBBox() {
+    updateBounds() {
       const corners = [];
 
       for (let child of this.children) {
-        for (let corner of child.box.corners) {
+        for (let corner of child.bounds.corners) {
           corners.push(corner.transform(child.transform));
         }
       }
@@ -508,7 +508,7 @@
       const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
       const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
 
-      this.box = Rectangle.createFromMinMax(min, max);
+      this.bounds = Rectangle.createFromMinMax(min, max);
     },
 
     // setting and removing classes
@@ -651,7 +651,7 @@
   Shape.toJSON = function() {
     return Object.assign({
       tag:         'path',
-      box:         this.box || Rectangle.create(), // TODO
+      bounds:      this.bounds || Rectangle.create(), // TODO
       path:        this.path,
       transform:   this.transform,
       globalScale: this.globalScaleFactor(),
@@ -667,7 +667,7 @@
   Group.toJSON = function() {
     return Object.assign({
       tag:         'g',
-      box:         this.box || Rectangle.create(), // TODO
+      bounds:      this.bounds || Rectangle.create(), // TODO
       transform:   this.transform,
       globalScale: this.globalScaleFactor(),
       attr: {
@@ -2536,7 +2536,7 @@
       return (this.handle1 !== undefined) && (this.handle2 !== undefined);
     },
 
-    bBox() {
+    bounds() {
       if (this.isLine()) {
         const minX = Math.min(this.anchor1.x, this.anchor2.x);
         const minY = Math.min(this.anchor1.y, this.anchor2.y);
@@ -2550,9 +2550,9 @@
         return Rectangle.createFromMinMax(min, max);
       }
 
-      const box = new Bezier(...this.coords()).bbox();
-      const min = Vector.create(box.x.min, box.y.min);
-      const max = Vector.create(box.x.max, box.y.max);
+      const bbox = new Bezier(...this.coords()).bbox();
+      const min = Vector.create(bbox.x.min, bbox.y.min);
+      const max = Vector.create(bbox.x.max, bbox.y.max);
 
       return Rectangle.createFromMinMax(min, max);
     },
@@ -2615,23 +2615,23 @@
       return theCurves;
     },
 
-    bBox() {
-      let splineBox;
+    bounds() {
+      let splineBounds;
 
       if (this.segments.length === 1) {
-        splineBox = Rectangle.createFromMinMax(vector.anchor, vector.anchor);
+        splineBounds = Rectangle.createFromMinMax(vector.anchor, vector.anchor);
         // ^ TODO: I think this is difficult to draw, because it has no dimensions.
       } else {
         const curves  = this.curves();
-        splineBox = curves[0].bBox();
+        splineBounds = curves[0].bounds();
 
         for (let i = 1; i < curves.length; i += 1) {
-          const curveBox = curves[i].bBox();
-          splineBox = splineBox.getBoundingRect(curveBox);
+          const curveBounds = curves[i].bounds();
+          splineBounds = splineBounds.getBoundingRect(curveBounds);
         }
       }
 
-      return splineBox;
+      return splineBounds;
     },
 
     toJSON() {
@@ -2690,15 +2690,15 @@
         .commands;
     },
 
-    bBox() {
-      const splines = this.splines;
-      let pathBox   = splines[0].bBox();
+    bounds() {
+      const splines  = this.splines;
+      let pathBounds = splines[0].bounds();
 
       for (let i = 1; i < this.splines.length; i += 1) {
-        const splineBox = this.splines[i].bBox();
-        pathBox = pathBox.getBoundingRect(splineBox);
+        const splineBounds = this.splines[i].bounds();
+        pathBounds = pathBounds.getBoundingRect(splineBounds);
       }
-      return pathBox;
+      return pathBounds;
     },
 
     toString() {
@@ -2771,7 +2771,7 @@
       // this.copyStyles($svg, scene); // TODO
       // this.copyDefs($svg, scene);   // TODO
       this.buildTree($svg, scene);
-      scene.computeBBox();
+      scene.computeBounds();
       scene.setFrontier();
 
       return scene;
@@ -2893,7 +2893,7 @@
     initTransform(state, input) {
       const selected = state.scene.selected;
       aux.from       = Vector.create(input.x, input.y); // global coordinates
-      aux.center     = selected.box.center.transform(selected.globalTransform());
+      aux.center     = selected.bounds.center.transform(selected.globalTransform());
       // ^ global coordinates (globalTransform transforms local coords to global coords)
     },
 
@@ -2949,7 +2949,7 @@
 
     release(state, input) {
       for (let ancestor of state.scene.selected.ancestors) {
-        ancestor.updateBBox();
+        ancestor.updateBounds();
       }
 
       aux = {};
@@ -3419,23 +3419,23 @@
     }
 
     $topLCorner.setSVGAttrs({
-      x: node.box.x - length / 2,
-      y: node.box.y - length / 2,
+      x: node.bounds.x - length / 2,
+      y: node.bounds.y - length / 2,
     });
 
     $botLCorner.setSVGAttrs({
-      x: node.box.x - length / 2,
-      y: node.box.y + node.box.height - length / 2,
+      x: node.bounds.x - length / 2,
+      y: node.bounds.y + node.bounds.height - length / 2,
     });
 
     $topRCorner.setSVGAttrs({
-      x: node.box.x + node.box.width - length / 2,
-      y: node.box.y - length / 2,
+      x: node.bounds.x + node.bounds.width - length / 2,
+      y: node.bounds.y - length / 2,
     });
 
     $botRCorner.setSVGAttrs({
-      x: node.box.x + node.box.width - length / 2,
-      y: node.box.y + node.box.height - length / 2,
+      x: node.bounds.x + node.bounds.width - length / 2,
+      y: node.bounds.y + node.bounds.height - length / 2,
     });
 
     return $corners;
@@ -3460,23 +3460,23 @@
     }
 
     $topLDot.setSVGAttrs({
-      cx: node.box.x - radius / 2,
-      cy: node.box.y - radius / 2,
+      cx: node.bounds.x - radius / 2,
+      cy: node.bounds.y - radius / 2,
     });
 
     $botLDot.setSVGAttrs({
-      cx: node.box.x - radius / 2,
-      cy: node.box.y + node.box.height + radius / 2,
+      cx: node.bounds.x - radius / 2,
+      cy: node.bounds.y + node.bounds.height + radius / 2,
     });
 
     $topRDot.setSVGAttrs({
-      cx: node.box.x + node.box.width + radius / 2,
-      cy: node.box.y - radius / 2,
+      cx: node.bounds.x + node.bounds.width + radius / 2,
+      cy: node.bounds.y - radius / 2,
     });
 
     $botRDot.setSVGAttrs({
-      cx: node.box.x + node.box.width + radius / 2,
-      cy: node.box.y + node.box.height + radius / 2,
+      cx: node.bounds.x + node.bounds.width + radius / 2,
+      cy: node.bounds.y + node.bounds.height + radius / 2,
     });
 
     return $dots;
@@ -3487,10 +3487,10 @@
 
     $frame.setSVGAttrs({
       'data-type':  'frame',
-      x:            node.box.x,
-      y:            node.box.y,
-      width:        node.box.width,
-      height:       node.box.height,
+      x:            node.bounds.x,
+      y:            node.bounds.y,
+      width:        node.bounds.width,
+      height:       node.bounds.height,
       transform:    node.attr.transform,
       'data-id':    node._id,
     });

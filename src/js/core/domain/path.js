@@ -54,15 +54,15 @@ const Path = {
       .commands;
   },
 
-  bBox() {
-    const splines = this.splines;
-    let pathBox   = splines[0].bBox();
+  bounds() {
+    const splines  = this.splines;
+    let pathBounds = splines[0].bounds();
 
     for (let i = 1; i < this.splines.length; i += 1) {
-      const splineBox = this.splines[i].bBox();
-      pathBox = pathBox.getBoundingRect(splineBox);
+      const splineBounds = this.splines[i].bounds();
+      pathBounds = pathBounds.getBoundingRect(splineBounds);
     }
-    return pathBox;
+    return pathBounds;
   },
 
   toString() {

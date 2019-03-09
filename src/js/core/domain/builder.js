@@ -35,7 +35,7 @@ const builder = {
     // this.copyStyles($svg, scene); // TODO
     // this.copyDefs($svg, scene);   // TODO
     this.buildTree($svg, scene);
-    scene.computeBBox();
+    scene.computeBounds();
     scene.setFrontier();
 
     return scene;

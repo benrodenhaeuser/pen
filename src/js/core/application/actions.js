@@ -21,7 +21,7 @@ const actions = {
   initTransform(state, input) {
     const selected = state.scene.selected;
     aux.from       = Vector.create(input.x, input.y); // global coordinates
-    aux.center     = selected.box.center.transform(selected.globalTransform());
+    aux.center     = selected.bounds.center.transform(selected.globalTransform());
     // ^ global coordinates (globalTransform transforms local coords to global coords)
   },
 
@@ -77,7 +77,7 @@ const actions = {
 
   release(state, input) {
     for (let ancestor of state.scene.selected.ancestors) {
-      ancestor.updateBBox();
+      ancestor.updateBounds();
     }
 
     aux = {};

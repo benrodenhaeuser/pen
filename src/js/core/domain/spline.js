@@ -60,23 +60,23 @@ const Spline = {
     return theCurves;
   },
 
-  bBox() {
-    let splineBox;
+  bounds() {
+    let splineBounds;
 
     if (this.segments.length === 1) {
-      splineBox = Rectangle.createFromMinMax(vector.anchor, vector.anchor);
+      splineBounds = Rectangle.createFromMinMax(vector.anchor, vector.anchor);
       // ^ TODO: I think this is difficult to draw, because it has no dimensions.
     } else {
       const curves  = this.curves();
-      splineBox = curves[0].bBox();
+      splineBounds = curves[0].bounds();
 
       for (let i = 1; i < curves.length; i += 1) {
-        const curveBox = curves[i].bBox();
-        splineBox = splineBox.getBoundingRect(curveBox);
+        const curveBounds = curves[i].bounds();
+        splineBounds = splineBounds.getBoundingRect(curveBounds);
       }
     }
 
-    return splineBox;
+    return splineBounds;
   },
 
   toJSON() {

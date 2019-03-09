@@ -171,15 +171,15 @@ const Node = {
 
   // bounding box
 
-  computeBBox() {
+  computeBounds() {
     if (this.isLeaf() && !this.isRoot()) {
       console.log(this);
-      this.box = this.path.bBox();
+      this.bounds = this.path.bounds();
     } else {
       const corners = [];
 
       for (let child of this.children) {
-        for (let corner of child.computeBBox().corners) {
+        for (let corner of child.computeBounds().corners) {
           corners.push(corner.transform(child.transform));
         }
       }
@@ -192,24 +192,24 @@ const Node = {
       const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
       const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
 
-      this.box = Rectangle.createFromMinMax(min, max);
+      this.bounds = Rectangle.createFromMinMax(min, max);
     }
 
-    return this.box;
+    return this.bounds;
   },
 
   contains(point) {
     return point
       .transform(this.globalTransform().invert())
-      .isWithin(this.box);
+      .isWithin(this.bounds);
   },
 
   // TODO: repetitive with the previous method
-  updateBBox() {
+  updateBounds() {
     const corners = [];
 
     for (let child of this.children) {
-      for (let corner of child.box.corners) {
+      for (let corner of child.bounds.corners) {
         corners.push(corner.transform(child.transform));
       }
     }
@@ -222,7 +222,7 @@ const Node = {
     const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
     const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
 
-    this.box = Rectangle.createFromMinMax(min, max);
+    this.bounds = Rectangle.createFromMinMax(min, max);
   },
 
   // setting and removing classes
@@ -365,7 +365,7 @@ const Shape = Object.create(Node);
 Shape.toJSON = function() {
   return Object.assign({
     tag:         'path',
-    box:         this.box || Rectangle.create(), // TODO
+    bounds:      this.bounds || Rectangle.create(), // TODO
     path:        this.path,
     transform:   this.transform,
     globalScale: this.globalScaleFactor(),
@@ -381,7 +381,7 @@ const Group = Object.create(Node);
 Group.toJSON = function() {
   return Object.assign({
     tag:         'g',
-    box:         this.box || Rectangle.create(), // TODO
+    bounds:      this.bounds || Rectangle.create(), // TODO
     transform:   this.transform,
     globalScale: this.globalScaleFactor(),
     attr: {
