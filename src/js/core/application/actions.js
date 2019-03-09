@@ -1,16 +1,14 @@
-import { Vector }  from '../domain/vector.js';
-import { Shape, Group, Root } from '../domain/node.js';
-import { Path }    from '../domain/path.js';
-import { Segment } from '../domain/segment.js';
+import { Shape, Group } from '../domain/node.js';
+import { Vector }       from '../domain/vector.js';
+import { Path }         from '../domain/path.js';
+import { Segment }      from '../domain/segment.js';
 
 let aux = {};
 
 const actions = {
   select(state, input) {
-    const target   = state.scene.findByID(input.pointer.targetID);
-    const toSelect = target && target.findAncestor((node) => {
-      return node.class.includes('frontier');
-    });
+    const target   = state.scene.findDescendantByID(input.targetID);
+    const toSelect = target && target.findAncestorByClass('frontier');
 
     if (toSelect) {
       toSelect.select();
@@ -22,8 +20,9 @@ const actions = {
 
   initTransform(state, input) {
     const selected = state.scene.selected;
-    aux.from       = Vector.create(input.pointer.x, input.pointer.y);
+    aux.from       = Vector.create(input.x, input.y); // global coordinates
     aux.center     = selected.box.center.transform(selected.globalTransform());
+    // ^ global coordinates (globalTransform transforms local coords to global coords)
   },
 
   shift(state, input) {
@@ -33,36 +32,45 @@ const actions = {
       return;
     }
 
-    const to   = Vector.create(input.pointer.x, input.pointer.y);
-    const from = aux.from;
+    const to     = Vector.create(input.x, input.y); // global coordinates
+    const from   = aux.from;
+    const offset = to.minus(from);
 
-    selected.translate(to.subtract(from));
+    selected.translate(offset);
 
     aux.from = to;
   },
 
   rotate(state, input) {
-    const to     = Vector.create(input.pointer.x, input.pointer.y);
+    const selected = state.scene.selected;
+
+    if (!selected) {
+      return;
+    }
+
+    const to     = Vector.create(input.x, input.y);
     const from   = aux.from;
     const center = aux.center;
+    const angle  = center.angle(from, to);
 
-    state.scene.selected.rotate(
-      to.subtract(center).angle() - from.subtract(center).angle(),
-      center
-    );
+    selected.rotate(angle, center);
 
     aux.from = to;
   },
 
   scale(state, input) {
-    const to     = Vector.create(input.pointer.x, input.pointer.y);
+    const selected = state.scene.selected;
+
+    if (!selected) {
+      return;
+    }
+
+    const to     = Vector.create(input.x, input.y);
     const from   = aux.from;
     const center = aux.center;
+    const factor = to.minus(center).length() / from.minus(center).length();
 
-    state.scene.selected.scale(
-      to.subtract(center).length() / from.subtract(center).length(),
-      center
-   );
+    selected.scale(factor, center);
 
     aux.from = to;
   },
@@ -76,7 +84,7 @@ const actions = {
   },
 
   deepSelect(state, input) {
-    const target = state.scene.findByID(input.pointer.targetID);
+    const target = state.scene.findDescendantByID(input.targetID);
 
     if (!target) {
       return;
@@ -102,26 +110,14 @@ const actions = {
   focus(state, input) {
     state.scene.unfocusAll(); // expensive but effective
 
-    const target = state.scene.findByID(input.pointer.targetID);
+    const target = state.scene.findDescendantByID(input.targetID);
+    const hit    = Vector.create(input.x, input.y);
 
     if (target) {
-      const toFocus = target.findAncestor((node) => {
-        return node.class.includes('frontier');
-      });
+      const toFocus = target.findAncestorByClass('frontier');
 
-      if (toFocus) {
-        // const point = Vector.create(input.pointer.x, input.pointer.y);
-        // if (toFocus.contains(point)) {
-        //   toFocus.focus();
-        // }
-
-        const point = Vector
-          .create(input.pointer.x, input.pointer.y)
-          .transform(toFocus.globalTransform().invert());
-
-        if (point.isWithin(toFocus.box)) {
-          toFocus.focus();
-        }
+      if (toFocus && toFocus.contains(hit)) {
+        toFocus.focus();
       }
     }
   },
@@ -143,19 +139,19 @@ const actions = {
   },
 
   requestDoc(state, input) {
-    state.docs.selectedID = input.pointer.targetID;
+    state.docs.selectedID = input.targetID;
   },
 
   setDoc(state, input) {
     state.init(input.data.doc);
   },
 
-  // pen tool
+  // pen tool (draft version)
 
   // mousedown in state 'pen'
   initPen(state, input) {
     const node = Shape.create();
-    const d = `M ${input.pointer.x} ${input.pointer.y}`;
+    const d = `M ${input.x} ${input.y}`;
     node.path = Path.createFromSVGpath(d);
     node.type = 'shape';
     state.scene.append(node);
@@ -167,7 +163,7 @@ const actions = {
   addSegment(state, input) {
     const node = aux.node;
     console.log(node.path);
-    const anchor = Vector.create(input.pointer.x, input.pointer.y);
+    const anchor = Vector.create(input.x, input.y);
     const segment = Segment.create({ anchor: anchor });
     node.path.splines[0].segments.push(segment);
     console.log(node.path);

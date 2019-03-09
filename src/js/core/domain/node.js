@@ -150,10 +150,16 @@ const Node = {
     return descendants;
   },
 
-  findByID(id) {
+  findDescendantByID(id) {
     return this.findDescendant((node) => {
       return node._id === id;
     });
+  },
+
+  findAncestorByClass(className) {
+    return this.findAncestor((node) => {
+      return node.class.includes(className);
+    })
   },
 
   // node creation
@@ -302,20 +308,33 @@ const Node = {
   },
 
   rotate(angle, center) {
-    this.transform = this
-      .ancestorTransform().invert()
-      .multiply(Matrix.rotation(angle, center))
-      .multiply(this.globalTransform());
+    center = center.transform(this.ancestorTransform().invert());
+    this.transform = Matrix.rotation(angle, center).multiply(this.transform);
+
+    // alternatively:
+
+    // this.transform = this
+    //   .ancestorTransform().invert()
+    //   .multiply(Matrix.rotation(angle, center))
+    //   .multiply(this.globalTransform());
   },
 
   scale(factor, center) {
-    this.transform = this
-      .ancestorTransform().invert()
-      .multiply(Matrix.scale(factor, center))
-      .multiply(this.globalTransform());
+    center = center.transform(this.ancestorTransform().invert());
+    this.transform = Matrix.scale(factor, center).multiply(this.transform);
+
+    // alternatively:
+
+    // this.transform = this
+    //   .ancestorTransform().invert()
+    //   .multiply(Matrix.scale(factor, center))
+    //   .multiply(this.globalTransform());
   },
 
   translate(offset) {
+    // TODO: for some reason, simply premultiplying this.transform
+    // with the offset matrix does not yield the correct result, why is that?
+
     this.transform = this
       .ancestorTransform().invert()
       .multiply(Matrix.translation(offset))

@@ -20,13 +20,12 @@ const ui = {
       'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
     ];
 
-    const pointerData = (event) => {
+    const coords = (event) => {
       const [x, y] = getSVGCoords(event.clientX, event.clientY);
 
       return {
-        x:        x,
-        y:        y,
-        targetID: event.target.dataset.id,
+        x: x,
+        y: y,
       };
     };
 
@@ -47,9 +46,11 @@ const ui = {
         }
 
         compute({
-          type:    event.type,
-          target:  event.target.dataset.type,
-          pointer: pointerData(event),
+          type:     event.type,
+          target:   event.target.dataset.type,
+          x:        coords(event).x,
+          y:        coords(event).y,
+          targetID: event.target.dataset.id,
         });
       });
     }

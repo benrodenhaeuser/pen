@@ -30,7 +30,7 @@ const Vector = {
     return Vector.create(this.x + other.x, this.y + other.y);
   },
 
-  subtract(other) {
+  minus(other) {
     return Vector.create(this.x - other.x, this.y - other.y);
   },
 
@@ -45,8 +45,13 @@ const Vector = {
            this.y <= rectangle.y + rectangle.height;
   },
 
-  angle() {
-    return Math.atan2(this.y, this.x);
+  angle(...args) {
+    if (args.length === 0) {
+      return Math.atan2(this.y, this.x);
+    } else {
+      const [from, to] = args;
+      return to.minus(this).angle() - from.minus(this).angle();
+    }
   },
 
   length() {
