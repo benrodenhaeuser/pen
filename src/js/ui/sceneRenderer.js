@@ -221,6 +221,12 @@ const innerUI = (node) => {
     'data-id':   node._id,
   });
 
+  const $connections = connections(node);
+
+  for (let $connection of $connections) {
+    $innerUI.appendChild($connection);
+  }
+
   const $controls = controls(node);
 
   for (let $control of $controls) {
@@ -230,19 +236,45 @@ const innerUI = (node) => {
   return $innerUI;
 };
 
+const connections = (node) => {
+  const $connections = [];
+
+  for (let spline of node.path) {
+    for (let segment of spline) {
+      if (segment.handleIn && segment.handleOut) {
+        $connections.push(connection(node, segment));
+      }
+    }
+  }
+
+  return $connections;
+};
+
+const connection = (node, segment) => {
+  console.log(segment);
+  const $connection = document.createElementNS(svgns, 'line');
+
+  // TODO: this assumes "symmetric" handles – will not be true in general
+  //       it also assumes two handles to begin with (see the call site!)
+  //       So we really want to draw *two* lines here
+
+  $connection.setSVGAttrs({
+    x1:        segment.handleIn.x,
+    y1:        segment.handleIn.y,
+    x2:        segment.handleOut.x,
+    y2:        segment.handleOut.y,
+    transform: node.attr.transform,
+  });
+
+  return $connection;
+};
+
 const controls = (node) => {
   const $controls = [];
   const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
 
-  console.log(diameter);
-
-  console.log('node.path', node.path); // TODO: flat array -- why is that?
-
   for (let spline of node.path) {
-    console.log(spline);
     for (let segment of spline) {
-      console.log(segment);
-
       $controls.push(control(node, diameter, segment.anchor.x, segment.anchor.y));
 
       if (segment.handleIn) {

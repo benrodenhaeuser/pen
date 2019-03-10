@@ -22,9 +22,10 @@ const config = [
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
   // PEN TOOL
   { from: 'idle', type: 'click', target: 'usePen', do: 'deselect', to: 'pen' },
-  { from: 'pen', type: 'mousedown', do: 'initPen', to: 'pen' },
-  { from: 'pen', type: 'mouseup', to: 'continuePen' },
-  { from: 'continuePen', type: 'mousedown', do: 'addSegment' },
+  { from: 'pen', type: 'mousedown', do: 'addFirstAnchor', to: 'addingHandle' },
+  { from: 'addingHandle', type: 'mousemove', do: 'addHandle', to: 'addingHandle' },
+  { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
+  { from: 'continuePen', type: 'mousedown', do: 'addSegment', to: 'addingHandle' },
 ];
 
 config.get = function(state, input) {

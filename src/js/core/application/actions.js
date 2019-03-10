@@ -2,6 +2,7 @@ import { Shape, Group } from '../domain/node.js';
 import { Vector }       from '../domain/vector.js';
 import { Path }         from '../domain/path.js';
 import { Segment }      from '../domain/segment.js';
+import { Matrix }       from '../domain/matrix.js';
 
 let aux = {};
 
@@ -148,8 +149,8 @@ const actions = {
 
   // pen tool (draft version)
 
-  // mousedown in state 'pen'
-  initPen(state, input) {
+  // mousedown in state 'pen':
+  addFirstAnchor(state, input) {
     const node = Shape.create();
     const d = `M ${input.x} ${input.y}`;
     node.path = Path.createFromSVGpath(d);
@@ -160,9 +161,25 @@ const actions = {
     aux.node = node;
   },
 
+  // what's the effect of adding a handle after the first state?
+  // unclear.
+
+  // mousemove in state 'addingHandle'
+  addHandle(state, input) {
+    const node = aux.node;
+    const length = node.path.splines[0].segments.length;
+    const segment = node.path.splines[0].segments[length - 1];
+    const anchor = segment.anchor;
+    const handleIn = Vector.create(input.x, input.y);
+    const handleOut = handleIn.transform(Matrix.rotation(Math.PI, anchor));
+    segment.handleIn = Vector.create(input.x, input.y);
+    segment.handleOut = handleOut;
+  },
+
+  // mousedown on state 'continuePen'
   addSegment(state, input) {
     const node = aux.node;
-    console.log(node.path);
+    // console.log(node.path);
     const anchor = Vector.create(input.x, input.y);
     const segment = Segment.create({ anchor: anchor });
     node.path.splines[0].segments.push(segment);

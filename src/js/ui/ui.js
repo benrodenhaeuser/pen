@@ -39,7 +39,7 @@ const ui = {
       document.addEventListener(eventType, (event) => {
         event.preventDefault();
 
-        console.log(event.target.dataset.type);
+        // console.log(event.target.dataset.type);
 
         if (toSuppress(event)) {
           return;

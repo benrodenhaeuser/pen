@@ -28,7 +28,7 @@ const Node = {
       parent:    null,
       transform: Matrix.identity(),
       class:     Class.create(),
-      // props:     {},  //
+      // props:     {},  // TODO: not clear if we want this
     };
   },
 

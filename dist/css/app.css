@@ -161,7 +161,7 @@ svg {
 }
 
 [data-type="content"] {
-  pointer-events: bounding-box; 
+  pointer-events: bounding-box;
 }
 
 .focus ~ [data-type="outerUI"] > [data-type="frame"] {
@@ -184,6 +184,12 @@ svg {
 
 .focus ~ g > [data-type="frame"] {
   visibility: visible;
+}
+
+path, line {
+  stroke-width: 1px;
+  stroke: #d3d3d3;
+  fill: none;
 }
 
 /* temporary */

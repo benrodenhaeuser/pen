@@ -69,7 +69,6 @@ const Path = {
     let d = '';
 
     for (let spline of this.splines) {
-      // console.log(spline);
       const moveto = spline.segments[0];
       d += `M ${moveto.anchor.x} ${moveto.anchor.y}`;
 
