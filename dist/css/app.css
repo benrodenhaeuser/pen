@@ -108,11 +108,6 @@ svg {
   outline: 1px solid red;
 }
 
-/* TODO: can we avoid this? */
-[data-type="content"] {
-  /* pointer-events: none; */
-}
-
 [data-type="wrapper"] {
   pointer-events: bounding-box;
 }
@@ -150,7 +145,7 @@ svg {
   pointer-events: visiblePainted;
   visibility: hidden;
 }
-
+  
 [data-type="innerUI"] {
   pointer-events: visible;
   visibility: hidden;
@@ -187,6 +182,7 @@ svg {
 }
 
 path, line {
+  vector-effect: non-scaling-stroke;
   stroke-width: 1px;
   stroke: #d3d3d3;
   fill: none;

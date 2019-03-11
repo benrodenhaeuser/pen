@@ -77,8 +77,12 @@ const actions = {
   },
 
   release(state, input) {
-    for (let ancestor of state.scene.selected.ancestors) {
-      ancestor.updateBounds();
+    const selected = state.scene.selected;
+
+    if (selected) {
+      for (let ancestor of state.scene.selected.ancestors) {
+        ancestor.updateBounds();
+      }
     }
 
     aux = {};
@@ -94,7 +98,7 @@ const actions = {
     if (target.isSelected()) {
       target.edit();
       state.scene.unfocusAll();
-      state.id = 'pen'; // TODO: hack!
+      state.id = 'pen'; // TODO: hack! could the action initiate an input?
     } else {
       const toSelect = target.findAncestor((node) => {
         return node.parent && node.parent.class.includes('frontier');
@@ -183,11 +187,18 @@ const actions = {
     const anchor = Vector.create(input.x, input.y);
     const segment = Segment.create({ anchor: anchor });
     node.path.splines[0].segments.push(segment);
-    console.log(node.path);
+  },
 
-    console.log(state);
+  editControl(state, input) {
+    console.log('initiating edit of control point'); // fine
+    // identify the control by its id (currently undefined)
+    // ... store it
+  },
 
-    // TODO: the line lacks a stroke
+  moveControl(state, input) {
+    console.log('supposed to be moving control point'); // fine
+    // retrieve stored control
+    // ... move it
   },
 };
 

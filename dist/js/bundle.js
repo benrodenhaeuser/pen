@@ -1,13 +1,15 @@
 (function () {
   'use strict';
 
+  const createID = () => {
+    const randomString = Math.random().toString(36).substring(2);
+    const timestamp    = (new Date()).getTime().toString(36);
+    return randomString + timestamp;
+  };
+
   const Vector = {
     create(x = 0, y = 0) {
-      return Object.create(Vector).init(x, y);
-    },
-
-    createWithID(x,y) {
-      return Vector.create(x, y).addID();
+      return Object.create(Vector).init(x, y).addID();
     },
 
     init(x, y) {
@@ -2947,8 +2949,12 @@
     },
 
     release(state, input) {
-      for (let ancestor of state.scene.selected.ancestors) {
-        ancestor.updateBounds();
+      const selected = state.scene.selected;
+
+      if (selected) {
+        for (let ancestor of state.scene.selected.ancestors) {
+          ancestor.updateBounds();
+        }
       }
 
       aux = {};
@@ -2964,7 +2970,7 @@
       if (target.isSelected()) {
         target.edit();
         state.scene.unfocusAll();
-        state.id = 'pen'; // TODO: hack!
+        state.id = 'pen'; // TODO: hack! could the action initiate an input?
       } else {
         const toSelect = target.findAncestor((node) => {
           return node.parent && node.parent.class.includes('frontier');
@@ -3053,11 +3059,18 @@
       const anchor = Vector.create(input.x, input.y);
       const segment = Segment.create({ anchor: anchor });
       node.path.splines[0].segments.push(segment);
-      console.log(node.path);
+    },
 
-      console.log(state);
+    editControl(state, input) {
+      console.log('initiating edit of control point'); // fine
+      // identify the control by its id (currently undefined)
+      // ... store it
+    },
 
-      // TODO: the line lacks a stroke
+    moveControl(state, input) {
+      console.log('supposed to be moving control point'); // fine
+      // retrieve stored control
+      // ... move it
     },
   };
 
@@ -3084,11 +3097,17 @@
     { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
     { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
     // PEN TOOL
-    { from: 'idle', type: 'click', target: 'usePen', do: 'deselect', to: 'pen' },
-    { from: 'pen', type: 'mousedown', do: 'addFirstAnchor', to: 'addingHandle' },
+    // adding controls
+    { from: 'idle', type: 'click', target: 'activatePen', do: 'deselect', to: 'pen' },
+    { from: 'pen', type: 'mousedown', target: 'content', do: 'addFirstAnchor', to: 'addingHandle' },
     { from: 'addingHandle', type: 'mousemove', do: 'addHandle', to: 'addingHandle' },
     { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
-    { from: 'continuePen', type: 'mousedown', do: 'addSegment', to: 'addingHandle' },
+    { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
+    // editing controls
+    { from: 'continuePen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
+    { from: 'pen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
+    { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
+    { from: 'editingControl', type: 'mouseup', to: 'pen' },
   ];
 
   config.get = function(state, input) {
@@ -3177,36 +3196,36 @@
   };
 
 
-  const markup = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
-
-    <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
-
-    <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
-
-    <g>
-      <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
-
-      <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
-    </g>
-  </svg>
-`;
-
   // const markup = `
-  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
+  //
+  //     <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
+  //
+  //     <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
   //
   //     <g>
-  //       <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //       <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
   //
-  //       <g>
-  //         <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  //         <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  //       </g>
+  //       <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
   //     </g>
-  //
-  //     <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
   //   </svg>
   // `;
+
+  const markup = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+
+    <g>
+      <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+
+      <g>
+        <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+        <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+      </g>
+    </g>
+
+    <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  </svg>
+`;
 
   // const markup = `
   //   <svg id="a3dbc277-3d4c-49ea-bad0-b2ae645587b1" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
@@ -3338,7 +3357,7 @@
 
       if (node.tag === 'svg') {
         $node.setAttributeNS(xmlns, 'xmlns', svgns);
-        $node.setSVGAttr('data-type', 'root');
+        $node.setSVGAttr('data-type', 'content');
 
         $parent.appendChild($node);
 
@@ -3540,8 +3559,11 @@
 
     for (let spline of node.path) {
       for (let segment of spline) {
-        if (segment.handleIn && segment.handleOut) {
-          $connections.push(connection(node, segment));
+        if (segment.handleIn) {
+          $connections.push(connection(node, segment, 'in'));
+        }
+        if (segment.handleOut) {
+          $connections.push(connection(node, segment, 'out'));
         }
       }
     }
@@ -3549,21 +3571,29 @@
     return $connections;
   };
 
-  const connection = (node, segment) => {
-    console.log(segment);
+  // TODO: flawed logic!!
+  const connection = (node, segment, direction) => {
     const $connection = document.createElementNS(svgns, 'line');
 
-    // TODO: this assumes "symmetric" handles – will not be true in general
-    //       it also assumes two handles to begin with (see the call site!)
-    //       So we really want to draw *two* lines here
+    if (direction === 'in') {
+      $connection.setSVGAttrs({
+        x1:        segment.anchor.x,
+        y1:        segment.anchor.y,
+        x2:        segment.handleIn.x,
+        y2:        segment.handleIn.y,
+        transform: node.attr.transform,
+      });
+    }
 
-    $connection.setSVGAttrs({
-      x1:        segment.handleIn.x,
-      y1:        segment.handleIn.y,
-      x2:        segment.handleOut.x,
-      y2:        segment.handleOut.y,
-      transform: node.attr.transform,
-    });
+    if (direction === 'out') {
+      $connection.setSVGAttrs({
+        x1:        segment.anchor.x,
+        y1:        segment.anchor.y,
+        x2:        segment.handleOut.x,
+        y2:        segment.handleOut.y,
+        transform: node.attr.transform,
+      });
+    }
 
     return $connection;
   };
@@ -3574,14 +3604,14 @@
 
     for (let spline of node.path) {
       for (let segment of spline) {
-        $controls.push(control(node, diameter, segment.anchor.x, segment.anchor.y));
+        $controls.push(control(node, diameter, segment.anchor));
 
         if (segment.handleIn) {
-          $controls.push(control(node, diameter, segment.handleIn.x, segment.handleIn.y));
+          $controls.push(control(node, diameter, segment.handleIn));
         }
 
         if (segment.handleOut) {
-          $controls.push(control(node, diameter, segment.handleOut.x, segment.handleOut.y));
+          $controls.push(control(node, diameter, segment.handleOut));
         }
       }
     }
@@ -3589,16 +3619,16 @@
     return $controls;
   };
 
-  const control = (node, diameter, x, y) => {
+  const control = (node, diameter, contr) => {
     const $control = document.createElementNS(svgns, 'circle');
 
     $control.setSVGAttrs({
       'data-type': 'control',
-      'data-id':   control._id,
+      'data-id':   contr._id,
       transform:   node.attr.transform,
       r:           diameter / 2,
-      cx:          x,
-      cy:          y,
+      cx:          contr.x,
+      cy:          contr.y,
     });
 
     return $control;
@@ -3642,8 +3672,9 @@
         document.addEventListener(eventType, (event) => {
           event.preventDefault();
 
-          // console.log(event.target.dataset.type);
-
+          console.log(event.target.dataset.type);
+          console.log(event.target.dataset.id);
+          
           if (toSuppress(event)) {
             return;
           }

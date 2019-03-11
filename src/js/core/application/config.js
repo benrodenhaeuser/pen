@@ -21,11 +21,17 @@ const config = [
   { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
   // PEN TOOL
-  { from: 'idle', type: 'click', target: 'usePen', do: 'deselect', to: 'pen' },
-  { from: 'pen', type: 'mousedown', do: 'addFirstAnchor', to: 'addingHandle' },
+  // adding controls
+  { from: 'idle', type: 'click', target: 'activatePen', do: 'deselect', to: 'pen' },
+  { from: 'pen', type: 'mousedown', target: 'content', do: 'addFirstAnchor', to: 'addingHandle' },
   { from: 'addingHandle', type: 'mousemove', do: 'addHandle', to: 'addingHandle' },
   { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
-  { from: 'continuePen', type: 'mousedown', do: 'addSegment', to: 'addingHandle' },
+  { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
+  // editing controls
+  { from: 'continuePen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
+  { from: 'pen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
+  { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
+  { from: 'editingControl', type: 'mouseup', to: 'pen' },
 ];
 
 config.get = function(state, input) {

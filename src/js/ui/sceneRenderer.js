@@ -39,7 +39,7 @@ const sceneRenderer = {
 
     if (node.tag === 'svg') {
       $node.setAttributeNS(xmlns, 'xmlns', svgns);
-      $node.setSVGAttr('data-type', 'root');
+      $node.setSVGAttr('data-type', 'content');
 
       $parent.appendChild($node);
 
@@ -241,8 +241,11 @@ const connections = (node) => {
 
   for (let spline of node.path) {
     for (let segment of spline) {
-      if (segment.handleIn && segment.handleOut) {
-        $connections.push(connection(node, segment));
+      if (segment.handleIn) {
+        $connections.push(connection(node, segment, 'in'));
+      }
+      if (segment.handleOut) {
+        $connections.push(connection(node, segment, 'out'));
       }
     }
   }
@@ -250,21 +253,29 @@ const connections = (node) => {
   return $connections;
 };
 
-const connection = (node, segment) => {
-  console.log(segment);
+// TODO: flawed logic!!
+const connection = (node, segment, direction) => {
   const $connection = document.createElementNS(svgns, 'line');
 
-  // TODO: this assumes "symmetric" handles – will not be true in general
-  //       it also assumes two handles to begin with (see the call site!)
-  //       So we really want to draw *two* lines here
+  if (direction === 'in') {
+    $connection.setSVGAttrs({
+      x1:        segment.anchor.x,
+      y1:        segment.anchor.y,
+      x2:        segment.handleIn.x,
+      y2:        segment.handleIn.y,
+      transform: node.attr.transform,
+    });
+  }
 
-  $connection.setSVGAttrs({
-    x1:        segment.handleIn.x,
-    y1:        segment.handleIn.y,
-    x2:        segment.handleOut.x,
-    y2:        segment.handleOut.y,
-    transform: node.attr.transform,
-  });
+  if (direction === 'out') {
+    $connection.setSVGAttrs({
+      x1:        segment.anchor.x,
+      y1:        segment.anchor.y,
+      x2:        segment.handleOut.x,
+      y2:        segment.handleOut.y,
+      transform: node.attr.transform,
+    });
+  }
 
   return $connection;
 };
@@ -275,14 +286,14 @@ const controls = (node) => {
 
   for (let spline of node.path) {
     for (let segment of spline) {
-      $controls.push(control(node, diameter, segment.anchor.x, segment.anchor.y));
+      $controls.push(control(node, diameter, segment.anchor));
 
       if (segment.handleIn) {
-        $controls.push(control(node, diameter, segment.handleIn.x, segment.handleIn.y));
+        $controls.push(control(node, diameter, segment.handleIn));
       }
 
       if (segment.handleOut) {
-        $controls.push(control(node, diameter, segment.handleOut.x, segment.handleOut.y));
+        $controls.push(control(node, diameter, segment.handleOut));
       }
     }
   }
@@ -290,16 +301,16 @@ const controls = (node) => {
   return $controls;
 };
 
-const control = (node, diameter, x, y) => {
+const control = (node, diameter, contr) => {
   const $control = document.createElementNS(svgns, 'circle');
 
   $control.setSVGAttrs({
     'data-type': 'control',
-    'data-id':   control._id,
+    'data-id':   contr._id,
     transform:   node.attr.transform,
     r:           diameter / 2,
-    cx:          x,
-    cy:          y,
+    cx:          contr.x,
+    cy:          contr.y,
   });
 
   return $control;
