@@ -27,7 +27,7 @@ const scale = (node, length) => {
 
 const sceneRenderer = {
   render(scene, $canvas) {
-    canvas.innerHTML = '';
+    $canvas.innerHTML = '';
     this.build(scene, $canvas);
   },
 
@@ -45,6 +45,10 @@ const sceneRenderer = {
 
       this.documentScale = this.canvasWidth / node.viewBox.width;
     } else {
+      // TODO: make a distinction between shapes and groups
+      // so we should cover the "g" case, and then we have a third case
+      // which is for shapes (`path`).
+
       const $wrapper = wrap($node, node);
       $parent.appendChild($wrapper);
     }
@@ -54,6 +58,7 @@ const sceneRenderer = {
     }
   },
 
+  // TODO: we need this as part of the core
   get canvasWidth() {
     const canvasNode = document.querySelector('#canvas');
     return canvasNode.clientWidth;
@@ -236,16 +241,16 @@ const innerUI = (node) => {
   return $innerUI;
 };
 
+// make a connection between anchor and handle
 const connections = (node) => {
   const $connections = [];
 
   for (let spline of node.path) {
     for (let segment of spline) {
-      if (segment.handleIn) {
-        $connections.push(connection(node, segment, 'in'));
-      }
-      if (segment.handleOut) {
-        $connections.push(connection(node, segment, 'out'));
+      for (let handle of ['handleIn', 'handleOut']) {
+        if (segment[handle]) {
+          $connections.push(connection(node, segment.anchor, segment[handle]));
+        }
       }
     }
   }
@@ -253,29 +258,16 @@ const connections = (node) => {
   return $connections;
 };
 
-// TODO: flawed logic!!
-const connection = (node, segment, direction) => {
+const connection = (node, anchor, handle) => {
   const $connection = document.createElementNS(svgns, 'line');
 
-  if (direction === 'in') {
-    $connection.setSVGAttrs({
-      x1:        segment.anchor.x,
-      y1:        segment.anchor.y,
-      x2:        segment.handleIn.x,
-      y2:        segment.handleIn.y,
-      transform: node.attr.transform,
-    });
-  }
-
-  if (direction === 'out') {
-    $connection.setSVGAttrs({
-      x1:        segment.anchor.x,
-      y1:        segment.anchor.y,
-      x2:        segment.handleOut.x,
-      y2:        segment.handleOut.y,
-      transform: node.attr.transform,
-    });
-  }
+  $connection.setSVGAttrs({
+    x1:        anchor.x,
+    y1:        anchor.y,
+    x2:        handle.x,
+    y2:        handle.y,
+    transform: node.attr.transform,
+  });
 
   return $connection;
 };
@@ -301,16 +293,17 @@ const controls = (node) => {
   return $controls;
 };
 
+// TODO: rename contr to coords (coords.x/coords.y)
 const control = (node, diameter, contr) => {
   const $control = document.createElementNS(svgns, 'circle');
 
   $control.setSVGAttrs({
     'data-type': 'control',
-    'data-id':   contr._id,
-    transform:   node.attr.transform,
-    r:           diameter / 2,
-    cx:          contr.x,
-    cy:          contr.y,
+    'data-id'  : contr._id,
+    transform  : node.attr.transform,
+    r          : diameter / 2,
+    cx         : contr.x,
+    cy         : contr.y,
   });
 
   return $control;

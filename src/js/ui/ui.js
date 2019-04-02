@@ -1,14 +1,17 @@
-import { nodeFactory } from './nodeFactory.js';
+import { nodeFactory   } from './nodeFactory.js';
 import { sceneRenderer } from './sceneRenderer.js';
 
-const getSVGCoords = (x, y) => {
+const coordinates = (event) => {
   const svg = document.querySelector('svg');
   let point = svg.createSVGPoint();
-  point.x   = x;
-  point.y   = y;
+  point.x   = event.clientX;
+  point.y   = event.clientY;
   point     = point.matrixTransform(svg.getScreenCTM().inverse());
 
-  return [point.x, point.y];
+  return {
+    x: point.x,
+    y: point.y,
+  };
 };
 
 const ui = {
@@ -20,15 +23,6 @@ const ui = {
       'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
     ];
 
-    const coords = (event) => {
-      const [x, y] = getSVGCoords(event.clientX, event.clientY);
-
-      return {
-        x: x,
-        y: y,
-      };
-    };
-
     const toSuppress = (event) => {
       return [
         'mousedown', 'mouseup', 'click'
@@ -39,9 +33,6 @@ const ui = {
       document.addEventListener(eventType, (event) => {
         event.preventDefault();
 
-        console.log(event.target.dataset.type);
-        console.log(event.target.dataset.id);
-        
         if (toSuppress(event)) {
           return;
         }
@@ -49,15 +40,14 @@ const ui = {
         compute({
           type:     event.type,
           target:   event.target.dataset.type,
-          x:        coords(event).x,
-          y:        coords(event).y,
+          x:        coordinates(event).x,
+          y:        coordinates(event).y,
           targetID: event.target.dataset.id,
         });
       });
     }
   },
 
-  // check what has changed (TODO: this is cumbersome!)
   sync(state) {
     const changes = (state1, state2) => {
       const keys = Object.keys(state1);
@@ -78,10 +68,11 @@ const ui = {
       this.render[changed] && this.render[changed](state);
     }
 
-    this.previousState = state; // logs the state - we can use that when making an input
+    this.previousState = state; // saves the state - we can use that when making an input
   },
 
-  // map changed state keys to method calls
+  // reconcile
+
   render: {
     scene(state) {
       ui.renderScene(state);
@@ -145,54 +136,12 @@ const ui = {
     inspector.appendChild(node);
   },
 
-  renderAnimations(state) {
-    const convertAngleToDegrees = (frame) => {
-      return {
-        x:        frame.x,
-        y:        frame.y,
-        width:    frame.width,
-        height:   frame.height,
-        rotation: frame.angle * 57.2958, // convert to degrees
-      };
-    };
-
-    ui.canvasNode.innerHTML = '';
-
-    for (let shape of state.doc.shapes) {
-      const timeline = new TimelineMax();
-      const shapeNode = nodeFactory.makeShapeNode(state);
-      shapeNode.innerHTML = shape.markup;
-
-      for (let i = 0; i < shape.frames.length - 1; i += 1) {
-        let start = shape.frames[i];
-        let end   = shape.frames[i + 1];
-
-        timeline.fromTo(
-          shapeNode,
-          0.3,
-          convertAngleToDegrees(start),
-          convertAngleToDegrees(end)
-        );
-      }
-
-      ui.canvasNode.appendChild(shapeNode);
-    }
-  },
-
   renderFlash(message) {
     const flash = document.createElement('p');
     flash.innerHTML = message;
     flash.class.add('flash');
     window.setTimeout(() => document.body.appendChild(flash), 500);
     window.setTimeout(() => flash.remove(), 1500);
-  },
-
-  writeCSS(node, frame) {
-    node.style.left      = String(frame.x) + 'px';
-    node.style.top       = String(frame.y) + 'px';
-    node.style.width     = String(frame.width) + 'px';
-    node.style.height    = String(frame.height) + 'px';
-    node.style.transform = `rotate(${frame.angle}rad)`;
   },
 
   start(state) {

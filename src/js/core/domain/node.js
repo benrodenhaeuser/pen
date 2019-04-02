@@ -1,7 +1,7 @@
-import { Matrix }    from './matrix.js';
-import { Vector }    from './vector.js';
+import { Matrix    } from './matrix.js';
+import { Vector    } from './vector.js';
 import { Rectangle } from './rectangle.js';
-import { Class }   from './class.js';
+import { Class     } from './class.js';
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -36,7 +36,6 @@ const Node = {
     return {
       _id: this._id,
       children: this.children,
-      parent: this.parent && this.parent._id,
     };
   },
 
@@ -173,7 +172,6 @@ const Node = {
 
   computeBounds() {
     if (this.isLeaf() && !this.isRoot()) {
-      console.log(this);
       this.bounds = this.path.bounds();
     } else {
       const corners = [];
@@ -349,6 +347,12 @@ const Node = {
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },
 };
+
+// TODO: instead of providing messy toJSON() method,
+// provide separate toJSON() and toVDOM() methods
+
+// the toVDOM() method needs to be recursive
+// maybe this is a method defined on Node?
 
 const Root = Object.create(Node);
 Root.toJSON = function() {

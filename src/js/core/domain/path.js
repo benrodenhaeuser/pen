@@ -78,7 +78,7 @@ const Path = {
 
         if (prev.handleOut && curr.handleIn) {
           d += ' C';
-        } else if (curr.handleIn) {
+        } else if (curr.handleIn || prev.handleOut) {
           d += ' Q';
         } else {
           d += ' L';

@@ -1,8 +1,9 @@
-import { Shape, Group } from '../domain/node.js';
-import { Vector }       from '../domain/vector.js';
-import { Path }         from '../domain/path.js';
-import { Segment }      from '../domain/segment.js';
-import { Matrix }       from '../domain/matrix.js';
+import { Shape   } from '../domain/node.js';
+import { Group   } from '../domain/node.js';
+import { Vector  } from '../domain/vector.js';
+import { Path    } from '../domain/path.js';
+import { Segment } from '../domain/segment.js';
+import { Matrix  } from '../domain/matrix.js';
 
 let aux = {};
 
@@ -187,6 +188,7 @@ const actions = {
     const anchor = Vector.create(input.x, input.y);
     const segment = Segment.create({ anchor: anchor });
     node.path.splines[0].segments.push(segment);
+    console.log(node.path);
   },
 
   editControl(state, input) {

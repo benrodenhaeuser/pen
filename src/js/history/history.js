@@ -1,6 +1,4 @@
-// log is more like a 'history', so the name 'log' is quite confusing
-
-const log = {
+const hist = {
   bindEvents(setState) {
     window.addEventListener('popstate', (event) => {
       setState(event.state);
@@ -21,9 +19,9 @@ const log = {
   },
 
   init() {
-    this.name = 'log';
+    this.name = 'hist';
     return this;
   }
 };
 
-export { log };
+export { hist };

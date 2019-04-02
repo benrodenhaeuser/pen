@@ -324,7 +324,6 @@
       return {
         _id: this._id,
         children: this.children,
-        parent: this.parent && this.parent._id,
       };
     },
 
@@ -461,7 +460,6 @@
 
     computeBounds() {
       if (this.isLeaf() && !this.isRoot()) {
-        console.log(this);
         this.bounds = this.path.bounds();
       } else {
         const corners = [];
@@ -637,6 +635,12 @@
       return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
     },
   };
+
+  // TODO: instead of providing messy toJSON() method,
+  // provide separate toJSON() and toVDOM() methods
+
+  // the toVDOM() method needs to be recursive
+  // maybe this is a method defined on Node?
 
   const Root = Object.create(Node);
   Root.toJSON = function() {
@@ -2716,7 +2720,7 @@
 
           if (prev.handleOut && curr.handleIn) {
             d += ' C';
-          } else if (curr.handleIn) {
+          } else if (curr.handleIn || prev.handleOut) {
             d += ' Q';
           } else {
             d += ' L';
@@ -3059,6 +3063,7 @@
       const anchor = Vector.create(input.x, input.y);
       const segment = Segment.create({ anchor: anchor });
       node.path.splines[0].segments.push(segment);
+      console.log(node.path);
     },
 
     editControl(state, input) {
@@ -3135,18 +3140,57 @@
   };
 
   const core = {
+    // note that `markup` is currently hard-coded
+    // TODO: make a dedicated state object which allows us to control
+    //       how the json version is generated.
+    init() {
+      this.state = {
+        clock: clock.init(),
+        id: 'start',
+        scene: builder.importSVG(markup),
+        // ^ eventually, this will need to come elsewhere
+        docs: { ids: [], selectedID: null },
+      };
+
+      this.periphery = [];
+      return this;
+    },
+
+    attach(name, func) {
+      this.periphery[name] = func;
+    },
+
+    kickoff() {
+      this.publish();
+      this.compute({ type: 'kickoff' });
+    },
+
+    compute(input) {
+      const transition = config.get(this.state, input);
+      // console.log('from: ', this.state.id, input, transition); // DEBUG
+      if (transition) {
+        this.makeTransition(input, transition);
+        this.publish();  // this is really a publish action
+      }
+    },
+
+
+    // TODO: I think we don't need this anymore.
+    // (does not seem like it's used anywhere)
     get stateData() {
       return JSON.parse(JSON.stringify(this.state));
     },
 
-    sync() {
+    // this is the output of the machine. It could be called `output` perhaps?
+    // this whole `this.periphery[keys]` thing is a bit hard to understand.
+    publish() {
       const keys = Object.keys(this.periphery);
       for (let key of keys) {
         this.periphery[key](JSON.parse(JSON.stringify(this.state)));
       }
     },
 
-    // TODO: not functional right now (this method is injected into "log")
+    // TODO: not functional right now (this method is injected into "hist")
     // (API has also changed quite a bit)
     setState(stateData) {
       this.state = stateData;
@@ -3158,15 +3202,6 @@
       // ^ TODO: call sync here, and make that method more flexible
     },
 
-    compute(input) {
-      const transition = config.get(this.state, input);
-      // console.log('from: ', this.state.id, input, transition); // DEBUG
-      if (transition) {
-        this.makeTransition(input, transition);
-        this.sync();
-      }
-    },
-
     makeTransition(input, transition) {
       this.state.clock.tick();
       this.state.currentInput = input.type;
@@ -3174,24 +3209,6 @@
 
       const action = actions[transition.do];
       action && action.bind(actions)(this.state, input);
-    },
-
-    // note that `markup` is currently hard-coded
-    init() {
-      this.state = {
-        clock: clock.init(),
-        id: 'start',
-        scene: builder.importSVG(markup),
-        docs: { ids: [], selectedID: null },
-      };
-
-      this.periphery = [];
-      return this;
-    },
-
-    kickoff() {
-      this.sync();
-      this.compute({ type: 'kickoff' });
     },
   };
 
@@ -3211,21 +3228,21 @@
   //   </svg>
   // `;
 
-  const markup = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-
-    <g>
-      <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-
-      <g>
-        <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-        <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-      </g>
-    </g>
-
-    <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  </svg>
-`;
+  // const markup = `
+  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  //
+  //     <g>
+  //       <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //
+  //       <g>
+  //         <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //         <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //       </g>
+  //     </g>
+  //
+  //     <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //   </svg>
+  // `;
 
   // const markup = `
   //   <svg id="a3dbc277-3d4c-49ea-bad0-b2ae645587b1" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
@@ -3244,18 +3261,16 @@
   //   </svg>
   // `;
 
-  // // empty svg with viewBox
-  // const markup = `
-  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
-  // `;
+  // empty svg with viewBox
+  const markup = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
+`;
 
   // const markup = `
   //   <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 405"><g fill="#ff0000" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><path d="M50.5869,148.3516c-0.2308,-43.67734 -0.2308,-43.67734 -24.7598,-54.57743c-24.529,-10.90009 -24.529,-10.90009 -24.529,55.34c0,66.2401 0,66.2401 24.7598,54.57743c24.7598,-11.66267 24.7598,-11.66267 24.529,-55.34z"/><path d="M21.62818,330.71352c-20.56368,-15.09293 -20.56368,-15.09293 -20.56368,28.5276c0,43.62053 0,43.62053 19.55435,43.62053c19.55435,0 19.55435,0 20.56368,-28.5276c1.00933,-28.5276 1.00933,-28.5276 -19.55435,-43.62053z"/><path d="M107.96977,0.50937c0.73005,-0.48695 0.73005,-0.48695 -1.01175,-0.48695c-1.7418,0 -1.7418,0 -0.73005,0.48695c1.01175,0.48695 1.01175,0.48695 1.7418,0z"/><path d="M74.97452,87.43121c23.24606,-12.27663 23.24606,-12.27663 26.41619,-48.12571c3.17013,-35.84908 1.14663,-36.82298 -48.78682,-36.82298c-49.93345,0 -49.93345,0 -49.93345,37.71256c0,37.71256 0,37.71256 24.529,48.61266c24.529,10.90009 24.529,10.90009 47.77507,-1.37653z"/><path d="M79.76578,203.77243c24.86172,11.77861 24.86172,11.77861 49.61865,3.24961c24.75693,-8.529 24.75693,-8.529 29.23518,-52.52805c4.47825,-43.99905 4.47825,-43.99905 -26.60339,-59.20358c-31.08164,-15.20453 -31.08164,-15.20453 -54.3277,-2.9279c-23.24606,12.27663 -23.24606,12.27663 -23.01526,55.95397c0.2308,43.67734 0.2308,43.67734 25.09252,55.45595z"/><path d="M70.59973,326.80235c26.89466,-14.35367 26.89466,-14.35367 29.05785,-59.7788c2.16319,-45.42513 2.16319,-45.42513 -22.69853,-57.20374c-24.86172,-11.77861 -24.86172,-11.77861 -49.62152,-0.11595c-24.7598,11.66267 -24.7598,11.66267 -24.7598,56.46448c0,44.80181 0,44.80181 20.56368,59.89474c20.56368,15.09293 20.56368,15.09293 47.45834,0.73926z"/><path d="M129.84987,328.44011c-29.97881,-11.37576 -29.97881,-11.37576 -56.87347,2.97791c-26.89466,14.35367 -26.89466,14.35367 -27.90399,42.88126c-1.00933,28.5276 -1.00933,28.5276 34.40359,28.5276c35.41292,0 35.41292,0 57.88279,-31.5055c22.46988,-31.5055 22.46988,-31.5055 -7.50893,-42.88126z"/><path d="M187.06059,96.11957c21.47119,-9.59579 21.47119,-9.59579 22.49175,-51.54056c1.02056,-41.94477 1.02056,-41.94477 -48.65265,-41.94477c-49.67321,0 -51.13331,0.9739 -54.30344,36.82298c-3.17013,35.84908 -3.17013,35.84908 27.91151,51.05361c31.08164,15.20453 31.08164,15.20453 52.55283,5.60874z"/><path d="M245.34605,206.18022c33.14602,-20.86668 33.14602,-20.86668 30.2472,-54.58075c-2.89882,-33.71407 -2.89882,-33.71407 -33.43397,-46.74428c-30.53515,-13.03021 -30.53515,-13.03021 -52.00634,-3.43443c-21.47119,9.59579 -21.47119,9.59579 -25.94945,53.59483c-4.47825,43.99905 -4.47825,43.99905 21.75914,58.01517c26.23739,14.01613 26.23739,14.01613 59.38342,-6.85056z"/><path d="M195.80525,326.19818c21.96942,-10.19253 21.96942,-10.19253 17.69765,-51.84721c-4.27177,-41.65468 -4.27177,-41.65468 -30.50916,-55.67081c-26.23739,-14.01613 -26.23739,-14.01613 -50.99432,-5.48713c-24.75693,8.529 -24.75693,8.529 -26.92012,53.95413c-2.16319,45.42513 -2.16319,45.42513 27.81562,56.80089c29.97881,11.37576 40.9409,12.44265 62.91033,2.25012z"/><path d="M227.51873,402.9056c49.30296,0 49.30296,0 45.96844,-29.33069c-3.33452,-29.33069 -3.33452,-29.33069 -27.86991,-41.16459c-24.53539,-11.83389 -24.53539,-11.83389 -46.50481,-1.64137c-21.96942,10.19253 -21.96942,10.19253 -21.43305,41.16459c0.53637,30.97206 0.53637,30.97206 49.83933,30.97206z"/><path d="M339.22874,3.60137c9.5027,-3.44282 9.5027,-3.44282 -4.69103,-3.44282c-14.19373,0 -14.19373,0 -9.5027,3.44282c4.69103,3.44282 4.69103,3.44282 14.19373,0z"/><path d="M297.32885,95.81776c22.09241,-16.92833 22.09241,-16.92833 25.64882,-51.53216c3.5564,-34.60384 -5.82566,-41.48947 -56.29804,-41.48947c-50.47238,0 -50.47238,0 -51.49294,41.94477c-1.02056,41.94477 -1.02056,41.94477 29.51459,54.97498c30.53515,13.03021 30.53515,13.03021 52.62756,-3.89812z"/><path d="M315.52969,202.76801c31.17916,17.74268 31.17916,17.74268 49.30204,10.55348c18.12288,-7.18921 18.12288,-7.18921 24.75761,-50.72443c6.63474,-43.53522 6.63474,-43.53522 -30.10845,-61.19587c-36.74318,-17.66065 -36.74318,-17.66065 -58.8356,-0.73232c-22.09241,16.92833 -22.09241,16.92833 -19.19359,50.64239c2.89882,33.71407 2.89882,33.71407 34.07798,51.45675z"/><path d="M248.25403,327.5441c24.53539,11.83389 24.53539,11.83389 51.87383,-2.72394c27.33844,-14.55783 27.33844,-14.55783 35.51803,-56.61257c8.17959,-42.05474 8.17959,-42.05474 -22.99957,-59.79743c-31.17916,-17.74268 -31.17916,-17.74268 -64.32519,3.124c-33.14602,20.86668 -33.14602,20.86668 -28.87425,62.52137c4.27177,41.65468 4.27177,41.65468 28.80716,53.48857z"/><path d="M334.71096,402.7916c52.47028,0 52.47028,0 55.59477,-27.50337c3.1245,-27.50337 3.1245,-27.50337 -28.46636,-43.88853c-31.59085,-16.38516 -31.59085,-16.38516 -58.9293,-1.82732c-27.33844,14.55783 -27.33844,14.55783 -24.00392,43.88853c3.33452,29.33069 3.33452,29.33069 55.8048,29.33069z"/><path d="M437.28803,1.64447c2.69179,-1.57207 2.69179,-1.57207 -3.64826,-1.57207c-6.34004,0 -6.34004,0 -2.69179,1.57207c3.64826,1.57207 3.64826,1.57207 6.34004,0z"/><path d="M423.47215,101.0203c24.76808,-13.22625 24.76808,-13.22625 16.75607,-54.13524c-8.01201,-40.90899 -15.30852,-44.05313 -52.10041,-44.05313c-36.79189,0 -36.79189,0 -46.29459,3.44282c-9.5027,3.44282 -9.5027,3.44282 -13.05911,38.04665c-3.5564,34.60384 -3.5564,34.60384 33.18678,52.26449c36.74318,17.66065 36.74318,17.66065 61.51126,4.43441z"/><path d="M473.2864,212.58868c30.39492,-14.89085 30.39492,-14.89085 33.55771,-54.98674c3.16279,-40.09589 3.16279,-40.09589 -26.12633,-52.36114c-29.28911,-12.26525 -29.28911,-12.26525 -54.05719,0.961c-24.76808,13.22625 -24.76808,13.22625 -31.40281,56.76146c-6.63474,43.53522 -6.63474,43.53522 20.49948,54.02574c27.13422,10.49052 27.13422,10.49052 57.52914,-4.40033z"/><path d="M423.24411,333.73001c26.92878,-9.8882 26.92878,-9.8882 21.84583,-55.13858c-5.08295,-45.25039 -5.08295,-45.25039 -32.21717,-55.74091c-27.13422,-10.49052 -27.13422,-10.49052 -45.25709,-3.30131c-18.12288,7.18921 -18.12288,7.18921 -26.30247,49.24395c-8.17959,42.05474 -8.17959,42.05474 23.41126,58.4399c31.59085,16.38516 31.59085,16.38516 58.51964,6.49696z"/><path d="M475.05699,339.05927c-22.21507,-10.7426 -22.21507,-10.7426 -49.14385,-0.85441c-26.92878,9.8882 -26.92878,9.8882 -30.05328,37.39157c-3.1245,27.50337 -3.1245,27.50337 47.87861,27.50337c51.00311,0 51.00311,0 52.26835,-26.64896c1.26524,-26.64896 1.26524,-26.64896 -20.94983,-37.39157z"/><path d="M482.61699,100.04921c29.28911,12.26525 29.28911,12.26525 42.03328,5.31362c12.74416,-6.95163 12.74416,-6.95163 12.74416,-54.74631c0,-47.79468 0,-47.79468 -47.3535,-47.79468c-47.3535,0 -52.73707,3.14414 -44.72506,44.05313c8.01201,40.90899 8.01201,40.90899 37.30112,53.17424z"/><path d="M539.2026,162.82026c0,-59.13683 0,-59.13683 -12.74416,-52.18521c-12.74416,6.95163 -12.74416,6.95163 -15.90695,47.04752c-3.16279,40.09589 -3.16279,40.09589 12.74416,52.18521c15.90695,12.08932 15.90695,12.08932 15.90695,-47.04752z"/><path d="M477.40768,334.44837c22.21507,10.7426 22.21507,10.7426 41.21892,2.089c19.00385,-8.6536 19.00385,-8.6536 19.00385,-58.79452c0,-50.14092 0,-50.14092 -15.90695,-62.23023c-15.90695,-12.08932 -15.90695,-12.08932 -46.30187,2.80153c-30.39492,14.89085 -30.39492,14.89085 -25.31197,60.14123c5.08295,45.25039 5.08295,45.25039 27.29802,55.99299z"/><path d="M499.68158,376.59488c-1.26524,26.64896 -1.26524,26.64896 19.00385,26.64896c20.26909,0 20.26909,0 20.26909,-35.30257c0,-35.30257 0,-35.30257 -19.00385,-26.64896c-19.00385,8.6536 -19.00385,8.6536 -20.26909,35.30257z"/><path d="M167.79565,340.87524c-5.48105,-0.53344 -5.48105,-0.53344 -27.95093,30.97206c-22.46988,31.5055 -22.46988,31.5055 6.01742,31.5055c28.4873,0 28.4873,0 27.95093,-30.97206c-0.53637,-30.97206 -0.53637,-30.97206 -6.01742,-31.5055z"/></g></svg>
   // `;
 
-  // log is more like a 'history', so the name 'log' is quite confusing
-
-  const log = {
+  const hist = {
     bindEvents(setState) {
       window.addEventListener('popstate', (event) => {
         setState(event.state);
@@ -3276,7 +3291,7 @@
     },
 
     init() {
-      this.name = 'log';
+      this.name = 'hist';
       return this;
     }
   };
@@ -3345,7 +3360,7 @@
 
   const sceneRenderer = {
     render(scene, $canvas) {
-      canvas.innerHTML = '';
+      $canvas.innerHTML = '';
       this.build(scene, $canvas);
     },
 
@@ -3363,6 +3378,10 @@
 
         this.documentScale = this.canvasWidth / node.viewBox.width;
       } else {
+        // TODO: make a distinction between shapes and groups
+        // so we should cover the "g" case, and then we have a third case
+        // which is for shapes (`path`).
+
         const $wrapper = wrap($node, node);
         $parent.appendChild($wrapper);
       }
@@ -3372,6 +3391,7 @@
       }
     },
 
+    // TODO: we need this as part of the core
     get canvasWidth() {
       const canvasNode = document.querySelector('#canvas');
       return canvasNode.clientWidth;
@@ -3554,16 +3574,16 @@
     return $innerUI;
   };
 
+  // make a connection between anchor and handle
   const connections = (node) => {
     const $connections = [];
 
     for (let spline of node.path) {
       for (let segment of spline) {
-        if (segment.handleIn) {
-          $connections.push(connection(node, segment, 'in'));
-        }
-        if (segment.handleOut) {
-          $connections.push(connection(node, segment, 'out'));
+        for (let handle of ['handleIn', 'handleOut']) {
+          if (segment[handle]) {
+            $connections.push(connection(node, segment.anchor, segment[handle]));
+          }
         }
       }
     }
@@ -3571,29 +3591,16 @@
     return $connections;
   };
 
-  // TODO: flawed logic!!
-  const connection = (node, segment, direction) => {
+  const connection = (node, anchor, handle) => {
     const $connection = document.createElementNS(svgns, 'line');
 
-    if (direction === 'in') {
-      $connection.setSVGAttrs({
-        x1:        segment.anchor.x,
-        y1:        segment.anchor.y,
-        x2:        segment.handleIn.x,
-        y2:        segment.handleIn.y,
-        transform: node.attr.transform,
-      });
-    }
-
-    if (direction === 'out') {
-      $connection.setSVGAttrs({
-        x1:        segment.anchor.x,
-        y1:        segment.anchor.y,
-        x2:        segment.handleOut.x,
-        y2:        segment.handleOut.y,
-        transform: node.attr.transform,
-      });
-    }
+    $connection.setSVGAttrs({
+      x1:        anchor.x,
+      y1:        anchor.y,
+      x2:        handle.x,
+      y2:        handle.y,
+      transform: node.attr.transform,
+    });
 
     return $connection;
   };
@@ -3619,29 +3626,33 @@
     return $controls;
   };
 
+  // TODO: rename contr to coords (coords.x/coords.y)
   const control = (node, diameter, contr) => {
     const $control = document.createElementNS(svgns, 'circle');
 
     $control.setSVGAttrs({
       'data-type': 'control',
-      'data-id':   contr._id,
-      transform:   node.attr.transform,
-      r:           diameter / 2,
-      cx:          contr.x,
-      cy:          contr.y,
+      'data-id'  : contr._id,
+      transform  : node.attr.transform,
+      r          : diameter / 2,
+      cx         : contr.x,
+      cy         : contr.y,
     });
 
     return $control;
   };
 
-  const getSVGCoords = (x, y) => {
+  const coordinates = (event) => {
     const svg = document.querySelector('svg');
     let point = svg.createSVGPoint();
-    point.x   = x;
-    point.y   = y;
+    point.x   = event.clientX;
+    point.y   = event.clientY;
     point     = point.matrixTransform(svg.getScreenCTM().inverse());
 
-    return [point.x, point.y];
+    return {
+      x: point.x,
+      y: point.y,
+    };
   };
 
   const ui = {
@@ -3653,15 +3664,6 @@
         'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
       ];
 
-      const coords = (event) => {
-        const [x, y] = getSVGCoords(event.clientX, event.clientY);
-
-        return {
-          x: x,
-          y: y,
-        };
-      };
-
       const toSuppress = (event) => {
         return [
           'mousedown', 'mouseup', 'click'
@@ -3672,9 +3674,6 @@
         document.addEventListener(eventType, (event) => {
           event.preventDefault();
 
-          console.log(event.target.dataset.type);
-          console.log(event.target.dataset.id);
-          
           if (toSuppress(event)) {
             return;
           }
@@ -3682,15 +3681,14 @@
           compute({
             type:     event.type,
             target:   event.target.dataset.type,
-            x:        coords(event).x,
-            y:        coords(event).y,
+            x:        coordinates(event).x,
+            y:        coordinates(event).y,
             targetID: event.target.dataset.id,
           });
         });
       }
     },
 
-    // check what has changed (TODO: this is cumbersome!)
     sync(state) {
       const changes = (state1, state2) => {
         const keys = Object.keys(state1);
@@ -3711,10 +3709,11 @@
         this.render[changed] && this.render[changed](state);
       }
 
-      this.previousState = state; // logs the state - we can use that when making an input
+      this.previousState = state; // saves the state - we can use that when making an input
     },
 
-    // map changed state keys to method calls
+    // reconcile
+
     render: {
       scene(state) {
         ui.renderScene(state);
@@ -3778,54 +3777,12 @@
       inspector.appendChild(node);
     },
 
-    renderAnimations(state) {
-      const convertAngleToDegrees = (frame) => {
-        return {
-          x:        frame.x,
-          y:        frame.y,
-          width:    frame.width,
-          height:   frame.height,
-          rotation: frame.angle * 57.2958, // convert to degrees
-        };
-      };
-
-      ui.canvasNode.innerHTML = '';
-
-      for (let shape of state.doc.shapes) {
-        const timeline = new TimelineMax();
-        const shapeNode = nodeFactory.makeShapeNode(state);
-        shapeNode.innerHTML = shape.markup;
-
-        for (let i = 0; i < shape.frames.length - 1; i += 1) {
-          let start = shape.frames[i];
-          let end   = shape.frames[i + 1];
-
-          timeline.fromTo(
-            shapeNode,
-            0.3,
-            convertAngleToDegrees(start),
-            convertAngleToDegrees(end)
-          );
-        }
-
-        ui.canvasNode.appendChild(shapeNode);
-      }
-    },
-
     renderFlash(message) {
       const flash = document.createElement('p');
       flash.innerHTML = message;
       flash.class.add('flash');
       window.setTimeout(() => document.body.appendChild(flash), 500);
       window.setTimeout(() => flash.remove(), 1500);
-    },
-
-    writeCSS(node, frame) {
-      node.style.left      = String(frame.x) + 'px';
-      node.style.top       = String(frame.y) + 'px';
-      node.style.width     = String(frame.width) + 'px';
-      node.style.height    = String(frame.height) + 'px';
-      node.style.transform = `rotate(${frame.angle}rad)`;
     },
 
     start(state) {
@@ -3945,17 +3902,17 @@
     init() {
       core.init();
 
-      // wire up `ui` and `db`
       for (let component of [ui, db]) {
         component.init();
         component.bindEvents(core.compute.bind(core));
-        core.periphery[component.name] = component.sync.bind(component);
+        core.attach(component.name, component.sync.bind(component));
       }
 
-      // wire up `log`
-      log.init();
-      log.bindEvents(core.setState.bind(core));
-      core.periphery[log.name] = log.sync.bind(log);
+      // todo: unify this with above attach loop for ui and db:
+      // instead of setState, hist should also use compute.
+      hist.init();
+      hist.bindEvents(core.setState.bind(core));
+      core.attach(hist.name, hist.sync.bind(hist));
 
       core.kickoff();
     },
