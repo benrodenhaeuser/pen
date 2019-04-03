@@ -1,5 +1,8 @@
 import { nodeFactory   } from './nodeFactory.js';
 import { sceneRenderer } from './sceneRenderer.js';
+import { render        } from './render.js';
+import { mount         } from './mount.js';
+
 
 const coordinates = (event) => {
   const svg = document.querySelector('svg');
@@ -102,7 +105,8 @@ const ui = {
 
   // methods performing sync actions in the ui
   renderScene(state) {
-    sceneRenderer.render(state.scene, ui.canvasNode);
+    // sceneRenderer.render(state.scene, ui.canvasNode);
+    mount(render(state.scene), ui.canvasNode);
   },
 
   renderDocList(state) {

@@ -21,19 +21,13 @@ SVGElement.prototype.setSVGAttrs = function(obj) {
 };
 
 const builder = {
-  importSVG(markup) {
+  buildFrom(markup) {
     const $svg = new DOMParser()
       .parseFromString(markup, "application/xml")
       .documentElement;
 
-    return this.buildScene($svg);
-  },
-
-  buildScene($svg) {
     const scene = Root.create();
 
-    // this.copyStyles($svg, scene); // TODO
-    // this.copyDefs($svg, scene);   // TODO
     this.buildTree($svg, scene);
     scene.computeBounds();
     scene.setFrontier();

@@ -1,3 +1,14 @@
+// assemble a tree for use by the ui
+
+
+const toVDOM() {
+
+};
+
+
+
+// Below is the "material" (it's copied from the sceneRenderer):
+
 SVGElement.prototype.getSVGAttr = function(...args) {
   return this.getAttributeNS.apply(this, [null].concat(args));
 };
@@ -65,7 +76,6 @@ const sceneRenderer = {
   },
 };
 
-// DONE
 const wrap = ($node, node) => {
   $node.setSVGAttrs({
     'data-type': 'content',
@@ -86,7 +96,6 @@ const wrap = ($node, node) => {
   return $wrapper;
 };
 
-// DONE
 const wrapper = (node) => {
   const $wrapper = document.createElementNS(svgns, 'g');
 

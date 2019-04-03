@@ -3,6 +3,9 @@ import { Vector    } from './vector.js';
 import { Rectangle } from './rectangle.js';
 import { Class     } from './class.js';
 
+import { builder   } from './builder.js';
+import { wrapper   } from './wrapper.js';
+
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
   const timestamp    = (new Date()).getTime().toString(36);
@@ -346,15 +349,79 @@ const Node = {
 
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },
+
+  // TODO: intransparent naming
+  // this method parses markup into scene
+  createFromMarkup(markup) {
+    return builder.buildFrom(markup);
+  },
+
+  // returns a virtual dom tree (for rendering as a real dom tree)
+  toVDOM(vParent = null) {
+    const vNode = this.toVDOMNode();
+
+    if (vParent) {
+      const vWrapper = wrapper.wrap(vNode, this);
+      vParent.children.push(vWrapper);
+    }
+
+    for (let child of this.children) {
+      child.toVDOM(vNode);
+    }
+
+    return vNode;
+  },
+
+  // returns a plain JS object (for backend storage)
+  toPlain() {
+    return JSON.parse(JSON.stringify(this));
+  },
 };
 
-// TODO: instead of providing messy toJSON() method,
-// provide separate toJSON() and toVDOM() methods
+const Root  = Object.create(Node);
+const Group = Object.create(Node);
+const Shape = Object.create(Node);
 
-// the toVDOM() method needs to be recursive
-// maybe this is a method defined on Node?
+Root.toVDOMNode = function() {
+  return {
+    tag:      'svg',
+    children: [],
+    props: {
+      'data-id':   this._id,
+      'data-type': 'content',
+      'viewBox':    this.viewBox.toString(),
+      xmlns:       'http://www.w3.org/2000/svg',
+    },
+  };
+};
 
-const Root = Object.create(Node);
+Group.toVDOMNode = function() {
+  return {
+    tag:      'g',
+    children: [],
+    props: {
+      'data-id':   this._id,
+      'data-type': 'content',
+      transform:   this.transform.toString(),
+      class:       this.class.toString(),
+    },
+  };
+};
+
+Shape.toVDOMNode = function() {
+  return {
+    tag:      'path',
+    children: [],
+    props: {
+      'data-id':   this._id,
+      'data-type': 'content',
+      d:           this.path.toString(),
+      transform:   this.transform.toString(),
+      class:       this.class.toString(),
+    },
+  };
+};
+
 Root.toJSON = function() {
   return Object.assign({
     tag:     'svg',
@@ -365,7 +432,19 @@ Root.toJSON = function() {
   }, this.publishDefaults());
 };
 
-const Shape = Object.create(Node);
+Group.toJSON = function() {
+  return Object.assign({
+    tag:         'g',
+    bounds:      this.bounds || Rectangle.create(), // TODO
+    transform:   this.transform,
+    globalScale: this.globalScaleFactor(),
+    attr: {
+      transform: this.transform.toString(),
+      class:     this.class.toString(),
+    },
+  }, this.publishDefaults());
+};
+
 Shape.toJSON = function() {
   return Object.assign({
     tag:         'path',
@@ -381,18 +460,4 @@ Shape.toJSON = function() {
   }, this.publishDefaults());
 };
 
-const Group = Object.create(Node);
-Group.toJSON = function() {
-  return Object.assign({
-    tag:         'g',
-    bounds:      this.bounds || Rectangle.create(), // TODO
-    transform:   this.transform,
-    globalScale: this.globalScaleFactor(),
-    attr: {
-      transform: this.transform.toString(),
-      class:     this.class.toString(),
-    },
-  }, this.publishDefaults());
-};
-
-export { Root, Shape, Group };
+export { Root, Shape, Group, Node };
