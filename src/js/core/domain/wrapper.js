@@ -6,7 +6,7 @@ const LENGTHS_IN_PX = {
 
 // TODO: this value is just a placeholder, need to get
 // this value dynamically from the ui (see notes).
-const DOCUMENT_SCALE = 1;
+const DOCUMENT_SCALE = 0.5;
 
 const h = (tag, props = {}, ...children) => {
   return {

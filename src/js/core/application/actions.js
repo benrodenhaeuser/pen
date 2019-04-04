@@ -81,11 +81,8 @@ const actions = {
   release(state, input) {
     const current = state.scene.selected || state.scene.editing;
 
-    console.log(current);
-
     if (current) {
       for (let ancestor of current.ancestors) {
-        console.log(ancestor, Object.getPrototypeOf(ancestor) === Root);
         ancestor.updateBounds();
       }
     }

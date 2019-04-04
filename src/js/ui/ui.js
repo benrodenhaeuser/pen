@@ -1,5 +1,5 @@
 import { nodeFactory   } from './nodeFactory.js';
-import { sceneRenderer } from './sceneRenderer.js';
+// import { sceneRenderer } from './sceneRenderer.js';
 import { render        } from './render.js';
 import { mount         } from './mount.js';
 
@@ -77,77 +77,77 @@ const ui = {
 
   // reconcile
 
-  render: {
-    scene(state) {
-      ui.renderScene(state);
-      // ui.renderInspector(state); // TODO ==> later
-    },
-
-    docs(state) {
-      ui.renderDocList(state);
-    },
-
-    currentInput(state) {
-      if (state.currentInput === 'docSaved') {
-        ui.renderFlash('Saved');
-      }
-
-      if (state.currentInput === 'edit') {
-        ui.renderScene(state);
-      }
-    },
-
-    clock(state) {
-      if (state.currentInput === 'animate') {
-        ui.renderAnimations(state);
-      }
-    },
-  },
-
-  // methods performing sync actions in the ui
-  renderScene(state) {
-    // sceneRenderer.render(state.scene, ui.canvasNode);
-    mount(render(state.scene), ui.canvasNode);
-  },
-
-  renderDocList(state) {
-    const docList = document.querySelector('.doc-list');
-    docList.innerHTML = '';
-
-    for (let docID of state.docs.ids) {
-      const node = nodeFactory.makeDocListNode(docID);
-      docList.appendChild(node);
-      if (docID === state.docs.selectedID) {
-        node.classList.add('selected');
-      }
-    }
-  },
-
-  renderInspector(state) {
-    const findSelected = (doc) => {
-      for (let shape of doc.shapes) {
-        for (let frame of shape.frames) {
-          if (frame._id === doc.selected.frameID) {
-            return frame;
-          }
-        }
-      }
-    };
-
-    const inspector = document.querySelector('#inspector');
-    inspector.innerHTML = '';
-
-    const node = nodeFactory.makeInspectorNode(findSelected(state.doc));
-    inspector.appendChild(node);
-  },
-
-  renderFlash(message) {
-    const flash = document.createElement('p');
-    flash.innerHTML = message;
-    flash.class.add('flash');
-    window.setTimeout(() => document.body.appendChild(flash), 500);
-    window.setTimeout(() => flash.remove(), 1500);
-  },
+  // render: {
+  //   scene(state) {
+  //     ui.renderScene(state);
+  //     // ui.renderInspector(state); // TODO ==> later
+  //   },
+  //
+  //   docs(state) {
+  //     ui.renderDocList(state);
+  //   },
+  //
+  //   currentInput(state) {
+  //     if (state.currentInput === 'docSaved') {
+  //       ui.renderFlash('Saved');
+  //     }
+  //
+  //     if (state.currentInput === 'edit') {
+  //       ui.renderScene(state);
+  //     }
+  //   },
+  //
+  //   clock(state) {
+  //     if (state.currentInput === 'animate') {
+  //       ui.renderAnimations(state);
+  //     }
+  //   },
+  // },
+  //
+  // // methods performing sync actions in the ui
+  // renderScene(state) {
+  //   // sceneRenderer.render(state.scene, ui.canvasNode);
+  //   mount(render(state.scene), ui.canvasNode);
+  // },
+  //
+  // renderDocList(state) {
+  //   const docList = document.querySelector('.doc-list');
+  //   docList.innerHTML = '';
+  //
+  //   for (let docID of state.docs.ids) {
+  //     const node = nodeFactory.makeDocListNode(docID);
+  //     docList.appendChild(node);
+  //     if (docID === state.docs.selectedID) {
+  //       node.classList.add('selected');
+  //     }
+  //   }
+  // },
+  //
+  // renderInspector(state) {
+  //   const findSelected = (doc) => {
+  //     for (let shape of doc.shapes) {
+  //       for (let frame of shape.frames) {
+  //         if (frame._id === doc.selected.frameID) {
+  //           return frame;
+  //         }
+  //       }
+  //     }
+  //   };
+  //
+  //   const inspector = document.querySelector('#inspector');
+  //   inspector.innerHTML = '';
+  //
+  //   const node = nodeFactory.makeInspectorNode(findSelected(state.doc));
+  //   inspector.appendChild(node);
+  // },
+  //
+  // renderFlash(message) {
+  //   const flash = document.createElement('p');
+  //   flash.innerHTML = message;
+  //   flash.class.add('flash');
+  //   window.setTimeout(() => document.body.appendChild(flash), 500);
+  //   window.setTimeout(() => flash.remove(), 1500);
+  // },
 
   start(state) {
     this.previousState = state;
