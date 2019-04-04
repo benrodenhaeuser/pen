@@ -2782,6 +2782,12 @@
       );
     },
 
+    get properAncestors() {
+      return this.parent.findAncestors(
+        node => true
+      );
+    },
+
     get descendants() {
       return this.findDescendants(
         node => true
@@ -2818,7 +2824,7 @@
 
     // traversal
 
-    // NOTE: a node is an ancestor of itself
+    // NOTE: a node is an ancestor of itself!
     findAncestor(predicate) {
       if (predicate(this)) {
         return this;
@@ -2829,7 +2835,7 @@
       }
     },
 
-    // NOTE: a node is an ancestor of itself
+    // NOTE: a node is an ancestor of itself!
     findAncestors(predicate, ancestors = []) {
       if (predicate(this)) {
         ancestors.push(this);
@@ -3027,10 +3033,11 @@
       return this.ancestorTransform().multiply(this.transform);
     },
 
+    // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
     ancestorTransform() {
       let matrix = Matrix.identity();
 
-      for (let ancestor of this.ancestors.reverse()) {
+      for (let ancestor of this.properAncestors.reverse()) {
         matrix = matrix.multiply(ancestor.transform);
       }
 
