@@ -1,5 +1,6 @@
 import { Shape   } from '../domain/node.js';
 import { Group   } from '../domain/node.js';
+import { Root    } from '../domain/node.js';
 import { Vector  } from '../domain/vector.js';
 import { Path    } from '../domain/path.js';
 import { Segment } from '../domain/segment.js';
@@ -78,15 +79,18 @@ const actions = {
   },
 
   release(state, input) {
-    const selected = state.scene.selected;
+    const current = state.scene.selected || state.scene.editing;
 
-    if (selected) {
-      for (let ancestor of state.scene.selected.ancestors) {
+    console.log(current);
+
+    if (current) {
+      for (let ancestor of current.ancestors) {
+        console.log(ancestor, Object.getPrototypeOf(ancestor) === Root);
         ancestor.updateBounds();
       }
     }
 
-    aux = {};
+    this.aux = {};
   },
 
   deepSelect(state, input) {
@@ -132,6 +136,10 @@ const actions = {
     state.scene.deselectAll();
   },
 
+  deedit(state, event) {
+    state.scene.deeditAll();
+  },
+
   // OLD (still useful?):
 
   createDoc(state, input) {
@@ -152,7 +160,7 @@ const actions = {
     state.init(input.data.doc);
   },
 
-  // pen tool (draft version)
+  // PEN TOOL (draft version)
 
   // mousedown in state 'pen':
   addFirstAnchor(state, input) {

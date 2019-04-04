@@ -17,6 +17,11 @@ const Node = {
     return Object.create(this).init(opts);
   },
 
+  // this method parses markup into scene
+  createFromMarkup(markup) {
+    return builder.buildFrom(markup);
+  },
+
   init(opts) {
     this.set(this.initDefaults());
     this.set(opts);
@@ -31,7 +36,7 @@ const Node = {
       parent:    null,
       transform: Matrix.identity(),
       class:     Class.create(),
-      // props:     {},  // TODO: not clear if we want this
+      bounds:    Rectangle.create(),
     };
   },
 
@@ -94,6 +99,12 @@ const Node = {
     });
   },
 
+  get editing() {
+    return this.root.findDescendant((node) => {
+      return node.class.includes('editing');
+    });
+  },
+
   isSelected() {
     return this.class.includes('selected');
   },
@@ -106,6 +117,7 @@ const Node = {
 
   // traversal
 
+  // NOTE: a node is an ancestor of itself
   findAncestor(predicate) {
     if (predicate(this)) {
       return this;
@@ -116,13 +128,15 @@ const Node = {
     }
   },
 
+  // NOTE: a node is an ancestor of itself
   findAncestors(predicate, ancestors = []) {
+    if (predicate(this)) {
+      ancestors.push(this);
+    }
+
     if (this.parent === null) {
       return ancestors;
     } else {
-      if (predicate(this.parent)) {
-        ancestors.push(this.parent);
-      }
       return this.parent.findAncestors(predicate, ancestors);
     }
   },
@@ -199,31 +213,39 @@ const Node = {
     return this.bounds;
   },
 
-  contains(point) {
-    return point
+  contains(globalPoint) {
+    return globalPoint
       .transform(this.globalTransform().invert())
       .isWithin(this.bounds);
   },
 
-  // TODO: repetitive with the previous method
+  // TODO: repetitive with `computeBounds` to some extent
+  // computeBounds computes bounds for the whole tree,
+  // wheres updateBounds computes bounds for `this` only
   updateBounds() {
-    const corners = [];
+    if (this.isLeaf() && !this.isRoot()) {
+      this.bounds = this.path.bounds();
+    } else {
+      const corners = [];
 
-    for (let child of this.children) {
-      for (let corner of child.bounds.corners) {
-        corners.push(corner.transform(child.transform));
+      for (let child of this.children) {
+        for (let corner of child.bounds.corners) {
+          corners.push(corner.transform(child.transform));
+        }
       }
+
+      const xValue  = vector => vector.x;
+      const xValues = corners.map(xValue);
+      const yValue  = vector => vector.y;
+      const yValues = corners.map(yValue);
+
+      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+      this.bounds = Rectangle.createFromMinMax(min, max);
     }
 
-    const xValue  = vector => vector.x;
-    const xValues = corners.map(xValue);
-    const yValue  = vector => vector.y;
-    const yValues = corners.map(yValue);
-
-    const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-    const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
-
-    this.bounds = Rectangle.createFromMinMax(min, max);
+    return this.bounds;
   },
 
   // setting and removing classes
@@ -292,6 +314,12 @@ const Node = {
     this.setFrontier();
   },
 
+  deeditAll() {
+    if (this.editing) {
+      this.editing.class.remove('editing');
+    }
+  },
+
   // transform
 
   globalTransform() {
@@ -348,12 +376,6 @@ const Node = {
     const b      = total.m[1][0];
 
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-  },
-
-  // TODO: intransparent naming
-  // this method parses markup into scene
-  createFromMarkup(markup) {
-    return builder.buildFrom(markup);
   },
 
   // returns a virtual dom tree (for rendering as a real dom tree)

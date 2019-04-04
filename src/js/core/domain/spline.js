@@ -64,8 +64,7 @@ const Spline = {
     let splineBounds;
 
     if (this.segments.length === 1) {
-      splineBounds = Rectangle.createFromMinMax(vector.anchor, vector.anchor);
-      // ^ TODO: I think this is difficult to draw, because it has no dimensions.
+      splineBounds = Rectangle.create(); // => it's a single M segment
     } else {
       const curves  = this.curves();
       splineBounds = curves[0].bounds();

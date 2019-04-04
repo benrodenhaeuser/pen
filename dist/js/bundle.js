@@ -2127,8 +2127,10 @@
       return this;
     },
 
+    // NOTE: the order of points is crucial. It's the order required
+    // by the Bezier constructor of the Pomax Bezier library!
     points() {
-      return [this.anchor1, this.anchor2, this.handle1, this.handle2]
+      return [this.anchor1, this.handle1, this.handle2, this.anchor2]
         .filter((point) => {
           return (point !== undefined);
         });
@@ -2163,6 +2165,8 @@
 
         return Rectangle.createFromMinMax(min, max);
       }
+
+      console.log(this.coords());
 
       const bbox = new Bezier(...this.coords()).bbox();
       const min = Vector.create(bbox.x.min, bbox.y.min);
@@ -2233,8 +2237,7 @@
       let splineBounds;
 
       if (this.segments.length === 1) {
-        splineBounds = Rectangle.createFromMinMax(vector.anchor, vector.anchor);
-        // ^ TODO: I think this is difficult to draw, because it has no dimensions.
+        splineBounds = Rectangle.create(); // => it's a single M segment
       } else {
         const curves  = this.curves();
         splineBounds = curves[0].bounds();
@@ -2477,10 +2480,17 @@
     controlDiameter:  6,
   };
 
-  // TODO:
-  // this value is just a placeholder, need to somehow get this value from the frontend.
-  // (see my notes on this)
-  const DOCUMENT_SCALE = 0.5;
+  // TODO: this value is just a placeholder, need to get
+  // this value dynamically from the ui (see notes).
+  const DOCUMENT_SCALE = 1;
+
+  const h = (tag, props = {}, ...children) => {
+    return {
+      tag: tag,
+      props: props,
+      children: children || [],
+    };
+  };
 
   const scale = (node, length) => {
     return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
@@ -2488,14 +2498,10 @@
 
   const wrapper = {
     wrap(vNode, node) {
-      const vWrapper = {
-        tag:         'g',
-        props: {
-          'data-type': 'wrapper',
-          'data-id':   node._id,
-        },
-        children:    [],
-      };
+      const vWrapper = h('g', {
+        'data-type': 'wrapper',
+        'data-id':   node._id,
+      });
 
       vWrapper.children.push(vNode);
       if (node.path) { vWrapper.children.push(this.innerUI(node)); }
@@ -2505,14 +2511,10 @@
     },
 
     outerUI(node) {
-      const vOuterUI = {
-        tag:         'g',
-        props: {
-          'data-type': 'outerUI',
-          'data-id':   node._id,
-        },
-        children:    [],
-      };
+      const vOuterUI = h('g', {
+        'data-type': 'outerUI',
+        'data-id':   node._id,
+      });
 
       const vFrame   = this.frame(node);
       const vDots    = this.dots(node);    // for rotation
@@ -2532,23 +2534,20 @@
     },
 
     corners(node) {
-      const vTopLCorner = { tag: 'rect' };
-      const vBotLCorner = { tag: 'rect' };
-      const vTopRCorner = { tag: 'rect' };
-      const vBotRCorner = { tag: 'rect' };
+      const vTopLCorner = h('rect');
+      const vBotLCorner = h('rect');
+      const vTopRCorner = h('rect');
+      const vBotRCorner = h('rect');
       const vCorners    = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
       const length      = scale(node, LENGTHS_IN_PX.cornerSideLength);
 
       for (let vCorner of vCorners) {
-        Object.assign(vCorner, {
-          props: {
-            'data-type': 'corner',
-            'data-id':   node._id,
-            transform:   node.transform.toString(),
-            width:       length,
-            height:      length,
-          },
-          children: [],
+        Object.assign(vCorner.props, {
+          'data-type': 'corner',
+          'data-id':   node._id,
+          transform:   node.transform.toString(),
+          width:       length,
+          height:      length,
         });
       }
 
@@ -2576,23 +2575,20 @@
     },
 
     dots(node) {
-      const vTopLDot  = { tag: 'circle' };
-      const vBotLDot  = { tag: 'circle' };
-      const vTopRDot  = { tag: 'circle' };
-      const vBotRDot  = { tag: 'circle' };
+      const vTopLDot  = h('circle');
+      const vBotLDot  = h('circle');
+      const vTopRDot  = h('circle');
+      const vBotRDot  = h('circle');
       const vDots     = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
       const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
       const radius    = diameter / 2;
 
       for (let vDot of vDots) {
-        Object.assign(vDot, {
-          props: {
-            'data-type':      'dot',
-            'data-id':        node._id,
-            transform:        node.transform.toString(),
-            r:                radius,
-          },
-          children: [],
+        Object.assign(vDot.props, {
+          'data-type':      'dot',
+          'data-id':        node._id,
+          transform:        node.transform.toString(),
+          r:                radius,
         });
       }
 
@@ -2620,30 +2616,22 @@
     },
 
     frame(node) {
-      return {
-        tag:          'rect',
-        props: {
-          'data-type':  'frame',
-          x:            node.bounds.x,
-          y:            node.bounds.y,
-          width:        node.bounds.width,
-          height:       node.bounds.height,
-          transform:    node.transform.toString(),
-          'data-id':    node._id,
-        },
-        children: [],
-      };
+      return h('rect', {
+        'data-type':  'frame',
+        x:            node.bounds.x,
+        y:            node.bounds.y,
+        width:        node.bounds.width,
+        height:       node.bounds.height,
+        transform:    node.transform.toString(),
+        'data-id':    node._id,
+      });
     },
 
     innerUI(node) {
-      const vInnerUI = {
-        tag: 'g',
-        props: {
-          'data-type': 'innerUI',
-          'data-id': node._id,
-        },
-        children: [],
-      };
+      const vInnerUI = h('g', {
+        'data-type': 'innerUI',
+        'data-id': node._id,
+      });
 
       const vConnections = this.connections(node);
 
@@ -2677,17 +2665,13 @@
     },
 
     connection(node, anchor, handle) {
-      return {
-        tag: 'line',
-        props: {
-          x1:        anchor.x,
-          y1:        anchor.y,
-          x2:        handle.x,
-          y2:        handle.y,
-          transform: node.transform.toString(),
-        },
-        children: [],
-      };
+      return h('line', {
+        x1:        anchor.x,
+        y1:        anchor.y,
+        x2:        handle.x,
+        y2:        handle.y,
+        transform: node.transform.toString(),
+      });
     },
 
     controls(node) {
@@ -2712,18 +2696,14 @@
     },
 
     control(node, diameter, contr) {
-      return {
-        tag: 'circle',
-        props: {
-          'data-type': 'control',
-          'data-id'  : contr._id,
-          transform  : node.transform.toString(),
-          r          : diameter / 2,
-          cx         : contr.x,
-          cy         : contr.y,
-        },
-        children: [],
-      };
+      return h('circle', {
+        'data-type': 'control',
+        'data-id'  : contr._id,
+        transform  : node.transform.toString(),
+        r          : diameter / 2,
+        cx         : contr.x,
+        cy         : contr.y,
+      });
     },
   };
 
@@ -2736,6 +2716,11 @@
   const Node = {
     create(opts = {}) {
       return Object.create(this).init(opts);
+    },
+
+    // this method parses markup into scene
+    createFromMarkup(markup) {
+      return builder.buildFrom(markup);
     },
 
     init(opts) {
@@ -2752,7 +2737,7 @@
         parent:    null,
         transform: Matrix.identity(),
         class:     Class.create(),
-        // props:     {},  // TODO: not clear if we want this
+        bounds:    Rectangle.create(),
       };
     },
 
@@ -2815,6 +2800,12 @@
       });
     },
 
+    get editing() {
+      return this.root.findDescendant((node) => {
+        return node.class.includes('editing');
+      });
+    },
+
     isSelected() {
       return this.class.includes('selected');
     },
@@ -2827,6 +2818,7 @@
 
     // traversal
 
+    // NOTE: a node is an ancestor of itself
     findAncestor(predicate) {
       if (predicate(this)) {
         return this;
@@ -2837,13 +2829,15 @@
       }
     },
 
+    // NOTE: a node is an ancestor of itself
     findAncestors(predicate, ancestors = []) {
+      if (predicate(this)) {
+        ancestors.push(this);
+      }
+
       if (this.parent === null) {
         return ancestors;
       } else {
-        if (predicate(this.parent)) {
-          ancestors.push(this.parent);
-        }
         return this.parent.findAncestors(predicate, ancestors);
       }
     },
@@ -2920,31 +2914,39 @@
       return this.bounds;
     },
 
-    contains(point) {
-      return point
+    contains(globalPoint) {
+      return globalPoint
         .transform(this.globalTransform().invert())
         .isWithin(this.bounds);
     },
 
-    // TODO: repetitive with the previous method
+    // TODO: repetitive with `computeBounds` to some extent
+    // computeBounds computes bounds for the whole tree,
+    // wheres updateBounds computes bounds for `this` only
     updateBounds() {
-      const corners = [];
+      if (this.isLeaf() && !this.isRoot()) {
+        this.bounds = this.path.bounds();
+      } else {
+        const corners = [];
 
-      for (let child of this.children) {
-        for (let corner of child.bounds.corners) {
-          corners.push(corner.transform(child.transform));
+        for (let child of this.children) {
+          for (let corner of child.bounds.corners) {
+            corners.push(corner.transform(child.transform));
+          }
         }
+
+        const xValue  = vector => vector.x;
+        const xValues = corners.map(xValue);
+        const yValue  = vector => vector.y;
+        const yValues = corners.map(yValue);
+
+        const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+        const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+        this.bounds = Rectangle.createFromMinMax(min, max);
       }
 
-      const xValue  = vector => vector.x;
-      const xValues = corners.map(xValue);
-      const yValue  = vector => vector.y;
-      const yValues = corners.map(yValue);
-
-      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
-
-      this.bounds = Rectangle.createFromMinMax(min, max);
+      return this.bounds;
     },
 
     // setting and removing classes
@@ -3013,6 +3015,12 @@
       this.setFrontier();
     },
 
+    deeditAll() {
+      if (this.editing) {
+        this.editing.class.remove('editing');
+      }
+    },
+
     // transform
 
     globalTransform() {
@@ -3069,12 +3077,6 @@
       const b      = total.m[1][0];
 
       return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-    },
-
-    // TODO: intransparent naming
-    // this method parses markup into scene
-    createFromMarkup(markup) {
-      return builder.buildFrom(markup);
     },
 
     // returns a virtual dom tree (for rendering as a real dom tree)
@@ -3192,8 +3194,6 @@
     },
   };
 
-  // import { builder } from '../domain/builder.js';
-
   const State = {
     create() {
       return Object.create(State).init();
@@ -3234,21 +3234,21 @@
   //   </svg>
   // `;
 
-  const markup = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-
-    <g>
-      <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-
-      <g>
-        <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-        <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-      </g>
-    </g>
-
-    <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
-  </svg>
-`;
+  // const markup = `
+  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  //
+  //     <g>
+  //       <rect x="260" y="250" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //
+  //       <g>
+  //         <rect x="400" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //         <rect x="550" y="260" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //       </g>
+  //     </g>
+  //
+  //     <rect x="600" y="600" width="100" height="100" fill="none" stroke="#e3e3e3"></rect>
+  //   </svg>
+  // `;
 
   // const markup = `
   //   <svg id="a3dbc277-3d4c-49ea-bad0-b2ae645587b1" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
@@ -3268,9 +3268,9 @@
   // `;
 
   // empty svg with viewBox
-  // const markup = `
-  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
-  // `;
+  const markup = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"></svg>
+`;
 
   // const markup = `
   //   <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 405"><g fill="#ff0000" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><path d="M50.5869,148.3516c-0.2308,-43.67734 -0.2308,-43.67734 -24.7598,-54.57743c-24.529,-10.90009 -24.529,-10.90009 -24.529,55.34c0,66.2401 0,66.2401 24.7598,54.57743c24.7598,-11.66267 24.7598,-11.66267 24.529,-55.34z"/><path d="M21.62818,330.71352c-20.56368,-15.09293 -20.56368,-15.09293 -20.56368,28.5276c0,43.62053 0,43.62053 19.55435,43.62053c19.55435,0 19.55435,0 20.56368,-28.5276c1.00933,-28.5276 1.00933,-28.5276 -19.55435,-43.62053z"/><path d="M107.96977,0.50937c0.73005,-0.48695 0.73005,-0.48695 -1.01175,-0.48695c-1.7418,0 -1.7418,0 -0.73005,0.48695c1.01175,0.48695 1.01175,0.48695 1.7418,0z"/><path d="M74.97452,87.43121c23.24606,-12.27663 23.24606,-12.27663 26.41619,-48.12571c3.17013,-35.84908 1.14663,-36.82298 -48.78682,-36.82298c-49.93345,0 -49.93345,0 -49.93345,37.71256c0,37.71256 0,37.71256 24.529,48.61266c24.529,10.90009 24.529,10.90009 47.77507,-1.37653z"/><path d="M79.76578,203.77243c24.86172,11.77861 24.86172,11.77861 49.61865,3.24961c24.75693,-8.529 24.75693,-8.529 29.23518,-52.52805c4.47825,-43.99905 4.47825,-43.99905 -26.60339,-59.20358c-31.08164,-15.20453 -31.08164,-15.20453 -54.3277,-2.9279c-23.24606,12.27663 -23.24606,12.27663 -23.01526,55.95397c0.2308,43.67734 0.2308,43.67734 25.09252,55.45595z"/><path d="M70.59973,326.80235c26.89466,-14.35367 26.89466,-14.35367 29.05785,-59.7788c2.16319,-45.42513 2.16319,-45.42513 -22.69853,-57.20374c-24.86172,-11.77861 -24.86172,-11.77861 -49.62152,-0.11595c-24.7598,11.66267 -24.7598,11.66267 -24.7598,56.46448c0,44.80181 0,44.80181 20.56368,59.89474c20.56368,15.09293 20.56368,15.09293 47.45834,0.73926z"/><path d="M129.84987,328.44011c-29.97881,-11.37576 -29.97881,-11.37576 -56.87347,2.97791c-26.89466,14.35367 -26.89466,14.35367 -27.90399,42.88126c-1.00933,28.5276 -1.00933,28.5276 34.40359,28.5276c35.41292,0 35.41292,0 57.88279,-31.5055c22.46988,-31.5055 22.46988,-31.5055 -7.50893,-42.88126z"/><path d="M187.06059,96.11957c21.47119,-9.59579 21.47119,-9.59579 22.49175,-51.54056c1.02056,-41.94477 1.02056,-41.94477 -48.65265,-41.94477c-49.67321,0 -51.13331,0.9739 -54.30344,36.82298c-3.17013,35.84908 -3.17013,35.84908 27.91151,51.05361c31.08164,15.20453 31.08164,15.20453 52.55283,5.60874z"/><path d="M245.34605,206.18022c33.14602,-20.86668 33.14602,-20.86668 30.2472,-54.58075c-2.89882,-33.71407 -2.89882,-33.71407 -33.43397,-46.74428c-30.53515,-13.03021 -30.53515,-13.03021 -52.00634,-3.43443c-21.47119,9.59579 -21.47119,9.59579 -25.94945,53.59483c-4.47825,43.99905 -4.47825,43.99905 21.75914,58.01517c26.23739,14.01613 26.23739,14.01613 59.38342,-6.85056z"/><path d="M195.80525,326.19818c21.96942,-10.19253 21.96942,-10.19253 17.69765,-51.84721c-4.27177,-41.65468 -4.27177,-41.65468 -30.50916,-55.67081c-26.23739,-14.01613 -26.23739,-14.01613 -50.99432,-5.48713c-24.75693,8.529 -24.75693,8.529 -26.92012,53.95413c-2.16319,45.42513 -2.16319,45.42513 27.81562,56.80089c29.97881,11.37576 40.9409,12.44265 62.91033,2.25012z"/><path d="M227.51873,402.9056c49.30296,0 49.30296,0 45.96844,-29.33069c-3.33452,-29.33069 -3.33452,-29.33069 -27.86991,-41.16459c-24.53539,-11.83389 -24.53539,-11.83389 -46.50481,-1.64137c-21.96942,10.19253 -21.96942,10.19253 -21.43305,41.16459c0.53637,30.97206 0.53637,30.97206 49.83933,30.97206z"/><path d="M339.22874,3.60137c9.5027,-3.44282 9.5027,-3.44282 -4.69103,-3.44282c-14.19373,0 -14.19373,0 -9.5027,3.44282c4.69103,3.44282 4.69103,3.44282 14.19373,0z"/><path d="M297.32885,95.81776c22.09241,-16.92833 22.09241,-16.92833 25.64882,-51.53216c3.5564,-34.60384 -5.82566,-41.48947 -56.29804,-41.48947c-50.47238,0 -50.47238,0 -51.49294,41.94477c-1.02056,41.94477 -1.02056,41.94477 29.51459,54.97498c30.53515,13.03021 30.53515,13.03021 52.62756,-3.89812z"/><path d="M315.52969,202.76801c31.17916,17.74268 31.17916,17.74268 49.30204,10.55348c18.12288,-7.18921 18.12288,-7.18921 24.75761,-50.72443c6.63474,-43.53522 6.63474,-43.53522 -30.10845,-61.19587c-36.74318,-17.66065 -36.74318,-17.66065 -58.8356,-0.73232c-22.09241,16.92833 -22.09241,16.92833 -19.19359,50.64239c2.89882,33.71407 2.89882,33.71407 34.07798,51.45675z"/><path d="M248.25403,327.5441c24.53539,11.83389 24.53539,11.83389 51.87383,-2.72394c27.33844,-14.55783 27.33844,-14.55783 35.51803,-56.61257c8.17959,-42.05474 8.17959,-42.05474 -22.99957,-59.79743c-31.17916,-17.74268 -31.17916,-17.74268 -64.32519,3.124c-33.14602,20.86668 -33.14602,20.86668 -28.87425,62.52137c4.27177,41.65468 4.27177,41.65468 28.80716,53.48857z"/><path d="M334.71096,402.7916c52.47028,0 52.47028,0 55.59477,-27.50337c3.1245,-27.50337 3.1245,-27.50337 -28.46636,-43.88853c-31.59085,-16.38516 -31.59085,-16.38516 -58.9293,-1.82732c-27.33844,14.55783 -27.33844,14.55783 -24.00392,43.88853c3.33452,29.33069 3.33452,29.33069 55.8048,29.33069z"/><path d="M437.28803,1.64447c2.69179,-1.57207 2.69179,-1.57207 -3.64826,-1.57207c-6.34004,0 -6.34004,0 -2.69179,1.57207c3.64826,1.57207 3.64826,1.57207 6.34004,0z"/><path d="M423.47215,101.0203c24.76808,-13.22625 24.76808,-13.22625 16.75607,-54.13524c-8.01201,-40.90899 -15.30852,-44.05313 -52.10041,-44.05313c-36.79189,0 -36.79189,0 -46.29459,3.44282c-9.5027,3.44282 -9.5027,3.44282 -13.05911,38.04665c-3.5564,34.60384 -3.5564,34.60384 33.18678,52.26449c36.74318,17.66065 36.74318,17.66065 61.51126,4.43441z"/><path d="M473.2864,212.58868c30.39492,-14.89085 30.39492,-14.89085 33.55771,-54.98674c3.16279,-40.09589 3.16279,-40.09589 -26.12633,-52.36114c-29.28911,-12.26525 -29.28911,-12.26525 -54.05719,0.961c-24.76808,13.22625 -24.76808,13.22625 -31.40281,56.76146c-6.63474,43.53522 -6.63474,43.53522 20.49948,54.02574c27.13422,10.49052 27.13422,10.49052 57.52914,-4.40033z"/><path d="M423.24411,333.73001c26.92878,-9.8882 26.92878,-9.8882 21.84583,-55.13858c-5.08295,-45.25039 -5.08295,-45.25039 -32.21717,-55.74091c-27.13422,-10.49052 -27.13422,-10.49052 -45.25709,-3.30131c-18.12288,7.18921 -18.12288,7.18921 -26.30247,49.24395c-8.17959,42.05474 -8.17959,42.05474 23.41126,58.4399c31.59085,16.38516 31.59085,16.38516 58.51964,6.49696z"/><path d="M475.05699,339.05927c-22.21507,-10.7426 -22.21507,-10.7426 -49.14385,-0.85441c-26.92878,9.8882 -26.92878,9.8882 -30.05328,37.39157c-3.1245,27.50337 -3.1245,27.50337 47.87861,27.50337c51.00311,0 51.00311,0 52.26835,-26.64896c1.26524,-26.64896 1.26524,-26.64896 -20.94983,-37.39157z"/><path d="M482.61699,100.04921c29.28911,12.26525 29.28911,12.26525 42.03328,5.31362c12.74416,-6.95163 12.74416,-6.95163 12.74416,-54.74631c0,-47.79468 0,-47.79468 -47.3535,-47.79468c-47.3535,0 -52.73707,3.14414 -44.72506,44.05313c8.01201,40.90899 8.01201,40.90899 37.30112,53.17424z"/><path d="M539.2026,162.82026c0,-59.13683 0,-59.13683 -12.74416,-52.18521c-12.74416,6.95163 -12.74416,6.95163 -15.90695,47.04752c-3.16279,40.09589 -3.16279,40.09589 12.74416,52.18521c15.90695,12.08932 15.90695,12.08932 15.90695,-47.04752z"/><path d="M477.40768,334.44837c22.21507,10.7426 22.21507,10.7426 41.21892,2.089c19.00385,-8.6536 19.00385,-8.6536 19.00385,-58.79452c0,-50.14092 0,-50.14092 -15.90695,-62.23023c-15.90695,-12.08932 -15.90695,-12.08932 -46.30187,2.80153c-30.39492,14.89085 -30.39492,14.89085 -25.31197,60.14123c5.08295,45.25039 5.08295,45.25039 27.29802,55.99299z"/><path d="M499.68158,376.59488c-1.26524,26.64896 -1.26524,26.64896 19.00385,26.64896c20.26909,0 20.26909,0 20.26909,-35.30257c0,-35.30257 0,-35.30257 -19.00385,-26.64896c-19.00385,8.6536 -19.00385,8.6536 -20.26909,35.30257z"/><path d="M167.79565,340.87524c-5.48105,-0.53344 -5.48105,-0.53344 -27.95093,30.97206c-22.46988,31.5055 -22.46988,31.5055 6.01742,31.5055c28.4873,0 28.4873,0 27.95093,-30.97206c-0.53637,-30.97206 -0.53637,-30.97206 -6.01742,-31.5055z"/></g></svg>
@@ -3349,15 +3349,18 @@
     },
 
     release(state, input) {
-      const selected = state.scene.selected;
+      const current = state.scene.selected || state.scene.editing;
 
-      if (selected) {
-        for (let ancestor of state.scene.selected.ancestors) {
+      console.log(current);
+
+      if (current) {
+        for (let ancestor of current.ancestors) {
+          console.log(ancestor, Object.getPrototypeOf(ancestor) === Root);
           ancestor.updateBounds();
         }
       }
 
-      aux = {};
+      this.aux = {};
     },
 
     deepSelect(state, input) {
@@ -3403,6 +3406,10 @@
       state.scene.deselectAll();
     },
 
+    deedit(state, event) {
+      state.scene.deeditAll();
+    },
+
     // OLD (still useful?):
 
     createDoc(state, input) {
@@ -3423,7 +3430,7 @@
       state.init(input.data.doc);
     },
 
-    // pen tool (draft version)
+    // PEN TOOL (draft version)
 
     // mousedown in state 'pen':
     addFirstAnchor(state, input) {
@@ -3481,34 +3488,44 @@
   const config = [
     { from: 'start', type: 'kickoff', do: 'kickoff', to: 'idle' },
     { from: 'idle', type: 'mousemove', do: 'focus' },
+
+    // SELECT AND TRANSFORM
+    // activate select tool
+    { type: 'click', target: 'activateSelect', do: 'deedit', to: 'idle' },
+
+    // select/transform actions
     { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
     { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
     { from: 'idle', type: 'mousedown', target: 'root', do: 'deselect' },
     { from: 'shifting', type: 'mousemove', do: 'shift' },
-    { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
+    { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' }, // RELEASE
     { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
     { from: 'rotating', type: 'mousemove', do: 'rotate' },
-    { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },
+    { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },  // RELEASE
     { from: 'idle', type: 'mousedown', target: 'corner', do: 'initTransform', to: 'scaling' },
     { from: 'scaling', type: 'mousemove', do: 'scale' },
-    { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
-    { type: 'click', target: 'doc-list-entry', do: 'requestDoc' },
-    { type: 'docSaved' },
-    { type: 'updateDocList', do: 'updateDocList' },
-    { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
-    { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
-    // PEN TOOL
-    // adding controls
+    { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' }, // RELEASE
+
+    // PEN
+    // activate pen tool
     { from: 'idle', type: 'click', target: 'activatePen', do: 'deselect', to: 'pen' },
+    // adding controls
     { from: 'pen', type: 'mousedown', target: 'content', do: 'addFirstAnchor', to: 'addingHandle' },
     { from: 'addingHandle', type: 'mousemove', do: 'addHandle', to: 'addingHandle' },
-    { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
+    { from: 'addingHandle', type: 'mouseup', do: 'release', to: 'continuePen' },
     { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
     // editing controls
     { from: 'continuePen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
     { from: 'pen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
     { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
-    { from: 'editingControl', type: 'mouseup', to: 'pen' },
+    { from: 'editingControl', type: 'mouseup', do: 'release', to: 'pen' },
+
+    // OTHER
+    { type: 'click', target: 'doc-list-entry', do: 'requestDoc' },
+    { type: 'docSaved' },
+    { type: 'updateDocList', do: 'updateDocList' },
+    { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
+    { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
   ];
 
   config.get = function(state, input) {
@@ -3748,26 +3765,28 @@
     },
 
     sync(state) {
-      const changes = (state1, state2) => {
-        const keys = Object.keys(state1);
-        return keys.filter(key => !equalData(state1[key], state2[key]));
-      };
+      mount(render(state.scene), ui.canvasNode);
 
-      const equalData = (obj1, obj2) => {
-        return JSON.stringify(obj1) === JSON.stringify(obj2);
-      };
-
-      if (state.id === 'start') {
-        this.start(state);
-        this.renderScene(state); // ?
-        return;
-      }
-
-      for (let changed of changes(state, this.previousState)) {
-        this.render[changed] && this.render[changed](state);
-      }
-
-      this.previousState = state; // saves the state - we can use that when making an input
+      // const changes = (state1, state2) => {
+      //   const keys = Object.keys(state1);
+      //   return keys.filter(key => !equalData(state1[key], state2[key]));
+      // };
+      //
+      // const equalData = (obj1, obj2) => {
+      //   return JSON.stringify(obj1) === JSON.stringify(obj2);
+      // };
+      //
+      // if (state.id === 'start') {
+      //   this.start(state);
+      //   this.renderScene(state); // ?
+      //   return;
+      // }
+      //
+      // for (let changed of changes(state, this.previousState)) {
+      //   this.render[changed] && this.render[changed](state);
+      // }
+      //
+      // this.previousState = state; // saves the state - we can use that when making an input
     },
 
     // reconcile

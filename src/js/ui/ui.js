@@ -3,7 +3,6 @@ import { sceneRenderer } from './sceneRenderer.js';
 import { render        } from './render.js';
 import { mount         } from './mount.js';
 
-
 const coordinates = (event) => {
   const svg = document.querySelector('svg');
   let point = svg.createSVGPoint();
@@ -52,26 +51,28 @@ const ui = {
   },
 
   sync(state) {
-    const changes = (state1, state2) => {
-      const keys = Object.keys(state1);
-      return keys.filter(key => !equalData(state1[key], state2[key]));
-    };
+    mount(render(state.scene), ui.canvasNode);
 
-    const equalData = (obj1, obj2) => {
-      return JSON.stringify(obj1) === JSON.stringify(obj2);
-    };
-
-    if (state.id === 'start') {
-      this.start(state);
-      this.renderScene(state); // ?
-      return;
-    }
-
-    for (let changed of changes(state, this.previousState)) {
-      this.render[changed] && this.render[changed](state);
-    }
-
-    this.previousState = state; // saves the state - we can use that when making an input
+    // const changes = (state1, state2) => {
+    //   const keys = Object.keys(state1);
+    //   return keys.filter(key => !equalData(state1[key], state2[key]));
+    // };
+    //
+    // const equalData = (obj1, obj2) => {
+    //   return JSON.stringify(obj1) === JSON.stringify(obj2);
+    // };
+    //
+    // if (state.id === 'start') {
+    //   this.start(state);
+    //   this.renderScene(state); // ?
+    //   return;
+    // }
+    //
+    // for (let changed of changes(state, this.previousState)) {
+    //   this.render[changed] && this.render[changed](state);
+    // }
+    //
+    // this.previousState = state; // saves the state - we can use that when making an input
   },
 
   // reconcile

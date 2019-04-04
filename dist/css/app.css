@@ -145,7 +145,7 @@ svg {
   pointer-events: visiblePainted;
   visibility: hidden;
 }
-  
+
 [data-type="innerUI"] {
   pointer-events: visible;
   visibility: hidden;

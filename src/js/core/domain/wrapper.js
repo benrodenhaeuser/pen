@@ -4,10 +4,17 @@ const LENGTHS_IN_PX = {
   controlDiameter:  6,
 };
 
-// TODO:
-// this value is just a placeholder, need to somehow get this value from the frontend.
-// (see my notes on this)
-const DOCUMENT_SCALE = 0.5;
+// TODO: this value is just a placeholder, need to get
+// this value dynamically from the ui (see notes).
+const DOCUMENT_SCALE = 1;
+
+const h = (tag, props = {}, ...children) => {
+  return {
+    tag: tag,
+    props: props,
+    children: children || [],
+  };
+};
 
 const scale = (node, length) => {
   return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
@@ -15,14 +22,10 @@ const scale = (node, length) => {
 
 const wrapper = {
   wrap(vNode, node) {
-    const vWrapper = {
-      tag:         'g',
-      props: {
-        'data-type': 'wrapper',
-        'data-id':   node._id,
-      },
-      children:    [],
-    };
+    const vWrapper = h('g', {
+      'data-type': 'wrapper',
+      'data-id':   node._id,
+    });
 
     vWrapper.children.push(vNode);
     if (node.path) { vWrapper.children.push(this.innerUI(node)); }
@@ -32,14 +35,10 @@ const wrapper = {
   },
 
   outerUI(node) {
-    const vOuterUI = {
-      tag:         'g',
-      props: {
-        'data-type': 'outerUI',
-        'data-id':   node._id,
-      },
-      children:    [],
-    };
+    const vOuterUI = h('g', {
+      'data-type': 'outerUI',
+      'data-id':   node._id,
+    });
 
     const vFrame   = this.frame(node);
     const vDots    = this.dots(node);    // for rotation
@@ -59,23 +58,20 @@ const wrapper = {
   },
 
   corners(node) {
-    const vTopLCorner = { tag: 'rect' };
-    const vBotLCorner = { tag: 'rect' };
-    const vTopRCorner = { tag: 'rect' };
-    const vBotRCorner = { tag: 'rect' };
+    const vTopLCorner = h('rect');
+    const vBotLCorner = h('rect');
+    const vTopRCorner = h('rect');
+    const vBotRCorner = h('rect');
     const vCorners    = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
     const length      = scale(node, LENGTHS_IN_PX.cornerSideLength);
 
     for (let vCorner of vCorners) {
-      Object.assign(vCorner, {
-        props: {
-          'data-type': 'corner',
-          'data-id':   node._id,
-          transform:   node.transform.toString(),
-          width:       length,
-          height:      length,
-        },
-        children: [],
+      Object.assign(vCorner.props, {
+        'data-type': 'corner',
+        'data-id':   node._id,
+        transform:   node.transform.toString(),
+        width:       length,
+        height:      length,
       });
     }
 
@@ -103,23 +99,20 @@ const wrapper = {
   },
 
   dots(node) {
-    const vTopLDot  = { tag: 'circle' };
-    const vBotLDot  = { tag: 'circle' };
-    const vTopRDot  = { tag: 'circle' };
-    const vBotRDot  = { tag: 'circle' };
+    const vTopLDot  = h('circle');
+    const vBotLDot  = h('circle');
+    const vTopRDot  = h('circle');
+    const vBotRDot  = h('circle');
     const vDots     = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
     const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
     const radius    = diameter / 2;
 
     for (let vDot of vDots) {
-      Object.assign(vDot, {
-        props: {
-          'data-type':      'dot',
-          'data-id':        node._id,
-          transform:        node.transform.toString(),
-          r:                radius,
-        },
-        children: [],
+      Object.assign(vDot.props, {
+        'data-type':      'dot',
+        'data-id':        node._id,
+        transform:        node.transform.toString(),
+        r:                radius,
       });
     }
 
@@ -147,30 +140,22 @@ const wrapper = {
   },
 
   frame(node) {
-    return {
-      tag:          'rect',
-      props: {
-        'data-type':  'frame',
-        x:            node.bounds.x,
-        y:            node.bounds.y,
-        width:        node.bounds.width,
-        height:       node.bounds.height,
-        transform:    node.transform.toString(),
-        'data-id':    node._id,
-      },
-      children: [],
-    };
+    return h('rect', {
+      'data-type':  'frame',
+      x:            node.bounds.x,
+      y:            node.bounds.y,
+      width:        node.bounds.width,
+      height:       node.bounds.height,
+      transform:    node.transform.toString(),
+      'data-id':    node._id,
+    });
   },
 
   innerUI(node) {
-    const vInnerUI = {
-      tag: 'g',
-      props: {
-        'data-type': 'innerUI',
-        'data-id': node._id,
-      },
-      children: [],
-    };
+    const vInnerUI = h('g', {
+      'data-type': 'innerUI',
+      'data-id': node._id,
+    });
 
     const vConnections = this.connections(node);
 
@@ -204,17 +189,13 @@ const wrapper = {
   },
 
   connection(node, anchor, handle) {
-    return {
-      tag: 'line',
-      props: {
-        x1:        anchor.x,
-        y1:        anchor.y,
-        x2:        handle.x,
-        y2:        handle.y,
-        transform: node.transform.toString(),
-      },
-      children: [],
-    };
+    return h('line', {
+      x1:        anchor.x,
+      y1:        anchor.y,
+      x2:        handle.x,
+      y2:        handle.y,
+      transform: node.transform.toString(),
+    });
   },
 
   controls(node) {
@@ -239,18 +220,14 @@ const wrapper = {
   },
 
   control(node, diameter, contr) {
-    return {
-      tag: 'circle',
-      props: {
-        'data-type': 'control',
-        'data-id'  : contr._id,
-        transform  : node.transform.toString(),
-        r          : diameter / 2,
-        cx         : contr.x,
-        cy         : contr.y,
-      },
-      children: [],
-    };
+    return h('circle', {
+      'data-type': 'control',
+      'data-id'  : contr._id,
+      transform  : node.transform.toString(),
+      r          : diameter / 2,
+      cx         : contr.x,
+      cy         : contr.y,
+    });
   },
 };
 

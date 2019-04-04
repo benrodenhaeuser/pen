@@ -25,8 +25,10 @@ const Curve = {
     return this;
   },
 
+  // NOTE: the order of points is crucial. It's the order required
+  // by the Bezier constructor of the Pomax Bezier library!
   points() {
-    return [this.anchor1, this.anchor2, this.handle1, this.handle2]
+    return [this.anchor1, this.handle1, this.handle2, this.anchor2]
       .filter((point) => {
         return (point !== undefined);
       });
@@ -61,6 +63,8 @@ const Curve = {
 
       return Rectangle.createFromMinMax(min, max);
     }
+
+    console.log(this.coords());
 
     const bbox = new Bezier(...this.coords()).bbox();
     const min = Vector.create(bbox.x.min, bbox.y.min);
