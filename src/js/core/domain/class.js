@@ -12,6 +12,10 @@ const Class = {
     return Array.from(this.set).join(' ');
   },
 
+  toJSON() {
+    return Array.from(this.set);
+  },
+
   includes(className) {
     return this.set.has(className);
   },

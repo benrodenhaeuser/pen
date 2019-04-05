@@ -8,13 +8,24 @@ import { Matrix  } from '../domain/matrix.js';
 
 let aux = {};
 
+const touch = (node) => {
+  if (node) {
+    node._id = createID();
+  }
+
+  return node;
+};
+
+// usually, it's very clear what node we are going to change.
+// so touch implements that.
+
 const actions = {
   select(state, input) {
-    const target   = state.scene.findDescendantByID(input.targetID);
-    const toSelect = target && target.findAncestorByClass('frontier');
+    const target = state.scene.findDescendantByID(input.targetID);
+    const node = target && target.findAncestorByClass('frontier');
 
-    if (toSelect) {
-      toSelect.select();
+    if (node) {
+      node.select();
       this.initTransform(state, input);
     } else {
       state.scene.deselectAll();
@@ -22,16 +33,16 @@ const actions = {
   },
 
   initTransform(state, input) {
-    const selected = state.scene.selected;
-    aux.from       = Vector.create(input.x, input.y); // global coordinates
-    aux.center     = selected.bounds.center.transform(selected.globalTransform());
+    const node = state.scene.selected;
+    aux.from   = Vector.create(input.x, input.y); // global coordinates
+    aux.center = node.bounds.center.transform(node.globalTransform());
     // ^ global coordinates (globalTransform transforms local coords to global coords)
   },
 
   shift(state, input) {
-    const selected = state.scene.selected;
+    const node = state.scene.selected;
 
-    if (!selected) {
+    if (!node) {
       return;
     }
 
@@ -39,15 +50,15 @@ const actions = {
     const from   = aux.from;
     const offset = to.minus(from);
 
-    selected.translate(offset);
+    node.translate(offset);
 
     aux.from = to;
   },
 
   rotate(state, input) {
-    const selected = state.scene.selected;
+    const node = state.scene.selected;
 
-    if (!selected) {
+    if (!node) {
       return;
     }
 
@@ -56,15 +67,15 @@ const actions = {
     const center = aux.center;
     const angle  = center.angle(from, to);
 
-    selected.rotate(angle, center);
+    node.rotate(angle, center);
 
     aux.from = to;
   },
 
   scale(state, input) {
-    const selected = state.scene.selected;
+    const node = state.scene.selected;
 
-    if (!selected) {
+    if (!node) {
       return;
     }
 
@@ -73,7 +84,7 @@ const actions = {
     const center = aux.center;
     const factor = to.minus(center).length() / from.minus(center).length();
 
-    selected.scale(factor, center);
+    node.scale(factor, center);
 
     aux.from = to;
   },
@@ -159,20 +170,19 @@ const actions = {
 
   // PEN TOOL (draft version)
 
+  // work on a proper API for manipulating paths
+
   // mousedown in state 'pen':
   addFirstAnchor(state, input) {
     const node = Shape.create();
     const d = `M ${input.x} ${input.y}`;
-    node.path = Path.createFromSVGpath(d);
+    node.path = Path.createFromSVGpath(d); // assignment to path
     node.type = 'shape';
     state.scene.append(node);
     node.edit();
 
     aux.node = node;
   },
-
-  // what's the effect of adding a handle after the first state?
-  // unclear.
 
   // mousemove in state 'addingHandle'
   addHandle(state, input) {

@@ -52,12 +52,12 @@ const ui = {
 
   sync(state) {
     if (state.id === 'start') {
-      mount(render(state.scene), ui.canvasNode);
+      mount(render(state.vDOM), ui.canvasNode);
       this.previousState = state;
       return;
     }
 
-    mount(render(state.scene), ui.canvasNode);
+    mount(render(state.vDOM), ui.canvasNode);
 
     // this is what we want to happen:
 

@@ -1,5 +1,5 @@
-import { Node  } from '../domain/node.js';
-import { clock } from './clock.js';
+import { builder } from '../domain/builder.js';
+import { clock   } from './clock.js';
 
 const State = {
   create() {
@@ -14,26 +14,22 @@ const State = {
   init() {
     this.clock = clock.init();
     this.id    = 'start';
-    this.scene = Node.createFromMarkup(markup);
+    this.scene = builder.buildFrom(markup);
     this.docs  = { ids: [], selectedID: null };
 
     return this;
   },
 
-  toJSON() {
+  toPublishFormat() {
     return {
-      clock: this.clock,
-      id: this.id,
-      scene: this.scene.toVDOM(),
-      docs: this.docs,
+      id:    this.id,
+      vDOM:  this.scene.toVDOM(),
+      plain: this.scene.toPlain(),
     };
   },
 };
 
 export { State };
-
-
-// we can create a state from markup, or from a plain object
 
 // const markup = `
 //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>

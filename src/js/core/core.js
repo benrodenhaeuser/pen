@@ -38,10 +38,9 @@ const core = {
   publish() {
     const keys = Object.keys(this.periphery);
     for (let key of keys) {
-      this.periphery[key](JSON.parse(JSON.stringify(this.state)));
+      this.periphery[key](this.state.toPublishFormat());
     }
-    // console.log(this.state.scene.toVDOM());
-    console.log(this.state.scene.toPlain());
+    console.log(this.state.toPublishFormat().vDOM);
   },
 
   // TODO: not functional right now (this method is injected into "hist")

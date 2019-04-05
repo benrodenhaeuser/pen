@@ -58,10 +58,11 @@ const db = {
     }
 
     if (['idle', 'busy'].includes(state.id)) {
-      for (let changed of this.changes(state, this.previousState)) {
-        this.crud[changed] && this.crud[changed](state);
-      }
-      this.previousState = state;
+      this.crud.doc(state);
+      // for (let changed of this.changes(state, this.previousState)) {
+      //   this.crud[changed] && this.crud[changed](state);
+      // }
+      // this.previousState = state;
     }
   },
 
@@ -76,12 +77,12 @@ const db = {
     },
 
     doc(state) {
-      if (state.docs.selectedID === db.previousState.docs.selectedID) {
-        window.dispatchEvent(new CustomEvent(
-          'upsert',
-          { detail: state.doc }
-        ));
-      }
+      // if (state.docs.selectedID === db.previousState.docs.selectedID) {
+        // window.dispatchEvent(new CustomEvent(
+        //   'upsert',
+        //   { detail: state.vDOM }
+        // ));
+      // }
     },
   },
 

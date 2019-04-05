@@ -17,33 +17,23 @@ const Node = {
     return Object.create(this).init(opts);
   },
 
-  // this method parses markup into scene
-  createFromMarkup(markup) {
-    return builder.buildFrom(markup);
-  },
-
   init(opts) {
-    this.set(this.initDefaults());
+    this.set(this.defaults());
     this.set(opts);
 
     return this;
   },
 
-  initDefaults() {
+  defaults() {
     return {
-      _id:       createID(),
-      children:  [],
-      parent:    null,
-      transform: Matrix.identity(),
-      class:     Class.create(),
-      bounds:    Rectangle.create(),
-    };
-  },
-
-  publishDefaults() {
-    return {
-      _id: this._id,
-      children: this.children,
+      _id:      createID(),
+      children: [],
+      parent:   null,
+      payload: {
+        transform: Matrix.identity(),
+        class:     Class.create(),
+        bounds:    Rectangle.create(),
+      },
     };
   },
 
@@ -53,7 +43,21 @@ const Node = {
     }
   },
 
-  // hierarchy
+  // HIERARCHY PREDICATES
+
+  isLeaf() {
+    return this.children.length === 0;
+  },
+
+  isRoot() {
+    return this.parent === null;
+  },
+
+  isSelected() {
+    return this.class.includes('selected');
+  },
+
+  // HIERARCHY GETTERS
 
   get root() {
     return this.findAncestor(
@@ -65,14 +69,6 @@ const Node = {
     return this.findDescendants(
       node => node.children.length === 0
     );
-  },
-
-  isLeaf() {
-    return this.children.length === 0;
-  },
-
-  isRoot() {
-    return this.parent === null;
   },
 
   get ancestors() {
@@ -111,19 +107,57 @@ const Node = {
     });
   },
 
-  isSelected() {
-    return this.class.includes('selected');
-  },
-
   get frontier() {
     return this.root.findDescendants((node) => {
       return node.class.includes('frontier');
     });
   },
 
-  // traversal
+  // PAYLOAD GETTERS/SETTERS
 
-  // NOTE: a node is an ancestor of itself!
+  get transform() {
+    return this.payload.transform;
+  },
+
+  set transform(value) {
+    this.payload.transform = value;
+  },
+
+  get class() {
+    return this.payload.class;
+  },
+
+  set class(value) {
+    this.payload.class = value;
+  },
+
+  get bounds() {
+    return this.payload.bounds;
+  },
+
+  set bounds(value) {
+    this.payload.bounds = value;
+  },
+
+  get path() {
+    return this.payload.path;
+  },
+
+  set path(value) {
+    this.payload.path = value;
+  },
+
+  get viewBox() {
+    return this.payload.viewBox;
+  },
+
+  set viewBox(value) {
+    this.payload.viewBox = value;
+  },
+
+  // TREE TRAVERSAL
+
+  // NOTE: a node is an ancestor of itself
   findAncestor(predicate) {
     if (predicate(this)) {
       return this;
@@ -134,7 +168,7 @@ const Node = {
     }
   },
 
-  // NOTE: a node is an ancestor of itself!
+  // NOTE: a node is an ancestor of itself
   findAncestors(predicate, ancestors = []) {
     if (predicate(this)) {
       ancestors.push(this);
@@ -147,6 +181,7 @@ const Node = {
     }
   },
 
+  // NOTE: a node is a descendant of itself
   findDescendant(predicate) {
     if (predicate(this)) {
       return this;
@@ -160,6 +195,7 @@ const Node = {
     return null;
   },
 
+  // NOTE: a node is a descendant of itself
   findDescendants(predicate, descendants = []) {
     if (predicate(this)) {
       descendants.push(this);
@@ -184,14 +220,14 @@ const Node = {
     })
   },
 
-  // node creation
+  // NODE CREATION
 
   append(node) {
     this.children.push(node);
     node.parent = this;
   },
 
-  // bounding box
+  // BOUNDS
 
   computeBounds() {
     if (this.isLeaf() && !this.isRoot()) {
@@ -254,7 +290,7 @@ const Node = {
     return this.bounds;
   },
 
-  // setting and removing classes
+  // CLASSES
 
   setFrontier() {
     this.removeFrontier();
@@ -326,7 +362,29 @@ const Node = {
     }
   },
 
-  // transform
+  // PATH
+
+  // we don't have a node-level API for paths yet.
+  // so maybe we should think about that a bit.
+
+  // when we edit a node, we have to find a segment by id
+  // for this, we need to somehow access all those segments
+
+  get splines() {
+    return this.path.splines;
+  },
+
+  get curves() {
+    // accumulate all the curves of all the splines
+  },
+
+  get segments() {
+    // accumulate all the segments of all the curves
+
+    // (find an anchor by its id in this pool).
+  },
+
+  // TRANSFORMS
 
   globalTransform() {
     return this.ancestorTransform().multiply(this.transform);
@@ -347,36 +405,21 @@ const Node = {
   rotate(angle, center) {
     center = center.transform(this.ancestorTransform().invert());
     this.transform = Matrix.rotation(angle, center).multiply(this.transform);
-
-    // alternatively:
-
-    // this.transform = this
-    //   .ancestorTransform().invert()
-    //   .multiply(Matrix.rotation(angle, center))
-    //   .multiply(this.globalTransform());
   },
 
   scale(factor, center) {
     center = center.transform(this.ancestorTransform().invert());
     this.transform = Matrix.scale(factor, center).multiply(this.transform);
-
-    // alternatively:
-
-    // this.transform = this
-    //   .ancestorTransform().invert()
-    //   .multiply(Matrix.scale(factor, center))
-    //   .multiply(this.globalTransform());
   },
 
   translate(offset) {
-    // TODO: for some reason, simply premultiplying this.transform
-    // with the offset matrix does not yield the correct result, why is that?
-
     this.transform = this
       .ancestorTransform().invert()
       .multiply(Matrix.translation(offset))
       .multiply(this.globalTransform());
   },
+
+  // SCALE FACTOR
 
   globalScaleFactor() {
     const total  = this.globalTransform();
@@ -386,7 +429,8 @@ const Node = {
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },
 
-  // returns a virtual dom tree (for rendering as a real dom tree)
+  // PUBLISHING
+
   toVDOM(vParent = null) {
     const vNode = this.toVDOMNode();
 
@@ -402,15 +446,28 @@ const Node = {
     return vNode;
   },
 
-  // returns a plain JS object (for backend storage)
+  toJSON() {
+    return {
+      _id: this._id,
+      type: this.type,
+      children: this.children,
+      payload: this.payload,
+    };
+  },
+
   toPlain() {
     return JSON.parse(JSON.stringify(this));
   },
 };
 
 const Root  = Object.create(Node);
+Root.type   = 'root';
+
 const Group = Object.create(Node);
+Group.type  = 'group';
+
 const Shape = Object.create(Node);
+Shape.type  = 'shape';
 
 Root.toVDOMNode = function() {
   return {
@@ -452,42 +509,4 @@ Shape.toVDOMNode = function() {
   };
 };
 
-Root.toJSON = function() {
-  return Object.assign({
-    tag:     'svg',
-    viewBox: this.viewBox,
-    attr: {
-      viewBox: this.viewBox.toString(),
-    },
-  }, this.publishDefaults());
-};
-
-Group.toJSON = function() {
-  return Object.assign({
-    tag:         'g',
-    bounds:      this.bounds || Rectangle.create(), // TODO
-    transform:   this.transform,
-    globalScale: this.globalScaleFactor(),
-    attr: {
-      transform: this.transform.toString(),
-      class:     this.class.toString(),
-    },
-  }, this.publishDefaults());
-};
-
-Shape.toJSON = function() {
-  return Object.assign({
-    tag:         'path',
-    bounds:      this.bounds || Rectangle.create(), // TODO
-    path:        this.path,
-    transform:   this.transform,
-    globalScale: this.globalScaleFactor(),
-    attr: {
-      d:         this.path.toString(),
-      transform: this.transform.toString(),
-      class:     this.class.toString(),
-    },
-  }, this.publishDefaults());
-};
-
-export { Root, Shape, Group, Node };
+export { Root, Shape, Group };
