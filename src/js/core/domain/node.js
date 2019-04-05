@@ -336,6 +336,7 @@ const Node = {
   ancestorTransform() {
     let matrix = Matrix.identity();
 
+    // we use properAncestors, which does not include the current node:
     for (let ancestor of this.properAncestors.reverse()) {
       matrix = matrix.multiply(ancestor.transform);
     }

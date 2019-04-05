@@ -6,7 +6,11 @@ const State = {
     return Object.create(State).init();
   },
 
-  // note below that `markup` is currently hard-coded
+  createFromPlain() {
+    // take a plain object, and turn it into a state object.
+  },
+
+  // TODO: note below that `markup` is currently hard-coded
   init() {
     this.clock = clock.init();
     this.id    = 'start';
@@ -27,6 +31,9 @@ const State = {
 };
 
 export { State };
+
+
+// we can create a state from markup, or from a plain object
 
 // const markup = `
 //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>

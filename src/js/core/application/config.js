@@ -2,7 +2,7 @@
 // 'from', 'target', 'to' and `do` are optional
 
 const config = [
-  { from: 'start', type: 'kickoff', do: 'kickoff', to: 'idle' },
+  { from: 'start', type: 'go', to: 'idle' },
   { from: 'idle', type: 'mousemove', do: 'focus' },
 
   // SELECT AND TRANSFORM

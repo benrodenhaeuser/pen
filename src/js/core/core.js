@@ -15,7 +15,7 @@ const core = {
 
   kickoff() {
     this.publish();
-    this.compute({ type: 'kickoff' });
+    this.compute({ type: 'go' });
   },
 
   compute(input) {
@@ -41,7 +41,7 @@ const core = {
       this.periphery[key](JSON.parse(JSON.stringify(this.state)));
     }
     // console.log(this.state.scene.toVDOM());
-    // console.log(this.state.scene.toPlain());
+    console.log(this.state.scene.toPlain());
   },
 
   // TODO: not functional right now (this method is injected into "hist")

@@ -29,6 +29,7 @@ const db = {
       request.open('GET', "/docs/" + event.detail);
       request.responseType = 'json';
       request.send(JSON.stringify(event.detail));
+      // ^ TODO why does the GET request have a payload?
     });
 
     window.addEventListener('loadDocIDs', function(event) {

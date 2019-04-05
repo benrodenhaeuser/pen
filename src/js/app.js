@@ -1,12 +1,13 @@
 import { core } from './core/core.js';
+import {  ui  } from './ui/ui.js';
+import {  db  } from './db/db.js';
 import { hist } from './history/history.js';
-import { ui }   from './ui/ui.js';
-import { db }   from './db/db.js';
 
 const app = {
   init() {
     core.init();
 
+    // wire up peripherals:
     for (let component of [ui, db]) {
       component.init();
       component.bindEvents(core.compute.bind(core));

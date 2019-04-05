@@ -2153,24 +2153,22 @@
     },
 
     bounds() {
+      let min, max;
+
       if (this.isLine()) {
         const minX = Math.min(this.anchor1.x, this.anchor2.x);
         const minY = Math.min(this.anchor1.y, this.anchor2.y);
         const maxX = Math.max(this.anchor1.x, this.anchor2.x);
         const maxY = Math.max(this.anchor1.y, this.anchor2.y);
-        const min  = Vector.create(minX, minY);
-        const max  = Vector.create(maxX, maxY);
 
-        // console.log(Rectangle.createFromMinMax(min, max));
+        min  = Vector.create(minX, minY);
+        max  = Vector.create(maxX, maxY);
+      } else {
+        const bbox = new Bezier(...this.coords()).bbox();
 
-        return Rectangle.createFromMinMax(min, max);
+        min = Vector.create(bbox.x.min, bbox.y.min);
+        max = Vector.create(bbox.x.max, bbox.y.max);
       }
-
-      console.log(this.coords());
-
-      const bbox = new Bezier(...this.coords()).bbox();
-      const min = Vector.create(bbox.x.min, bbox.y.min);
-      const max = Vector.create(bbox.x.max, bbox.y.max);
 
       return Rectangle.createFromMinMax(min, max);
     },
@@ -3037,6 +3035,7 @@
     ancestorTransform() {
       let matrix = Matrix.identity();
 
+      // we use properAncestors, which does not include the current node:
       for (let ancestor of this.properAncestors.reverse()) {
         matrix = matrix.multiply(ancestor.transform);
       }
@@ -3206,7 +3205,11 @@
       return Object.create(State).init();
     },
 
-    // note below that `markup` is currently hard-coded
+    createFromPlain() {
+      // take a plain object, and turn it into a state object.
+    },
+
+    // TODO: note below that `markup` is currently hard-coded
     init() {
       this.clock = clock$1.init();
       this.id    = 'start';
@@ -3225,6 +3228,9 @@
       };
     },
   };
+
+
+  // we can create a state from markup, or from a plain object
 
   // const markup = `
   //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
@@ -3490,7 +3496,7 @@
   // 'from', 'target', 'to' and `do` are optional
 
   const config = [
-    { from: 'start', type: 'kickoff', do: 'kickoff', to: 'idle' },
+    { from: 'start', type: 'go', to: 'idle' },
     { from: 'idle', type: 'mousemove', do: 'focus' },
 
     // SELECT AND TRANSFORM
@@ -3569,7 +3575,7 @@
 
     kickoff() {
       this.publish();
-      this.compute({ type: 'kickoff' });
+      this.compute({ type: 'go' });
     },
 
     compute(input) {
@@ -3595,7 +3601,7 @@
         this.periphery[key](JSON.parse(JSON.stringify(this.state)));
       }
       // console.log(this.state.scene.toVDOM());
-      // console.log(this.state.scene.toPlain());
+      console.log(this.state.scene.toPlain());
     },
 
     // TODO: not functional right now (this method is injected into "hist")
@@ -3618,32 +3624,6 @@
       const action = actions[transition.do];
       action && action.bind(actions)(this.state, input);
     },
-  };
-
-  const hist = {
-    bindEvents(setState) {
-      window.addEventListener('popstate', (event) => {
-        setState(event.state);
-      });
-    },
-
-    sync(state) {
-      const ignored = [
-        'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
-      ];
-      const ignore  = ignored.includes(state.currentInput);
-      const idle    = state.id === 'idle';
-      if (ignore || !idle) {
-        return;
-      }
-
-      window.history.pushState(state, 'entry');
-    },
-
-    init() {
-      this.name = 'hist';
-      return this;
-    }
   };
 
   const svgns = 'http://www.w3.org/2000/svg';
@@ -3694,7 +3674,7 @@
         'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
       ];
 
-      const toSuppress = (event) => {
+      const shouldBeIgnored = (event) => {
         return [
           'mousedown', 'mouseup', 'click'
         ].includes(event.type) && event.detail > 1;
@@ -3704,7 +3684,7 @@
         document.addEventListener(eventType, (event) => {
           event.preventDefault();
 
-          if (toSuppress(event)) {
+          if (shouldBeIgnored(event)) {
             return;
           }
 
@@ -3720,7 +3700,22 @@
     },
 
     sync(state) {
+      if (state.id === 'start') {
+        mount(render(state.scene), ui.canvasNode);
+        this.previousState = state;
+        return;
+      }
+
       mount(render(state.scene), ui.canvasNode);
+
+      // this is what we want to happen:
+
+      // $scene = document.querySelector('svg');
+      // const patch = diff(previousState.scene, state.scene);
+      // $scene = patch($scene);
+      // previousState = state;
+
+      // this is old stuff:
 
       // const changes = (state1, state2) => {
       //   const keys = Object.keys(state1);
@@ -3742,6 +3737,32 @@
       // }
       //
       // this.previousState = state; // saves the state - we can use that when making an input
+    },
+
+    mount($node, $mountPoint) {
+      $mountPoint.innerHTML = '';
+      $mountPoint.appendChild($node);
+    },
+
+    render(vNode) {
+      const svgns = 'http://www.w3.org/2000/svg';
+      const xmlns = 'http://www.w3.org/2000/xmlns/';
+
+      const $node = document.createElementNS(svgns, vNode.tag);
+
+      for (let [key, value] of Object.entries(vNode.props)) {
+        if (key === 'xmlns') {
+          $node.setAttributeNS(xmlns, key, value);
+        } else {
+          $node.setAttributeNS(null, key, value);
+        }
+      }
+
+      for (let vChild of vNode.children) {
+        $node.appendChild(render(vChild));
+      }
+
+      return $node;
     },
 
     // reconcile
@@ -3818,6 +3839,7 @@
     //   window.setTimeout(() => flash.remove(), 1500);
     // },
 
+    // not sure why we need this:
     start(state) {
       this.previousState = state;
     },
@@ -3858,6 +3880,7 @@
         request.open('GET', "/docs/" + event.detail);
         request.responseType = 'json';
         request.send(JSON.stringify(event.detail));
+        // ^ TODO why does the GET request have a payload?
       });
 
       window.addEventListener('loadDocIDs', function(event) {
@@ -3931,10 +3954,37 @@
     }
   };
 
+  const hist = {
+    bindEvents(setState) {
+      window.addEventListener('popstate', (event) => {
+        setState(event.state);
+      });
+    },
+
+    sync(state) {
+      const ignored = [
+        'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
+      ];
+      const ignore  = ignored.includes(state.currentInput);
+      const idle    = state.id === 'idle';
+      if (ignore || !idle) {
+        return;
+      }
+
+      window.history.pushState(state, 'entry');
+    },
+
+    init() {
+      this.name = 'hist';
+      return this;
+    }
+  };
+
   const app = {
     init() {
       core.init();
 
+      // wire up peripherals:
       for (let component of [ui, db]) {
         component.init();
         component.bindEvents(core.compute.bind(core));

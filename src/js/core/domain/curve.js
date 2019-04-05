@@ -51,24 +51,22 @@ const Curve = {
   },
 
   bounds() {
+    let min, max;
+
     if (this.isLine()) {
       const minX = Math.min(this.anchor1.x, this.anchor2.x);
       const minY = Math.min(this.anchor1.y, this.anchor2.y);
       const maxX = Math.max(this.anchor1.x, this.anchor2.x);
       const maxY = Math.max(this.anchor1.y, this.anchor2.y);
-      const min  = Vector.create(minX, minY);
-      const max  = Vector.create(maxX, maxY);
 
-      // console.log(Rectangle.createFromMinMax(min, max));
+      min  = Vector.create(minX, minY);
+      max  = Vector.create(maxX, maxY);
+    } else {
+      const bbox = new Bezier(...this.coords()).bbox();
 
-      return Rectangle.createFromMinMax(min, max);
+      min = Vector.create(bbox.x.min, bbox.y.min);
+      max = Vector.create(bbox.x.max, bbox.y.max);
     }
-
-    console.log(this.coords());
-
-    const bbox = new Bezier(...this.coords()).bbox();
-    const min = Vector.create(bbox.x.min, bbox.y.min);
-    const max = Vector.create(bbox.x.max, bbox.y.max);
 
     return Rectangle.createFromMinMax(min, max);
   },

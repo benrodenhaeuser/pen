@@ -25,7 +25,7 @@ const ui = {
       'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
     ];
 
-    const toSuppress = (event) => {
+    const shouldBeIgnored = (event) => {
       return [
         'mousedown', 'mouseup', 'click'
       ].includes(event.type) && event.detail > 1;
@@ -35,7 +35,7 @@ const ui = {
       document.addEventListener(eventType, (event) => {
         event.preventDefault();
 
-        if (toSuppress(event)) {
+        if (shouldBeIgnored(event)) {
           return;
         }
 
@@ -51,7 +51,22 @@ const ui = {
   },
 
   sync(state) {
+    if (state.id === 'start') {
+      mount(render(state.scene), ui.canvasNode);
+      this.previousState = state;
+      return;
+    }
+
     mount(render(state.scene), ui.canvasNode);
+
+    // this is what we want to happen:
+
+    // $scene = document.querySelector('svg');
+    // const patch = diff(previousState.scene, state.scene);
+    // $scene = patch($scene);
+    // previousState = state;
+
+    // this is old stuff:
 
     // const changes = (state1, state2) => {
     //   const keys = Object.keys(state1);
@@ -73,6 +88,32 @@ const ui = {
     // }
     //
     // this.previousState = state; // saves the state - we can use that when making an input
+  },
+
+  mount($node, $mountPoint) {
+    $mountPoint.innerHTML = '';
+    $mountPoint.appendChild($node);
+  },
+
+  render(vNode) {
+    const svgns = 'http://www.w3.org/2000/svg';
+    const xmlns = 'http://www.w3.org/2000/xmlns/';
+
+    const $node = document.createElementNS(svgns, vNode.tag);
+
+    for (let [key, value] of Object.entries(vNode.props)) {
+      if (key === 'xmlns') {
+        $node.setAttributeNS(xmlns, key, value);
+      } else {
+        $node.setAttributeNS(null, key, value);
+      }
+    }
+
+    for (let vChild of vNode.children) {
+      $node.appendChild(render(vChild));
+    }
+
+    return $node;
   },
 
   // reconcile
@@ -149,6 +190,7 @@ const ui = {
   //   window.setTimeout(() => flash.remove(), 1500);
   // },
 
+  // not sure why we need this:
   start(state) {
     this.previousState = state;
   },
