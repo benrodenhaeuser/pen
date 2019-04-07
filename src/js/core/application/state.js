@@ -18,6 +18,9 @@ const State = {
   },
 
   export() {
+    const plain = plainExporter.build(this.scene);
+    console.log(this.importFromPlain(plain));
+
     return {
       id:    this.id,
       vDOM:  this.exportToVDOM(),
@@ -26,19 +29,19 @@ const State = {
   },
 
   importFromPlain(object) {
-    return plainImporter.buildScene(object);
+    return plainImporter.build(object);
   },
 
   importFromSVG(markup) {
-    return svgImporter.buildScene(markup);
+    return svgImporter.build(markup);
   },
 
   exportToVDOM() {
-    return vdomExporter.buildVDOM(this.scene);
+    return vdomExporter.build(this.scene);
   },
 
   exportToPlain() {
-    return plainExporter.buildPlain(this.scene);
+    return plainExporter.build(this.scene);
   },
 };
 

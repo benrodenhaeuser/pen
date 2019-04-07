@@ -10,7 +10,7 @@ import { SVGPathData             } from 'svg-pathdata';
 import { SVGPathDataTransformer  } from 'svg-pathdata';
 
 const svgImporter = {
-  buildScene(markup) {
+  build(markup) {
     const $svg = new DOMParser()
       .parseFromString(markup, "application/xml")
       .documentElement;
@@ -83,12 +83,10 @@ const svgImporter = {
 
     this.processAttributes($geometryNode, shape);
     // ^ TODO: we are also calling processAttributes further above, duplication!
-
-    const tag = $geometryNode.tagName;
-
+    
     let pathCommands;
 
-    switch (tag) {
+    switch ($geometryNode.tagName) {
       case 'rect':
         const x      = Number($geometryNode.getAttributeNS(null, 'x'));
         const y      = Number($geometryNode.getAttributeNS(null, 'y'));

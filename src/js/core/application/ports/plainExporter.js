@@ -1,5 +1,5 @@
 const plainExporter = {
-  buildPlain(node) {
+  build(node) {
     return JSON.parse(JSON.stringify(node));
   },
 };

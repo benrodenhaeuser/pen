@@ -21,7 +21,7 @@ const scale = (node, length) => {
 };
 
 const vdomExporter = {
-  buildVDOM(node, vParent = null) {
+  build(node, vParent = null) {
     const vNode = node.toVDOMNode();
 
     if (vParent) {
@@ -30,7 +30,7 @@ const vdomExporter = {
     }
 
     for (let child of node.graphicsChildren) {
-      this.buildVDOM(child, vNode);
+      this.build(child, vNode);
     }
 
     return vNode;
