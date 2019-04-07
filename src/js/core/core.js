@@ -1,6 +1,6 @@
-import { State   } from './application/state.js';
-import { actions } from './application/actions.js';
-import { config  } from './application/config.js';
+import { State        } from './application/state.js';
+import { actions      } from './application/actions.js';
+import { transitions  } from './application/transitions.js';
 
 const core = {
   init() {
@@ -19,7 +19,7 @@ const core = {
   },
 
   compute(input) {
-    const transition = config.get(this.state, input);
+    const transition = transitions.get(this.state, input);
     // console.log('from: ', this.state.id, input, transition); // DEBUG
     if (transition) {
       this.makeTransition(input, transition);
@@ -35,12 +35,14 @@ const core = {
 
   // this is the output of the machine. It could be called `output` perhaps?
   // this whole `this.periphery[keys]` thing is a bit hard to understand.
+
+  // TODO: can't we just turn the periphery into an array of functions that need
+  // to be called?
   publish() {
     const keys = Object.keys(this.periphery);
     for (let key of keys) {
-      this.periphery[key](this.state.toPublishFormat());
+      this.periphery[key](this.state.export());
     }
-    console.log(this.state.toPublishFormat().vDOM);
   },
 
   // TODO: not functional right now (this method is injected into "hist")
@@ -48,7 +50,6 @@ const core = {
   setState(stateData) {
     this.state = stateData;
     this.state.doc = doc.init(stateData.doc);
-    this.state.clock = clock.init(stateData.clock.time);
     this.periphery['ui'] &&
       this.periphery['ui'](JSON.parse(JSON.stringify(this.state)));
     // ^ only UI is synced
@@ -56,7 +57,6 @@ const core = {
   },
 
   makeTransition(input, transition) {
-    this.state.clock.tick();
     this.state.currentInput = input.type;
     this.state.id = transition.to;
 

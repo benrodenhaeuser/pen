@@ -79,6 +79,13 @@ const Rectangle = {
     return Rectangle.createFromMinMax(min, max);
   },
 
+  transform(matrix) {
+    return Rectangle.create(
+      this.origin.transform(matrix),
+      this.size.transform(matrix)
+    );
+  },
+
   toString() {
     return [
       this.origin.x,

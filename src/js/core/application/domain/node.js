@@ -2,9 +2,7 @@ import { Matrix    } from './matrix.js';
 import { Vector    } from './vector.js';
 import { Rectangle } from './rectangle.js';
 import { Class     } from './class.js';
-
-import { builder   } from './builder.js';
-import { wrapper   } from './wrapper.js';
+import { Curve     } from './curve.js';
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -32,7 +30,7 @@ const Node = {
       payload: {
         transform: Matrix.identity(),
         class:     Class.create(),
-        bounds:    Rectangle.create(),
+        bounds:    null,
       },
     };
   },
@@ -43,7 +41,7 @@ const Node = {
     }
   },
 
-  // HIERARCHY PREDICATES
+  // hierarchy (predicates)
 
   isLeaf() {
     return this.children.length === 0;
@@ -57,7 +55,7 @@ const Node = {
     return this.class.includes('selected');
   },
 
-  // HIERARCHY GETTERS
+  // hierarchy (getters)
 
   get root() {
     return this.findAncestor(
@@ -95,6 +93,12 @@ const Node = {
     );
   },
 
+  get graphicsChildren() {
+    return this.children.filter(
+      node => ['group', 'shape'].includes(node.type)
+    );
+  },
+
   get selected() {
     return this.root.findDescendant((node) => {
       return node.class.includes('selected');
@@ -113,7 +117,7 @@ const Node = {
     });
   },
 
-  // PAYLOAD GETTERS/SETTERS
+  // payload (getters/setters)
 
   get transform() {
     return this.payload.transform;
@@ -132,19 +136,44 @@ const Node = {
   },
 
   get bounds() {
-    return this.payload.bounds;
+    if ([
+      'segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
+      return null;
+    }
+
+    if (this.payload.bounds !== null) {
+      return this.payload.bounds;
+    }
+
+    return this.memoizeBounds();
   },
 
-  set bounds(value) {
-    this.payload.bounds = value;
-  },
+  memoizeBounds() {
+    if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
+      return;
+    }
 
-  get path() {
-    return this.payload.path;
-  },
+    const corners = [];
+    const children = this.children;
 
-  set path(value) {
-    this.payload.path = value;
+    for (let child of children) {
+      for (let corner of child.bounds.corners) {
+        corners.push(corner.transform(child.transform));
+      }
+    }
+
+    const xValue  = vector => vector.x;
+    const xValues = corners.map(xValue);
+    const yValue  = vector => vector.y;
+    const yValues = corners.map(yValue);
+
+    const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+    const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+    const bounds = Rectangle.createFromMinMax(min, max);
+
+    this.payload.bounds = bounds;
+    return bounds;
   },
 
   get viewBox() {
@@ -155,7 +184,7 @@ const Node = {
     this.payload.viewBox = value;
   },
 
-  // TREE TRAVERSAL
+  // traversal
 
   // NOTE: a node is an ancestor of itself
   findAncestor(predicate) {
@@ -220,40 +249,14 @@ const Node = {
     })
   },
 
-  // NODE CREATION
+  // append
 
   append(node) {
     this.children.push(node);
     node.parent = this;
   },
 
-  // BOUNDS
-
-  computeBounds() {
-    if (this.isLeaf() && !this.isRoot()) {
-      this.bounds = this.path.bounds();
-    } else {
-      const corners = [];
-
-      for (let child of this.children) {
-        for (let corner of child.computeBounds().corners) {
-          corners.push(corner.transform(child.transform));
-        }
-      }
-
-      const xValue  = vector => vector.x;
-      const xValues = corners.map(xValue);
-      const yValue  = vector => vector.y;
-      const yValues = corners.map(yValue);
-
-      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
-
-      this.bounds = Rectangle.createFromMinMax(min, max);
-    }
-
-    return this.bounds;
-  },
+   // hit testing
 
   contains(globalPoint) {
     return globalPoint
@@ -261,36 +264,7 @@ const Node = {
       .isWithin(this.bounds);
   },
 
-  // TODO: repetitive with `computeBounds` to some extent
-  // computeBounds computes bounds for the whole tree,
-  // wheres updateBounds computes bounds for `this` only
-  updateBounds() {
-    if (this.isLeaf() && !this.isRoot()) {
-      this.bounds = this.path.bounds();
-    } else {
-      const corners = [];
-
-      for (let child of this.children) {
-        for (let corner of child.bounds.corners) {
-          corners.push(corner.transform(child.transform));
-        }
-      }
-
-      const xValue  = vector => vector.x;
-      const xValues = corners.map(xValue);
-      const yValue  = vector => vector.y;
-      const yValues = corners.map(yValue);
-
-      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
-
-      this.bounds = Rectangle.createFromMinMax(min, max);
-    }
-
-    return this.bounds;
-  },
-
-  // CLASSES
+  // classes
 
   setFrontier() {
     this.removeFrontier();
@@ -362,29 +336,7 @@ const Node = {
     }
   },
 
-  // PATH
-
-  // we don't have a node-level API for paths yet.
-  // so maybe we should think about that a bit.
-
-  // when we edit a node, we have to find a segment by id
-  // for this, we need to somehow access all those segments
-
-  get splines() {
-    return this.path.splines;
-  },
-
-  get curves() {
-    // accumulate all the curves of all the splines
-  },
-
-  get segments() {
-    // accumulate all the segments of all the curves
-
-    // (find an anchor by its id in this pool).
-  },
-
-  // TRANSFORMS
+  // transforms
 
   globalTransform() {
     return this.ancestorTransform().multiply(this.transform);
@@ -419,8 +371,6 @@ const Node = {
       .multiply(this.globalTransform());
   },
 
-  // SCALE FACTOR
-
   globalScaleFactor() {
     const total  = this.globalTransform();
     const a      = total.m[0][0];
@@ -429,22 +379,7 @@ const Node = {
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },
 
-  // PUBLISHING
-
-  toVDOM(vParent = null) {
-    const vNode = this.toVDOMNode();
-
-    if (vParent) {
-      const vWrapper = wrapper.wrap(vNode, this);
-      vParent.children.push(vWrapper);
-    }
-
-    for (let child of this.children) {
-      child.toVDOM(vNode);
-    }
-
-    return vNode;
-  },
+  // string encoding
 
   toJSON() {
     return {
@@ -454,59 +389,6 @@ const Node = {
       payload: this.payload,
     };
   },
-
-  toPlain() {
-    return JSON.parse(JSON.stringify(this));
-  },
 };
 
-const Root  = Object.create(Node);
-Root.type   = 'root';
-
-const Group = Object.create(Node);
-Group.type  = 'group';
-
-const Shape = Object.create(Node);
-Shape.type  = 'shape';
-
-Root.toVDOMNode = function() {
-  return {
-    tag:      'svg',
-    children: [],
-    props: {
-      'data-id':   this._id,
-      'data-type': 'content',
-      'viewBox':    this.viewBox.toString(),
-      xmlns:       'http://www.w3.org/2000/svg',
-    },
-  };
-};
-
-Group.toVDOMNode = function() {
-  return {
-    tag:      'g',
-    children: [],
-    props: {
-      'data-id':   this._id,
-      'data-type': 'content',
-      transform:   this.transform.toString(),
-      class:       this.class.toString(),
-    },
-  };
-};
-
-Shape.toVDOMNode = function() {
-  return {
-    tag:      'path',
-    children: [],
-    props: {
-      'data-id':   this._id,
-      'data-type': 'content',
-      d:           this.path.toString(),
-      transform:   this.transform.toString(),
-      class:       this.class.toString(),
-    },
-  };
-};
-
-export { Root, Shape, Group };
+export { Node };

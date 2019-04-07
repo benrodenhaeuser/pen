@@ -1,10 +1,11 @@
-import { Shape   } from '../domain/node.js';
-import { Group   } from '../domain/node.js';
-import { Root    } from '../domain/node.js';
-import { Vector  } from '../domain/vector.js';
-import { Path    } from '../domain/path.js';
-import { Segment } from '../domain/segment.js';
-import { Matrix  } from '../domain/matrix.js';
+import { Root, Shape, Group      } from './domain/types.js';
+import { Spline, Segment, Anchor } from './domain/types.js';
+import { HandleIn, HandleOut,    } from './domain/types.js';
+import { Vector                  } from './domain/vector.js';
+import { Matrix                  } from './domain/matrix.js';
+
+// import { Path                    } from '../domain/path.js';
+// import { Segment                 } from '../domain/segment.js';
 
 let aux = {};
 
@@ -94,7 +95,8 @@ const actions = {
 
     if (current) {
       for (let ancestor of current.ancestors) {
-        ancestor.updateBounds();
+        ancestor.memoizeBounds();
+        // NOTE: ^ will be called on root, but root does not have this function
       }
     }
 

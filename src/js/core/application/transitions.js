@@ -1,7 +1,7 @@
 // 'type' is mandatory
 // 'from', 'target', 'to' and `do` are optional
 
-const config = [
+const transitions = [
   { from: 'start', type: 'go', to: 'idle' },
   { from: 'idle', type: 'mousemove', do: 'focus' },
 
@@ -44,7 +44,7 @@ const config = [
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
 ];
 
-config.get = function(state, input) {
+transitions.get = function(state, input) {
   const isMatch = (row) => {
     const from   = row.from;
     const type   = row.type;
@@ -57,7 +57,7 @@ config.get = function(state, input) {
     return stateMatch && typeMatch && targetMatch;
   };
 
-  const match = config.find(isMatch);
+  const match = transitions.find(isMatch);
 
   if (match) {
     // console.log(input.target); // note that inputs from db don't have a target
@@ -68,4 +68,4 @@ config.get = function(state, input) {
   }
 };
 
-export { config };
+export { transitions };

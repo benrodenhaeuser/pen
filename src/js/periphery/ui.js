@@ -1,8 +1,3 @@
-import { nodeFactory   } from './nodeFactory.js';
-// import { sceneRenderer } from './sceneRenderer.js';
-import { render        } from './render.js';
-import { mount         } from './mount.js';
-
 const coordinates = (event) => {
   const svg = document.querySelector('svg');
   let point = svg.createSVGPoint();
@@ -52,12 +47,12 @@ const ui = {
 
   sync(state) {
     if (state.id === 'start') {
-      mount(render(state.vDOM), ui.canvasNode);
+      this.mount(this.render(state.vDOM), ui.canvasNode);
       this.previousState = state;
       return;
     }
 
-    mount(render(state.vDOM), ui.canvasNode);
+    this.mount(this.render(state.vDOM), ui.canvasNode);
 
     // this is what we want to happen:
 
@@ -110,7 +105,7 @@ const ui = {
     }
 
     for (let vChild of vNode.children) {
-      $node.appendChild(render(vChild));
+      $node.appendChild(this.render(vChild));
     }
 
     return $node;

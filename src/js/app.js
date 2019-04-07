@@ -1,7 +1,7 @@
 import { core } from './core/core.js';
-import {  ui  } from './ui/ui.js';
-import {  db  } from './db/db.js';
-import { hist } from './history/history.js';
+import {  ui  } from './periphery/ui.js';
+import {  db  } from './periphery/db.js';
+import { hist } from './periphery/hist.js';
 
 const app = {
   init() {
@@ -20,7 +20,13 @@ const app = {
     hist.bindEvents(core.setState.bind(core));
     core.attach(hist.name, hist.sync.bind(hist));
 
+    this.setCanvasWidth();
     core.kickoff();
+  }, 
+
+  setCanvasWidth() {
+    const canvasNode = document.querySelector('#canvas');
+    core.state.canvasWidth = canvasNode.clientWidth;
   },
 };
 

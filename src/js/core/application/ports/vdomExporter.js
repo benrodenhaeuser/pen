@@ -6,7 +6,7 @@ const LENGTHS_IN_PX = {
 
 // TODO: this value is just a placeholder, need to get
 // this value dynamically from the ui (see notes).
-const DOCUMENT_SCALE = 0.5;
+const DOCUMENT_SCALE = 1;
 
 const h = (tag, props = {}, ...children) => {
   return {
@@ -20,7 +20,22 @@ const scale = (node, length) => {
   return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
 };
 
-const wrapper = {
+const vdomExporter = {
+  buildVDOM(node, vParent = null) {
+    const vNode = node.toVDOMNode();
+
+    if (vParent) {
+      const vWrapper = this.wrap(vNode, node);
+      vParent.children.push(vWrapper);
+    }
+
+    for (let child of node.graphicsChildren) {
+      this.buildVDOM(child, vNode);
+    }
+
+    return vNode;
+  },
+
   wrap(vNode, node) {
     const vWrapper = h('g', {
       'data-type': 'wrapper',
@@ -28,7 +43,7 @@ const wrapper = {
     });
 
     vWrapper.children.push(vNode);
-    if (node.path) { vWrapper.children.push(this.innerUI(node)); }
+    if (node.type === 'shape') { vWrapper.children.push(this.innerUI(node)); }
     vWrapper.children.push(this.outerUI(node));
 
     return vWrapper;
@@ -175,11 +190,11 @@ const wrapper = {
   connections(node) {
     const vConnections = [];
 
-    for (let spline of node.path.splines) {
-      for (let segment of spline.segments) {
+    for (let spline of node.children) {
+      for (let segment of spline.children) {
         for (let handle of ['handleIn', 'handleOut']) {
-          if (segment[handle]) {
-            vConnections.push(this.connection(node, segment.anchor, segment[handle]));
+          if (segment[handle]()) {
+            vConnections.push(this.connection(node, segment.anchor(), segment[handle]()));
           }
         }
       }
@@ -202,16 +217,16 @@ const wrapper = {
     const vControls = [];
     const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
 
-    for (let spline of node.path.splines) {
-      for (let segment of spline.segments) {
-        vControls.push(this.control(node, diameter, segment.anchor));
+    for (let spline of node.children) {
+      for (let segment of spline.children) {
+        vControls.push(this.control(node, diameter, segment.anchor()));
 
-        if (segment.handleIn) {
-          vControls.push(this.control(node, diameter, segment.handleIn));
+        if (segment.handleIn()) {
+          vControls.push(this.control(node, diameter, segment.handleIn()));
         }
 
-        if (segment.handleOut) {
-          vControls.push(this.control(node, diameter, segment.handleOut));
+        if (segment.handleOut()) {
+          vControls.push(this.control(node, diameter, segment.handleOut()));
         }
       }
     }
@@ -231,4 +246,4 @@ const wrapper = {
   },
 };
 
-export { wrapper };
+export { vdomExporter };
