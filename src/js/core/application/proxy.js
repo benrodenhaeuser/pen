@@ -7,28 +7,28 @@ const proxify = (node, parent = null) => {
 };
 
 const handler = {
-  get(instance, propKey) {
-    if (instance.props[propKey] !== undefined) {
-      return Reflect.get(instance.props, propKey);
+  get(node, propKey) {
+    if (node.props[propKey] !== undefined) {
+      return Reflect.get(node.props, propKey);
     } else {
-      return Reflect.get(instance, propKey);
+      return Reflect.get(node, propKey);
     }
   },
 
-  set(instance, propKey, propValue) {
+  set(node, propKey, propValue) {
     if (['bounds', '_id'].includes(propKey)) {
       return;
     }
 
-    for (ancestor of instance.ancestors) {
+    for (ancestor of node.ancestors) {
       ancestor._id = createID();
       ancestor.memoizeBounds();
     }
 
-    if (instance.props[propKey] !== undefined) {
-      Reflect.set(instance.props, propKey, propValue);
+    if (node.props[propKey] !== undefined) {
+      Reflect.set(node.props, propKey, propValue);
     } else {
-      Reflect.set(instance, propKey, propValue);
+      Reflect.set(node, propKey, propValue);
     }
   },
 };

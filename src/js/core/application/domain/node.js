@@ -176,12 +176,24 @@ const Node = {
     return bounds;
   },
 
+  set bounds(value) {
+    this.payload.bounds = value;
+  },
+
   get viewBox() {
     return this.payload.viewBox;
   },
 
   set viewBox(value) {
     this.payload.viewBox = value;
+  },
+
+  get vector() {
+    return this.payload.vector;
+  },
+
+  set vector(value) {
+    this.payload.vector = value;
   },
 
   // traversal

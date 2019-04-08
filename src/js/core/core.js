@@ -27,18 +27,14 @@ const core = {
     }
   },
 
-  // TODO: I think we don't need this anymore.
-  // (does not seem like it's used anywhere)
-  get stateData() {
-    return JSON.parse(JSON.stringify(this.state));
-  },
-
-  // this is the output of the machine. It could be called `output` perhaps?
-  // this whole `this.periphery[keys]` thing is a bit hard to understand.
-
-  // TODO: can't we just turn the periphery into an array of functions that need
-  // to be called?
   publish() {
+    // debug code:
+    // const theExport = this.state.export();
+    // const plain = theExport.plain;
+    // const scene = this.state.importFromPlain(plain);
+    // this.state.scene = scene;
+    // console.log('did all of this');
+
     const keys = Object.keys(this.periphery);
     for (let key of keys) {
       this.periphery[key](this.state.export());

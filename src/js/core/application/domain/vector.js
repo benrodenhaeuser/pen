@@ -1,22 +1,11 @@
-const createID = () => {
-  const randomString = Math.random().toString(36).substring(2);
-  const timestamp    = (new Date()).getTime().toString(36);
-  return randomString + timestamp;
-};
-
 const Vector = {
   create(x = 0, y = 0) {
-    return Object.create(Vector).init(x, y).addID();
+    return Object.create(Vector).init(x, y);
   },
 
   init(x, y) {
     this.x = x;
     this.y = y;
-    return this;
-  },
-
-  addID() {
-    this._id = createID();
     return this;
   },
 
