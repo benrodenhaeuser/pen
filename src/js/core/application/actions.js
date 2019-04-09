@@ -1,28 +1,16 @@
-import { Root, Shape, Group      } from './domain/types.js';
+import { Scene, Shape, Group     } from './domain/types.js';
 import { Spline, Segment, Anchor } from './domain/types.js';
 import { HandleIn, HandleOut,    } from './domain/types.js';
+
 import { Vector                  } from './domain/vector.js';
 import { Matrix                  } from './domain/matrix.js';
-
-// import { Path                    } from '../domain/path.js';
-// import { Segment                 } from '../domain/segment.js';
+import { Rectangle               } from './domain/rectangle.js';
 
 let aux = {};
 
-const touch = (node) => {
-  if (node) {
-    node._id = createID();
-  }
-
-  return node;
-};
-
-// usually, it's very clear what node we are going to change.
-// so touch implements that.
-
 const actions = {
   select(state, input) {
-    const target = state.scene.findDescendantByID(input.targetID);
+    const target = state.scene.findDescendantByKey(input.key);
     const node = target && target.findAncestorByClass('frontier');
 
     if (node) {
@@ -96,7 +84,6 @@ const actions = {
     if (current) {
       for (let ancestor of current.ancestors) {
         ancestor.memoizeBounds();
-        // NOTE: ^ will be called on root, but root does not have this function
       }
     }
 
@@ -104,7 +91,7 @@ const actions = {
   },
 
   deepSelect(state, input) {
-    const target = state.scene.findDescendantByID(input.targetID);
+    const target = state.scene.findDescendantByKey(input.key);
 
     if (!target) {
       return;
@@ -113,7 +100,7 @@ const actions = {
     if (target.isSelected()) {
       target.edit();
       state.scene.unfocusAll();
-      state.id = 'pen'; // TODO: hack! could the action initiate an input?
+      state.label = 'pen'; // TODO: hack! could the action initiate an input?
     } else {
       const toSelect = target.findAncestor((node) => {
         return node.parent && node.parent.class.includes('frontier');
@@ -130,7 +117,7 @@ const actions = {
   focus(state, input) {
     state.scene.unfocusAll(); // expensive but effective
 
-    const target = state.scene.findDescendantByID(input.targetID);
+    const target = state.scene.findDescendantByKey(input.key);
     const hit    = Vector.create(input.x, input.y);
 
     if (target) {
@@ -153,17 +140,18 @@ const actions = {
   // OLD (still useful?):
 
   createDoc(state, input) {
-    state.init();
+    state.init(); // TODO: want a new state here!
     state.docs.ids.push(state.doc._id);
     state.docs.selectedID = state._id;
   },
 
   updateDocList(state, input) {
-    state.docs.ids = input.data.docIDs;
+    // state.docs.ids = input.data.docIDs;
+    // ^ old code, does not work anymore
   },
 
   requestDoc(state, input) {
-    state.docs.selectedID = input.targetID;
+    state.docs.selectedID = input.key;
   },
 
   setDoc(state, input) {
@@ -172,45 +160,56 @@ const actions = {
 
   // PEN TOOL (draft version)
 
-  // work on a proper API for manipulating paths
+  // mousedown in state 'pen'
+  // ==> make a new shape/spline and place an anchor
+  addFirstAnchor(state, input) {       // FIXED
+    const shape   = Shape.create();
+    const spline  = Spline.create();
+    const segment = Segment.create();
+    const anchor  = Anchor.create();
 
-  // mousedown in state 'pen':
-  addFirstAnchor(state, input) {
-    const node = Shape.create();
-    const d = `M ${input.x} ${input.y}`;
-    node.path = Path.createFromSVGpath(d); // assignment to path
-    node.type = 'shape';
-    state.scene.append(node);
-    node.edit();
+    shape.append(spline);
+    spline.append(segment);
+    segment.append(anchor);
+    state.scene.append(shape);
 
-    aux.node = node;
+    anchor.payload.vector = Vector.create(input.x, input.y);
+    shape.edit();
+    shape.payload.bounds = Rectangle.create(); // TODO: hack
+
+    aux.spline = spline;
+    aux.segment = segment;
   },
 
   // mousemove in state 'addingHandle'
-  addHandle(state, input) {
-    const node = aux.node;
-    const length = node.path.splines[0].segments.length;
-    const segment = node.path.splines[0].segments[length - 1];
-    const anchor = segment.anchor;
+  // ==> add handleIn and handleOut to existing segment
+  addHandle(state, input) {   // FIX
+    const segment = aux.segment;
+    const anchor  = segment.anchor;
+
     const handleIn = Vector.create(input.x, input.y);
-    const handleOut = handleIn.transform(Matrix.rotation(Math.PI, anchor));
-    segment.handleIn = Vector.create(input.x, input.y);
+    const handleOut = handleIn.rotate(Math.PI, anchor);
+
+    segment.handleIn = handleIn;
     segment.handleOut = handleOut;
   },
 
   // mousedown on state 'continuePen'
-  addSegment(state, input) {
-    const node = aux.node;
-    // console.log(node.path);
-    const anchor = Vector.create(input.x, input.y);
-    const segment = Segment.create({ anchor: anchor });
-    node.path.splines[0].segments.push(segment);
-    console.log(node.path);
+  // ==> add another segment with anchor to shape/spline
+  addSegment(state, input) {   // FIX
+    const spline = aux.spline;
+    const segment = Segment.create();
+    const anchor = Anchor.create();
+    anchor.payload.vector = Vector.create(input.x, input.y);
+    segment.append(anchor);
+    spline.append(segment);
+
+    aux.segment = segment;
   },
 
   editControl(state, input) {
     console.log('initiating edit of control point'); // fine
-    // identify the control by its id (currently undefined)
+    // identify the control by its id
     // ... store it
   },
 

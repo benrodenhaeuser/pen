@@ -20,7 +20,7 @@ const core = {
 
   compute(input) {
     const transition = transitions.get(this.state, input);
-    // console.log('from: ', this.state.id, input, transition); // DEBUG
+    // console.log('from: ', this.state.label, input, transition); // DEBUG
     if (transition) {
       this.makeTransition(input, transition);
       this.publish();
@@ -28,13 +28,6 @@ const core = {
   },
 
   publish() {
-    // debug code:
-    // const theExport = this.state.export();
-    // const plain = theExport.plain;
-    // const scene = this.state.importFromPlain(plain);
-    // this.state.scene = scene;
-    // console.log('did all of this');
-
     const keys = Object.keys(this.periphery);
     for (let key of keys) {
       this.periphery[key](this.state.export());
@@ -54,7 +47,7 @@ const core = {
 
   makeTransition(input, transition) {
     this.state.currentInput = input.type;
-    this.state.id = transition.to;
+    this.state.label = transition.to;
 
     const action = actions[transition.do];
     action && action.bind(actions)(this.state, input);

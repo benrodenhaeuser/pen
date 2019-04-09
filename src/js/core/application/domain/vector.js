@@ -1,6 +1,12 @@
+import { Matrix } from './matrix.js';
+
 const Vector = {
   create(x = 0, y = 0) {
     return Object.create(Vector).init(x, y);
+  },
+
+  createFromObject(object) {
+    return Object.create(Vector).init(object.x, object.y);
   },
 
   init(x, y) {
@@ -13,22 +19,32 @@ const Vector = {
     return { x: this.x, y: this.y };
   },
 
+  // return value: new Vector instance
   transform(matrix) {
     return matrix.transform(this);
   },
 
+  // return value: new Vector instance
+  rotate(angle, vector) {
+    return this.transform(Matrix.rotation(Math.PI, vector));
+  },
+
+  // return value: new Vector instance
   add(other) {
     return Vector.create(this.x + other.x, this.y + other.y);
   },
 
+  // return value: new Vector instance
   minus(other) {
     return Vector.create(this.x - other.x, this.y - other.y);
   },
 
+  // return value: new Vector instance
   abs() {
     return Vector.create(Math.abs(this.x), Math.abs(this.y));
   },
 
+  // return value: boolean
   isWithin(rectangle) {
     return this.x >= rectangle.x &&
            this.x <= rectangle.x + rectangle.width &&
@@ -36,6 +52,7 @@ const Vector = {
            this.y <= rectangle.y + rectangle.height;
   },
 
+  // return value: number
   angle(...args) {
     if (args.length === 0) {
       return Math.atan2(this.y, this.x);

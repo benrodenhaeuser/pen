@@ -16,12 +16,12 @@ const handler = {
   },
 
   set(node, propKey, propValue) {
-    if (['bounds', '_id'].includes(propKey)) {
+    if (['bounds', 'key'].includes(propKey)) {
       return;
     }
 
     for (ancestor of node.ancestors) {
-      ancestor._id = createID();
+      ancestor.key = createID();
       ancestor.memoizeBounds();
     }
 

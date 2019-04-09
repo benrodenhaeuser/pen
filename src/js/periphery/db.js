@@ -51,13 +51,13 @@ const db = {
   },
 
   sync(state) {
-    if (state.id === 'start') {
+    if (state.label === 'start') {
       db.loadDocIDs();
       this.previousState = state;
       return;
     }
 
-    if (['idle', 'busy'].includes(state.id)) {
+    if (['idle', 'busy'].includes(state.label)) {
       this.crud.doc(state);
       // for (let changed of this.changes(state, this.previousState)) {
       //   this.crud[changed] && this.crud[changed](state);

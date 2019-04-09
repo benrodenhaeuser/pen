@@ -10,7 +10,7 @@ const hist = {
       'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
     ];
     const ignore  = ignored.includes(state.currentInput);
-    const idle    = state.id === 'idle';
+    const idle    = state.label === 'idle';
     if (ignore || !idle) {
       return;
     }

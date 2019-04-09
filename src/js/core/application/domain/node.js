@@ -1,8 +1,8 @@
-import { Matrix    } from './matrix.js';
-import { Vector    } from './vector.js';
-import { Rectangle } from './rectangle.js';
-import { Class     } from './class.js';
-import { Curve     } from './curve.js';
+import { Matrix    } from './matrix.js';     // transforms
+import { Vector    } from './vector.js';     // control points ('vector' prop)
+import { Rectangle } from './rectangle.js';  // bounds, viewBox
+import { Class     } from './class.js';      // class list
+import { Curve     } from './curve.js';      // Bezier curves
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -24,7 +24,7 @@ const Node = {
 
   defaults() {
     return {
-      _id:      createID(),
+      key:      createID(),
       children: [],
       parent:   null,
       payload: {
@@ -56,10 +56,33 @@ const Node = {
   },
 
   // hierarchy (getters)
-
   get root() {
     return this.findAncestor(
       node => node.parent === null
+    );
+  },
+
+  get store() {
+    return this.findAncestor(
+      node => node.type === 'store'
+    );
+  },
+
+  get scene() {
+    return this.root.findDescendant(
+      node => node.type === 'scene'
+    );
+  },
+
+  get docs() {
+    return this.root.findDescendant(
+      node => node.type === 'docs'
+    );
+  },
+
+  get doc() {
+    return this.root.findDescendant(
+      node => node.type === 'doc'
     );
   },
 
@@ -100,19 +123,19 @@ const Node = {
   },
 
   get selected() {
-    return this.root.findDescendant((node) => {
+    return this.scene.findDescendant((node) => {
       return node.class.includes('selected');
     });
   },
 
   get editing() {
-    return this.root.findDescendant((node) => {
+    return this.scene.findDescendant((node) => {
       return node.class.includes('editing');
     });
   },
 
   get frontier() {
-    return this.root.findDescendants((node) => {
+    return this.scene.findDescendants((node) => {
       return node.class.includes('frontier');
     });
   },
@@ -148,15 +171,22 @@ const Node = {
     return this.memoizeBounds();
   },
 
+  // TODO isnt' this the same as a setter with a different name?
   memoizeBounds() {
-    if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
-      return;
-    }
+    const ignoredTypes = [
+      'store',
+      'doc',
+      'scene',
+      'segment',
+      'anchor',
+      'handleIn',
+      'handleOut'
+    ];
+
+    if (ignoredTypes.includes(this.type)) { return; }
 
     const corners = [];
-    const children = this.children;
-
-    for (let child of children) {
+    for (let child of this.children) {
       for (let corner of child.bounds.corners) {
         corners.push(corner.transform(child.transform));
       }
@@ -249,9 +279,9 @@ const Node = {
     return descendants;
   },
 
-  findDescendantByID(id) {
+  findDescendantByKey(key) {
     return this.findDescendant((node) => {
-      return node._id === id;
+      return node.key === key;
     });
   },
 
@@ -264,8 +294,14 @@ const Node = {
   // append
 
   append(node) {
-    this.children.push(node);
+    this.children = this.children.concat([node]);
     node.parent = this;
+  },
+
+  replaceWith(node) {
+    node.parent = this.parent;
+    const index = this.parent.children.indexOf(this);
+    this.parent.children.splice(index, 1, node);
   },
 
    // hit testing
@@ -282,25 +318,25 @@ const Node = {
     this.removeFrontier();
 
     if (this.selected) {
-      this.selected.class.add('frontier');
+      this.selected.class = this.selected.class.add('frontier');
 
       let node = this.selected;
 
       do {
         for (let sibling of node.siblings) {
-          sibling.class.add('frontier');
+          sibling.class = sibling.class.add('frontier');
         }
         node = node.parent;
       } while (node.parent !== null);
     } else {
-      for (let child of this.root.children) {
-        child.class.add('frontier');
+      for (let child of this.scene.children) {
+        child.class = child.class.add('frontier');
       }
     }
   },
 
   removeFrontier() {
-    const frontier = this.root.findDescendants((node) => {
+    const frontier = this.scene.findDescendants((node) => {
       return node.class.includes('frontier');
     });
 
@@ -310,11 +346,11 @@ const Node = {
   },
 
   focus() {
-    this.class.add('focus');
+    this.class = this.class.add('focus');
   },
 
   unfocusAll() {
-    const focussed = this.root.findDescendants((node) => {
+    const focussed = this.scene.findDescendants((node) => {
       return node.class.includes('focus');
     });
 
@@ -325,14 +361,14 @@ const Node = {
 
   select() {
     this.deselectAll();
-    this.class.add('selected');
+    this.class = this.class.add('selected');
     this.setFrontier();
   },
 
   edit() {
     this.deselectAll();
     this.setFrontier();
-    this.class.add('editing');
+    this.class = this.class.add('editing');
   },
 
   deselectAll() {
@@ -395,7 +431,7 @@ const Node = {
 
   toJSON() {
     return {
-      _id: this._id,
+      key: this.key,
       type: this.type,
       children: this.children,
       payload: this.payload,

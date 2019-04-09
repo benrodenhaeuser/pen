@@ -1,4 +1,4 @@
-import { Root, Shape, Group      } from '../domain/types.js';
+import { Scene, Shape, Group      } from '../domain/types.js';
 import { Spline, Segment, Anchor } from '../domain/types.js';
 import { HandleIn, HandleOut     } from '../domain/types.js';
 import { Matrix                  } from '../domain/matrix.js';
@@ -15,7 +15,7 @@ const svgImporter = {
       .parseFromString(markup, "application/xml")
       .documentElement;
 
-    const scene = Root.create();
+    const scene = Scene.create();
 
     this.buildTree($svg, scene);
     scene.setFrontier();
@@ -55,7 +55,6 @@ const svgImporter = {
   processAttributes($node, node) {
     // viewBox
     if ($node.tagName === 'svg') {
-      // delete node.props.xmlns;
       const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
       const origin = Vector.create(viewBox[0], viewBox[1]);
       const size = Vector.create(viewBox[2], viewBox[3]);
@@ -83,7 +82,7 @@ const svgImporter = {
 
     this.processAttributes($geometryNode, shape);
     // ^ TODO: we are also calling processAttributes further above, duplication!
-    
+
     let pathCommands;
 
     switch ($geometryNode.tagName) {

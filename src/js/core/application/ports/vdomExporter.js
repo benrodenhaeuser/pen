@@ -16,12 +16,121 @@ const h = (tag, props = {}, ...children) => {
   };
 };
 
-const scale = (node, length) => {
-  return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
-};
-
 const vdomExporter = {
-  build(node, vParent = null) {
+  renderApp(store) {
+    const comps = this.comps(store);
+
+    return h('main', { id: 'app' },
+      comps.doc,
+      comps.navigate,
+      comps.inspect,
+      h('div', { id: 'toolbar' },
+        comps.buttons,
+        comps.message
+      ),
+    );
+  },
+
+  comps(store) {
+    return {
+      buttons:  this.buttons(store),
+      message:  this.message(store),
+      navigate: this.navigate(store),
+      doc:      this.doc(store),
+      inspect:  this.inspect(store),
+    };
+  },
+
+  docs(store) {
+    const vDocs = h('ul', {
+      id: 'docs',
+      class: 'pure-menu-children doc-list',
+    });
+
+    const docs = store.docs;
+    for (let identifier of docs.children) {
+      vDocs.children.push(
+        h('li', {
+          'data-key': identifier.key,
+          'data-type': 'doc-identifier',
+        }, 'document name placeholder') // TODO
+      );
+    }
+
+    const container = h('div', { class: 'pure-menu pure-menu-horizontal' },
+      h('ul', { class: 'pure-menu-list' },
+        h('li', { class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover'},
+          h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Docs'),
+          vDocs
+        )
+      )
+    );
+
+    return container;
+  },
+
+  buttons(store) {
+    return h('ul', { id: 'buttons' },
+      h('li', {},
+        h('button', {
+          id: 'newDocButton',
+          class: 'pure-button',
+          'data-type': 'newDocButton',
+        }, 'New')
+      ),
+      this.docs(store),
+      h('li', {},
+        h('button', {
+          id: 'pen',
+          'data-type': 'pen',
+          class: 'pure-button',
+        }, 'Pen')
+      ),
+      h('li', {},
+        h('button', {
+          id: 'select',
+          'data-type': 'select',
+          class: 'pure-button',
+        }, 'Select')
+      )
+    );
+  },
+
+  message(store) {
+    return h('ul', {},
+      h('li', {},
+        h('button', {
+          id: 'message',
+        }, 'Message')
+      )
+    );
+  },
+
+  navigate(store) {
+    return h('div', {
+      id: 'navigator',
+    }); // TODO
+  },
+
+  inspect(store) {
+    return h('div', {
+      id: 'inspector',
+    }); // TODO
+  },
+
+  doc(store) {
+    return h('div', {
+      'data-type': 'doc',
+      id: 'canvas',
+      key: store.doc.key,
+    }, this.renderScene(store));
+  },
+
+  renderScene(store) {
+    return this.buildSceneNode(store.scene);
+  },
+
+  buildSceneNode(node, vParent = null) {
     const vNode = node.toVDOMNode();
 
     if (vParent) {
@@ -30,7 +139,7 @@ const vdomExporter = {
     }
 
     for (let child of node.graphicsChildren) {
-      this.build(child, vNode);
+      this.buildSceneNode(child, vNode);
     }
 
     return vNode;
@@ -39,7 +148,7 @@ const vdomExporter = {
   wrap(vNode, node) {
     const vWrapper = h('g', {
       'data-type': 'wrapper',
-      'data-id':   node._id,
+      'data-key':   node.key,
     });
 
     vWrapper.children.push(vNode);
@@ -52,7 +161,7 @@ const vdomExporter = {
   outerUI(node) {
     const vOuterUI = h('g', {
       'data-type': 'outerUI',
-      'data-id':   node._id,
+      'data-key':   node.key,
     });
 
     const vFrame   = this.frame(node);
@@ -78,12 +187,12 @@ const vdomExporter = {
     const vTopRCorner = h('rect');
     const vBotRCorner = h('rect');
     const vCorners    = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
-    const length      = scale(node, LENGTHS_IN_PX.cornerSideLength);
+    const length      = this.scale(node, LENGTHS_IN_PX.cornerSideLength);
 
     for (let vCorner of vCorners) {
       Object.assign(vCorner.props, {
         'data-type': 'corner',
-        'data-id':   node._id,
+        'data-key':   node.key,
         transform:   node.transform.toString(),
         width:       length,
         height:      length,
@@ -119,13 +228,13 @@ const vdomExporter = {
     const vTopRDot  = h('circle');
     const vBotRDot  = h('circle');
     const vDots     = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
-    const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
+    const diameter  = this.scale(node, LENGTHS_IN_PX.dotDiameter);
     const radius    = diameter / 2;
 
     for (let vDot of vDots) {
       Object.assign(vDot.props, {
         'data-type':      'dot',
-        'data-id':        node._id,
+        'data-key':        node.key,
         transform:        node.transform.toString(),
         r:                radius,
       });
@@ -162,14 +271,14 @@ const vdomExporter = {
       width:        node.bounds.width,
       height:       node.bounds.height,
       transform:    node.transform.toString(),
-      'data-id':    node._id,
+      'data-key':    node.key,
     });
   },
 
   innerUI(node) {
     const vInnerUI = h('g', {
       'data-type': 'innerUI',
-      'data-id': node._id,
+      'data-key': node.key,
     });
 
     const vConnections = this.connections(node);
@@ -193,8 +302,8 @@ const vdomExporter = {
     for (let spline of node.children) {
       for (let segment of spline.children) {
         for (let handle of ['handleIn', 'handleOut']) {
-          if (segment[handle]()) {
-            vConnections.push(this.connection(node, segment.anchor(), segment[handle]()));
+          if (segment[handle]) {
+            vConnections.push(this.connection(node, segment.anchor, segment[handle]));
           }
         }
       }
@@ -215,18 +324,18 @@ const vdomExporter = {
 
   controls(node) {
     const vControls = [];
-    const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
+    const diameter  = this.scale(node, LENGTHS_IN_PX.controlDiameter);
 
     for (let spline of node.children) {
       for (let segment of spline.children) {
-        vControls.push(this.control(node, diameter, segment.anchor()));
+        vControls.push(this.control(node, diameter, segment.anchor));
 
-        if (segment.handleIn()) {
-          vControls.push(this.control(node, diameter, segment.handleIn()));
+        if (segment.handleIn) {
+          vControls.push(this.control(node, diameter, segment.handleIn));
         }
 
-        if (segment.handleOut()) {
-          vControls.push(this.control(node, diameter, segment.handleOut()));
+        if (segment.handleOut) {
+          vControls.push(this.control(node, diameter, segment.handleOut));
         }
       }
     }
@@ -236,13 +345,17 @@ const vdomExporter = {
 
   control(node, diameter, contr) {
     return h('circle', {
-      'data-type': 'control',
-      'data-id'  : contr._id,
+      'data-type': 'control','
+      'data-key' : contr.key, // or does it not have a key?
       transform  : node.transform.toString(),
       r          : diameter / 2,
       cx         : contr.x,
       cy         : contr.y,
     });
+  },
+
+  scale(node, length) {
+    return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
   },
 };
 

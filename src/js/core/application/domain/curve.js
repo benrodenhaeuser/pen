@@ -11,10 +11,10 @@ const Curve = {
   // the params are Segment instances
   createFromSegments(segment1, segment2) {
     return Curve.create(
-      segment1.anchor(),
-      segment2.anchor(),
-      segment1.handleOut(),
-      segment2.handleIn()
+      segment1.anchor,
+      segment2.anchor,
+      segment1.handleOut,
+      segment2.handleIn
     );
   },
 

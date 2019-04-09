@@ -21,6 +21,14 @@ const Rectangle = {
     return Rectangle.create(origin, size);
   },
 
+  // => { x: ..., y: ..., width: ..., height: ...}
+  createFromObject(object) {
+    const origin = Vector.create(object.x, object.y);
+    const size   = Vector.create(object.width, object.height);
+
+    return Rectangle.create(origin, size);
+  },
+
   // => two vectors (from and to, or equivalently, min and max)
   createFromMinMax(min, max) {
     const origin = Vector.create(min.x, min.y);

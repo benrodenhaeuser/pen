@@ -16,17 +16,11 @@ const app = {
 
     // todo: unify this with above attach loop for ui and db:
     // instead of setState, hist should also use compute.
+    // there should be a single interface (method) to interacting with the core 
     hist.init();
     hist.bindEvents(core.setState.bind(core));
     core.attach(hist.name, hist.sync.bind(hist));
-
-    this.setCanvasWidth();
     core.kickoff();
-  }, 
-
-  setCanvasWidth() {
-    const canvasNode = document.querySelector('#canvas');
-    core.state.canvasWidth = canvasNode.clientWidth;
   },
 };
 

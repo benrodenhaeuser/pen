@@ -31,17 +31,17 @@ const Matrix = {
     return this.m;
   },
 
+  // return value: string
   toString() {
-    return `matrix(${this.toVector()})`;
-  },
-
-  toVector() {
-    return [
+    const sixValueMatrix = [
       this.m[0][0], this.m[1][0], this.m[0][1],
       this.m[1][1], this.m[0][2], this.m[1][2]
     ];
+
+    return `matrix(${sixValueMatrix})`;
   },
 
+  // return value: new Vector instance
   transform(vector) {
     const column      = Matrix.create([[vector.x], [vector.y], [1]]);
     const transformed = this.multiply(column).toArray();
@@ -49,20 +49,24 @@ const Matrix = {
     return Vector.create(transformed[0][0], transformed[1][0]);
   },
 
+  // return value: Array
   toArray() {
     return this.m;
   },
 
+  // return value: new Matrix instance
   multiply(other) {
     const m = math.multiply(this.m, other.m);
     return Matrix.create(m);
   },
 
+  // return value: new Matrix instance
   invert() {
     const m = JSON.parse(JSON.stringify(this.m));
     return Matrix.create(math.inv(m));
   },
 
+  // return value: new Matrix instance
   identity() {
     const m = JSON.parse(JSON.stringify(
       [
@@ -75,6 +79,7 @@ const Matrix = {
     return Matrix.create(m);
   },
 
+  // return value: new Matrix instance
   rotation(angle, origin) {
     const sin                = Math.sin(angle);
     const cos                = Math.cos(angle);
@@ -88,6 +93,7 @@ const Matrix = {
     return Matrix.create(m);
   },
 
+  // return value: new Matrix instance
   translation(vector) {
     const m = [
       [1, 0, vector.x],
@@ -98,6 +104,7 @@ const Matrix = {
     return Matrix.create(m);
   },
 
+  // return value: new Matrix instance
   scale(factor, origin = Vector.create(0, 0)) {
     const m = [
       [factor, 0,      origin.x - factor * origin.x],

@@ -13,6 +13,8 @@ const coordinates = (event) => {
 
 const ui = {
   bindEvents(compute) {
+    // TODO: this belongs in an init method:
+    // plus we will not have those before the first render
     this.canvasNode  = document.querySelector('#canvas');
     this.toolbarNode = document.querySelector('#toolbar');
 
@@ -35,24 +37,24 @@ const ui = {
         }
 
         compute({
-          type:     event.type,
-          target:   event.target.dataset.type,
-          x:        coordinates(event).x,
-          y:        coordinates(event).y,
-          targetID: event.target.dataset.id,
+          type:   event.type,
+          target: event.target.dataset.type,
+          x:      coordinates(event).x,
+          y:      coordinates(event).y,
+          key:    event.target.dataset.key,
         });
       });
     }
   },
 
   sync(state) {
-    if (state.id === 'start') {
-      this.mount(this.render(state.vDOM), ui.canvasNode);
+    if (state.label === 'start') {
+      this.mount(this.render(state.vDOM), document.body);
       this.previousState = state;
       return;
     }
 
-    this.mount(this.render(state.vDOM), ui.canvasNode);
+    this.mount(this.render(state.vDOM), document.body);
 
     // this is what we want to happen:
 
@@ -72,7 +74,7 @@ const ui = {
     //   return JSON.stringify(obj1) === JSON.stringify(obj2);
     // };
     //
-    // if (state.id === 'start') {
+    // if (state.label === 'start') {
     //   this.start(state);
     //   this.renderScene(state); // ?
     //   return;
@@ -90,7 +92,31 @@ const ui = {
     $mountPoint.appendChild($node);
   },
 
+  // TODO: possible to merge this method and the next one?
   render(vNode) {
+    if (vNode.tag === 'svg') {
+      return this.renderSVG(vNode);
+    } else {
+      const $node = document.createElement(vNode.tag);
+
+      for (let [key, value] of Object.entries(vNode.props)) {
+        $node.setAttributeNS(null, key, value);
+      }
+
+      for (let vChild of vNode.children) {
+        if (typeof vChild === 'string') {
+          $node.textContent = vChild; // TODO: do svg nodes have this attribute?
+        } else {
+          $node.appendChild(this.render(vChild));
+        }
+      }
+
+      return $node;
+    }
+
+  },
+
+  renderSVG(vNode) {
     const svgns = 'http://www.w3.org/2000/svg';
     const xmlns = 'http://www.w3.org/2000/xmlns/';
 
@@ -105,7 +131,11 @@ const ui = {
     }
 
     for (let vChild of vNode.children) {
-      $node.appendChild(this.render(vChild));
+      if (typeof vChild === 'string') {
+        vNode.textContent = vChild; // TODO: does not work for svg I think
+      } else {
+        $node.appendChild(this.renderSVG(vChild));
+      }
     }
 
     return $node;

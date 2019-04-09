@@ -2,43 +2,60 @@ import { svgImporter   } from './ports/svgImporter.js';
 import { vdomExporter  } from './ports/vdomExporter.js';
 import { plainImporter } from './ports/plainImporter.js';
 import { plainExporter } from './ports/plainExporter.js';
+import { fromScratch   } from './ports/fromScratch.js';
 
 const State = {
   create() {
     return Object.create(State).init();
   },
 
-  // TODO: note below that `markup` is currently hard-coded!
   init() {
-    this.id    = 'start';
-    this.scene = this.importFromSVG(markup);
-    this.docs  = { ids: [], selectedID: null };
+    this.label = 'start';
+    this.store = fromScratch.build();
+
+    // TODO: using hard-coded markup to generate svg
+    this.store.scene.replaceWith(this.importFromSVG(markup));
 
     return this;
   },
 
   export() {
     return {
-      id:    this.id,
+      label: this.label,
       vDOM:  this.exportToVDOM(),
       plain: this.exportToPlain(),
     };
   },
 
+  get scene() {
+    return this.store.scene;
+  },
+
+  get doc() {
+    return this.store.doc;
+  },
+
+  get docs() {
+    return this.store.docs;
+  },
+
+  // TODO: returns Scene node, but should return Store node
   importFromPlain(object) {
     return plainImporter.build(object);
   },
 
+  // TODO: returns Scene node, but should return Store node
   importFromSVG(markup) {
     return svgImporter.build(markup);
   },
 
   exportToVDOM() {
-    return vdomExporter.build(this.scene);
+    return vdomExporter.renderApp(this.store);
   },
 
+  // returns plain JS representation of this.store
   exportToPlain() {
-    return plainExporter.build(this.scene);
+    return plainExporter.build(this.store);
   },
 };
 

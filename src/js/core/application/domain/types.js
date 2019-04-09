@@ -2,7 +2,8 @@ import { Node      } from './node.js';
 import { Rectangle } from './rectangle.js';
 import { Curve     } from './curve.js';
 
-const Root      = Object.create(Node);
+// scene graph nodes
+const Scene     = Object.create(Node);
 const Group     = Object.create(Node);
 const Shape     = Object.create(Node);
 const Spline    = Object.create(Node);
@@ -11,7 +12,7 @@ const Anchor    = Object.create(Node);
 const HandleIn  = Object.create(Node);
 const HandleOut = Object.create(Node);
 
-Root.type      = 'root';
+Scene.type     = 'scene';
 Group.type     = 'group';
 Shape.type     = 'shape';
 Spline.type    = 'spline';
@@ -20,12 +21,28 @@ Anchor.type    = 'anchor';
 HandleIn.type  = 'handleIn';
 HandleOut.type = 'handleOut';
 
-Root.toVDOMNode = function() {
+// other types of nodes
+const Store      = Object.create(Node);
+const Doc        = Object.create(Node);
+const Docs       = Object.create(Node);
+const Message    = Object.create(Node);
+const Text       = Object.create(Node);
+const Identifier = Object.create(Node);
+
+Store.type      = 'store';
+Doc.type        = 'doc';
+Docs.type       = 'docs';
+Message.type    = 'message';
+Text.type       = 'text';
+Identifier.type = 'identifier';
+
+
+Scene.toVDOMNode = function() {
   return {
     tag:      'svg',
     children: [],
     props: {
-      'data-id':   this._id,
+      'data-key':   this.key,
       'data-type': 'content',
       'viewBox':    this.viewBox.toString(),
       xmlns:       'http://www.w3.org/2000/svg',
@@ -38,7 +55,7 @@ Group.toVDOMNode = function() {
     tag:      'g',
     children: [],
     props: {
-      'data-id':   this._id,
+      'data-key':   this.key,
       'data-type': 'content',
       transform:   this.transform.toString(),
       class:       this.class.toString(),
@@ -51,7 +68,7 @@ Shape.toVDOMNode = function() {
     tag:      'path',
     children: [],
     props: {
-      'data-id':   this._id,
+      'data-key':   this.key,
       'data-type': 'content',
       d:           this.pathString(),
       transform:   this.transform.toString(),
@@ -60,39 +77,43 @@ Shape.toVDOMNode = function() {
   };
 };
 
+// SHAPE
+
 Shape.pathString = function() {
   let d = '';
 
   for (let spline of this.children) {
     const segment = spline.children[0];
-    d += `M ${segment.anchor().x} ${segment.anchor().y}`;
+    d += `M ${segment.anchor.x} ${segment.anchor.y}`;
 
     for (let i = 1; i < spline.children.length; i += 1) {
       const currSeg = spline.children[i];
       const prevSeg = spline.children[i - 1];
 
-      if (prevSeg.handleOut() && currSeg.handleIn()) {
+      if (prevSeg.handleOut && currSeg.handleIn) {
         d += ' C';
-      } else if (currSeg.handleIn() || prevSeg.handleOut()) {
+      } else if (currSeg.handleIn || prevSeg.handleOut) {
         d += ' Q';
       } else {
         d += ' L';
       }
 
-      if (prevSeg.handleOut()) {
-        d += ` ${prevSeg.handleOut().x} ${prevSeg.handleOut().y}`;
+      if (prevSeg.handleOut) {
+        d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
       }
 
-      if (currSeg.handleIn()) {
-        d += ` ${currSeg.handleIn().x} ${currSeg.handleIn().y}`;
+      if (currSeg.handleIn) {
+        d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
       }
 
-      d += ` ${currSeg.anchor().x} ${currSeg.anchor().y}`;
+      d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
     }
   }
 
   return d;
 };
+
+// SPLINE
 
 Spline.curves = function() {
   const theCurves = [];
@@ -122,43 +143,82 @@ Spline.memoizeBounds = function() {
   return bounds;
 };
 
-Segment.anchor = function() {
-  const theAnchor = this.children.find(child => child.type === 'anchor');
+// SEGMENT
 
-  if (theAnchor) {
-    return theAnchor.payload.vector;
-  }
+Object.defineProperty(Segment, 'anchor', {
+  get() {
+    const theAnchor = this.children.find(child => child.type === 'anchor');
 
-  return null;
-};
+    if (theAnchor) {
+      return theAnchor.payload.vector;
+    }
 
-Segment.handleIn = function() {
-  const theHandle = this.children.find(child => child.type === 'handleIn');
+    return null;
+  },
+});
 
-  if (theHandle) {
-    return theHandle.payload.vector;
-  }
+Object.defineProperty(Segment, 'handleIn', {
+  get() {
+    const handle = this.children.find(child => child.type === 'handleIn');
 
-  return null;
-};
+    if (handle) {
+      return handle.payload.vector;
+    }
 
-Segment.handleOut = function() {
-  const theHandle = this.children.find(child => child.type === 'handleOut');
+    return null;
+  },
+  set(value) {
+    let handle;
 
-  if (theHandle) {
-    return theHandle.payload.vector;
-  }
+    if (this.handleIn) {
+      handle = this.children.find(child => child.type === 'handleIn');
+    } else {
+      handle = HandleIn.create();
+      this.children = this.children.concat([handle]);
+    }
 
-  return null;
-};
+    handle.payload.vector = value;
+  },
+});
+
+Object.defineProperty(Segment, 'handleOut', {
+  get() {
+    const theHandle = this.children.find(child => child.type === 'handleOut');
+
+    if (theHandle) {
+      return theHandle.payload.vector;
+    }
+
+    return null;
+  },
+  set(value) {
+    let handle;
+
+    if (this.handleOut) {
+      handle = this.children.find(child => child.type === 'handleOut');
+    } else {
+      handle = HandleOut.create();
+      this.children = this.children.concat([handle]);
+    }
+
+    handle.payload.vector = value;
+
+  },
+});
 
 export {
-  Root,
+  Scene,
   Group,
   Shape,
   Spline,
   Segment,
   Anchor,
   HandleIn,
-  HandleOut
+  HandleOut,
+  Store,
+  Doc,
+  Docs,
+  Message,
+  Text,
+  Identifier
 };

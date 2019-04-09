@@ -5,14 +5,13 @@ const transitions = [
   { from: 'start', type: 'go', to: 'idle' },
   { from: 'idle', type: 'mousemove', do: 'focus' },
 
-  // SELECT AND TRANSFORM
+  // SELECT
   // activate select tool
-  { type: 'click', target: 'activateSelect', do: 'deedit', to: 'idle' },
+  { type: 'click', target: 'select', do: 'deedit', to: 'idle' },
 
-  // select/transform actions
+  // transform actions
   { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
   { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
-  { from: 'idle', type: 'mousedown', target: 'root', do: 'deselect' },
   { from: 'shifting', type: 'mousemove', do: 'shift' },
   { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' }, // RELEASE
   { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
@@ -24,17 +23,17 @@ const transitions = [
 
   // PEN
   // activate pen tool
-  { from: 'idle', type: 'click', target: 'activatePen', do: 'deselect', to: 'pen' },
+  { from: 'idle', type: 'click', target: 'pen', do: 'deselect', to: 'pen' },
   // adding controls
   { from: 'pen', type: 'mousedown', target: 'content', do: 'addFirstAnchor', to: 'addingHandle' },
   { from: 'addingHandle', type: 'mousemove', do: 'addHandle', to: 'addingHandle' },
-  { from: 'addingHandle', type: 'mouseup', do: 'release', to: 'continuePen' },
+  { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
   { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
   // editing controls
   { from: 'continuePen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
   { from: 'pen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
   { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
-  { from: 'editingControl', type: 'mouseup', do: 'release', to: 'pen' },
+  { from: 'editingControl', type: 'mouseup', to: 'pen' },
 
   // OTHER
   { type: 'click', target: 'doc-list-entry', do: 'requestDoc' },
@@ -50,7 +49,7 @@ transitions.get = function(state, input) {
     const type   = row.type;
     const target = row.target;
 
-    const stateMatch  = from === state.id || from === undefined;
+    const stateMatch  = from === state.label || from === undefined;
     const typeMatch   = type === input.type;
     const targetMatch = target === input.target || target === undefined;
 
@@ -63,7 +62,7 @@ transitions.get = function(state, input) {
     // console.log(input.target); // note that inputs from db don't have a target
     return {
       do: match.do,
-      to: match.to || state.id,
+      to: match.to || state.label,
     };
   }
 };

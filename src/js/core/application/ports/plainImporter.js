@@ -1,4 +1,4 @@
-import { Root, Shape, Group      } from '../domain/types.js';
+import { Scene, Shape, Group      } from '../domain/types.js';
 import { Spline, Segment, Anchor } from '../domain/types.js';
 import { HandleIn, HandleOut,    } from '../domain/types.js';
 import { Matrix                  } from '../domain/matrix.js';
@@ -11,8 +11,8 @@ const plainImporter = {
     let node;
 
     switch (object.type) {
-      case 'root':
-        node = Root.create();
+      case 'scene':
+        node = Scene.create();
         break;
       case 'group':
         node = Group.create();
@@ -39,7 +39,7 @@ const plainImporter = {
     }
 
     node.type = object.type;
-    node._id = object._id;
+    node.key = object.key;
     this.setPayload(node, object);
 
     for (let child of object.children) {
@@ -51,58 +51,31 @@ const plainImporter = {
 
   setPayload(node, object) {
     for (let [key, value] of Object.entries(object.payload)) {
-      // console.log(key, value);
-
       switch (key) {
-        // looks OK
         case 'viewBox':
-          const viewBox = Rectangle.createFromDimensions(
-            object.payload.viewBox.x,
-            object.payload.viewBox.y,
-            object.payload.viewBox.width,
-            object.payload.viewBox.height
-          );
-          node.viewBox = viewBox;
-          break;
+        node.viewBox = Rectangle.createFromObject(value);
+        break;
 
-        // looks OK
         case 'transform':
-          const matrix = Matrix.create(object.payload.transform);
-          node.transform = matrix;
-          break;
+        node.transform = Matrix.create(value);
+        break;
 
-        // looks OK
         case 'class':
-          const classes = Class.create(object.payload.class);
-          node.class = classes;
-          break;
+        node.class = Class.create(value);
+        break;
 
-        // looks OK
         case 'bounds':
-          if (value) {
-            const bounds = Rectangle.createFromDimensions(
-              object.payload.bounds.x,
-              object.payload.bounds.y,
-              object.payload.bounds.width,
-              object.payload.bounds.height
-            );
-            node.bounds = bounds;
-          }
-          break;
+        if (value) {
+          node.bounds = Rectangle.createFromObject(value);
+        }
+        break;
 
         case 'vector':
-          const vector = Vector.create(
-            object.payload.vector.x,
-            object.payload.vector.y
-          );
-          node.vector = vector;
-          break;
+        node.vector = Vector.createFromObject(value);
+        break;
       }
     }
   },
 };
 
 export { plainImporter };
-
-
-// why does the plain object have no bounds? Presumably there was no need to compute it yet!

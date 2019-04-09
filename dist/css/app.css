@@ -1,6 +1,6 @@
 /* HTML */
 
-body {
+main {
   display: grid;
   grid-template-columns: 165px auto 165px;
   grid-template-areas:
@@ -54,7 +54,7 @@ body {
   margin: 0 5px;
 }
 
-.flash {
+#message {
   position: fixed;
   right: 20px;
   color: red;
