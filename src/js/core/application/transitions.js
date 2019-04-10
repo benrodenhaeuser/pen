@@ -25,13 +25,13 @@ const transitions = [
   // activate pen tool
   { from: 'idle', type: 'click', target: 'pen', do: 'deselect', to: 'pen' },
   // adding controls
-  { from: 'pen', type: 'mousedown', target: 'content', do: 'addFirstAnchor', to: 'addingHandle' },
-  { from: 'addingHandle', type: 'mousemove', do: 'addHandle', to: 'addingHandle' },
+  { from: 'pen', type: 'mousedown', target: 'content', do: 'placeAnchor', to: 'addingHandle' },
+  { from: 'addingHandle', type: 'mousemove', do: 'addHandles', to: 'addingHandle' },
   { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
   { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
   // editing controls
-  { from: 'continuePen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
-  { from: 'pen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
+  { from: 'continuePen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
+  { from: 'pen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
   { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
   { from: 'editingControl', type: 'mouseup', to: 'pen' },
 

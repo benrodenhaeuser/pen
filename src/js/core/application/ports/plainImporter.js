@@ -1,16 +1,32 @@
-import { Scene, Shape, Group      } from '../domain/types.js';
-import { Spline, Segment, Anchor } from '../domain/types.js';
-import { HandleIn, HandleOut,    } from '../domain/types.js';
-import { Matrix                  } from '../domain/matrix.js';
-import { Vector                  } from '../domain/vector.js';
-import { Rectangle               } from '../domain/rectangle.js';
-import { Class                   } from '../domain/class.js';
+import { Store, Docs, Doc, Message } from '../domain/types.js';
+import { Scene, Shape, Group       } from '../domain/types.js';
+import { Spline, Segment, Anchor   } from '../domain/types.js';
+import { HandleIn, HandleOut       } from '../domain/types.js';
+import { Matrix                    } from '../domain/matrix.js';
+import { Vector                    } from '../domain/vector.js';
+import { Rectangle                 } from '../domain/rectangle.js';
+import { Class                     } from '../domain/class.js';
 
 const plainImporter = {
   build(object) {
     let node;
 
     switch (object.type) {
+      case 'store':
+        node = Store.create();
+        break;
+      case 'doc':
+        node = Doc.create();
+        break;
+      case 'docs':
+        node = Docs.create();
+        break;
+      case 'identifier':
+        node = Identifier.create();
+        break;
+      case 'message':
+        node = Message.create();
+        break;
       case 'scene':
         node = Scene.create();
         break;
@@ -53,26 +69,22 @@ const plainImporter = {
     for (let [key, value] of Object.entries(object.payload)) {
       switch (key) {
         case 'viewBox':
-        node.viewBox = Rectangle.createFromObject(value);
-        break;
-
+          node.viewBox = Rectangle.createFromObject(value);
+          break;
         case 'transform':
-        node.transform = Matrix.create(value);
-        break;
-
+          node.transform = Matrix.create(value);
+          break;
         case 'class':
-        node.class = Class.create(value);
-        break;
-
+          node.class = Class.create(value);
+          break;
         case 'bounds':
-        if (value) {
-          node.bounds = Rectangle.createFromObject(value);
-        }
-        break;
-
+          if (value) {
+            node.bounds = Rectangle.createFromObject(value);
+          }
+          break;
         case 'vector':
-        node.vector = Vector.createFromObject(value);
-        break;
+          node.vector = Vector.createFromObject(value);
+          break;
       }
     }
   },

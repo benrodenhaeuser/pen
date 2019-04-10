@@ -20,6 +20,8 @@ const State = {
   },
 
   export() {
+    console.log(this.exportToPlain()); // DEBUG
+
     return {
       label: this.label,
       vDOM:  this.exportToVDOM(),
@@ -39,12 +41,12 @@ const State = {
     return this.store.docs;
   },
 
-  // TODO: returns Scene node, but should return Store node
+  // TODO: returns Scene node – how to hook up?
   importFromPlain(object) {
     return plainImporter.build(object);
   },
 
-  // TODO: returns Scene node, but should return Store node
+  // TODO: returns Scene node – how to hook up?
   importFromSVG(markup) {
     return svgImporter.build(markup);
   },

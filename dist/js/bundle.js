@@ -2665,14 +2665,14 @@
   const Docs       = Object.create(Node);
   const Message    = Object.create(Node);
   const Text       = Object.create(Node);
-  const Identifier = Object.create(Node);
+  const Identifier$1 = Object.create(Node);
 
   Store.type      = 'store';
   Doc.type        = 'doc';
   Docs.type       = 'docs';
   Message.type    = 'message';
   Text.type       = 'text';
-  Identifier.type = 'identifier';
+  Identifier$1.type = 'identifier';
 
 
   Scene.toVDOMNode = function() {
@@ -2782,6 +2782,8 @@
   };
 
   // SEGMENT
+
+  // TODO: these custom getters should be avoided, because they do more harm than good.
 
   Object.defineProperty(Segment, 'anchor', {
     get() {
@@ -3355,31 +3357,45 @@
 
       for (let spline of node.children) {
         for (let segment of spline.children) {
-          vControls.push(this.control(node, diameter, segment.anchor));
-
-          if (segment.handleIn) {
-            vControls.push(this.control(node, diameter, segment.handleIn));
+          for (let control of segment.children) {
+            vControls.push(this.control(node, control, diameter));
           }
-
-          if (segment.handleOut) {
-            vControls.push(this.control(node, diameter, segment.handleOut));
-          }
+          // vControls.push(this.control(node, diameter, segment.anchor));
+          //
+          // if (segment.handleIn) {
+          //   vControls.push(this.control(node, diameter, segment.handleIn));
+          // }
+          //
+          // if (segment.handleOut) {
+          //   vControls.push(this.control(node, diameter, segment.handleOut));
+          // }
         }
       }
 
       return vControls;
     },
 
-    control(node, diameter, contr) {
+    control(node, controlNode, diameter) {
       return h('circle', {
         'data-type': 'control',
-        'data-key' : contr.key,
+        'data-key' : controlNode.key,
         transform  : node.transform.toString(),
         r          : diameter / 2,
-        cx         : contr.x,
-        cy         : contr.y,
+        cx         : controlNode.vector.x,
+        cy         : controlNode.vector.y,
       });
     },
+
+    // control(node, diameter, contr) {
+    //   return h('circle', {
+    //     'data-type': 'control',
+    //     'data-key' : contr.key,
+    //     transform  : node.transform.toString(),
+    //     r          : diameter / 2,
+    //     cx         : contr.x,
+    //     cy         : contr.y,
+    //   });
+    // },
 
     scale(node, length) {
       return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
@@ -3391,6 +3407,21 @@
       let node;
 
       switch (object.type) {
+        case 'store':
+          node = Store.create();
+          break;
+        case 'doc':
+          node = Doc.create();
+          break;
+        case 'docs':
+          node = Docs.create();
+          break;
+        case 'identifier':
+          node = Identifier.create();
+          break;
+        case 'message':
+          node = Message.create();
+          break;
         case 'scene':
           node = Scene.create();
           break;
@@ -3433,26 +3464,22 @@
       for (let [key, value] of Object.entries(object.payload)) {
         switch (key) {
           case 'viewBox':
-          node.viewBox = Rectangle.createFromObject(value);
-          break;
-
+            node.viewBox = Rectangle.createFromObject(value);
+            break;
           case 'transform':
-          node.transform = Matrix.create(value);
-          break;
-
+            node.transform = Matrix.create(value);
+            break;
           case 'class':
-          node.class = Class.create(value);
-          break;
-
+            node.class = Class.create(value);
+            break;
           case 'bounds':
-          if (value) {
-            node.bounds = Rectangle.createFromObject(value);
-          }
-          break;
-
+            if (value) {
+              node.bounds = Rectangle.createFromObject(value);
+            }
+            break;
           case 'vector':
-          node.vector = Vector.createFromObject(value);
-          break;
+            node.vector = Vector.createFromObject(value);
+            break;
         }
       }
     },
@@ -3499,6 +3526,8 @@
     },
 
     export() {
+      console.log(this.exportToPlain()); // DEBUG
+
       return {
         label: this.label,
         vDOM:  this.exportToVDOM(),
@@ -3518,12 +3547,12 @@
       return this.store.docs;
     },
 
-    // TODO: returns Scene node, but should return Store node
+    // TODO: returns Scene node – how to hook up?
     importFromPlain(object) {
       return plainImporter.build(object);
     },
 
-    // TODO: returns Scene node, but should return Store node
+    // TODO: returns Scene node – how to hook up?
     importFromSVG(markup) {
       return svgImporter.build(markup);
     },
@@ -3757,9 +3786,7 @@
 
     // PEN TOOL (draft version)
 
-    // mousedown in state 'pen'
-    // ==> make a new shape/spline and place an anchor
-    addFirstAnchor(state, input) {       // FIXED
+    placeAnchor(state, input) {
       const shape   = Shape.create();
       const spline  = Spline.create();
       const segment = Segment.create();
@@ -3774,44 +3801,57 @@
       shape.edit();
       shape.payload.bounds = Rectangle.create(); // TODO: hack
 
-      aux.spline = spline;
+      aux.spline  = spline;
       aux.segment = segment;
     },
 
-    // mousemove in state 'addingHandle'
-    // ==> add handleIn and handleOut to existing segment
-    addHandle(state, input) {   // FIX
-      const segment = aux.segment;
-      const anchor  = segment.anchor;
+    addHandles(state, input) {
+      // we need to: create the handles when this method is called the first time around
+      // modify the handles when this method is called again time.
+      // The interface we have guarantees that, but it has a problem with the ids.
 
-      const handleIn = Vector.create(input.x, input.y);
+      const segment  = aux.segment;
+      const anchor   = segment.anchor;
+
+      const handleIn  = Vector.create(input.x, input.y);
       const handleOut = handleIn.rotate(Math.PI, anchor);
 
       segment.handleIn = handleIn;
       segment.handleOut = handleOut;
+
+      // THIS IS TOO SIMPLE:
+
+      // const handleIn = HandleIn.create();
+      // const handleOut = HandleOut.create();
+      //
+      // handleIn.payload.vector  = Vector.create(input.x, input.y);
+      // handleOut.payload.vector = handleIn.payload.vector.rotate(Math.PI, anchor);
+      //
+      // segment.append(handleIn);
+      // segment.append(handleOut);
     },
 
-    // mousedown on state 'continuePen'
-    // ==> add another segment with anchor to shape/spline
-    addSegment(state, input) {   // FIX
-      const spline = aux.spline;
+    addSegment(state, input) {
+      const spline  = aux.spline;
       const segment = Segment.create();
-      const anchor = Anchor.create();
+      const anchor  = Anchor.create();
+
       anchor.payload.vector = Vector.create(input.x, input.y);
       segment.append(anchor);
       spline.append(segment);
 
       aux.segment = segment;
+      // TODO: bounds
     },
 
-    editControl(state, input) {
-      console.log('initiating edit of control point'); // fine
+    pickControl(state, input) {
+      console.log('initiating edit of control point');
       // identify the control by its id
       // ... store it
     },
 
     moveControl(state, input) {
-      console.log('supposed to be moving control point'); // fine
+      console.log('supposed to be moving control point');
       // retrieve stored control
       // ... move it
     },
@@ -3844,13 +3884,13 @@
     // activate pen tool
     { from: 'idle', type: 'click', target: 'pen', do: 'deselect', to: 'pen' },
     // adding controls
-    { from: 'pen', type: 'mousedown', target: 'content', do: 'addFirstAnchor', to: 'addingHandle' },
-    { from: 'addingHandle', type: 'mousemove', do: 'addHandle', to: 'addingHandle' },
+    { from: 'pen', type: 'mousedown', target: 'content', do: 'placeAnchor', to: 'addingHandle' },
+    { from: 'addingHandle', type: 'mousemove', do: 'addHandles', to: 'addingHandle' },
     { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
     { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
     // editing controls
-    { from: 'continuePen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
-    { from: 'pen', type: 'mousedown', target: 'control', do: 'editControl', to: 'editingControl' },
+    { from: 'continuePen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
+    { from: 'pen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
     { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
     { from: 'editingControl', type: 'mouseup', to: 'pen' },
 

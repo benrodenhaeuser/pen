@@ -145,6 +145,8 @@ Spline.memoizeBounds = function() {
 
 // SEGMENT
 
+// TODO: these custom getters should be avoided, because they do more harm than good.
+
 Object.defineProperty(Segment, 'anchor', {
   get() {
     const theAnchor = this.children.find(child => child.type === 'anchor');

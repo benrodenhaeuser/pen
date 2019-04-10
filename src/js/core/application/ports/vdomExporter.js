@@ -328,31 +328,45 @@ const vdomExporter = {
 
     for (let spline of node.children) {
       for (let segment of spline.children) {
-        vControls.push(this.control(node, diameter, segment.anchor));
-
-        if (segment.handleIn) {
-          vControls.push(this.control(node, diameter, segment.handleIn));
+        for (let control of segment.children) {
+          vControls.push(this.control(node, control, diameter));
         }
-
-        if (segment.handleOut) {
-          vControls.push(this.control(node, diameter, segment.handleOut));
-        }
+        // vControls.push(this.control(node, diameter, segment.anchor));
+        //
+        // if (segment.handleIn) {
+        //   vControls.push(this.control(node, diameter, segment.handleIn));
+        // }
+        //
+        // if (segment.handleOut) {
+        //   vControls.push(this.control(node, diameter, segment.handleOut));
+        // }
       }
     }
 
     return vControls;
   },
 
-  control(node, diameter, contr) {
+  control(node, controlNode, diameter) {
     return h('circle', {
-      'data-type': 'control','
-      'data-key' : contr.key, // or does it not have a key?
+      'data-type': 'control',
+      'data-key' : controlNode.key,
       transform  : node.transform.toString(),
       r          : diameter / 2,
-      cx         : contr.x,
-      cy         : contr.y,
+      cx         : controlNode.vector.x,
+      cy         : controlNode.vector.y,
     });
   },
+
+  // control(node, diameter, contr) {
+  //   return h('circle', {
+  //     'data-type': 'control',
+  //     'data-key' : contr.key,
+  //     transform  : node.transform.toString(),
+  //     r          : diameter / 2,
+  //     cx         : contr.x,
+  //     cy         : contr.y,
+  //   });
+  // },
 
   scale(node, length) {
     return length / (node.globalScaleFactor() * DOCUMENT_SCALE);

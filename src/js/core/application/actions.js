@@ -1,6 +1,6 @@
 import { Scene, Shape, Group     } from './domain/types.js';
 import { Spline, Segment, Anchor } from './domain/types.js';
-import { HandleIn, HandleOut,    } from './domain/types.js';
+import { HandleIn, HandleOut     } from './domain/types.js';
 
 import { Vector                  } from './domain/vector.js';
 import { Matrix                  } from './domain/matrix.js';
@@ -160,9 +160,7 @@ const actions = {
 
   // PEN TOOL (draft version)
 
-  // mousedown in state 'pen'
-  // ==> make a new shape/spline and place an anchor
-  addFirstAnchor(state, input) {       // FIXED
+  placeAnchor(state, input) {
     const shape   = Shape.create();
     const spline  = Spline.create();
     const segment = Segment.create();
@@ -177,44 +175,57 @@ const actions = {
     shape.edit();
     shape.payload.bounds = Rectangle.create(); // TODO: hack
 
-    aux.spline = spline;
+    aux.spline  = spline;
     aux.segment = segment;
   },
 
-  // mousemove in state 'addingHandle'
-  // ==> add handleIn and handleOut to existing segment
-  addHandle(state, input) {   // FIX
-    const segment = aux.segment;
-    const anchor  = segment.anchor;
+  addHandles(state, input) {
+    // we need to: create the handles when this method is called the first time around
+    // modify the handles when this method is called again time.
+    // The interface we have guarantees that, but it has a problem with the ids.
 
-    const handleIn = Vector.create(input.x, input.y);
+    const segment  = aux.segment;
+    const anchor   = segment.anchor;
+
+    const handleIn  = Vector.create(input.x, input.y);
     const handleOut = handleIn.rotate(Math.PI, anchor);
 
     segment.handleIn = handleIn;
     segment.handleOut = handleOut;
+
+    // THIS IS TOO SIMPLE:
+
+    // const handleIn = HandleIn.create();
+    // const handleOut = HandleOut.create();
+    //
+    // handleIn.payload.vector  = Vector.create(input.x, input.y);
+    // handleOut.payload.vector = handleIn.payload.vector.rotate(Math.PI, anchor);
+    //
+    // segment.append(handleIn);
+    // segment.append(handleOut);
   },
 
-  // mousedown on state 'continuePen'
-  // ==> add another segment with anchor to shape/spline
-  addSegment(state, input) {   // FIX
-    const spline = aux.spline;
+  addSegment(state, input) {
+    const spline  = aux.spline;
     const segment = Segment.create();
-    const anchor = Anchor.create();
+    const anchor  = Anchor.create();
+
     anchor.payload.vector = Vector.create(input.x, input.y);
     segment.append(anchor);
     spline.append(segment);
 
     aux.segment = segment;
+    // TODO: bounds
   },
 
-  editControl(state, input) {
-    console.log('initiating edit of control point'); // fine
+  pickControl(state, input) {
+    console.log('initiating edit of control point');
     // identify the control by its id
     // ... store it
   },
 
   moveControl(state, input) {
-    console.log('supposed to be moving control point'); // fine
+    console.log('supposed to be moving control point');
     // retrieve stored control
     // ... move it
   },
