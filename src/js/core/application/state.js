@@ -4,6 +4,8 @@ import { plainImporter } from './ports/plainImporter.js';
 import { plainExporter } from './ports/plainExporter.js';
 import { fromScratch   } from './ports/fromScratch.js';
 
+// TODO: is fromScratch the constructor we want to use generally?
+
 const State = {
   create() {
     return Object.create(State).init();
@@ -13,15 +15,12 @@ const State = {
     this.label = 'start';
     this.store = fromScratch.build();
 
-    // TODO: using hard-coded markup to generate svg
     this.store.scene.replaceWith(this.importFromSVG(markup));
 
     return this;
   },
 
   export() {
-    console.log(this.exportToPlain()); // DEBUG
-
     return {
       label: this.label,
       vDOM:  this.exportToVDOM(),

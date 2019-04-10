@@ -322,51 +322,31 @@ const vdomExporter = {
     });
   },
 
-  controls(node) {
+  controls(pathNode) {
     const vControls = [];
-    const diameter  = this.scale(node, LENGTHS_IN_PX.controlDiameter);
+    const diameter  = this.scale(pathNode, LENGTHS_IN_PX.controlDiameter);
 
-    for (let spline of node.children) {
+    for (let spline of pathNode.children) {
       for (let segment of spline.children) {
         for (let control of segment.children) {
-          vControls.push(this.control(node, control, diameter));
+          vControls.push(this.control(pathNode, control, diameter));
         }
-        // vControls.push(this.control(node, diameter, segment.anchor));
-        //
-        // if (segment.handleIn) {
-        //   vControls.push(this.control(node, diameter, segment.handleIn));
-        // }
-        //
-        // if (segment.handleOut) {
-        //   vControls.push(this.control(node, diameter, segment.handleOut));
-        // }
       }
     }
 
     return vControls;
   },
 
-  control(node, controlNode, diameter) {
+  control(pathNode, controlNode, diameter) {
     return h('circle', {
       'data-type': 'control',
       'data-key' : controlNode.key,
-      transform  : node.transform.toString(),
+      transform  : pathNode.transform.toString(),
       r          : diameter / 2,
       cx         : controlNode.vector.x,
       cy         : controlNode.vector.y,
     });
   },
-
-  // control(node, diameter, contr) {
-  //   return h('circle', {
-  //     'data-type': 'control',
-  //     'data-key' : contr.key,
-  //     transform  : node.transform.toString(),
-  //     r          : diameter / 2,
-  //     cx         : contr.x,
-  //     cy         : contr.y,
-  //   });
-  // },
 
   scale(node, length) {
     return length / (node.globalScaleFactor() * DOCUMENT_SCALE);

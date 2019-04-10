@@ -5,7 +5,6 @@ import { Matrix                  } from '../domain/matrix.js';
 import { Vector                  } from '../domain/vector.js';
 import { Rectangle               } from '../domain/rectangle.js';
 import { Class                   } from '../domain/class.js';
-
 import { SVGPathData             } from 'svg-pathdata';
 import { SVGPathDataTransformer  } from 'svg-pathdata';
 

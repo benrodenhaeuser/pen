@@ -145,65 +145,75 @@ Spline.memoizeBounds = function() {
 
 // SEGMENT
 
-// TODO: these custom getters should be avoided, because they do more harm than good.
-
 Object.defineProperty(Segment, 'anchor', {
   get() {
-    const theAnchor = this.children.find(child => child.type === 'anchor');
+    const anchorNode = this.children.find(child => child.type === 'anchor');
 
-    if (theAnchor) {
-      return theAnchor.payload.vector;
+    if (anchorNode) {
+      return anchorNode.vector;
     }
 
     return null;
+  },
+  set(value) {
+    let anchorNode;
+
+    if (this.anchor) {
+      anchorNode = this.children.find(child => child.type === 'anchor');
+    } else {
+      anchorNode = anchorNode.create();
+      this.children = this.children.concat([anchorNode]);
+    }
+
+    anchorNode.vector = value;
   },
 });
 
 Object.defineProperty(Segment, 'handleIn', {
   get() {
-    const handle = this.children.find(child => child.type === 'handleIn');
+    const handleNode = this.children.find(child => child.type === 'handleIn');
 
-    if (handle) {
-      return handle.payload.vector;
+    if (handleNode) {
+      return handleNode.vector;
     }
 
     return null;
   },
   set(value) {
-    let handle;
+    let handleNode;
 
     if (this.handleIn) {
-      handle = this.children.find(child => child.type === 'handleIn');
+      handleNode = this.children.find(child => child.type === 'handleIn');
     } else {
-      handle = HandleIn.create();
-      this.children = this.children.concat([handle]);
+      handleNode = HandleIn.create();
+      this.children = this.children.concat([handleNode]);
     }
 
-    handle.payload.vector = value;
+    handleNode.vector = value;
   },
 });
 
 Object.defineProperty(Segment, 'handleOut', {
   get() {
-    const theHandle = this.children.find(child => child.type === 'handleOut');
+    const handleNode = this.children.find(child => child.type === 'handleOut');
 
-    if (theHandle) {
-      return theHandle.payload.vector;
+    if (handleNode) {
+      return handleNode.vector;
     }
 
     return null;
   },
   set(value) {
-    let handle;
+    let handleNode;
 
     if (this.handleOut) {
-      handle = this.children.find(child => child.type === 'handleOut');
+      handleNode = this.children.find(child => child.type === 'handleOut');
     } else {
-      handle = HandleOut.create();
-      this.children = this.children.concat([handle]);
+      handleNode = HandleOut.create();
+      this.children = this.children.concat([handleNode]);
     }
 
-    handle.payload.vector = value;
+    handleNode.vector = value;
 
   },
 });

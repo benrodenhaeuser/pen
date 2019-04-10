@@ -2783,65 +2783,75 @@
 
   // SEGMENT
 
-  // TODO: these custom getters should be avoided, because they do more harm than good.
-
   Object.defineProperty(Segment, 'anchor', {
     get() {
-      const theAnchor = this.children.find(child => child.type === 'anchor');
+      const anchorNode = this.children.find(child => child.type === 'anchor');
 
-      if (theAnchor) {
-        return theAnchor.payload.vector;
+      if (anchorNode) {
+        return anchorNode.vector;
       }
 
       return null;
+    },
+    set(value) {
+      let anchorNode;
+
+      if (this.anchor) {
+        anchorNode = this.children.find(child => child.type === 'anchor');
+      } else {
+        anchorNode = anchorNode.create();
+        this.children = this.children.concat([anchorNode]);
+      }
+
+      anchorNode.vector = value;
     },
   });
 
   Object.defineProperty(Segment, 'handleIn', {
     get() {
-      const handle = this.children.find(child => child.type === 'handleIn');
+      const handleNode = this.children.find(child => child.type === 'handleIn');
 
-      if (handle) {
-        return handle.payload.vector;
+      if (handleNode) {
+        return handleNode.vector;
       }
 
       return null;
     },
     set(value) {
-      let handle;
+      let handleNode;
 
       if (this.handleIn) {
-        handle = this.children.find(child => child.type === 'handleIn');
+        handleNode = this.children.find(child => child.type === 'handleIn');
       } else {
-        handle = HandleIn.create();
-        this.children = this.children.concat([handle]);
+        handleNode = HandleIn.create();
+        this.children = this.children.concat([handleNode]);
       }
 
-      handle.payload.vector = value;
+      handleNode.vector = value;
     },
   });
 
   Object.defineProperty(Segment, 'handleOut', {
     get() {
-      const theHandle = this.children.find(child => child.type === 'handleOut');
+      const handleNode = this.children.find(child => child.type === 'handleOut');
 
-      if (theHandle) {
-        return theHandle.payload.vector;
+      if (handleNode) {
+        return handleNode.vector;
       }
 
       return null;
     },
     set(value) {
-      let handle;
+      let handleNode;
 
       if (this.handleOut) {
-        handle = this.children.find(child => child.type === 'handleOut');
+        handleNode = this.children.find(child => child.type === 'handleOut');
       } else {
-        handle = HandleOut.create();
-        this.children = this.children.concat([handle]);
+        handleNode = HandleOut.create();
+        this.children = this.children.concat([handleNode]);
       }
 
-      handle.payload.vector = value;
+      handleNode.vector = value;
 
     },
   });
@@ -3351,51 +3361,31 @@
       });
     },
 
-    controls(node) {
+    controls(pathNode) {
       const vControls = [];
-      const diameter  = this.scale(node, LENGTHS_IN_PX.controlDiameter);
+      const diameter  = this.scale(pathNode, LENGTHS_IN_PX.controlDiameter);
 
-      for (let spline of node.children) {
+      for (let spline of pathNode.children) {
         for (let segment of spline.children) {
           for (let control of segment.children) {
-            vControls.push(this.control(node, control, diameter));
+            vControls.push(this.control(pathNode, control, diameter));
           }
-          // vControls.push(this.control(node, diameter, segment.anchor));
-          //
-          // if (segment.handleIn) {
-          //   vControls.push(this.control(node, diameter, segment.handleIn));
-          // }
-          //
-          // if (segment.handleOut) {
-          //   vControls.push(this.control(node, diameter, segment.handleOut));
-          // }
         }
       }
 
       return vControls;
     },
 
-    control(node, controlNode, diameter) {
+    control(pathNode, controlNode, diameter) {
       return h('circle', {
         'data-type': 'control',
         'data-key' : controlNode.key,
-        transform  : node.transform.toString(),
+        transform  : pathNode.transform.toString(),
         r          : diameter / 2,
         cx         : controlNode.vector.x,
         cy         : controlNode.vector.y,
       });
     },
-
-    // control(node, diameter, contr) {
-    //   return h('circle', {
-    //     'data-type': 'control',
-    //     'data-key' : contr.key,
-    //     transform  : node.transform.toString(),
-    //     r          : diameter / 2,
-    //     cx         : contr.x,
-    //     cy         : contr.y,
-    //   });
-    // },
 
     scale(node, length) {
       return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
@@ -3499,7 +3489,6 @@
       const message = Message.create();
       const scene   = Scene.create();
       scene.viewBox = Rectangle.createFromDimensions(0, 0, 1000, 1000); // TODO: placeholder
-      // TODO: we need a namespace
 
       store.append(docs);
       store.append(doc);
@@ -3510,6 +3499,8 @@
     },
   };
 
+  // TODO: is fromScratch the constructor we want to use generally?
+
   const State = {
     create() {
       return Object.create(State).init();
@@ -3519,15 +3510,12 @@
       this.label = 'start';
       this.store = fromScratch.build();
 
-      // TODO: using hard-coded markup to generate svg
       this.store.scene.replaceWith(this.importFromSVG(markup));
 
       return this;
     },
 
     export() {
-      console.log(this.exportToPlain()); // DEBUG
-
       return {
         label: this.label,
         vDOM:  this.exportToVDOM(),
@@ -3978,6 +3966,12 @@
     },
   };
 
+  const svgTags = ['svg', 'g', 'path', 'rect', 'circle', 'line'];
+
+  const svgns   = 'http://www.w3.org/2000/svg';
+  const xmlns   = 'http://www.w3.org/2000/xmlns/';
+  const htmlns  = 'http://www.w3.org/1999/xhtml';
+
   const coordinates = (event) => {
     const svg = document.querySelector('svg');
     let point = svg.createSVGPoint();
@@ -3993,11 +3987,6 @@
 
   const ui = {
     bindEvents(compute) {
-      // TODO: this belongs in an init method:
-      // plus we will not have those before the first render
-      this.canvasNode  = document.querySelector('#canvas');
-      this.toolbarNode = document.querySelector('#toolbar');
-
       const eventTypes = [
         'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
       ];
@@ -4027,44 +4016,16 @@
       }
     },
 
+    // TODO: I am not sure if the `start` case shouldn't be handled elsewhere?
     sync(state) {
       if (state.label === 'start') {
-        this.mount(this.render(state.vDOM), document.body);
-        this.previousState = state;
-        return;
+        this.dom = this.createElement(state.vDOM);
+        this.mount(this.dom, document.body);
+      } else {
+        this.reconcile(this.previousVDOM, state.vDOM, this.dom);
       }
 
-      this.mount(this.render(state.vDOM), document.body);
-
-      // this is what we want to happen:
-
-      // $scene = document.querySelector('svg');
-      // const patch = diff(previousState.scene, state.scene);
-      // $scene = patch($scene);
-      // previousState = state;
-
-      // this is old stuff:
-
-      // const changes = (state1, state2) => {
-      //   const keys = Object.keys(state1);
-      //   return keys.filter(key => !equalData(state1[key], state2[key]));
-      // };
-      //
-      // const equalData = (obj1, obj2) => {
-      //   return JSON.stringify(obj1) === JSON.stringify(obj2);
-      // };
-      //
-      // if (state.label === 'start') {
-      //   this.start(state);
-      //   this.renderScene(state); // ?
-      //   return;
-      // }
-      //
-      // for (let changed of changes(state, this.previousState)) {
-      //   this.render[changed] && this.render[changed](state);
-      // }
-      //
-      // this.previousState = state; // saves the state - we can use that when making an input
+      this.previousVDOM = state.vDOM;
     },
 
     mount($node, $mountPoint) {
@@ -4072,35 +4033,16 @@
       $mountPoint.appendChild($node);
     },
 
-    // TODO: possible to merge this method and the next one?
-    render(vNode) {
-      if (vNode.tag === 'svg') {
-        return this.renderSVG(vNode);
+    createElement(vNode) {
+      let $node;
+
+      if (svgTags.includes(vNode.tag)) {
+        $node = document.createElementNS(svgns, vNode.tag);
       } else {
-        const $node = document.createElement(vNode.tag);
-
-        for (let [key, value] of Object.entries(vNode.props)) {
-          $node.setAttributeNS(null, key, value);
-        }
-
-        for (let vChild of vNode.children) {
-          if (typeof vChild === 'string') {
-            $node.textContent = vChild; // TODO: do svg nodes have this attribute?
-          } else {
-            $node.appendChild(this.render(vChild));
-          }
-        }
-
-        return $node;
+        $node = document.createElementNS(htmlns, vNode.tag);
       }
 
-    },
-
-    renderSVG(vNode) {
-      const svgns = 'http://www.w3.org/2000/svg';
-      const xmlns = 'http://www.w3.org/2000/xmlns/';
-
-      const $node = document.createElementNS(svgns, vNode.tag);
+      console.log(vNode);
 
       for (let [key, value] of Object.entries(vNode.props)) {
         if (key === 'xmlns') {
@@ -4112,92 +4054,52 @@
 
       for (let vChild of vNode.children) {
         if (typeof vChild === 'string') {
-          vNode.textContent = vChild; // TODO: does not work for svg I think
+          $node.appendChild(document.createTextNode(vChild));
         } else {
-          $node.appendChild(this.renderSVG(vChild));
+          $node.appendChild(this.createElement(vChild));
         }
       }
 
       return $node;
     },
 
-    // reconcile
+    reconcile(oldV, newV, $node) {
+      if (oldV.tag !== newV.tag) {
+        $node.replaceWith(this.createElement(newV));
+      } else {
+        this.reconcileProps(oldV, newV, $node);
+        this.reconcileChildren(oldV, newV, $node);
+      }
+    },
 
-    // render: {
-    //   scene(state) {
-    //     ui.renderScene(state);
-    //     // ui.renderInspector(state); // TODO ==> later
-    //   },
-    //
-    //   docs(state) {
-    //     ui.renderDocList(state);
-    //   },
-    //
-    //   currentInput(state) {
-    //     if (state.currentInput === 'docSaved') {
-    //       ui.renderFlash('Saved');
-    //     }
-    //
-    //     if (state.currentInput === 'edit') {
-    //       ui.renderScene(state);
-    //     }
-    //   },
-    //
-    //   clock(state) {
-    //     if (state.currentInput === 'animate') {
-    //       ui.renderAnimations(state);
-    //     }
-    //   },
-    // },
-    //
-    // // methods performing sync actions in the ui
-    // renderScene(state) {
-    //   // sceneRenderer.render(state.scene, ui.canvasNode);
-    //   mount(render(state.scene), ui.canvasNode);
-    // },
-    //
-    // renderDocList(state) {
-    //   const docList = document.querySelector('.doc-list');
-    //   docList.innerHTML = '';
-    //
-    //   for (let docID of state.docs.ids) {
-    //     const node = nodeFactory.makeDocListNode(docID);
-    //     docList.appendChild(node);
-    //     if (docID === state.docs.selectedID) {
-    //       node.classList.add('selected');
-    //     }
-    //   }
-    // },
-    //
-    // renderInspector(state) {
-    //   const findSelected = (doc) => {
-    //     for (let shape of doc.shapes) {
-    //       for (let frame of shape.frames) {
-    //         if (frame._id === doc.selected.frameID) {
-    //           return frame;
-    //         }
-    //       }
-    //     }
-    //   };
-    //
-    //   const inspector = document.querySelector('#inspector');
-    //   inspector.innerHTML = '';
-    //
-    //   const node = nodeFactory.makeInspectorNode(findSelected(state.doc));
-    //   inspector.appendChild(node);
-    // },
-    //
-    // renderFlash(message) {
-    //   const flash = document.createElement('p');
-    //   flash.innerHTML = message;
-    //   flash.class.add('flash');
-    //   window.setTimeout(() => document.body.appendChild(flash), 500);
-    //   window.setTimeout(() => flash.remove(), 1500);
-    // },
+    reconcileProps(oldV, newV, $node) {
+      for (let [key, value] of Object.entries(newV.props)) {
+        if (oldV.props[key] !== newV.props[key]) {
+          $node.setAttributeNS(null, key, value);
+        }
+      }
 
-    // not sure why we need this:
-    start(state) {
-      this.previousState = state;
+      for (let [key, value] of Object.entries(oldV.props)) {
+        if (newV.props[key] === undefined) {
+          $node.removeAttributeNS(null, key);
+        }
+      }
+    },
+
+    reconcileChildren(oldV, newV, $node) {
+      const maxLength = Math.max(oldV.children.length, newV.children.length);
+      for (let i = 0; i < maxLength; i += 1) {
+        if (typeof newV.children[i] === 'string') {
+          $node.childNodes[i].replaceWith(document.createTextNode(newV.children[i]));
+          // ^ TODO: not sure if this is correct. what if there is no $node.childNodes[i]?
+        } else if (newV.children[i] === undefined) {
+          $node.childNodes[i] && $node.childNodes[i].remove();
+        } else if (oldV.children[i] === undefined) {
+          $node.appendChild(this.createElement(newV.children[i]));
+        } else {
+          this.reconcile(oldV.children[i], newV.children[i], $node.childNodes[i]);
+        }
+      }
     },
 
     init() {
