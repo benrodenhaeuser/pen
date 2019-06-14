@@ -6,22 +6,35 @@ import { hist } from './periphery/hist.js';
 const app = {
   init() {
     core.init();
+    // ^ after this step, the core is set up with an empty canvas to draw on.
+    // but it's not wired up, and the interface has not yet been drawn.
+    // in addition, we have not dimensioned the doc properly.
 
     // wire up peripherals:
     for (let component of [ui, db]) {
       component.init();
       component.bindEvents(core.compute.bind(core));
-      core.attach(component.name, component.sync.bind(component));
+      core.attachPeripheral(component.name, component.receive.bind(component));
     }
 
-    // todo: unify this with above attach loop for ui and db:
-    // instead of setState, hist should also use compute.
-    // there should be a single interface (method) to interacting with the core 
+    // should use `compute` instead of `setState`
     hist.init();
-    hist.bindEvents(core.setState.bind(core));
-    core.attach(hist.name, hist.sync.bind(hist));
-    core.kickoff();
+    hist.bindEvents(core.setState.bind(core)); // should use `compute`
+    core.attachPeripheral(hist.name, hist.receive.bind(hist)); // this is like above
+
+    // now everything is wired up, so we can start "publishing" stuff.
+
+    core.kickoff(this.getCanvasSize());
   },
+
+  getCanvasSize() {
+    const canvasWidth   = document.documentElement.clientWidth;
+    const toolbarHeight = 35;
+    const canvasHeight  = (document.documentElement.clientHeight - toolbarHeight);
+    const canvasSize    = { width: canvasWidth, height: canvasHeight };
+
+    return canvasSize;
+  }
 };
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app));

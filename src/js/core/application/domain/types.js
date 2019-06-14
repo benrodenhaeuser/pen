@@ -36,7 +36,6 @@ Message.type    = 'message';
 Text.type       = 'text';
 Identifier.type = 'identifier';
 
-
 Scene.toVDOMNode = function() {
   return {
     tag:      'svg',

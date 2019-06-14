@@ -1,55 +1,70 @@
-const svgTags = ['svg', 'g', 'path', 'rect', 'circle', 'line'];
+const svgTags = [
+  'svg',
+  'g',
+  'path',
+  'rect',
+  'circle',
+  'line'
+];
+
+const eventTypes = [
+  'mousedown',
+  'mousemove',
+  'mouseup',
+  'click',
+  'dblclick'
+];
 
 const svgns   = 'http://www.w3.org/2000/svg';
 const xmlns   = 'http://www.w3.org/2000/xmlns/';
 const htmlns  = 'http://www.w3.org/1999/xhtml';
 
-const coordinates = (event) => {
-  const svg = document.querySelector('svg');
-  let point = svg.createSVGPoint();
-  point.x   = event.clientX;
-  point.y   = event.clientY;
-  point     = point.matrixTransform(svg.getScreenCTM().inverse());
-
-  return {
-    x: point.x,
-    y: point.y,
-  };
-};
-
 const ui = {
+  init() {
+    this.name = 'ui';
+  },
+
   bindEvents(compute) {
-    const eventTypes = [
-      'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
-    ];
-
-    const shouldBeIgnored = (event) => {
-      return [
-        'mousedown', 'mouseup', 'click'
-      ].includes(event.type) && event.detail > 1;
-    };
-
     for (let eventType of eventTypes) {
       document.addEventListener(eventType, (event) => {
         event.preventDefault();
 
-        if (shouldBeIgnored(event)) {
+        if (event.type !== 'dblclick' && event.detail > 1) {
           return;
         }
+
+        // console.log(event.target.dataset.type);
+        // console.log(event.target.dataset.key);
 
         compute({
           type:   event.type,
           target: event.target.dataset.type,
-          x:      coordinates(event).x,
-          y:      coordinates(event).y,
           key:    event.target.dataset.key,
+          x:      this.coordinates(event).x,
+          y:      this.coordinates(event).y,
         });
       });
     }
   },
 
-  // TODO: I am not sure if the `start` case shouldn't be handled elsewhere?
-  sync(state) {
+  coordinates(event) {
+    const coords = {};
+
+    const svg = document.querySelector('svg');
+
+    if (svg) {
+      let point   = svg.createSVGPoint();
+      point.x     = event.clientX;
+      point.y     = event.clientY;
+      point       = point.matrixTransform(svg.getScreenCTM().inverse());
+      coords.x    = point.x;
+      coords.y    = point.y;
+    }
+
+    return coords;
+  },
+
+  receive(state) {
     if (state.label === 'start') {
       this.dom = this.createElement(state.vDOM);
       this.mount(this.dom, document.body);
@@ -66,6 +81,10 @@ const ui = {
   },
 
   createElement(vNode) {
+    if (typeof vNode === 'string') {
+      return document.createTextNode(vNode);
+    }
+
     let $node;
 
     if (svgTags.includes(vNode.tag)) {
@@ -73,8 +92,6 @@ const ui = {
     } else {
       $node = document.createElementNS(htmlns, vNode.tag);
     }
-
-    console.log(vNode);
 
     for (let [key, value] of Object.entries(vNode.props)) {
       if (key === 'xmlns') {
@@ -85,58 +102,60 @@ const ui = {
     }
 
     for (let vChild of vNode.children) {
-      if (typeof vChild === 'string') {
-        $node.appendChild(document.createTextNode(vChild));
-      } else {
-        $node.appendChild(this.createElement(vChild));
-      }
+      $node.appendChild(this.createElement(vChild));
     }
 
     return $node;
   },
 
-  reconcile(oldV, newV, $node) {
-    if (oldV.tag !== newV.tag) {
-      $node.replaceWith(this.createElement(newV));
-    } else {
-      this.reconcileProps(oldV, newV, $node);
-      this.reconcileChildren(oldV, newV, $node);
+  reconcile(oldVNode, newVNode, $node) {
+    if (typeof newVNode === 'string') {
+      if (newVNode !== oldVNode) {
+        $node.replaceWith(this.createElement(newVNode));
+      }
+    } else if (oldVNode.tag !== newVNode.tag) {
+      $node.replaceWith(this.createElement(newVNode));
+    }
+     else {
+      this.reconcileProps(oldVNode, newVNode, $node);
+      this.reconcileChildren(oldVNode, newVNode, $node);
     }
   },
 
-  reconcileProps(oldV, newV, $node) {
-    for (let [key, value] of Object.entries(newV.props)) {
-      if (oldV.props[key] !== newV.props[key]) {
+  reconcileProps(oldVNode, newVNode, $node) {
+    for (let [key, value] of Object.entries(newVNode.props)) {
+      if (oldVNode.props[key] !== newVNode.props[key]) {
         $node.setAttributeNS(null, key, value);
       }
     }
 
-    for (let [key, value] of Object.entries(oldV.props)) {
-      if (newV.props[key] === undefined) {
+    for (let [key, value] of Object.entries(oldVNode.props)) {
+      if (newVNode.props[key] === undefined) {
         $node.removeAttributeNS(null, key);
       }
     }
   },
 
-  reconcileChildren(oldV, newV, $node) {
-    const maxLength = Math.max(oldV.children.length, newV.children.length);
+  reconcileChildren(oldVNode, newVNode, $node) {
+    const maxLength = Math.max(
+      oldVNode.children.length,
+      newVNode.children.length
+    );
+
     for (let i = 0; i < maxLength; i += 1) {
-      if (typeof newV.children[i] === 'string') {
-        $node.childNodes[i].replaceWith(document.createTextNode(newV.children[i]));
-        // ^ TODO: not sure if this is correct. what if there is no $node.childNodes[i]?
-      } else if (newV.children[i] === undefined) {
-        $node.childNodes[i] && $node.childNodes[i].remove();
-      } else if (oldV.children[i] === undefined) {
-        $node.appendChild(this.createElement(newV.children[i]));
+      const oldVChild = oldVNode.children[i];
+      const newVChild = newVNode.children[i];
+      const $child    = $node.childNodes[i];
+
+      if (newVChild === undefined) {
+        $child && $child.remove();
+      } else if (oldVChild === undefined) {
+        $node.appendChild(this.createElement(newVChild));
       } else {
-        this.reconcile(oldV.children[i], newV.children[i], $node.childNodes[i])
+        this.reconcile(oldVChild, newVChild, $child);
       }
     }
   },
-
-  init() {
-    this.name = 'ui';
-  }
 };
 
 export { ui };

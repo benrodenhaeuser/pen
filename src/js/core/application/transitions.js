@@ -27,19 +27,19 @@ const transitions = [
   // adding controls
   { from: 'pen', type: 'mousedown', target: 'content', do: 'placeAnchor', to: 'addingHandle' },
   { from: 'addingHandle', type: 'mousemove', do: 'addHandles', to: 'addingHandle' },
-  { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
+  { from: 'addingHandle', type: 'mouseup', do: 'releasePen', to: 'continuePen' },
   { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
   // editing controls
   { from: 'continuePen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
   { from: 'pen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
   { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
-  { from: 'editingControl', type: 'mouseup', to: 'pen' },
+  { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' },
 
   // OTHER
-  { type: 'click', target: 'doc-list-entry', do: 'requestDoc' },
-  { type: 'docSaved' },
+  { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
+  { type: 'docSaved', do: 'setSavedMessage' },
   { type: 'updateDocList', do: 'updateDocList' },
-  { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
+  // { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
 ];
 
@@ -59,7 +59,7 @@ transitions.get = function(state, input) {
   const match = transitions.find(isMatch);
 
   if (match) {
-    // console.log(input.target); // note that inputs from db don't have a target
+    // console.log('next state', match.to); // note that inputs from db don't have a target
     return {
       do: match.do,
       to: match.to || state.label,

@@ -1,6 +1,7 @@
 import { Scene, Shape, Group     } from './domain/types.js';
 import { Spline, Segment, Anchor } from './domain/types.js';
 import { HandleIn, HandleOut     } from './domain/types.js';
+import { Identifier, Doc         } from './domain/types.js';
 
 import { Vector                  } from './domain/vector.js';
 import { Matrix                  } from './domain/matrix.js';
@@ -9,6 +10,8 @@ import { Rectangle               } from './domain/rectangle.js';
 let aux = {};
 
 const actions = {
+  // SELECT TOOL
+
   select(state, input) {
     const target = state.scene.findDescendantByKey(input.key);
     const node = target && target.findAncestorByClass('frontier');
@@ -137,27 +140,6 @@ const actions = {
     state.scene.deeditAll();
   },
 
-  // OLD (still useful?):
-
-  createDoc(state, input) {
-    state.init(); // TODO: want a new state here!
-    state.docs.ids.push(state.doc._id);
-    state.docs.selectedID = state._id;
-  },
-
-  updateDocList(state, input) {
-    // state.docs.ids = input.data.docIDs;
-    // ^ old code, does not work anymore
-  },
-
-  requestDoc(state, input) {
-    state.docs.selectedID = input.key;
-  },
-
-  setDoc(state, input) {
-    state.init(input.data.doc);
-  },
-
   // PEN TOOL (draft version)
 
   placeAnchor(state, input) {
@@ -180,29 +162,12 @@ const actions = {
   },
 
   addHandles(state, input) {
-    // we need to: create the handles when this method is called the first time around
-    // modify the handles when this method is called again time.
-    // The interface we have guarantees that, but it has a problem with the ids.
-
-    const segment  = aux.segment;
-    const anchor   = segment.anchor;
-
-    const handleIn  = Vector.create(input.x, input.y);
-    const handleOut = handleIn.rotate(Math.PI, anchor);
-
-    segment.handleIn = handleIn;
+    const segment     = aux.segment;
+    const anchor      = segment.anchor;
+    const handleIn    = Vector.create(input.x, input.y);
+    const handleOut   = handleIn.rotate(Math.PI, anchor);
+    segment.handleIn  = handleIn;
     segment.handleOut = handleOut;
-
-    // THIS IS TOO SIMPLE:
-
-    // const handleIn = HandleIn.create();
-    // const handleOut = HandleOut.create();
-    //
-    // handleIn.payload.vector  = Vector.create(input.x, input.y);
-    // handleOut.payload.vector = handleIn.payload.vector.rotate(Math.PI, anchor);
-    //
-    // segment.append(handleIn);
-    // segment.append(handleOut);
   },
 
   addSegment(state, input) {
@@ -228,6 +193,47 @@ const actions = {
     console.log('supposed to be moving control point');
     // retrieve stored control
     // ... move it
+  },
+
+  // DB/UI INTERACTION
+
+  // from ui: user has requested fresh document
+  createDoc(state, input) {
+    state.init(); // TODO: want a new state here!
+    state.docs.ids.push(state.doc._id);
+    state.docs.selectedID = state._id;
+  },
+
+  // from db: doc list has been obtained
+  updateDocList(state, input) {
+    const identNodes = [];
+
+    for (let id of input.data.docIDs) {
+      const identNode = Identifier.create();
+      identNode.payload._id = id; // note that it's called id!
+      identNodes.push(identNode);
+    }
+
+    state.store.docs.children = identNodes;
+  },
+
+  // from ui: user has made a pick from doc list
+  requestDoc(state, input) {
+    const doc = Doc.create();
+    doc._id = input.key; // but the doc doesn't show an id in frontend?
+    state.doc.replaceWith(doc);
+  },
+
+  // from db: doc has been retrieved
+  setDoc(state, input) {
+    console.log('should set doc'); // fine
+    // convert input into a scene node and attach it to the (existing) doc node
+    // the doc node already has the correct id
+  },
+
+  // from db: doc has just been saved
+  setSavedMessage(state, input) {
+    console.log('SAVING'); // fine
   },
 };
 

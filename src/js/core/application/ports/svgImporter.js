@@ -5,8 +5,8 @@ import { Matrix                  } from '../domain/matrix.js';
 import { Vector                  } from '../domain/vector.js';
 import { Rectangle               } from '../domain/rectangle.js';
 import { Class                   } from '../domain/class.js';
-import { SVGPathData             } from 'svg-pathdata';
-import { SVGPathDataTransformer  } from 'svg-pathdata';
+import { SVGPathData             } from 'svg-pathdata'; // TODO: put this in ext folder?
+import { SVGPathDataTransformer  } from 'svg-pathdata'; // TODO: put this in ext folder?
 
 const svgImporter = {
   build(markup) {

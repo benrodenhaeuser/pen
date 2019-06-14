@@ -5,11 +5,12 @@ main {
   grid-template-columns: 165px auto 165px;
   grid-template-areas:
     "toolbar toolbar toolbar"
-    "navigator canvas inspector";
+    "canvas canvas canvas";
   position: relative;
   height: 100vh;
   width: 100vw;
   font-family: Lato;
+  font-weight: 500;
   background-color: white;
 }
 
@@ -17,14 +18,16 @@ main {
   grid-area: toolbar;
   display: flex;
   align-items: center;
-  height: 50px;
-  background-color: black;
+  height: 35px;
+  /* background-color: #f6f6f6; */
+  background-color: #f6f6f6;
+  border-bottom: 1px solid #DAD9DA;
+  /* border-top: 2px solid #DAD9DA; */
 }
 
 #navigator, #inspector {
   background-color: #f6f6f6;
   height: 100vh;
-  /* z-index: 5; */
 }
 
 #canvas {
@@ -42,7 +45,8 @@ main {
 
 #buttons {
   display: flex;
-  padding-left: 10px;
+  padding-left: 0;
+  margin-left: 0;
   margin: 0;
 }
 
@@ -50,19 +54,32 @@ main {
   display: inline;
 }
 
-#buttons li button {
+/* #buttons li button {
   margin: 0 5px;
-}
+} */
 
 #message {
   position: fixed;
-  right: 20px;
-  color: red;
+  right: 10px;
+  color: black;
+  /* background-color: #f6f6f6; */
+  background-color: transparent;
+  border: 0px;
 }
 
-.pure-button, .pure-menu-list {
-  background-color: black;
-  color: white;
+.message {
+  color: #f6f6f6;
+}
+
+.pure-button {
+  background-color: transparent;
+  color: black;
+  border-radius: 0px;
+}
+
+.pure-button:hover {
+  background-image: none;
+  background-color: #eee;
 }
 
 .pure-menu-horizontal {
@@ -70,43 +87,23 @@ main {
 }
 
 #menuLink1 {
-  color: white;
-}
-
-#menuLink1:hover {
-  color: white;
-  background-color: black;
-}
-
-.doc-list {
-  background-color: #2F4F4F;
-}
-
-.doc-list a {
-  color: white;
-}
-
-.doc-list a:hover {
   color: black;
 }
 
-li.selected a, li.selected a:hover {
-  color: red;
+.doc-list {
+  background-color: #eee;
 }
 
-.inspector-list {
-  font-size: 14px;
-  line-height: 20px;
-  list-style: none;
-  padding: 10px;
+.doc-list a {
+  color: black;
+}
+
+.doc-list a:hover {
+  background-color: #fff;
+  color: black;
 }
 
 /* SVG */
-
-svg {
-  width: 100%;
-  outline: 1px solid red;
-}
 
 [data-type="wrapper"] {
   pointer-events: bounding-box;

@@ -1,4 +1,8 @@
 const db = {
+  init() {
+    this.name = 'db';
+  },
+
   bindEvents(compute) {
     window.addEventListener('upsert', function(event) {
       const request = new XMLHttpRequest;
@@ -15,6 +19,8 @@ const db = {
     });
 
     window.addEventListener('read', function(event) {
+      console.log('about to send read request to backend');
+
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
@@ -50,58 +56,81 @@ const db = {
     });
   },
 
-  sync(state) {
+  receive(state) {
     if (state.label === 'start') {
       db.loadDocIDs();
-      this.previousState = state;
-      return;
-    }
 
-    if (['idle', 'busy'].includes(state.label)) {
-      this.crud.doc(state);
-      // for (let changed of this.changes(state, this.previousState)) {
-      //   this.crud[changed] && this.crud[changed](state);
-      // }
-      // this.previousState = state;
-    }
-  },
+      this.previousPlain = state.plain;
+    } else {
+      if (state.plain.doc._id !== this.previousPlain.doc._id) {
+        console.log('change doc case applies'); // fine
 
-  crud: {
-    docs(state) {
-      if (state.docs.selectedID !== db.previousState.docs.selectedID) {
         window.dispatchEvent(new CustomEvent(
           'read',
-          { detail: state.docs.selectedID }
+          { detail: state.plain.doc._id }
         ));
+
+        this.previousPlain = state.plain;
+      } else if (
+        ['release', 'releasePen'].includes(state.actionLabel) &&
+        this.changed(state.plain.doc, this.previousPlain.doc)
+      ) {
+        console.log('SAVE: save case applies'); 
+
+        window.dispatchEvent(new CustomEvent(
+          'upsert',
+          { detail: state.plain.doc }
+        ));
+
+        this.previousPlain = state.plain;
+      } else if (state.plain.docs !== this.previousPlain.docs) {
+        // TODO: I don't know if we actually need this.
+        // should use JSON.stringify
+        // this.previousPlain = state.plain;
       }
-    },
-
-    doc(state) {
-      // if (state.docs.selectedID === db.previousState.docs.selectedID) {
-        // window.dispatchEvent(new CustomEvent(
-        //   'upsert',
-        //   { detail: state.vDOM }
-        // ));
-      // }
-    },
+    }
   },
 
-  changes(state1, state2) {
-    const keys = Object.keys(state1);
-    return keys.filter(key => !db.equal(state1[key], state2[key]));
-  },
-
-  equal(obj1, obj2) {
-    return JSON.stringify(obj1) === JSON.stringify(obj2);
+  changed(doc, previous) {
+    return JSON.stringify(doc) !== JSON.stringify(previous);
   },
 
   loadDocIDs() {
     window.dispatchEvent(new Event('loadDocIDs'));
   },
 
-  init() {
-    this.name = 'db';
-  }
+  // crud: {
+  //  // load a new doc
+  //   docs(state) {
+  //     if (state.docs.selectedID !== db.previousState.docs.selectedID) {
+  //       window.dispatchEvent(new CustomEvent(
+  //         'read',
+  //         { detail: state.docs.selectedID }
+  //       ));
+  //     }
+  //   },
+  //
+  //   // upsert current doc
+  //   doc(state) {
+  //     if (state.docs.selectedID === db.previousState.docs.selectedID) {
+  //       window.dispatchEvent(new CustomEvent(
+  //         'upsert',
+  //         { detail: state.vDOM }
+  //       ));
+  //     }
+  //   },
+  // },
+  //
+  // changes(state1, state2) {
+  //   const keys = Object.keys(state1);
+  //   return keys.filter(key => !db.equal(state1[key], state2[key]));
+  // },
+  //
+  // equal(obj1, obj2) {
+  //   return JSON.stringify(obj1) === JSON.stringify(obj2);
+  // },
+  //
+  //
 };
 
 export { db };

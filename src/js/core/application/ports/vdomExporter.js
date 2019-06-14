@@ -4,10 +4,6 @@ const LENGTHS_IN_PX = {
   controlDiameter:  6,
 };
 
-// TODO: this value is just a placeholder, need to get
-// this value dynamically from the ui (see notes).
-const DOCUMENT_SCALE = 1;
-
 const h = (tag, props = {}, ...children) => {
   return {
     tag: tag,
@@ -22,8 +18,8 @@ const vdomExporter = {
 
     return h('main', { id: 'app' },
       comps.doc,
-      comps.navigate,
-      comps.inspect,
+      // comps.navigate,
+      // comps.inspect,
       h('div', { id: 'toolbar' },
         comps.buttons,
         comps.message
@@ -48,13 +44,18 @@ const vdomExporter = {
     });
 
     const docs = store.docs;
+
     for (let identifier of docs.children) {
       vDocs.children.push(
         h('li', {
-          'data-key': identifier.key,
-          'data-type': 'doc-identifier',
-        }, 'document name placeholder') // TODO
-      );
+          class: 'pure-menu-item',
+        },
+          h('a', {
+            class: 'pure-menu-link',
+            'data-key': identifier.payload._id,
+            'data-type': 'doc-identifier',
+          }, identifier.key)
+      ));
     }
 
     const container = h('div', { class: 'pure-menu pure-menu-horizontal' },
@@ -97,11 +98,11 @@ const vdomExporter = {
   },
 
   message(store) {
-    return h('ul', {},
+    return h('ul', { class: 'message' },
       h('li', {},
         h('button', {
           id: 'message',
-        }, 'Message')
+        }, 'message')
       )
     );
   },
@@ -109,24 +110,29 @@ const vdomExporter = {
   navigate(store) {
     return h('div', {
       id: 'navigator',
-    }); // TODO
+    });
   },
 
   inspect(store) {
     return h('div', {
       id: 'inspector',
-    }); // TODO
+    });
   },
 
   doc(store) {
     return h('div', {
       'data-type': 'doc',
       id: 'canvas',
-      key: store.doc.key,
+      'data-key': store.doc.key,
     }, this.renderScene(store));
   },
 
   renderScene(store) {
+    // case: nothing to render
+    if (store.scene === null) {
+      return '';
+    }
+
     return this.buildSceneNode(store.scene);
   },
 
@@ -348,8 +354,10 @@ const vdomExporter = {
     });
   },
 
+  // TODO: in general, we would need to take into account here
+  // the ratio between the svg viewport width and the canvas width
   scale(node, length) {
-    return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
+    return length / node.globalScaleFactor();
   },
 };
 

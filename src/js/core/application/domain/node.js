@@ -3,6 +3,7 @@ import { Vector    } from './vector.js';     // control points ('vector' prop)
 import { Rectangle } from './rectangle.js';  // bounds, viewBox
 import { Class     } from './class.js';      // class list
 import { Curve     } from './curve.js';      // Bezier curves
+import { Doc       } from './types.js';
 
 const createID = () => {
   const randomString = Math.random().toString(36).substring(2);
@@ -12,7 +13,13 @@ const createID = () => {
 
 const Node = {
   create(opts = {}) {
-    return Object.create(this).init(opts);
+    const node = Object.create(this).init(opts);
+
+    if (Object.getPrototypeOf(node) === Doc) {
+      node._id = createID();
+    }
+
+    return node;
   },
 
   init(opts) {
@@ -65,6 +72,12 @@ const Node = {
   get store() {
     return this.findAncestor(
       node => node.type === 'store'
+    );
+  },
+
+  get message() {
+    return this.root.findDescendant(
+      node => node.type === 'message'
     );
   },
 
@@ -430,12 +443,19 @@ const Node = {
   // string encoding
 
   toJSON() {
-    return {
+    const plain = {
       key: this.key,
       type: this.type,
       children: this.children,
       payload: this.payload,
     };
+
+    // TODO: awkward
+    if (this._id) {
+      plain._id = this._id;
+    }
+
+    return plain;
   },
 };
 

@@ -9,48 +9,59 @@ const core = {
     return this;
   },
 
-  attach(name, func) {
+  attachPeripheral(name, func) {
     this.periphery[name] = func;
   },
 
-  kickoff() {
-    this.publish();
+  kickoff(canvasSize) {
+    this.state.store.scene.viewBox.width  = canvasSize.width;
+    this.state.store.scene.viewBox.height = canvasSize.height;
+
+    this.publish(); // TODO: is this necessary? why?
     this.compute({ type: 'go' });
   },
 
+  // TODO:
+  // if the argument is a state, then we set the state
+  // if the argument is an input, then we use that input
+
   compute(input) {
     const transition = transitions.get(this.state, input);
-    // console.log('from: ', this.state.label, input, transition); // DEBUG
+
+    // console.log('input', input);
+    // console.log('label', this.state.label);
+    // console.log('transition', transition);
+
     if (transition) {
       this.makeTransition(input, transition);
       this.publish();
     }
   },
 
+  makeTransition(input, transition) {
+    this.state.actionLabel = transition.do;
+    this.state.label       = transition.to;
+
+    console.log(this.state.label);
+
+    const action = actions[transition.do];
+    action && action.bind(actions)(this.state, input);
+  },
+
   publish() {
     const keys = Object.keys(this.periphery);
     for (let key of keys) {
       this.periphery[key](this.state.export());
+      // ^ uses `receive`, I think
     }
   },
 
-  // TODO: not functional right now (this method is injected into "hist")
-  // (API has also changed quite a bit)
-  setState(stateData) {
-    this.state = stateData;
-    this.state.doc = doc.init(stateData.doc);
-    this.periphery['ui'] &&
-      this.periphery['ui'](JSON.parse(JSON.stringify(this.state)));
-    // ^ only UI is synced
-    // ^ TODO: call sync here, and make that method more flexible
-  },
-
-  makeTransition(input, transition) {
-    this.state.currentInput = input.type;
-    this.state.label = transition.to;
-
-    const action = actions[transition.do];
-    action && action.bind(actions)(this.state, input);
+  // TODO integrate with `compute`
+  setState(plainState) {
+    this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
+    // ^ very complicated!
+    console.log(this.state);
+    this.periphery['ui'](this.state.export());
   },
 };
 

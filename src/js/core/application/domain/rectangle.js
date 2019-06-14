@@ -57,6 +57,14 @@ const Rectangle = {
     return this.size.x;
   },
 
+  set width(value) {
+    this.size.x = value;
+  },
+
+  set height(value) {
+    this.size.y = value;
+  },
+
   get height() {
     return this.size.y;
   },

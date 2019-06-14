@@ -1,21 +1,29 @@
 const hist = {
-  bindEvents(setState) {
+  bindEvents(func) {
     window.addEventListener('popstate', (event) => {
-      setState(event.state);
+      func(event.state);
     });
   },
 
-  sync(state) {
+  // TODO: needs finetuning
+  shouldIgnore(state) {
     const ignored = [
       'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
     ];
-    const ignore  = ignored.includes(state.currentInput);
+    const ignore  = ignored.includes(state.actionLabel);
     const idle    = state.label === 'idle';
-    if (ignore || !idle) {
+    const pen     = state.label === 'pen' || state.label === 'continuePen';
+    return ignore || !(idle || pen);
+  },
+
+  receive(state) {
+
+
+    if (this.shouldIgnore(state)) {
       return;
     }
 
-    window.history.pushState(state, 'entry');
+    window.history.pushState(state.plain, 'entry');
   },
 
   init() {

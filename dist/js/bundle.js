@@ -234,6 +234,14 @@
       return this.size.x;
     },
 
+    set width(value) {
+      this.size.x = value;
+    },
+
+    set height(value) {
+      this.size.y = value;
+    },
+
     get height() {
       return this.size.y;
     },
@@ -2205,7 +2213,7 @@
     },
   };
 
-  const createID$1 = () => {
+  const createID = () => {
     const randomString = Math.random().toString(36).substring(2);
     const timestamp    = (new Date()).getTime().toString(36);
     return randomString + timestamp;
@@ -2213,7 +2221,13 @@
 
   const Node = {
     create(opts = {}) {
-      return Object.create(this).init(opts);
+      const node = Object.create(this).init(opts);
+
+      if (Object.getPrototypeOf(node) === Doc) {
+        node._id = createID();
+      }
+
+      return node;
     },
 
     init(opts) {
@@ -2225,7 +2239,7 @@
 
     defaults() {
       return {
-        key:      createID$1(),
+        key:      createID(),
         children: [],
         parent:   null,
         payload: {
@@ -2266,6 +2280,12 @@
     get store() {
       return this.findAncestor(
         node => node.type === 'store'
+      );
+    },
+
+    get message() {
+      return this.root.findDescendant(
+        node => node.type === 'message'
       );
     },
 
@@ -2631,12 +2651,19 @@
     // string encoding
 
     toJSON() {
-      return {
+      const plain = {
         key: this.key,
         type: this.type,
         children: this.children,
         payload: this.payload,
       };
+
+      // TODO: awkward
+      if (this._id) {
+        plain._id = this._id;
+      }
+
+      return plain;
     },
   };
 
@@ -2673,7 +2700,6 @@
   Message.type    = 'message';
   Text.type       = 'text';
   Identifier$1.type = 'identifier';
-
 
   Scene.toVDOMNode = function() {
     return {
@@ -3043,10 +3069,6 @@
     controlDiameter:  6,
   };
 
-  // TODO: this value is just a placeholder, need to get
-  // this value dynamically from the ui (see notes).
-  const DOCUMENT_SCALE = 1;
-
   const h = (tag, props = {}, ...children) => {
     return {
       tag: tag,
@@ -3061,8 +3083,8 @@
 
       return h('main', { id: 'app' },
         comps.doc,
-        comps.navigate,
-        comps.inspect,
+        // comps.navigate,
+        // comps.inspect,
         h('div', { id: 'toolbar' },
           comps.buttons,
           comps.message
@@ -3087,13 +3109,18 @@
       });
 
       const docs = store.docs;
+
       for (let identifier of docs.children) {
         vDocs.children.push(
           h('li', {
-            'data-key': identifier.key,
-            'data-type': 'doc-identifier',
-          }, 'document name placeholder') // TODO
-        );
+            class: 'pure-menu-item',
+          },
+            h('a', {
+              class: 'pure-menu-link',
+              'data-key': identifier.payload._id,
+              'data-type': 'doc-identifier',
+            }, identifier.key)
+        ));
       }
 
       const container = h('div', { class: 'pure-menu pure-menu-horizontal' },
@@ -3136,11 +3163,11 @@
     },
 
     message(store) {
-      return h('ul', {},
+      return h('ul', { class: 'message' },
         h('li', {},
           h('button', {
             id: 'message',
-          }, 'Message')
+          }, 'message')
         )
       );
     },
@@ -3148,24 +3175,29 @@
     navigate(store) {
       return h('div', {
         id: 'navigator',
-      }); // TODO
+      });
     },
 
     inspect(store) {
       return h('div', {
         id: 'inspector',
-      }); // TODO
+      });
     },
 
     doc(store) {
       return h('div', {
         'data-type': 'doc',
         id: 'canvas',
-        key: store.doc.key,
+        'data-key': store.doc.key,
       }, this.renderScene(store));
     },
 
     renderScene(store) {
+      // case: nothing to render
+      if (store.scene === null) {
+        return '';
+      }
+
       return this.buildSceneNode(store.scene);
     },
 
@@ -3387,8 +3419,10 @@
       });
     },
 
+    // TODO: in general, we would need to take into account here
+    // the ratio between the svg viewport width and the canvas width
     scale(node, length) {
-      return length / (node.globalScaleFactor() * DOCUMENT_SCALE);
+      return length / node.globalScaleFactor();
     },
   };
 
@@ -3476,30 +3510,15 @@
   };
 
   const plainExporter = {
-    build(node) {
-      return JSON.parse(JSON.stringify(node));
+    build(store) {
+      return {
+        doc:  JSON.parse(JSON.stringify(store.doc)),
+        docs: store.docs.children.map(child => child.payload.id),
+        // ^ TODO: note that we don't have the appropriate interface yet
+        // and question: why are we doing this?
+      };
     },
   };
-
-  const fromScratch = {
-    build() {
-      const store   = Store.create();
-      const docs    = Docs.create();
-      const doc     = Doc.create();
-      const message = Message.create();
-      const scene   = Scene.create();
-      scene.viewBox = Rectangle.createFromDimensions(0, 0, 1000, 1000); // TODO: placeholder
-
-      store.append(docs);
-      store.append(doc);
-      store.append(message);
-      doc.append(scene);
-
-      return store;
-    },
-  };
-
-  // TODO: is fromScratch the constructor we want to use generally?
 
   const State = {
     create() {
@@ -3507,20 +3526,30 @@
     },
 
     init() {
-      this.label = 'start';
-      this.store = fromScratch.build();
+      this.label       = 'start';
+      this.actionLabel = null;
+      this.store       = this.buildStore();
 
-      this.store.scene.replaceWith(this.importFromSVG(markup));
+      // this.store.scene.replaceWith(this.importFromSVG(markup));
 
       return this;
     },
 
-    export() {
-      return {
-        label: this.label,
-        vDOM:  this.exportToVDOM(),
-        plain: this.exportToPlain(),
-      };
+    buildStore() {
+      const store   = Store.create();
+      const docs    = Docs.create();
+      const doc     = Doc.create();
+      const message = Message.create();
+      const scene   = Scene.create();
+      scene.viewBox = Rectangle.createFromDimensions(0, 0, 0, 0);
+      // ^ TODO: I think we can just rely on Rectangle defaults here
+
+      store.append(docs);
+      store.append(doc);
+      store.append(message);
+      doc.append(scene);
+
+      return store;
     },
 
     get scene() {
@@ -3535,40 +3564,52 @@
       return this.store.docs;
     },
 
-    // TODO: returns Scene node – how to hook up?
+    export() {
+      return {
+        label:       this.label,
+        actionLabel: this.actionLabel,
+        vDOM:        this.exportToVDOM(),
+        plain:       this.exportToPlain(),
+      };
+    },
+
+    // returns a Scene node
     importFromPlain(object) {
       return plainImporter.build(object);
     },
 
-    // TODO: returns Scene node – how to hook up?
+    // returns a Scene node
     importFromSVG(markup) {
       return svgImporter.build(markup);
     },
 
+    // returns a Doc node and a list of ids (for docs)
     exportToVDOM() {
       return vdomExporter.renderApp(this.store);
     },
 
-    // returns plain JS representation of this.store
+    // returns a plain representation of Doc node and a list of ids (for docs)
     exportToPlain() {
       return plainExporter.build(this.store);
     },
   };
 
-  const markup = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
-
-    <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
-
-    <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
-
-    <g>
-      <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
-
-      <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
-    </g>
-  </svg>
-`;
+  // hard-coded markup
+  //
+  // const markup = `
+  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
+  //
+  //     <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
+  //
+  //     <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
+  //
+  //     <g>
+  //       <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
+  //
+  //       <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
+  //     </g>
+  //   </svg>
+  // `;
 
   // const markup = `
   //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 400"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
@@ -3623,6 +3664,8 @@
   let aux = {};
 
   const actions = {
+    // SELECT TOOL
+
     select(state, input) {
       const target = state.scene.findDescendantByKey(input.key);
       const node = target && target.findAncestorByClass('frontier');
@@ -3751,27 +3794,6 @@
       state.scene.deeditAll();
     },
 
-    // OLD (still useful?):
-
-    createDoc(state, input) {
-      state.init(); // TODO: want a new state here!
-      state.docs.ids.push(state.doc._id);
-      state.docs.selectedID = state._id;
-    },
-
-    updateDocList(state, input) {
-      // state.docs.ids = input.data.docIDs;
-      // ^ old code, does not work anymore
-    },
-
-    requestDoc(state, input) {
-      state.docs.selectedID = input.key;
-    },
-
-    setDoc(state, input) {
-      state.init(input.data.doc);
-    },
-
     // PEN TOOL (draft version)
 
     placeAnchor(state, input) {
@@ -3794,29 +3816,12 @@
     },
 
     addHandles(state, input) {
-      // we need to: create the handles when this method is called the first time around
-      // modify the handles when this method is called again time.
-      // The interface we have guarantees that, but it has a problem with the ids.
-
-      const segment  = aux.segment;
-      const anchor   = segment.anchor;
-
-      const handleIn  = Vector.create(input.x, input.y);
-      const handleOut = handleIn.rotate(Math.PI, anchor);
-
-      segment.handleIn = handleIn;
+      const segment     = aux.segment;
+      const anchor      = segment.anchor;
+      const handleIn    = Vector.create(input.x, input.y);
+      const handleOut   = handleIn.rotate(Math.PI, anchor);
+      segment.handleIn  = handleIn;
       segment.handleOut = handleOut;
-
-      // THIS IS TOO SIMPLE:
-
-      // const handleIn = HandleIn.create();
-      // const handleOut = HandleOut.create();
-      //
-      // handleIn.payload.vector  = Vector.create(input.x, input.y);
-      // handleOut.payload.vector = handleIn.payload.vector.rotate(Math.PI, anchor);
-      //
-      // segment.append(handleIn);
-      // segment.append(handleOut);
     },
 
     addSegment(state, input) {
@@ -3842,6 +3847,47 @@
       console.log('supposed to be moving control point');
       // retrieve stored control
       // ... move it
+    },
+
+    // DB/UI INTERACTION
+
+    // from ui: user has requested fresh document
+    createDoc(state, input) {
+      state.init(); // TODO: want a new state here!
+      state.docs.ids.push(state.doc._id);
+      state.docs.selectedID = state._id;
+    },
+
+    // from db: doc list has been obtained
+    updateDocList(state, input) {
+      const identNodes = [];
+
+      for (let id of input.data.docIDs) {
+        const identNode = Identifier$1.create();
+        identNode.payload._id = id; // note that it's called id!
+        identNodes.push(identNode);
+      }
+
+      state.store.docs.children = identNodes;
+    },
+
+    // from ui: user has made a pick from doc list
+    requestDoc(state, input) {
+      const doc = Doc.create();
+      doc._id = input.key; // but the doc doesn't show an id in frontend?
+      state.doc.replaceWith(doc);
+    },
+
+    // from db: doc has been retrieved
+    setDoc(state, input) {
+      console.log('should set doc'); // fine
+      // convert input into a scene node and attach it to the (existing) doc node
+      // the doc node already has the correct id
+    },
+
+    // from db: doc has just been saved
+    setSavedMessage(state, input) {
+      console.log('SAVING'); // fine
     },
   };
 
@@ -3874,19 +3920,19 @@
     // adding controls
     { from: 'pen', type: 'mousedown', target: 'content', do: 'placeAnchor', to: 'addingHandle' },
     { from: 'addingHandle', type: 'mousemove', do: 'addHandles', to: 'addingHandle' },
-    { from: 'addingHandle', type: 'mouseup', to: 'continuePen' },
+    { from: 'addingHandle', type: 'mouseup', do: 'releasePen', to: 'continuePen' },
     { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
     // editing controls
     { from: 'continuePen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
     { from: 'pen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
     { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
-    { from: 'editingControl', type: 'mouseup', to: 'pen' },
+    { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' },
 
     // OTHER
-    { type: 'click', target: 'doc-list-entry', do: 'requestDoc' },
-    { type: 'docSaved' },
+    { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
+    { type: 'docSaved', do: 'setSavedMessage' },
     { type: 'updateDocList', do: 'updateDocList' },
-    { type: 'requestDoc', do: 'requestDoc', to: 'busy' },
+    // { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
     { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
   ];
 
@@ -3906,7 +3952,7 @@
     const match = transitions.find(isMatch);
 
     if (match) {
-      // console.log(input.target); // note that inputs from db don't have a target
+      // console.log('next state', match.to); // note that inputs from db don't have a target
       return {
         do: match.do,
         to: match.to || state.label,
@@ -3921,103 +3967,129 @@
       return this;
     },
 
-    attach(name, func) {
+    attachPeripheral(name, func) {
       this.periphery[name] = func;
     },
 
-    kickoff() {
-      this.publish();
+    kickoff(canvasSize) {
+      this.state.store.scene.viewBox.width  = canvasSize.width;
+      this.state.store.scene.viewBox.height = canvasSize.height;
+
+      this.publish(); // TODO: is this necessary? why?
       this.compute({ type: 'go' });
     },
 
+    // TODO:
+    // if the argument is a state, then we set the state
+    // if the argument is an input, then we use that input
+
     compute(input) {
       const transition = transitions.get(this.state, input);
-      // console.log('from: ', this.state.label, input, transition); // DEBUG
+
+      // console.log('input', input);
+      // console.log('label', this.state.label);
+      // console.log('transition', transition);
+
       if (transition) {
         this.makeTransition(input, transition);
         this.publish();
       }
     },
 
-    publish() {
-      const keys = Object.keys(this.periphery);
-      for (let key of keys) {
-        this.periphery[key](this.state.export());
-      }
-    },
-
-    // TODO: not functional right now (this method is injected into "hist")
-    // (API has also changed quite a bit)
-    setState(stateData) {
-      this.state = stateData;
-      this.state.doc = doc.init(stateData.doc);
-      this.periphery['ui'] &&
-        this.periphery['ui'](JSON.parse(JSON.stringify(this.state)));
-      // ^ only UI is synced
-      // ^ TODO: call sync here, and make that method more flexible
-    },
-
     makeTransition(input, transition) {
-      this.state.currentInput = input.type;
-      this.state.label = transition.to;
+      this.state.actionLabel = transition.do;
+      this.state.label       = transition.to;
+
+      console.log(this.state.label);
 
       const action = actions[transition.do];
       action && action.bind(actions)(this.state, input);
     },
+
+    publish() {
+      const keys = Object.keys(this.periphery);
+      for (let key of keys) {
+        this.periphery[key](this.state.export());
+        // ^ uses `receive`, I think
+      }
+    },
+
+    // TODO integrate with `compute`
+    setState(plainState) {
+      this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
+      // ^ very complicated!
+      console.log(this.state);
+      this.periphery['ui'](this.state.export());
+    },
   };
 
-  const svgTags = ['svg', 'g', 'path', 'rect', 'circle', 'line'];
+  const svgTags = [
+    'svg',
+    'g',
+    'path',
+    'rect',
+    'circle',
+    'line'
+  ];
+
+  const eventTypes = [
+    'mousedown',
+    'mousemove',
+    'mouseup',
+    'click',
+    'dblclick'
+  ];
 
   const svgns   = 'http://www.w3.org/2000/svg';
   const xmlns   = 'http://www.w3.org/2000/xmlns/';
   const htmlns  = 'http://www.w3.org/1999/xhtml';
 
-  const coordinates = (event) => {
-    const svg = document.querySelector('svg');
-    let point = svg.createSVGPoint();
-    point.x   = event.clientX;
-    point.y   = event.clientY;
-    point     = point.matrixTransform(svg.getScreenCTM().inverse());
-
-    return {
-      x: point.x,
-      y: point.y,
-    };
-  };
-
   const ui = {
+    init() {
+      this.name = 'ui';
+    },
+
     bindEvents(compute) {
-      const eventTypes = [
-        'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'
-      ];
-
-      const shouldBeIgnored = (event) => {
-        return [
-          'mousedown', 'mouseup', 'click'
-        ].includes(event.type) && event.detail > 1;
-      };
-
       for (let eventType of eventTypes) {
         document.addEventListener(eventType, (event) => {
           event.preventDefault();
 
-          if (shouldBeIgnored(event)) {
+          if (event.type !== 'dblclick' && event.detail > 1) {
             return;
           }
+
+          // console.log(event.target.dataset.type);
+          // console.log(event.target.dataset.key);
 
           compute({
             type:   event.type,
             target: event.target.dataset.type,
-            x:      coordinates(event).x,
-            y:      coordinates(event).y,
             key:    event.target.dataset.key,
+            x:      this.coordinates(event).x,
+            y:      this.coordinates(event).y,
           });
         });
       }
     },
 
-    // TODO: I am not sure if the `start` case shouldn't be handled elsewhere?
-    sync(state) {
+    coordinates(event) {
+      const coords = {};
+
+      const svg = document.querySelector('svg');
+
+      if (svg) {
+        let point   = svg.createSVGPoint();
+        point.x     = event.clientX;
+        point.y     = event.clientY;
+        point       = point.matrixTransform(svg.getScreenCTM().inverse());
+        coords.x    = point.x;
+        coords.y    = point.y;
+      }
+
+      return coords;
+    },
+
+    receive(state) {
       if (state.label === 'start') {
         this.dom = this.createElement(state.vDOM);
         this.mount(this.dom, document.body);
@@ -4034,6 +4106,10 @@
     },
 
     createElement(vNode) {
+      if (typeof vNode === 'string') {
+        return document.createTextNode(vNode);
+      }
+
       let $node;
 
       if (svgTags.includes(vNode.tag)) {
@@ -4041,8 +4117,6 @@
       } else {
         $node = document.createElementNS(htmlns, vNode.tag);
       }
-
-      console.log(vNode);
 
       for (let [key, value] of Object.entries(vNode.props)) {
         if (key === 'xmlns') {
@@ -4053,61 +4127,67 @@
       }
 
       for (let vChild of vNode.children) {
-        if (typeof vChild === 'string') {
-          $node.appendChild(document.createTextNode(vChild));
-        } else {
-          $node.appendChild(this.createElement(vChild));
-        }
+        $node.appendChild(this.createElement(vChild));
       }
 
       return $node;
     },
 
-    reconcile(oldV, newV, $node) {
-      if (oldV.tag !== newV.tag) {
-        $node.replaceWith(this.createElement(newV));
-      } else {
-        this.reconcileProps(oldV, newV, $node);
-        this.reconcileChildren(oldV, newV, $node);
+    reconcile(oldVNode, newVNode, $node) {
+      if (typeof newVNode === 'string') {
+        if (newVNode !== oldVNode) {
+          $node.replaceWith(this.createElement(newVNode));
+        }
+      } else if (oldVNode.tag !== newVNode.tag) {
+        $node.replaceWith(this.createElement(newVNode));
+      }
+       else {
+        this.reconcileProps(oldVNode, newVNode, $node);
+        this.reconcileChildren(oldVNode, newVNode, $node);
       }
     },
 
-    reconcileProps(oldV, newV, $node) {
-      for (let [key, value] of Object.entries(newV.props)) {
-        if (oldV.props[key] !== newV.props[key]) {
+    reconcileProps(oldVNode, newVNode, $node) {
+      for (let [key, value] of Object.entries(newVNode.props)) {
+        if (oldVNode.props[key] !== newVNode.props[key]) {
           $node.setAttributeNS(null, key, value);
         }
       }
 
-      for (let [key, value] of Object.entries(oldV.props)) {
-        if (newV.props[key] === undefined) {
+      for (let [key, value] of Object.entries(oldVNode.props)) {
+        if (newVNode.props[key] === undefined) {
           $node.removeAttributeNS(null, key);
         }
       }
     },
 
-    reconcileChildren(oldV, newV, $node) {
-      const maxLength = Math.max(oldV.children.length, newV.children.length);
+    reconcileChildren(oldVNode, newVNode, $node) {
+      const maxLength = Math.max(
+        oldVNode.children.length,
+        newVNode.children.length
+      );
+
       for (let i = 0; i < maxLength; i += 1) {
-        if (typeof newV.children[i] === 'string') {
-          $node.childNodes[i].replaceWith(document.createTextNode(newV.children[i]));
-          // ^ TODO: not sure if this is correct. what if there is no $node.childNodes[i]?
-        } else if (newV.children[i] === undefined) {
-          $node.childNodes[i] && $node.childNodes[i].remove();
-        } else if (oldV.children[i] === undefined) {
-          $node.appendChild(this.createElement(newV.children[i]));
+        const oldVChild = oldVNode.children[i];
+        const newVChild = newVNode.children[i];
+        const $child    = $node.childNodes[i];
+
+        if (newVChild === undefined) {
+          $child && $child.remove();
+        } else if (oldVChild === undefined) {
+          $node.appendChild(this.createElement(newVChild));
         } else {
-          this.reconcile(oldV.children[i], newV.children[i], $node.childNodes[i]);
+          this.reconcile(oldVChild, newVChild, $child);
         }
       }
     },
-
-    init() {
-      this.name = 'ui';
-    }
   };
 
   const db = {
+    init() {
+      this.name = 'db';
+    },
+
     bindEvents(compute) {
       window.addEventListener('upsert', function(event) {
         const request = new XMLHttpRequest;
@@ -4124,6 +4204,8 @@
       });
 
       window.addEventListener('read', function(event) {
+        console.log('about to send read request to backend');
+
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
@@ -4159,78 +4241,105 @@
       });
     },
 
-    sync(state) {
+    receive(state) {
       if (state.label === 'start') {
         db.loadDocIDs();
-        this.previousState = state;
-        return;
-      }
 
-      if (['idle', 'busy'].includes(state.label)) {
-        this.crud.doc(state);
-        // for (let changed of this.changes(state, this.previousState)) {
-        //   this.crud[changed] && this.crud[changed](state);
-        // }
-        // this.previousState = state;
-      }
-    },
+        this.previousPlain = state.plain;
+      } else {
+        if (state.plain.doc._id !== this.previousPlain.doc._id) {
+          console.log('change doc case applies'); // fine
 
-    crud: {
-      docs(state) {
-        if (state.docs.selectedID !== db.previousState.docs.selectedID) {
           window.dispatchEvent(new CustomEvent(
             'read',
-            { detail: state.docs.selectedID }
+            { detail: state.plain.doc._id }
           ));
-        }
-      },
 
-      doc(state) {
-        // if (state.docs.selectedID === db.previousState.docs.selectedID) {
-          // window.dispatchEvent(new CustomEvent(
-          //   'upsert',
-          //   { detail: state.vDOM }
-          // ));
-        // }
-      },
+          this.previousPlain = state.plain;
+        } else if (
+          ['release', 'releasePen'].includes(state.actionLabel) &&
+          this.changed(state.plain.doc, this.previousPlain.doc)
+        ) {
+          console.log('SAVE: save case applies'); 
+
+          window.dispatchEvent(new CustomEvent(
+            'upsert',
+            { detail: state.plain.doc }
+          ));
+
+          this.previousPlain = state.plain;
+        } else if (state.plain.docs !== this.previousPlain.docs) ;
+      }
     },
 
-    changes(state1, state2) {
-      const keys = Object.keys(state1);
-      return keys.filter(key => !db.equal(state1[key], state2[key]));
-    },
-
-    equal(obj1, obj2) {
-      return JSON.stringify(obj1) === JSON.stringify(obj2);
+    changed(doc, previous) {
+      return JSON.stringify(doc) !== JSON.stringify(previous);
     },
 
     loadDocIDs() {
       window.dispatchEvent(new Event('loadDocIDs'));
     },
 
-    init() {
-      this.name = 'db';
-    }
+    // crud: {
+    //  // load a new doc
+    //   docs(state) {
+    //     if (state.docs.selectedID !== db.previousState.docs.selectedID) {
+    //       window.dispatchEvent(new CustomEvent(
+    //         'read',
+    //         { detail: state.docs.selectedID }
+    //       ));
+    //     }
+    //   },
+    //
+    //   // upsert current doc
+    //   doc(state) {
+    //     if (state.docs.selectedID === db.previousState.docs.selectedID) {
+    //       window.dispatchEvent(new CustomEvent(
+    //         'upsert',
+    //         { detail: state.vDOM }
+    //       ));
+    //     }
+    //   },
+    // },
+    //
+    // changes(state1, state2) {
+    //   const keys = Object.keys(state1);
+    //   return keys.filter(key => !db.equal(state1[key], state2[key]));
+    // },
+    //
+    // equal(obj1, obj2) {
+    //   return JSON.stringify(obj1) === JSON.stringify(obj2);
+    // },
+    //
+    //
   };
 
   const hist = {
-    bindEvents(setState) {
+    bindEvents(func) {
       window.addEventListener('popstate', (event) => {
-        setState(event.state);
+        func(event.state);
       });
     },
 
-    sync(state) {
+    // TODO: needs finetuning
+    shouldIgnore(state) {
       const ignored = [
         'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
       ];
-      const ignore  = ignored.includes(state.currentInput);
+      const ignore  = ignored.includes(state.actionLabel);
       const idle    = state.label === 'idle';
-      if (ignore || !idle) {
+      const pen     = state.label === 'pen' || state.label === 'continuePen';
+      return ignore || !(idle || pen);
+    },
+
+    receive(state) {
+
+
+      if (this.shouldIgnore(state)) {
         return;
       }
 
-      window.history.pushState(state, 'entry');
+      window.history.pushState(state.plain, 'entry');
     },
 
     init() {
@@ -4242,22 +4351,35 @@
   const app = {
     init() {
       core.init();
+      // ^ after this step, the core is set up with an empty canvas to draw on.
+      // but it's not wired up, and the interface has not yet been drawn.
+      // in addition, we have not dimensioned the doc properly.
 
       // wire up peripherals:
       for (let component of [ui, db]) {
         component.init();
         component.bindEvents(core.compute.bind(core));
-        core.attach(component.name, component.sync.bind(component));
+        core.attachPeripheral(component.name, component.receive.bind(component));
       }
 
-      // todo: unify this with above attach loop for ui and db:
-      // instead of setState, hist should also use compute.
-      // there should be a single interface (method) to interacting with the core 
+      // should use `compute` instead of `setState`
       hist.init();
-      hist.bindEvents(core.setState.bind(core));
-      core.attach(hist.name, hist.sync.bind(hist));
-      core.kickoff();
+      hist.bindEvents(core.setState.bind(core)); // should use `compute`
+      core.attachPeripheral(hist.name, hist.receive.bind(hist)); // this is like above
+
+      // now everything is wired up, so we can start "publishing" stuff.
+
+      core.kickoff(this.getCanvasSize());
     },
+
+    getCanvasSize() {
+      const canvasWidth   = document.documentElement.clientWidth;
+      const toolbarHeight = 35;
+      const canvasHeight  = (document.documentElement.clientHeight - toolbarHeight);
+      const canvasSize    = { width: canvasWidth, height: canvasHeight };
+
+      return canvasSize;
+    }
   };
 
   document.addEventListener('DOMContentLoaded', app.init.bind(app));
