@@ -9,7 +9,7 @@ const core = {
     return this;
   },
 
-  attachPeripheral(name, func) {
+  attach(name, func) {
     this.periphery[name] = func;
   },
 
@@ -25,7 +25,15 @@ const core = {
   // if the argument is a state, then we set the state
   // if the argument is an input, then we use that input
 
+  // how to distinguish between the two? I think both are plain objects
+
   compute(input) {
+    console.log(input);
+    if (input.doc !== undefined) { // it's a state (TODO: improve this)
+      this.setState(input);
+      return;
+    }
+
     const transition = transitions.get(this.state, input);
 
     // console.log('input', input);
@@ -58,6 +66,7 @@ const core = {
 
   // TODO integrate with `compute`
   setState(plainState) {
+
     this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
     // ^ very complicated!
     console.log(this.state);

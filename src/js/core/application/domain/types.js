@@ -22,14 +22,14 @@ HandleIn.type  = 'handleIn';
 HandleOut.type = 'handleOut';
 
 // other types of nodes
-const Store      = Object.create(Node);
+const Store      = Object.create(Node); // TODO: State
 const Doc        = Object.create(Node);
 const Docs       = Object.create(Node);
 const Message    = Object.create(Node);
 const Text       = Object.create(Node);
 const Identifier = Object.create(Node);
 
-Store.type      = 'store';
+Store.type      = 'store'; // TODO: state
 Doc.type        = 'doc';
 Docs.type       = 'docs';
 Message.type    = 'message';
@@ -226,7 +226,7 @@ export {
   Anchor,
   HandleIn,
   HandleOut,
-  Store,
+  Store, // TODO: State
   Doc,
   Docs,
   Message,
