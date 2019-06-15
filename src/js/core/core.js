@@ -28,17 +28,12 @@ const core = {
   // how to distinguish between the two? I think both are plain objects
 
   compute(input) {
-    console.log(input);
     if (input.doc !== undefined) { // it's a state (TODO: improve this)
       this.setState(input);
       return;
     }
 
     const transition = transitions.get(this.state, input);
-
-    // console.log('input', input);
-    // console.log('label', this.state.label);
-    // console.log('transition', transition);
 
     if (transition) {
       this.makeTransition(input, transition);
@@ -64,11 +59,10 @@ const core = {
     }
   },
 
-  // TODO integrate with `compute`
   setState(plainState) {
 
     this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
-    // ^ very complicated!
+    // ^ TODO: very complicated!
     console.log(this.state);
     this.periphery['ui'](this.state.export());
   },

@@ -2128,8 +2128,6 @@
           break;
         }
 
-        // console.log("L835: [F] arc found", t_s, prev_e, prev_arc.x, prev_arc.y, prev_arc.s, prev_arc.e);
-
         prev_arc = prev_arc ? prev_arc : arc;
         circles.push(prev_arc);
         t_s = prev_e;
@@ -3896,7 +3894,7 @@
   // 'from', 'target', 'to' and `do` are optional
 
   const transitions = [
-    { from: 'start', type: 'go', to: 'idle' },
+    { from: 'start', type: 'go', do: 'go', to: 'idle' },
     { from: 'idle', type: 'mousemove', do: 'focus' },
 
     // SELECT
@@ -3953,7 +3951,6 @@
     const match = transitions.find(isMatch);
 
     if (match) {
-      // console.log('next state', match.to); // note that inputs from db don't have a target
       return {
         do: match.do,
         to: match.to || state.label,
@@ -3987,17 +3984,12 @@
     // how to distinguish between the two? I think both are plain objects
 
     compute(input) {
-      console.log(input);
       if (input.doc !== undefined) { // it's a state (TODO: improve this)
         this.setState(input);
         return;
       }
 
       const transition = transitions.get(this.state, input);
-
-      // console.log('input', input);
-      // console.log('label', this.state.label);
-      // console.log('transition', transition);
 
       if (transition) {
         this.makeTransition(input, transition);
@@ -4023,11 +4015,10 @@
       }
     },
 
-    // TODO integrate with `compute`
     setState(plainState) {
 
       this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
-      // ^ very complicated!
+      // ^ TODO: very complicated!
       console.log(this.state);
       this.periphery['ui'](this.state.export());
     },
@@ -4059,7 +4050,7 @@
       this.name = 'ui';
     },
 
-    bindEvents(compute) {
+    bindEvents(func) {
       for (let eventType of eventTypes) {
         document.addEventListener(eventType, (event) => {
           event.preventDefault();
@@ -4068,10 +4059,7 @@
             return;
           }
 
-          // console.log(event.target.dataset.type);
-          // console.log(event.target.dataset.key);
-
-          compute({
+          func({
             type:   event.type,
             target: event.target.dataset.type,
             key:    event.target.dataset.key,
@@ -4198,12 +4186,12 @@
       this.name = 'db';
     },
 
-    bindEvents(compute) {
+    bindEvents(func) {
       window.addEventListener('upsert', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          compute({
+          func({
             type: 'docSaved',
             data: {},
           });
@@ -4214,12 +4202,10 @@
       });
 
       window.addEventListener('read', function(event) {
-        console.log('about to send read request to backend');
-
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          compute({
+          func({
             type: 'setDoc',
             data: {
               doc: request.response
@@ -4237,7 +4223,7 @@
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          compute({
+          func({
             type: 'updateDocList',
             data: {
               docIDs: request.response
@@ -4258,8 +4244,6 @@
         this.previousPlain = state.plain;
       } else {
         if (state.plain.doc._id !== this.previousPlain.doc._id) {
-          console.log('change doc case applies'); // fine
-
           window.dispatchEvent(new CustomEvent(
             'read',
             { detail: state.plain.doc._id }
@@ -4270,7 +4254,7 @@
           ['release', 'releasePen'].includes(state.actionLabel) &&
           this.changed(state.plain.doc, this.previousPlain.doc)
         ) {
-          console.log('SAVE: save case applies'); 
+          console.log('SAVE: save case applies');
 
           window.dispatchEvent(new CustomEvent(
             'upsert',
@@ -4289,58 +4273,18 @@
     loadDocIDs() {
       window.dispatchEvent(new Event('loadDocIDs'));
     },
-
-    // crud: {
-    //  // load a new doc
-    //   docs(state) {
-    //     if (state.docs.selectedID !== db.previousState.docs.selectedID) {
-    //       window.dispatchEvent(new CustomEvent(
-    //         'read',
-    //         { detail: state.docs.selectedID }
-    //       ));
-    //     }
-    //   },
-    //
-    //   // upsert current doc
-    //   doc(state) {
-    //     if (state.docs.selectedID === db.previousState.docs.selectedID) {
-    //       window.dispatchEvent(new CustomEvent(
-    //         'upsert',
-    //         { detail: state.vDOM }
-    //       ));
-    //     }
-    //   },
-    // },
-    //
-    // changes(state1, state2) {
-    //   const keys = Object.keys(state1);
-    //   return keys.filter(key => !db.equal(state1[key], state2[key]));
-    // },
-    //
-    // equal(obj1, obj2) {
-    //   return JSON.stringify(obj1) === JSON.stringify(obj2);
-    // },
-    //
-    //
   };
 
   const hist = {
-    bindEvents(func) {
-      window.addEventListener('popstate', (event) => {
-        console.log('firing popstate');
-        func(event.state);
-      });
+    init() {
+      this.name = 'hist';
+      return this;
     },
 
-    // TODO: needs more systematic analysis
-    relevant(state) {
-      const ignored = [
-        'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
-      ]; // TODO: need to check this
-      const ignore  = ignored.includes(state.actionLabel);
-      const idle    = state.label === 'idle';
-      const pen     = state.label === 'pen' || state.label === 'continuePen';
-      return !ignore && (idle || pen);
+    bindEvents(func) {
+      window.addEventListener('popstate', (event) => {
+        func(event.state);
+      });
     },
 
     receive(state) {
@@ -4349,10 +4293,13 @@
       }
     },
 
-    init() {
-      this.name = 'hist';
-      return this;
-    }
+    relevant(state) {
+      const release    = state.actionLabel === 'release' ;
+      const releasePen = state.actionLabel === "releasePen";
+      const go         = state.actionLabel === 'go';
+
+      return release || releasePen || go;
+    },
   };
 
   const peripherals = [ui, db, hist];

@@ -2,7 +2,7 @@
 // 'from', 'target', 'to' and `do` are optional
 
 const transitions = [
-  { from: 'start', type: 'go', to: 'idle' },
+  { from: 'start', type: 'go', do: 'go', to: 'idle' },
   { from: 'idle', type: 'mousemove', do: 'focus' },
 
   // SELECT
@@ -59,7 +59,6 @@ transitions.get = function(state, input) {
   const match = transitions.find(isMatch);
 
   if (match) {
-    // console.log('next state', match.to); // note that inputs from db don't have a target
     return {
       do: match.do,
       to: match.to || state.label,

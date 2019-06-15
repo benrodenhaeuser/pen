@@ -24,7 +24,7 @@ const ui = {
     this.name = 'ui';
   },
 
-  bindEvents(compute) {
+  bindEvents(func) {
     for (let eventType of eventTypes) {
       document.addEventListener(eventType, (event) => {
         event.preventDefault();
@@ -33,10 +33,7 @@ const ui = {
           return;
         }
 
-        // console.log(event.target.dataset.type);
-        // console.log(event.target.dataset.key);
-
-        compute({
+        func({
           type:   event.type,
           target: event.target.dataset.type,
           key:    event.target.dataset.key,

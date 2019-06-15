@@ -1,20 +1,13 @@
 const hist = {
-  bindEvents(func) {
-    window.addEventListener('popstate', (event) => {
-      console.log('firing popstate');
-      func(event.state);
-    });
+  init() {
+    this.name = 'hist';
+    return this;
   },
 
-  // TODO: needs more systematic analysis
-  relevant(state) {
-    const ignored = [
-      'docSaved', 'edit', 'createDoc', 'createShape', 'movePointer'
-    ]; // TODO: need to check this
-    const ignore  = ignored.includes(state.actionLabel);
-    const idle    = state.label === 'idle';
-    const pen     = state.label === 'pen' || state.label === 'continuePen';
-    return !ignore && (idle || pen);
+  bindEvents(func) {
+    window.addEventListener('popstate', (event) => {
+      func(event.state);
+    });
   },
 
   receive(state) {
@@ -23,10 +16,13 @@ const hist = {
     }
   },
 
-  init() {
-    this.name = 'hist';
-    return this;
-  }
+  relevant(state) {
+    const release    = state.actionLabel === 'release' ;
+    const releasePen = state.actionLabel === "releasePen";
+    const go         = state.actionLabel === 'go';
+
+    return release || releasePen || go;
+  },
 };
 
 export { hist };
