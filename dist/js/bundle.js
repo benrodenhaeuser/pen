@@ -3837,13 +3837,13 @@
     },
 
     pickControl(state, input) {
-      console.log('initiating edit of control point');
+      // initiate edit of control point:
       // identify the control by its id
       // ... store it
     },
 
     moveControl(state, input) {
-      console.log('supposed to be moving control point');
+      // move control point:
       // retrieve stored control
       // ... move it
     },
@@ -3879,14 +3879,15 @@
 
     // from db: doc has been retrieved
     setDoc(state, input) {
-      console.log('should set doc'); // fine
+      // should set doc:
       // convert input into a scene node and attach it to the (existing) doc node
-      // the doc node already has the correct id
+      // the doc node already has the correct id (right?)
     },
 
     // from db: doc has just been saved
     setSavedMessage(state, input) {
-      console.log('SAVING'); // fine
+      // console.log('SAVING');
+      // ... this should trigger user output
     },
   };
 
@@ -3977,12 +3978,6 @@
       this.compute({ type: 'go' });
     },
 
-    // TODO:
-    // if the argument is a state, then we set the state
-    // if the argument is an input, then we use that input
-
-    // how to distinguish between the two? I think both are plain objects
-
     compute(input) {
       if (input.doc !== undefined) { // it's a state (TODO: improve this)
         this.setState(input);
@@ -4001,8 +3996,6 @@
       this.state.actionLabel = transition.do;
       this.state.label       = transition.to;
 
-      console.log(this.state.label);
-
       const action = actions[transition.do];
       action && action.bind(actions)(this.state, input);
     },
@@ -4019,7 +4012,7 @@
 
       this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
       // ^ TODO: very complicated!
-      
+
       this.periphery['ui'](this.state.export());
     },
   };
@@ -4165,23 +4158,23 @@
         newVNode.children.length
       );
 
-      let index = 0;
+      let $index = 0;
 
-      for (let i = 0; i < maxLength; i += 1) {
-        const oldVChild = oldVNode.children[i];
-        const newVChild = newVNode.children[i];
-        const $child    = $node.childNodes[index];
+      for (let vIndex = 0; vIndex < maxLength; vIndex += 1) {
+        const oldVChild = oldVNode.children[vIndex];
+        const newVChild = newVNode.children[vIndex];
+        const $child    = $node.childNodes[$index];
 
         if (newVChild === undefined) {
           $child && $child.remove();
-          index -= 1;
+          $index -= 1;
         } else if (oldVChild === undefined) {
           $node.appendChild(this.createElement(newVChild));
         } else {
           this.reconcile(oldVChild, newVChild, $child);
         }
 
-        index += 1;
+        $index += 1;
       }
     },
   };
@@ -4259,8 +4252,6 @@
           ['release', 'releasePen'].includes(state.actionLabel) &&
           this.changed(state.plain.doc, this.previousPlain.doc)
         ) {
-          console.log('SAVE: save case applies');
-
           window.dispatchEvent(new CustomEvent(
             'upsert',
             { detail: state.plain.doc }

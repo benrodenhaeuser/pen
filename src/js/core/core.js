@@ -21,12 +21,6 @@ const core = {
     this.compute({ type: 'go' });
   },
 
-  // TODO:
-  // if the argument is a state, then we set the state
-  // if the argument is an input, then we use that input
-
-  // how to distinguish between the two? I think both are plain objects
-
   compute(input) {
     if (input.doc !== undefined) { // it's a state (TODO: improve this)
       this.setState(input);
@@ -45,8 +39,6 @@ const core = {
     this.state.actionLabel = transition.do;
     this.state.label       = transition.to;
 
-    console.log(this.state.label);
-
     const action = actions[transition.do];
     action && action.bind(actions)(this.state, input);
   },
@@ -63,7 +55,7 @@ const core = {
 
     this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
     // ^ TODO: very complicated!
-    
+
     this.periphery['ui'](this.state.export());
   },
 };

@@ -71,8 +71,6 @@ const db = {
         ['release', 'releasePen'].includes(state.actionLabel) &&
         this.changed(state.plain.doc, this.previousPlain.doc)
       ) {
-        console.log('SAVE: save case applies');
-
         window.dispatchEvent(new CustomEvent(
           'upsert',
           { detail: state.plain.doc }

@@ -184,13 +184,13 @@ const actions = {
   },
 
   pickControl(state, input) {
-    console.log('initiating edit of control point');
+    // initiate edit of control point:
     // identify the control by its id
     // ... store it
   },
 
   moveControl(state, input) {
-    console.log('supposed to be moving control point');
+    // move control point:
     // retrieve stored control
     // ... move it
   },
@@ -226,14 +226,15 @@ const actions = {
 
   // from db: doc has been retrieved
   setDoc(state, input) {
-    console.log('should set doc'); // fine
+    // should set doc:
     // convert input into a scene node and attach it to the (existing) doc node
-    // the doc node already has the correct id
+    // the doc node already has the correct id (right?)
   },
 
   // from db: doc has just been saved
   setSavedMessage(state, input) {
-    console.log('SAVING'); // fine
+    // console.log('SAVING');
+    // ... this should trigger user output
   },
 };
 

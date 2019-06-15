@@ -139,23 +139,23 @@ const ui = {
       newVNode.children.length
     );
 
-    let index = 0;
+    let $index = 0;
 
-    for (let i = 0; i < maxLength; i += 1) {
-      const oldVChild = oldVNode.children[i];
-      const newVChild = newVNode.children[i];
-      const $child    = $node.childNodes[index];
+    for (let vIndex = 0; vIndex < maxLength; vIndex += 1) {
+      const oldVChild = oldVNode.children[vIndex];
+      const newVChild = newVNode.children[vIndex];
+      const $child    = $node.childNodes[$index];
 
       if (newVChild === undefined) {
         $child && $child.remove();
-        index -= 1;
+        $index -= 1;
       } else if (oldVChild === undefined) {
         $node.appendChild(this.createElement(newVChild));
       } else {
         this.reconcile(oldVChild, newVChild, $child);
       }
 
-      index += 1;
+      $index += 1;
     }
   },
 };
