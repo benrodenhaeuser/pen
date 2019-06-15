@@ -63,7 +63,7 @@ const core = {
 
     this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
     // ^ TODO: very complicated!
-    console.log(this.state);
+    
     this.periphery['ui'](this.state.export());
   },
 };

@@ -308,7 +308,7 @@ const vdomExporter = {
     for (let spline of node.children) {
       for (let segment of spline.children) {
         for (let handle of ['handleIn', 'handleOut']) {
-          if (segment[handle]) {
+          if (segment[handle] !== null) {
             vConnections.push(this.connection(node, segment.anchor, segment[handle]));
           }
         }

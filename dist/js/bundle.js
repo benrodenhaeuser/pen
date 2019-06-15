@@ -3371,7 +3371,7 @@
       for (let spline of node.children) {
         for (let segment of spline.children) {
           for (let handle of ['handleIn', 'handleOut']) {
-            if (segment[handle]) {
+            if (segment[handle] !== null) {
               vConnections.push(this.connection(node, segment.anchor, segment[handle]));
             }
           }
@@ -4019,7 +4019,7 @@
 
       this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
       // ^ TODO: very complicated!
-      console.log(this.state);
+      
       this.periphery['ui'](this.state.export());
     },
   };
@@ -4165,18 +4165,23 @@
         newVNode.children.length
       );
 
+      let index = 0;
+
       for (let i = 0; i < maxLength; i += 1) {
         const oldVChild = oldVNode.children[i];
         const newVChild = newVNode.children[i];
-        const $child    = $node.childNodes[i];
+        const $child    = $node.childNodes[index];
 
         if (newVChild === undefined) {
           $child && $child.remove();
+          index -= 1;
         } else if (oldVChild === undefined) {
           $node.appendChild(this.createElement(newVChild));
         } else {
           this.reconcile(oldVChild, newVChild, $child);
         }
+
+        index += 1;
       }
     },
   };
