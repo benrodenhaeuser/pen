@@ -199,6 +199,7 @@ const actions = {
 
   // from ui: user has requested fresh document
   createDoc(state, input) {
+    console.log('createDoc action called');
     state.init(); // TODO: want a new state here!
     state.docs.ids.push(state.doc._id);
     state.docs.selectedID = state._id;
@@ -219,16 +220,21 @@ const actions = {
 
   // from ui: user has made a pick from doc list
   requestDoc(state, input) {
+    console.log('doc has been requested');
+
+    // TODO: not sure if this is the best way to do this
+    // what if there is no network access? then we are screwed!
+    // we shouldn't mess with the current doc unless we have fresh one!
+    // the following is a cue for the db that it needs to load a fresh document
+    // (because the id has changed)
     const doc = Doc.create();
-    doc._id = input.key; // but the doc doesn't show an id in frontend?
+    doc._id = input.key;
     state.doc.replaceWith(doc);
   },
 
   // from db: doc has been retrieved
   setDoc(state, input) {
-    // should set doc:
-    // convert input into a scene node and attach it to the (existing) doc node
-    // the doc node already has the correct id (right?)
+    state.doc.replaceWith(state.importFromPlain(input.data.doc));
   },
 
   // from db: doc has just been saved

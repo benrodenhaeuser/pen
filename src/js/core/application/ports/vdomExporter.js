@@ -18,8 +18,8 @@ const vdomExporter = {
 
     return h('main', { id: 'app' },
       comps.doc,
-      // comps.navigate,
-      // comps.inspect,
+      // comps.navigate, // we don't have a navigator atm
+      // comps.inspect,  // we don't have an inspector atm
       h('div', { id: 'toolbar' },
         comps.buttons,
         comps.message

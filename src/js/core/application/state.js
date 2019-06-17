@@ -60,7 +60,7 @@ const State = {
     };
   },
 
-  // returns a Scene node
+  // returns a node (node type may vary depending on object)
   importFromPlain(object) {
     return plainImporter.build(object);
   },

@@ -3081,8 +3081,8 @@
 
       return h('main', { id: 'app' },
         comps.doc,
-        // comps.navigate,
-        // comps.inspect,
+        // comps.navigate, // we don't have a navigator atm
+        // comps.inspect,  // we don't have an inspector atm
         h('div', { id: 'toolbar' },
           comps.buttons,
           comps.message
@@ -3572,7 +3572,7 @@
       };
     },
 
-    // returns a Scene node
+    // returns a node (node type may vary depending on object)
     importFromPlain(object) {
       return plainImporter.build(object);
     },
@@ -3852,6 +3852,7 @@
 
     // from ui: user has requested fresh document
     createDoc(state, input) {
+      console.log('createDoc action called');
       state.init(); // TODO: want a new state here!
       state.docs.ids.push(state.doc._id);
       state.docs.selectedID = state._id;
@@ -3872,16 +3873,21 @@
 
     // from ui: user has made a pick from doc list
     requestDoc(state, input) {
+      console.log('doc has been requested');
+
+      // TODO: not sure if this is the best way to do this
+      // what if there is no network access? then we are screwed!
+      // we shouldn't mess with the current doc unless we have fresh one!
+      // the following is a cue for the db that it needs to load a fresh document
+      // (because the id has changed)
       const doc = Doc.create();
-      doc._id = input.key; // but the doc doesn't show an id in frontend?
+      doc._id = input.key;
       state.doc.replaceWith(doc);
     },
 
     // from db: doc has been retrieved
     setDoc(state, input) {
-      // should set doc:
-      // convert input into a scene node and attach it to the (existing) doc node
-      // the doc node already has the correct id (right?)
+      state.doc.replaceWith(state.importFromPlain(input.data.doc));
     },
 
     // from db: doc has just been saved
@@ -3906,13 +3912,13 @@
     { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
     { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
     { from: 'shifting', type: 'mousemove', do: 'shift' },
-    { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' }, // RELEASE
+    { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
     { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
     { from: 'rotating', type: 'mousemove', do: 'rotate' },
-    { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },  // RELEASE
+    { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },
     { from: 'idle', type: 'mousedown', target: 'corner', do: 'initTransform', to: 'scaling' },
     { from: 'scaling', type: 'mousemove', do: 'scale' },
-    { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' }, // RELEASE
+    { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
 
     // PEN
     // activate pen tool
@@ -3932,7 +3938,7 @@
     { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
     { type: 'docSaved', do: 'setSavedMessage' },
     { type: 'updateDocList', do: 'updateDocList' },
-    // { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
+    { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
     { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
   ];
 
@@ -4004,15 +4010,14 @@
       const keys = Object.keys(this.periphery);
       for (let key of keys) {
         this.periphery[key](this.state.export());
-        // ^ uses `receive`, I think
       }
     },
 
     setState(plainState) {
-
       this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
-      // ^ TODO: very complicated!
+      // ^ TODO: kind of complicated!
 
+      // TODO: we only update ui below. would it be possible to just publish, like elsewhere? 
       this.periphery['ui'](this.state.export());
     },
   };
@@ -4203,6 +4208,8 @@
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
+          console.log('received document');
+
           func({
             type: 'setDoc',
             data: {
@@ -4215,6 +4222,7 @@
         request.responseType = 'json';
         request.send(JSON.stringify(event.detail));
         // ^ TODO why does the GET request have a payload?
+        //   this looks like a mistake
       });
 
       window.addEventListener('loadDocIDs', function(event) {
@@ -4235,13 +4243,18 @@
       });
     },
 
+    // TODO: clean up this method
     receive(state) {
       if (state.label === 'start') {
+        // if the label is start, we load the doc ids
         db.loadDocIDs();
 
         this.previousPlain = state.plain;
       } else {
         if (state.plain.doc._id !== this.previousPlain.doc._id) {
+          // the doc id has changed – should load corresponding doc
+          // TODO: we should replace this with a different condition that captures the
+          // user's desire to load a document -- but how?
           window.dispatchEvent(new CustomEvent(
             'read',
             { detail: state.plain.doc._id }
@@ -4249,7 +4262,8 @@
 
           this.previousPlain = state.plain;
         } else if (
-          ['release', 'releasePen'].includes(state.actionLabel) &&
+          // the document "itself" has changed, and the state is relevant, i.e., should save
+          this.isRelevant(state) &&
           this.changed(state.plain.doc, this.previousPlain.doc)
         ) {
           window.dispatchEvent(new CustomEvent(
@@ -4260,6 +4274,13 @@
           this.previousPlain = state.plain;
         } else if (state.plain.docs !== this.previousPlain.docs) ;
       }
+    },
+
+    isRelevant(state) {
+      const release    = state.actionLabel === 'release' ;
+      const releasePen = state.actionLabel === "releasePen";
+
+      return release || releasePen;
     },
 
     changed(doc, previous) {
@@ -4284,12 +4305,12 @@
     },
 
     receive(state) {
-      if (this.relevant(state)) {
+      if (this.isRelevant(state)) {
         window.history.pushState(state.plain, 'entry');
       }
     },
 
-    relevant(state) {
+    isRelevant(state) {
       const release    = state.actionLabel === 'release' ;
       const releasePen = state.actionLabel === "releasePen";
       const go         = state.actionLabel === 'go';

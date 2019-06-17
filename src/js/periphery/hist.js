@@ -11,12 +11,12 @@ const hist = {
   },
 
   receive(state) {
-    if (this.relevant(state)) {
+    if (this.isRelevant(state)) {
       window.history.pushState(state.plain, 'entry')
     }
   },
 
-  relevant(state) {
+  isRelevant(state) {
     const release    = state.actionLabel === 'release' ;
     const releasePen = state.actionLabel === "releasePen";
     const go         = state.actionLabel === 'go';

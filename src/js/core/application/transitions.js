@@ -13,13 +13,13 @@ const transitions = [
   { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
   { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
   { from: 'shifting', type: 'mousemove', do: 'shift' },
-  { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' }, // RELEASE
+  { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
   { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
   { from: 'rotating', type: 'mousemove', do: 'rotate' },
-  { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },  // RELEASE
+  { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },
   { from: 'idle', type: 'mousedown', target: 'corner', do: 'initTransform', to: 'scaling' },
   { from: 'scaling', type: 'mousemove', do: 'scale' },
-  { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' }, // RELEASE
+  { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
 
   // PEN
   // activate pen tool
@@ -39,7 +39,7 @@ const transitions = [
   { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
   { type: 'docSaved', do: 'setSavedMessage' },
   { type: 'updateDocList', do: 'updateDocList' },
-  // { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
+  { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
 ];
 

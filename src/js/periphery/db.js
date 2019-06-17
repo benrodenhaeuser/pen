@@ -22,6 +22,8 @@ const db = {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
+        console.log('received document');
+
         func({
           type: 'setDoc',
           data: {
@@ -34,6 +36,7 @@ const db = {
       request.responseType = 'json';
       request.send(JSON.stringify(event.detail));
       // ^ TODO why does the GET request have a payload?
+      //   this looks like a mistake
     });
 
     window.addEventListener('loadDocIDs', function(event) {
@@ -54,13 +57,18 @@ const db = {
     });
   },
 
+  // TODO: clean up this method
   receive(state) {
     if (state.label === 'start') {
+      // if the label is start, we load the doc ids
       db.loadDocIDs();
 
       this.previousPlain = state.plain;
     } else {
       if (state.plain.doc._id !== this.previousPlain.doc._id) {
+        // the doc id has changed – should load corresponding doc
+        // TODO: we should replace this with a different condition that captures the
+        // user's desire to load a document -- but how?
         window.dispatchEvent(new CustomEvent(
           'read',
           { detail: state.plain.doc._id }
@@ -68,7 +76,8 @@ const db = {
 
         this.previousPlain = state.plain;
       } else if (
-        ['release', 'releasePen'].includes(state.actionLabel) &&
+        // the document "itself" has changed, and the state is relevant, i.e., should save
+        this.isRelevant(state) &&
         this.changed(state.plain.doc, this.previousPlain.doc)
       ) {
         window.dispatchEvent(new CustomEvent(
@@ -78,11 +87,15 @@ const db = {
 
         this.previousPlain = state.plain;
       } else if (state.plain.docs !== this.previousPlain.docs) {
-        // TODO: I don't know if we actually need this?
-        // should use JSON.stringify
-        // this.previousPlain = state.plain;
       }
     }
+  },
+
+  isRelevant(state) {
+    const release    = state.actionLabel === 'release' ;
+    const releasePen = state.actionLabel === "releasePen";
+
+    return release || releasePen;
   },
 
   changed(doc, previous) {

@@ -47,15 +47,14 @@ const core = {
     const keys = Object.keys(this.periphery);
     for (let key of keys) {
       this.periphery[key](this.state.export());
-      // ^ uses `receive`, I think
     }
   },
 
   setState(plainState) {
-
     this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
-    // ^ TODO: very complicated!
+    // ^ TODO: kind of complicated!
 
+    // TODO: we only update ui below. would it be possible to just publish, like elsewhere? 
     this.periphery['ui'](this.state.export());
   },
 };
