@@ -9,7 +9,7 @@ const transitions = [
   // activate select tool
   { type: 'click', target: 'select', do: 'deedit', to: 'idle' },
 
-  // transform actions
+  // transform updates
   { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
   { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
   { from: 'shifting', type: 'mousemove', do: 'shift' },

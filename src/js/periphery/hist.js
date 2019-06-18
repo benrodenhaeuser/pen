@@ -16,15 +16,15 @@ const hist = {
   },
 
   receive(state) {
-    if (this.isRelevant(state)) {
-      window.history.pushState(state.plain, 'entry')
+    if (this.isRelevant(state.update)) {
+      window.history.pushState(state.plain, 'entry');
     }
   },
 
-  isRelevant(state) {
-    const release    = state.actionLabel === 'release' ;
-    const releasePen = state.actionLabel === "releasePen";
-    const go         = state.actionLabel === 'go';
+  isRelevant(update) {
+    const release    = update === 'release' ;
+    const releasePen = update === "releasePen";
+    const go         = update === 'go';
 
     return release || releasePen || go;
   },

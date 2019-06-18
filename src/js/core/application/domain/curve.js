@@ -27,7 +27,7 @@ const Curve = {
     return this;
   },
 
-  // NOTE: the order of points is crucial. It's the order required
+  // NOTE: the order of points is crucial. It is required
   // by the Bezier constructor of the Pomax Bezier library!
   points() {
     const pts = [this.anchor1, this.handle1, this.handle2, this.anchor2]

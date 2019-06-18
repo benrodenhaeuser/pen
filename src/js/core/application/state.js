@@ -12,10 +12,10 @@ const State = {
   },
 
   init() {
-    this.label       = 'start';
-    this.actionLabel = '';
-    this.input       = {};
-    this.store       = this.buildStore();
+    this.label  = 'start';
+    this.input  = {};
+    this.update = '';
+    this.store  = this.buildStore();
 
     this.store.scene.replaceWith(this.importFromSVG(markup));
 
@@ -25,19 +25,28 @@ const State = {
   buildStore() {
     const store   = Store.create();
     const docs    = Docs.create();
-    const doc     = Doc.create();
     const message = Message.create();
-    const scene   = Scene.create();
-
-    scene.viewBox = Rectangle.createFromDimensions(0, 0, 0, 0);
-    // ^ TODO: I think we can just rely on Rectangle defaults here
+    const doc     = this.buildDoc();
 
     store.append(docs);
     store.append(doc);
     store.append(message);
-    doc.append(scene);
 
     return store;
+  },
+
+  buildDoc() {
+    const doc   = Doc.create();
+    const scene = Scene.create();
+
+    const width = this.width || 0;
+    const height = this.height || 0;
+
+    scene.viewBox = Rectangle.createFromDimensions(0, 0, width, height);
+
+    doc.append(scene);
+
+    return doc;
   },
 
   get scene() {
@@ -54,11 +63,11 @@ const State = {
 
   export() {
     return {
-      label:       this.label,
-      actionLabel: this.actionLabel,
-      input:       this.input,
-      vDOM:        this.exportToVDOM(),
-      plain:       this.exportToPlain(),
+      label:  this.label,
+      input:  this.input,
+      update: this.update,
+      vDOM:   this.exportToVDOM(),
+      plain:  this.exportToPlain(),
     };
   },
 

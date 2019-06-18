@@ -54,14 +54,18 @@ const db = {
   },
 
   receive(state) {
-    if (state.actionLabel === 'go') {
-      window.dispatchEvent(new Event('loadDocIDs'));
-    } else if (state.actionLabel === 'requestDoc') {
-      window.dispatchEvent(new CustomEvent('readDoc', { detail: state.input.key }));
-      // ^ uses id. but we don't want to set it like this!
-      //   this is why we need to store input in state, I think.
-    } else if (state.actionLabel === 'release' || state.actionLabel === 'releasePen') {
-      window.dispatchEvent(new CustomEvent('upsertDoc', { detail: state.plain.doc }));
+    if (state.update === 'go') {
+      window.dispatchEvent(
+        new Event('loadDocIDs')
+      );
+    } else if (state.update === 'requestDoc') {
+      window.dispatchEvent(
+        new CustomEvent('readDoc', { detail: state.input.key })
+      );
+    } else if (['release', 'releasePen'].includes(state.update)) {
+      window.dispatchEvent(
+        new CustomEvent('upsertDoc', { detail: state.plain.doc })
+      );
     }
 
     this.previous = state;

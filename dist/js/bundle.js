@@ -2161,7 +2161,7 @@
       return this;
     },
 
-    // NOTE: the order of points is crucial. It's the order required
+    // NOTE: the order of points is crucial. It is required
     // by the Bezier constructor of the Pomax Bezier library!
     points() {
       const pts = [this.anchor1, this.handle1, this.handle2, this.anchor2]
@@ -3524,10 +3524,10 @@
     },
 
     init() {
-      this.label       = 'start';
-      this.actionLabel = '';
-      this.input       = {};
-      this.store       = this.buildStore();
+      this.label  = 'start';
+      this.input  = {};
+      this.update = '';
+      this.store  = this.buildStore();
 
       this.store.scene.replaceWith(this.importFromSVG(markup));
 
@@ -3537,19 +3537,28 @@
     buildStore() {
       const store   = Store.create();
       const docs    = Docs.create();
-      const doc     = Doc.create();
       const message = Message.create();
-      const scene   = Scene.create();
-
-      scene.viewBox = Rectangle.createFromDimensions(0, 0, 0, 0);
-      // ^ TODO: I think we can just rely on Rectangle defaults here
+      const doc     = this.buildDoc();
 
       store.append(docs);
       store.append(doc);
       store.append(message);
-      doc.append(scene);
 
       return store;
+    },
+
+    buildDoc() {
+      const doc   = Doc.create();
+      const scene = Scene.create();
+
+      const width = this.width || 0;
+      const height = this.height || 0;
+
+      scene.viewBox = Rectangle.createFromDimensions(0, 0, width, height);
+
+      doc.append(scene);
+
+      return doc;
     },
 
     get scene() {
@@ -3566,11 +3575,11 @@
 
     export() {
       return {
-        label:       this.label,
-        actionLabel: this.actionLabel,
-        input:       this.input,
-        vDOM:        this.exportToVDOM(),
-        plain:       this.exportToPlain(),
+        label:  this.label,
+        input:  this.input,
+        update: this.update,
+        vDOM:   this.exportToVDOM(),
+        plain:  this.exportToPlain(),
       };
     },
 
@@ -3664,8 +3673,9 @@
 
   let aux = {};
 
-  const actions = {
-    // SELECT TOOL
+  const updates = {
+
+    // Select
 
     select(state, input) {
       const target = state.scene.findDescendantByKey(input.key);
@@ -3678,6 +3688,67 @@
         state.scene.deselectAll();
       }
     },
+
+    release(state, input) {
+      const current = state.scene.selected || state.scene.editing;
+
+      if (current) {
+        for (let ancestor of current.ancestors) {
+          ancestor.memoizeBounds();
+        }
+      }
+
+      this.aux = {};
+    },
+
+    deepSelect(state, input) {
+      const target = state.scene.findDescendantByKey(input.key);
+
+      if (!target) {
+        return;
+      }
+
+      if (target.isSelected()) {
+        target.edit();
+        state.scene.unfocusAll();
+        state.label = 'pen'; // TODO: hack! could the update initiate an input?
+      } else {
+        const toSelect = target.findAncestor((node) => {
+          return node.parent && node.parent.class.includes('frontier');
+        });
+
+        if (toSelect) {
+          toSelect.select();
+          state.scene.setFrontier();
+          state.scene.unfocusAll();
+        }
+      }
+    },
+
+    focus(state, input) {
+      state.scene.unfocusAll(); // expensive but effective
+
+      const target = state.scene.findDescendantByKey(input.key);
+      const hit    = Vector.create(input.x, input.y);
+
+      if (target) {
+        const toFocus = target.findAncestorByClass('frontier');
+
+        if (toFocus && toFocus.contains(hit)) {
+          toFocus.focus();
+        }
+      }
+    },
+
+    deselect(state, event) {
+      state.scene.deselectAll();
+    },
+
+    deedit(state, event) {
+      state.scene.deeditAll();
+    },
+
+    // Transform
 
     initTransform(state, input) {
       const node = state.scene.selected;
@@ -3736,66 +3807,7 @@
       aux.from = to;
     },
 
-    release(state, input) {
-      const current = state.scene.selected || state.scene.editing;
-
-      if (current) {
-        for (let ancestor of current.ancestors) {
-          ancestor.memoizeBounds();
-        }
-      }
-
-      this.aux = {};
-    },
-
-    deepSelect(state, input) {
-      const target = state.scene.findDescendantByKey(input.key);
-
-      if (!target) {
-        return;
-      }
-
-      if (target.isSelected()) {
-        target.edit();
-        state.scene.unfocusAll();
-        state.label = 'pen'; // TODO: hack! could the action initiate an input?
-      } else {
-        const toSelect = target.findAncestor((node) => {
-          return node.parent && node.parent.class.includes('frontier');
-        });
-
-        if (toSelect) {
-          toSelect.select();
-          state.scene.setFrontier();
-          state.scene.unfocusAll();
-        }
-      }
-    },
-
-    focus(state, input) {
-      state.scene.unfocusAll(); // expensive but effective
-
-      const target = state.scene.findDescendantByKey(input.key);
-      const hit    = Vector.create(input.x, input.y);
-
-      if (target) {
-        const toFocus = target.findAncestorByClass('frontier');
-
-        if (toFocus && toFocus.contains(hit)) {
-          toFocus.focus();
-        }
-      }
-    },
-
-    deselect(state, event) {
-      state.scene.deselectAll();
-    },
-
-    deedit(state, event) {
-      state.scene.deeditAll();
-    },
-
-    // PEN TOOL (draft version)
+    // Pen
 
     placeAnchor(state, input) {
       const shape   = Shape.create();
@@ -3848,16 +3860,22 @@
       // move control point:
       // retrieve stored control
       // ... move it
+      // need to move handles along with anchors
+      // and opposite handles together
     },
 
-    // DB/UI INTERACTION
+    insertAnchor(state, input) {
+      // insert anchor
+      // need to make sure that this update does not
+      // affect the existing curve (i.e., it splits the curve,
+      // but does not change it)
+    },
+
+    // Doc(s)
 
     // from ui: user has requested fresh document
     createDoc(state, input) {
-      console.log('createDoc action called'); // fine
-      state.init(); // TODO: old code
-      state.docs.ids.push(state.doc._id); // TODO: old code
-      state.docs.selectedID = state._id;  // TODO: old code
+      state.store.doc.replaceWith(state.buildDoc());
     },
 
     // from db: doc list has been obtained
@@ -3895,7 +3913,7 @@
     // activate select tool
     { type: 'click', target: 'select', do: 'deedit', to: 'idle' },
 
-    // transform actions
+    // transform updates
     { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
     { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
     { from: 'shifting', type: 'mousemove', do: 'shift' },
@@ -3965,6 +3983,9 @@
     },
 
     kickoff(canvasSize) {
+      this.state.width = canvasSize.width;   // TODO: stopgap
+      this.state.height = canvasSize.height; // TODO: stopgap
+
       this.state.store.scene.viewBox.width  = canvasSize.width;
       this.state.store.scene.viewBox.height = canvasSize.height;
 
@@ -3989,11 +4010,11 @@
     },
 
     makeTransition(input, transition) {
-      this.state.actionLabel = transition.do;
-      this.state.label       = transition.to;
+      this.state.update = transition.do;
+      this.state.label  = transition.to;
 
-      const action = actions[transition.do];
-      action && action.bind(actions)(this.state, input);
+      const update = updates[transition.do];
+      update && update.bind(updates)(this.state, input);
     },
 
     publish() {
@@ -4222,14 +4243,18 @@
     },
 
     receive(state) {
-      if (state.actionLabel === 'go') {
-        window.dispatchEvent(new Event('loadDocIDs'));
-      } else if (state.actionLabel === 'requestDoc') {
-        window.dispatchEvent(new CustomEvent('readDoc', { detail: state.input.key }));
-        // ^ uses id. but we don't want to set it like this!
-        //   this is why we need to store input in state, I think.
-      } else if (state.actionLabel === 'release' || state.actionLabel === 'releasePen') {
-        window.dispatchEvent(new CustomEvent('upsertDoc', { detail: state.plain.doc }));
+      if (state.update === 'go') {
+        window.dispatchEvent(
+          new Event('loadDocIDs')
+        );
+      } else if (state.update === 'requestDoc') {
+        window.dispatchEvent(
+          new CustomEvent('readDoc', { detail: state.input.key })
+        );
+      } else if (['release', 'releasePen'].includes(state.update)) {
+        window.dispatchEvent(
+          new CustomEvent('upsertDoc', { detail: state.plain.doc })
+        );
       }
 
       this.previous = state;
@@ -4254,15 +4279,15 @@
     },
 
     receive(state) {
-      if (this.isRelevant(state)) {
+      if (this.isRelevant(state.update)) {
         window.history.pushState(state.plain, 'entry');
       }
     },
 
-    isRelevant(state) {
-      const release    = state.actionLabel === 'release' ;
-      const releasePen = state.actionLabel === "releasePen";
-      const go         = state.actionLabel === 'go';
+    isRelevant(update) {
+      const release    = update === 'release' ;
+      const releasePen = update === "releasePen";
+      const go         = update === 'go';
 
       return release || releasePen || go;
     },

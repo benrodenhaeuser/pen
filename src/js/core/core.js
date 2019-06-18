@@ -1,5 +1,5 @@
 import { State        } from './application/state.js';
-import { actions      } from './application/actions.js';
+import { updates      } from './application/updates.js';
 import { transitions  } from './application/transitions.js';
 
 const core = {
@@ -14,6 +14,9 @@ const core = {
   },
 
   kickoff(canvasSize) {
+    this.state.width = canvasSize.width;   // TODO: stopgap
+    this.state.height = canvasSize.height; // TODO: stopgap
+
     this.state.store.scene.viewBox.width  = canvasSize.width;
     this.state.store.scene.viewBox.height = canvasSize.height;
 
@@ -38,11 +41,11 @@ const core = {
   },
 
   makeTransition(input, transition) {
-    this.state.actionLabel = transition.do;
-    this.state.label       = transition.to;
+    this.state.update = transition.do;
+    this.state.label  = transition.to;
 
-    const action = actions[transition.do];
-    action && action.bind(actions)(this.state, input);
+    const update = updates[transition.do];
+    update && update.bind(updates)(this.state, input);
   },
 
   publish() {

@@ -9,8 +9,9 @@ import { Rectangle               } from './domain/rectangle.js';
 
 let aux = {};
 
-const actions = {
-  // SELECT TOOL
+const updates = {
+
+  // Select
 
   select(state, input) {
     const target = state.scene.findDescendantByKey(input.key);
@@ -23,6 +24,67 @@ const actions = {
       state.scene.deselectAll();
     }
   },
+
+  release(state, input) {
+    const current = state.scene.selected || state.scene.editing;
+
+    if (current) {
+      for (let ancestor of current.ancestors) {
+        ancestor.memoizeBounds();
+      }
+    }
+
+    this.aux = {};
+  },
+
+  deepSelect(state, input) {
+    const target = state.scene.findDescendantByKey(input.key);
+
+    if (!target) {
+      return;
+    }
+
+    if (target.isSelected()) {
+      target.edit();
+      state.scene.unfocusAll();
+      state.label = 'pen'; // TODO: hack! could the update initiate an input?
+    } else {
+      const toSelect = target.findAncestor((node) => {
+        return node.parent && node.parent.class.includes('frontier');
+      });
+
+      if (toSelect) {
+        toSelect.select();
+        state.scene.setFrontier();
+        state.scene.unfocusAll();
+      }
+    }
+  },
+
+  focus(state, input) {
+    state.scene.unfocusAll(); // expensive but effective
+
+    const target = state.scene.findDescendantByKey(input.key);
+    const hit    = Vector.create(input.x, input.y);
+
+    if (target) {
+      const toFocus = target.findAncestorByClass('frontier');
+
+      if (toFocus && toFocus.contains(hit)) {
+        toFocus.focus();
+      }
+    }
+  },
+
+  deselect(state, event) {
+    state.scene.deselectAll();
+  },
+
+  deedit(state, event) {
+    state.scene.deeditAll();
+  },
+
+  // Transform
 
   initTransform(state, input) {
     const node = state.scene.selected;
@@ -81,66 +143,7 @@ const actions = {
     aux.from = to;
   },
 
-  release(state, input) {
-    const current = state.scene.selected || state.scene.editing;
-
-    if (current) {
-      for (let ancestor of current.ancestors) {
-        ancestor.memoizeBounds();
-      }
-    }
-
-    this.aux = {};
-  },
-
-  deepSelect(state, input) {
-    const target = state.scene.findDescendantByKey(input.key);
-
-    if (!target) {
-      return;
-    }
-
-    if (target.isSelected()) {
-      target.edit();
-      state.scene.unfocusAll();
-      state.label = 'pen'; // TODO: hack! could the action initiate an input?
-    } else {
-      const toSelect = target.findAncestor((node) => {
-        return node.parent && node.parent.class.includes('frontier');
-      });
-
-      if (toSelect) {
-        toSelect.select();
-        state.scene.setFrontier();
-        state.scene.unfocusAll();
-      }
-    }
-  },
-
-  focus(state, input) {
-    state.scene.unfocusAll(); // expensive but effective
-
-    const target = state.scene.findDescendantByKey(input.key);
-    const hit    = Vector.create(input.x, input.y);
-
-    if (target) {
-      const toFocus = target.findAncestorByClass('frontier');
-
-      if (toFocus && toFocus.contains(hit)) {
-        toFocus.focus();
-      }
-    }
-  },
-
-  deselect(state, event) {
-    state.scene.deselectAll();
-  },
-
-  deedit(state, event) {
-    state.scene.deeditAll();
-  },
-
-  // PEN TOOL (draft version)
+  // Pen
 
   placeAnchor(state, input) {
     const shape   = Shape.create();
@@ -193,16 +196,22 @@ const actions = {
     // move control point:
     // retrieve stored control
     // ... move it
+    // need to move handles along with anchors
+    // and opposite handles together
   },
 
-  // DB/UI INTERACTION
+  insertAnchor(state, input) {
+    // insert anchor
+    // need to make sure that this update does not
+    // affect the existing curve (i.e., it splits the curve,
+    // but does not change it)
+  },
+
+  // Doc(s)
 
   // from ui: user has requested fresh document
   createDoc(state, input) {
-    console.log('createDoc action called'); // fine
-    state.init(); // TODO: old code
-    state.docs.ids.push(state.doc._id); // TODO: old code
-    state.docs.selectedID = state._id;  // TODO: old code
+    state.store.doc.replaceWith(state.buildDoc());
   },
 
   // from db: doc list has been obtained
@@ -229,4 +238,4 @@ const actions = {
   },
 };
 
-export { actions };
+export { updates };
