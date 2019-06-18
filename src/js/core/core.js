@@ -17,21 +17,23 @@ const core = {
     this.state.store.scene.viewBox.width  = canvasSize.width;
     this.state.store.scene.viewBox.height = canvasSize.height;
 
-    this.publish(); // TODO: is this necessary? why?
+    this.publish();
     this.compute({ type: 'go' });
   },
 
   compute(input) {
-    if (input.doc !== undefined) { // it's a state (TODO: improve this)
-      this.setState(input);
-      return;
-    }
+    this.state.input = input;
 
-    const transition = transitions.get(this.state, input);
-
-    if (transition) {
-      this.makeTransition(input, transition);
+    if (input.type === 'undo') {
+      this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
       this.publish();
+    } else {
+      const transition = transitions.get(this.state, input);
+
+      if (transition) {
+        this.makeTransition(input, transition);
+        this.publish();
+      }
     }
   },
 
@@ -48,14 +50,6 @@ const core = {
     for (let key of keys) {
       this.periphery[key](this.state.export());
     }
-  },
-
-  setState(plainState) {
-    this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
-    // ^ TODO: kind of complicated!
-
-    // TODO: we only update ui below. would it be possible to just publish, like elsewhere? 
-    this.periphery['ui'](this.state.export());
   },
 };
 

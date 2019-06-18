@@ -37,6 +37,7 @@ const transitions = [
 
   // OTHER
   { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
+  { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
   { type: 'docSaved', do: 'setSavedMessage' },
   { type: 'updateDocList', do: 'updateDocList' },
   { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?

@@ -13,7 +13,8 @@ const State = {
 
   init() {
     this.label       = 'start';
-    this.actionLabel = null;
+    this.actionLabel = '';
+    this.input       = {};
     this.store       = this.buildStore();
 
     this.store.scene.replaceWith(this.importFromSVG(markup));
@@ -55,6 +56,7 @@ const State = {
     return {
       label:       this.label,
       actionLabel: this.actionLabel,
+      input:       this.input,
       vDOM:        this.exportToVDOM(),
       plain:       this.exportToPlain(),
     };

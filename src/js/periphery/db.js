@@ -4,7 +4,7 @@ const db = {
   },
 
   bindEvents(func) {
-    window.addEventListener('upsert', function(event) {
+    window.addEventListener('upsertDoc', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
@@ -18,12 +18,10 @@ const db = {
       request.send(JSON.stringify(event.detail));
     });
 
-    window.addEventListener('read', function(event) {
+    window.addEventListener('readDoc', function(event) {
       const request = new XMLHttpRequest;
 
       request.addEventListener('load', function() {
-        console.log('received document');
-
         func({
           type: 'setDoc',
           data: {
@@ -34,9 +32,7 @@ const db = {
 
       request.open('GET', "/docs/" + event.detail);
       request.responseType = 'json';
-      request.send(JSON.stringify(event.detail));
-      // ^ TODO why does the GET request have a payload?
-      //   this looks like a mistake
+      request.send();
     });
 
     window.addEventListener('loadDocIDs', function(event) {
@@ -57,53 +53,18 @@ const db = {
     });
   },
 
-  // TODO: clean up this method
   receive(state) {
-    if (state.label === 'start') {
-      // if the label is start, we load the doc ids
-      db.loadDocIDs();
-
-      this.previousPlain = state.plain;
-    } else {
-      if (state.plain.doc._id !== this.previousPlain.doc._id) {
-        // the doc id has changed – should load corresponding doc
-        // TODO: we should replace this with a different condition that captures the
-        // user's desire to load a document -- but how?
-        window.dispatchEvent(new CustomEvent(
-          'read',
-          { detail: state.plain.doc._id }
-        ));
-
-        this.previousPlain = state.plain;
-      } else if (
-        // the document "itself" has changed, and the state is relevant, i.e., should save
-        this.isRelevant(state) &&
-        this.changed(state.plain.doc, this.previousPlain.doc)
-      ) {
-        window.dispatchEvent(new CustomEvent(
-          'upsert',
-          { detail: state.plain.doc }
-        ));
-
-        this.previousPlain = state.plain;
-      } else if (state.plain.docs !== this.previousPlain.docs) {
-      }
+    if (state.actionLabel === 'go') {
+      window.dispatchEvent(new Event('loadDocIDs'));
+    } else if (state.actionLabel === 'requestDoc') {
+      window.dispatchEvent(new CustomEvent('readDoc', { detail: state.input.key }));
+      // ^ uses id. but we don't want to set it like this!
+      //   this is why we need to store input in state, I think.
+    } else if (state.actionLabel === 'release' || state.actionLabel === 'releasePen') {
+      window.dispatchEvent(new CustomEvent('upsertDoc', { detail: state.plain.doc }));
     }
-  },
 
-  isRelevant(state) {
-    const release    = state.actionLabel === 'release' ;
-    const releasePen = state.actionLabel === "releasePen";
-
-    return release || releasePen;
-  },
-
-  changed(doc, previous) {
-    return JSON.stringify(doc) !== JSON.stringify(previous);
-  },
-
-  loadDocIDs() {
-    window.dispatchEvent(new Event('loadDocIDs'));
+    this.previous = state;
   },
 };
 

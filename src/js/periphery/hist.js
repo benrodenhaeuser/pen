@@ -6,7 +6,12 @@ const hist = {
 
   bindEvents(func) {
     window.addEventListener('popstate', (event) => {
-      func(event.state);
+      if (event.state) {
+        func({
+          type: 'undo',
+          data: event.state,
+        });
+      }
     });
   },
 

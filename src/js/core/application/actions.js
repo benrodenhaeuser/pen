@@ -199,10 +199,10 @@ const actions = {
 
   // from ui: user has requested fresh document
   createDoc(state, input) {
-    console.log('createDoc action called');
-    state.init(); // TODO: want a new state here!
-    state.docs.ids.push(state.doc._id);
-    state.docs.selectedID = state._id;
+    console.log('createDoc action called'); // fine
+    state.init(); // TODO: old code
+    state.docs.ids.push(state.doc._id); // TODO: old code
+    state.docs.selectedID = state._id;  // TODO: old code
   },
 
   // from db: doc list has been obtained
@@ -211,25 +211,11 @@ const actions = {
 
     for (let id of input.data.docIDs) {
       const identNode = Identifier.create();
-      identNode.payload._id = id; // note that it's called id!
+      identNode.payload._id = id;
       identNodes.push(identNode);
     }
 
     state.store.docs.children = identNodes;
-  },
-
-  // from ui: user has made a pick from doc list
-  requestDoc(state, input) {
-    console.log('doc has been requested');
-
-    // TODO: not sure if this is the best way to do this
-    // what if there is no network access? then we are screwed!
-    // we shouldn't mess with the current doc unless we have fresh one!
-    // the following is a cue for the db that it needs to load a fresh document
-    // (because the id has changed)
-    const doc = Doc.create();
-    doc._id = input.key;
-    state.doc.replaceWith(doc);
   },
 
   // from db: doc has been retrieved
@@ -239,8 +225,7 @@ const actions = {
 
   // from db: doc has just been saved
   setSavedMessage(state, input) {
-    // console.log('SAVING');
-    // ... this should trigger user output
+    // ... should trigger user output
   },
 };
 

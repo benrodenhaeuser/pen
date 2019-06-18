@@ -3525,7 +3525,8 @@
 
     init() {
       this.label       = 'start';
-      this.actionLabel = null;
+      this.actionLabel = '';
+      this.input       = {};
       this.store       = this.buildStore();
 
       this.store.scene.replaceWith(this.importFromSVG(markup));
@@ -3567,6 +3568,7 @@
       return {
         label:       this.label,
         actionLabel: this.actionLabel,
+        input:       this.input,
         vDOM:        this.exportToVDOM(),
         plain:       this.exportToPlain(),
       };
@@ -3852,10 +3854,10 @@
 
     // from ui: user has requested fresh document
     createDoc(state, input) {
-      console.log('createDoc action called');
-      state.init(); // TODO: want a new state here!
-      state.docs.ids.push(state.doc._id);
-      state.docs.selectedID = state._id;
+      console.log('createDoc action called'); // fine
+      state.init(); // TODO: old code
+      state.docs.ids.push(state.doc._id); // TODO: old code
+      state.docs.selectedID = state._id;  // TODO: old code
     },
 
     // from db: doc list has been obtained
@@ -3864,25 +3866,11 @@
 
       for (let id of input.data.docIDs) {
         const identNode = Identifier$1.create();
-        identNode.payload._id = id; // note that it's called id!
+        identNode.payload._id = id;
         identNodes.push(identNode);
       }
 
       state.store.docs.children = identNodes;
-    },
-
-    // from ui: user has made a pick from doc list
-    requestDoc(state, input) {
-      console.log('doc has been requested');
-
-      // TODO: not sure if this is the best way to do this
-      // what if there is no network access? then we are screwed!
-      // we shouldn't mess with the current doc unless we have fresh one!
-      // the following is a cue for the db that it needs to load a fresh document
-      // (because the id has changed)
-      const doc = Doc.create();
-      doc._id = input.key;
-      state.doc.replaceWith(doc);
     },
 
     // from db: doc has been retrieved
@@ -3892,8 +3880,7 @@
 
     // from db: doc has just been saved
     setSavedMessage(state, input) {
-      // console.log('SAVING');
-      // ... this should trigger user output
+      // ... should trigger user output
     },
   };
 
@@ -3936,6 +3923,7 @@
 
     // OTHER
     { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
+    { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
     { type: 'docSaved', do: 'setSavedMessage' },
     { type: 'updateDocList', do: 'updateDocList' },
     { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
@@ -3980,21 +3968,23 @@
       this.state.store.scene.viewBox.width  = canvasSize.width;
       this.state.store.scene.viewBox.height = canvasSize.height;
 
-      this.publish(); // TODO: is this necessary? why?
+      this.publish();
       this.compute({ type: 'go' });
     },
 
     compute(input) {
-      if (input.doc !== undefined) { // it's a state (TODO: improve this)
-        this.setState(input);
-        return;
-      }
+      this.state.input = input;
 
-      const transition = transitions.get(this.state, input);
-
-      if (transition) {
-        this.makeTransition(input, transition);
+      if (input.type === 'undo') {
+        this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
         this.publish();
+      } else {
+        const transition = transitions.get(this.state, input);
+
+        if (transition) {
+          this.makeTransition(input, transition);
+          this.publish();
+        }
       }
     },
 
@@ -4011,14 +4001,6 @@
       for (let key of keys) {
         this.periphery[key](this.state.export());
       }
-    },
-
-    setState(plainState) {
-      this.state.store.scene.replaceWith(this.state.importFromPlain(plainState.doc));
-      // ^ TODO: kind of complicated!
-
-      // TODO: we only update ui below. would it be possible to just publish, like elsewhere? 
-      this.periphery['ui'](this.state.export());
     },
   };
 
@@ -4190,7 +4172,7 @@
     },
 
     bindEvents(func) {
-      window.addEventListener('upsert', function(event) {
+      window.addEventListener('upsertDoc', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
@@ -4204,12 +4186,10 @@
         request.send(JSON.stringify(event.detail));
       });
 
-      window.addEventListener('read', function(event) {
+      window.addEventListener('readDoc', function(event) {
         const request = new XMLHttpRequest;
 
         request.addEventListener('load', function() {
-          console.log('received document');
-
           func({
             type: 'setDoc',
             data: {
@@ -4220,9 +4200,7 @@
 
         request.open('GET', "/docs/" + event.detail);
         request.responseType = 'json';
-        request.send(JSON.stringify(event.detail));
-        // ^ TODO why does the GET request have a payload?
-        //   this looks like a mistake
+        request.send();
       });
 
       window.addEventListener('loadDocIDs', function(event) {
@@ -4243,52 +4221,18 @@
       });
     },
 
-    // TODO: clean up this method
     receive(state) {
-      if (state.label === 'start') {
-        // if the label is start, we load the doc ids
-        db.loadDocIDs();
-
-        this.previousPlain = state.plain;
-      } else {
-        if (state.plain.doc._id !== this.previousPlain.doc._id) {
-          // the doc id has changed – should load corresponding doc
-          // TODO: we should replace this with a different condition that captures the
-          // user's desire to load a document -- but how?
-          window.dispatchEvent(new CustomEvent(
-            'read',
-            { detail: state.plain.doc._id }
-          ));
-
-          this.previousPlain = state.plain;
-        } else if (
-          // the document "itself" has changed, and the state is relevant, i.e., should save
-          this.isRelevant(state) &&
-          this.changed(state.plain.doc, this.previousPlain.doc)
-        ) {
-          window.dispatchEvent(new CustomEvent(
-            'upsert',
-            { detail: state.plain.doc }
-          ));
-
-          this.previousPlain = state.plain;
-        } else if (state.plain.docs !== this.previousPlain.docs) ;
+      if (state.actionLabel === 'go') {
+        window.dispatchEvent(new Event('loadDocIDs'));
+      } else if (state.actionLabel === 'requestDoc') {
+        window.dispatchEvent(new CustomEvent('readDoc', { detail: state.input.key }));
+        // ^ uses id. but we don't want to set it like this!
+        //   this is why we need to store input in state, I think.
+      } else if (state.actionLabel === 'release' || state.actionLabel === 'releasePen') {
+        window.dispatchEvent(new CustomEvent('upsertDoc', { detail: state.plain.doc }));
       }
-    },
 
-    isRelevant(state) {
-      const release    = state.actionLabel === 'release' ;
-      const releasePen = state.actionLabel === "releasePen";
-
-      return release || releasePen;
-    },
-
-    changed(doc, previous) {
-      return JSON.stringify(doc) !== JSON.stringify(previous);
-    },
-
-    loadDocIDs() {
-      window.dispatchEvent(new Event('loadDocIDs'));
+      this.previous = state;
     },
   };
 
@@ -4300,7 +4244,12 @@
 
     bindEvents(func) {
       window.addEventListener('popstate', (event) => {
-        func(event.state);
+        if (event.state) {
+          func({
+            type: 'undo',
+            data: event.state,
+          });
+        }
       });
     },
 

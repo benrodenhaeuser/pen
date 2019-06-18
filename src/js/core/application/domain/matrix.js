@@ -1,4 +1,4 @@
-import { Vector } from './vector.js';
+import { Vector   } from './vector.js';
 
 const Matrix = {
   create(m) {
