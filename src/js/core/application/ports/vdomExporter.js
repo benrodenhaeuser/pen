@@ -12,14 +12,77 @@ const h = (tag, props = {}, ...children) => {
   };
 };
 
+// TODO: for development purposes only
+const markup = `<g><rect x="260" y="250" width="100" height="100"></rect><g><rect x="400" y="260" width="100" height="100"></rect><rect x="550" y="260" width="100" height="100"></rect></g></g><rect x="600" y="600" width="100" height="100"></rect>`;
+
+const beautify = function(xml) {
+        var reg = /(>)\s*(<)(\/*)/g; // updated Mar 30, 2015
+        var wsexp = / *(.*) +\n/g;
+        var contexp = /(<.+>)(.+\n)/g;
+        xml = xml.replace(reg, '$1\n$2$3').replace(wsexp, '$1\n').replace(contexp, '$1\n$2');
+        var pad = 0;
+        var formatted = '';
+        var lines = xml.split('\n');
+        var indent = 0;
+        var lastType = 'other';
+        // 4 types of tags - single, closing, opening, other (text, doctype, comment) - 4*4 = 16 transitions
+        var transitions = {
+            'single->single': 0,
+            'single->closing': -1,
+            'single->opening': 0,
+            'single->other': 0,
+            'closing->single': 0,
+            'closing->closing': -1,
+            'closing->opening': 0,
+            'closing->other': 0,
+            'opening->single': 1,
+            'opening->closing': 0,
+            'opening->opening': 1,
+            'opening->other': 1,
+            'other->single': 0,
+            'other->closing': -1,
+            'other->opening': 0,
+            'other->other': 0
+        };
+
+        for (var i = 0; i < lines.length; i++) {
+            var ln = lines[i];
+
+            // Luca Viggiani 2017-07-03: handle optional <?xml ... ?> declaration
+            if (ln.match(/\s*<\?xml/)) {
+                formatted += ln + "\n";
+                continue;
+            }
+            // ---
+
+            var single = Boolean(ln.match(/<.+\/>/)); // is this line a single tag? ex. <br />
+            var closing = Boolean(ln.match(/<\/.+>/)); // is this a closing tag? ex. </a>
+            var opening = Boolean(ln.match(/<[^!].*>/)); // is this even a tag (that's not <!something>)
+            var type = single ? 'single' : closing ? 'closing' : opening ? 'opening' : 'other';
+            var fromTo = lastType + '->' + type;
+            lastType = type;
+            var padding = '';
+
+            indent += transitions[fromTo];
+            for (var j = 0; j < indent; j++) {
+                padding += '  ';
+            }
+            if (fromTo == 'opening->closing')
+                formatted = formatted.substr(0, formatted.length - 1) + ln + '\n'; // substr removes line break (\n) from prev loop
+            else
+                formatted += padding + ln + '\n';
+        }
+
+        return formatted;
+    };
+
 const vdomExporter = {
   renderApp(store) {
     const comps = this.comps(store);
 
     return h('main', { id: 'app' },
-      comps.doc,
-      // comps.navigate, // we don't have a navigator atm
-      // comps.inspect,  // we don't have an inspector atm
+      comps.canvas,
+      comps.editor,
       h('div', { id: 'toolbar' },
         comps.buttons,
         comps.message
@@ -31,9 +94,8 @@ const vdomExporter = {
     return {
       buttons:  this.buttons(store),
       message:  this.message(store),
-      navigate: this.navigate(store),
-      doc:      this.doc(store),
-      inspect:  this.inspect(store),
+      editor:   this.editor(store),
+      canvas:   this.canvas(store),
     };
   },
 
@@ -54,9 +116,8 @@ const vdomExporter = {
             class: 'pure-menu-link',
             'data-key': identifier.payload._id,
             'data-type': 'doc-identifier',
-          }, identifier.key)
-          // ^ TODO: what is identifier.key anyway?
-          //   This is where we need to put the *name* of the document
+          }, identifier.payload._id)
+          //  TODO: This is where we need to put the *name* of the document
       ));
     }
 
@@ -74,13 +135,6 @@ const vdomExporter = {
 
   buttons(store) {
     return h('ul', { id: 'buttons' },
-      h('li', {},
-        h('button', {
-          id: 'importButton',
-          class: 'pure-button grayedout',
-          'data-type': 'importButton',
-        }, 'Import')
-      ),
       h('li', {},
         h('button', {
           id: 'newDocButton',
@@ -112,20 +166,6 @@ const vdomExporter = {
       ),
       h('li', {},
         h('button', {
-          id: 'group',
-          'data-type': 'group',
-          class: 'pure-button grayedout',
-        }, 'Group')
-      ),
-      h('li', {},
-        h('button', {
-          id: 'ungroup',
-          'data-type': 'ungroup',
-          class: 'pure-button grayedout',
-        }, 'Ungroup')
-      ),
-      h('li', {},
-        h('button', {
           id: 'pen',
           'data-type': 'pen',
           class: 'pure-button',
@@ -144,19 +184,22 @@ const vdomExporter = {
     );
   },
 
-  navigate(store) {
+  editor(store) {
     return h('div', {
-      id: 'navigator',
-    });
+      id: 'editor',
+    }, h('form', {
+        id: 'form',
+        'data-type': 'form',
+      }, h('textarea', {
+          form: 'form',
+          spellcheck: false,
+        }, beautify(markup)
+        )
+      )
+    );
   },
 
-  inspect(store) {
-    return h('div', {
-      id: 'inspector',
-    });
-  },
-
-  doc(store) {
+  canvas(store) {
     return h('div', {
       'data-type': 'doc',
       id: 'canvas',

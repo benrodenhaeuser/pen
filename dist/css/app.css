@@ -1,17 +1,24 @@
 /* HTML */
 
+body {
+  background-color: #f1f1f1;
+}
+
 main {
+  margin-top: 20px;
+  margin-left: 30px;
   display: grid;
-  grid-template-columns: 165px auto 165px;
+  grid-template-columns: 600px 600px;
   grid-template-areas:
-    "toolbar toolbar toolbar"
-    "canvas canvas canvas";
+    "toolbar toolbar"
+    "canvas editor";
+  grid-row-gap: 10px;
+  grid-column-gap: 20px;
   position: relative;
-  height: 100vh;
-  width: 100vw;
-  font-family: Lato;
+  width: 1220px;
+  height: 707px;
+  font-family: 'Roboto Mono';
   font-weight: 500;
-  background-color: white;
 }
 
 #toolbar {
@@ -19,28 +26,39 @@ main {
   display: flex;
   align-items: center;
   height: 35px;
-  /* background-color: #f6f6f6; */
-  background-color: #f6f6f6;
-  border-bottom: 1px solid #DAD9DA;
-  /* border-top: 2px solid #DAD9DA; */
-}
-
-#navigator, #inspector {
-  background-color: #f6f6f6;
-  height: 100vh;
 }
 
 #canvas {
   grid-area: canvas;
-  position: relative;
 }
 
-#navigator {
-  grid-area: navigator;
+#editor {
+  grid-area: editor;
 }
 
-#inspector {
-  grid-area: inspector;
+#canvas, #editor {
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 10px 10px 15px 0px rgba(200, 200, 200, 0.75);
+}
+
+#form {
+  font-family: 'Roboto Mono';
+  font-size: 12px;
+  color: #333;
+  margin: 15px;
+  height: 677px;
+}
+
+textarea {
+  resize: none;
+  border: none;
+  width: 100%;
+  height: 100%;
+}
+
+textarea:focus {
+  outline: none;
 }
 
 #buttons {
@@ -54,15 +72,11 @@ main {
   display: inline;
 }
 
-/* TODO for development only */
-button.grayedout {
-  color: #d3d3d3;
-}
 
 #message {
-  position: fixed;
+  position: absolute;
   right: 10px;
-  color: #d3d3d3;
+  color: #5DADE2;
   background-color: transparent;
   border: 0px;
 }
@@ -77,10 +91,17 @@ button.grayedout {
   border-radius: 0px;
 }
 
-.pure-button:hover {
+.pure-button:hover, .pure-menu-link:hover {
   background-image: none;
-  background-color: #eee;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 3px 3px 15px 0px rgba(200, 200, 200, 0.75);
 }
+
+/* .pure-menu-link:hover {
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+} */
 
 .pure-menu-horizontal {
   display: inline;
@@ -92,6 +113,7 @@ button.grayedout {
 
 .doc-list {
   background-color: #eee;
+  box-shadow: 3px 3px 15px 0px rgba(200, 200, 200, 0.75);
 }
 
 .doc-list a {

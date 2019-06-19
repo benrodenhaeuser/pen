@@ -17,7 +17,7 @@ const State = {
     this.update = '';
     this.store  = this.buildStore();
 
-    this.store.scene.replaceWith(this.importFromSVG(markup));
+    // this.store.scene.replaceWith(this.importFromSVG(markup));
 
     return this;
   },

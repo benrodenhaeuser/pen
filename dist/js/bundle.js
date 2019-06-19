@@ -3075,14 +3075,76 @@
     };
   };
 
+  // TODO: for development purposes only
+  const markup = `<g><rect x="260" y="250" width="100" height="100"></rect><g><rect x="400" y="260" width="100" height="100"></rect><rect x="550" y="260" width="100" height="100"></rect></g></g><rect x="600" y="600" width="100" height="100"></rect>`;
+
+  const beautify = function(xml) {
+          var reg = /(>)\s*(<)(\/*)/g; // updated Mar 30, 2015
+          var wsexp = / *(.*) +\n/g;
+          var contexp = /(<.+>)(.+\n)/g;
+          xml = xml.replace(reg, '$1\n$2$3').replace(wsexp, '$1\n').replace(contexp, '$1\n$2');
+          var formatted = '';
+          var lines = xml.split('\n');
+          var indent = 0;
+          var lastType = 'other';
+          // 4 types of tags - single, closing, opening, other (text, doctype, comment) - 4*4 = 16 transitions
+          var transitions = {
+              'single->single': 0,
+              'single->closing': -1,
+              'single->opening': 0,
+              'single->other': 0,
+              'closing->single': 0,
+              'closing->closing': -1,
+              'closing->opening': 0,
+              'closing->other': 0,
+              'opening->single': 1,
+              'opening->closing': 0,
+              'opening->opening': 1,
+              'opening->other': 1,
+              'other->single': 0,
+              'other->closing': -1,
+              'other->opening': 0,
+              'other->other': 0
+          };
+
+          for (var i = 0; i < lines.length; i++) {
+              var ln = lines[i];
+
+              // Luca Viggiani 2017-07-03: handle optional <?xml ... ?> declaration
+              if (ln.match(/\s*<\?xml/)) {
+                  formatted += ln + "\n";
+                  continue;
+              }
+              // ---
+
+              var single = Boolean(ln.match(/<.+\/>/)); // is this line a single tag? ex. <br />
+              var closing = Boolean(ln.match(/<\/.+>/)); // is this a closing tag? ex. </a>
+              var opening = Boolean(ln.match(/<[^!].*>/)); // is this even a tag (that's not <!something>)
+              var type = single ? 'single' : closing ? 'closing' : opening ? 'opening' : 'other';
+              var fromTo = lastType + '->' + type;
+              lastType = type;
+              var padding = '';
+
+              indent += transitions[fromTo];
+              for (var j = 0; j < indent; j++) {
+                  padding += '  ';
+              }
+              if (fromTo == 'opening->closing')
+                  formatted = formatted.substr(0, formatted.length - 1) + ln + '\n'; // substr removes line break (\n) from prev loop
+              else
+                  formatted += padding + ln + '\n';
+          }
+
+          return formatted;
+      };
+
   const vdomExporter = {
     renderApp(store) {
       const comps = this.comps(store);
 
       return h('main', { id: 'app' },
-        comps.doc,
-        // comps.navigate, // we don't have a navigator atm
-        // comps.inspect,  // we don't have an inspector atm
+        comps.canvas,
+        comps.editor,
         h('div', { id: 'toolbar' },
           comps.buttons,
           comps.message
@@ -3094,9 +3156,8 @@
       return {
         buttons:  this.buttons(store),
         message:  this.message(store),
-        navigate: this.navigate(store),
-        doc:      this.doc(store),
-        inspect:  this.inspect(store),
+        editor:   this.editor(store),
+        canvas:   this.canvas(store),
       };
     },
 
@@ -3117,9 +3178,8 @@
               class: 'pure-menu-link',
               'data-key': identifier.payload._id,
               'data-type': 'doc-identifier',
-            }, identifier.key)
-            // ^ TODO: what is identifier.key anyway?
-            //   This is where we need to put the *name* of the document
+            }, identifier.payload._id)
+            //  TODO: This is where we need to put the *name* of the document
         ));
       }
 
@@ -3137,13 +3197,6 @@
 
     buttons(store) {
       return h('ul', { id: 'buttons' },
-        h('li', {},
-          h('button', {
-            id: 'importButton',
-            class: 'pure-button grayedout',
-            'data-type': 'importButton',
-          }, 'Import')
-        ),
         h('li', {},
           h('button', {
             id: 'newDocButton',
@@ -3175,20 +3228,6 @@
         ),
         h('li', {},
           h('button', {
-            id: 'group',
-            'data-type': 'group',
-            class: 'pure-button grayedout',
-          }, 'Group')
-        ),
-        h('li', {},
-          h('button', {
-            id: 'ungroup',
-            'data-type': 'ungroup',
-            class: 'pure-button grayedout',
-          }, 'Ungroup')
-        ),
-        h('li', {},
-          h('button', {
             id: 'pen',
             'data-type': 'pen',
             class: 'pure-button',
@@ -3207,19 +3246,22 @@
       );
     },
 
-    navigate(store) {
+    editor(store) {
       return h('div', {
-        id: 'navigator',
-      });
+        id: 'editor',
+      }, h('form', {
+          id: 'form',
+          'data-type': 'form',
+        }, h('textarea', {
+            form: 'form',
+            spellcheck: false,
+          }, beautify(markup)
+          )
+        )
+      );
     },
 
-    inspect(store) {
-      return h('div', {
-        id: 'inspector',
-      });
-    },
-
-    doc(store) {
+    canvas(store) {
       return h('div', {
         'data-type': 'doc',
         id: 'canvas',
@@ -3566,7 +3608,7 @@
       this.update = '';
       this.store  = this.buildStore();
 
-      this.store.scene.replaceWith(this.importFromSVG(markup));
+      // this.store.scene.replaceWith(this.importFromSVG(markup));
 
       return this;
     },
@@ -3646,23 +3688,6 @@
       return plainExporter.build(this.store);
     },
   };
-
-  // hard-coded markup
-  //
-  const markup = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
-
-    <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
-
-    <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
-
-    <g>
-      <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
-
-      <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
-    </g>
-  </svg>
-`;
 
   // const markup = `
   //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 400"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
@@ -4056,7 +4081,7 @@
 
     compute(input) {
       this.state.input = input;
-      
+
       if (input.type === 'undo') {
         this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
         this.publish();
@@ -4103,6 +4128,10 @@
     'dblclick'
   ];
 
+  const clickLike = (event) => {
+    return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
+  };
+
   const svgns   = 'http://www.w3.org/2000/svg';
   const xmlns   = 'http://www.w3.org/2000/xmlns/';
   const htmlns  = 'http://www.w3.org/1999/xhtml';
@@ -4116,11 +4145,15 @@
     bindEvents(func) {
       for (let eventType of eventTypes) {
         document.addEventListener(eventType, (event) => {
-          event.preventDefault();
-
-          if (event.type !== 'dblclick' && event.detail > 1) {
+          // so as not to interfere with form input and double clicks:
+          if (
+            clickLike(event) &&
+            (event.target.tagName === 'TEXTAREA' || event.detail > 1)
+          ) {
             return;
           }
+
+          event.preventDefault();
 
           func({
             source: this.name,
@@ -4132,6 +4165,10 @@
           });
         });
       }
+
+      document.addEventListener('input', (event) => {
+        console.log('input received'); // fine
+      });
 
       window.addEventListener('cleanMessage', (event) => {
         func({
@@ -4386,7 +4423,6 @@
   };
 
   const peripherals = [ui, db, hist];
-  const toolbarHeight = 35;
 
   const app = {
     init() {
@@ -4402,8 +4438,8 @@
     },
 
     getCanvasSize() {
-      const canvasWidth   = document.documentElement.clientWidth;
-      const canvasHeight  = (document.documentElement.clientHeight - toolbarHeight);
+      const canvasWidth   = 600;
+      const canvasHeight  = 700 - 35;
       const canvasSize    = { width: canvasWidth, height: canvasHeight };
 
       return canvasSize;

@@ -4,7 +4,6 @@ import {  db  } from './periphery/db.js';
 import { hist } from './periphery/hist.js';
 
 const peripherals = [ui, db, hist];
-const toolbarHeight = 35;
 
 const app = {
   init() {
@@ -20,8 +19,8 @@ const app = {
   },
 
   getCanvasSize() {
-    const canvasWidth   = document.documentElement.clientWidth;
-    const canvasHeight  = (document.documentElement.clientHeight - toolbarHeight);
+    const canvasWidth   = 600;
+    const canvasHeight  = 700 - 35;
     const canvasSize    = { width: canvasWidth, height: canvasHeight };
 
     return canvasSize;

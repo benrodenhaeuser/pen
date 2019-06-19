@@ -15,6 +15,10 @@ const eventTypes = [
   'dblclick'
 ];
 
+const clickLike = (event) => {
+  return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
+}
+
 const svgns   = 'http://www.w3.org/2000/svg';
 const xmlns   = 'http://www.w3.org/2000/xmlns/';
 const htmlns  = 'http://www.w3.org/1999/xhtml';
@@ -28,11 +32,15 @@ const ui = {
   bindEvents(func) {
     for (let eventType of eventTypes) {
       document.addEventListener(eventType, (event) => {
-        event.preventDefault();
-
-        if (event.type !== 'dblclick' && event.detail > 1) {
+        // so as not to interfere with form input and double clicks:
+        if (
+          clickLike(event) &&
+          (event.target.tagName === 'TEXTAREA' || event.detail > 1)
+        ) {
           return;
         }
+
+        event.preventDefault();
 
         func({
           source: this.name,
@@ -44,6 +52,10 @@ const ui = {
         });
       });
     }
+
+    document.addEventListener('input', (event) => {
+      console.log('input received'); // fine
+    });
 
     window.addEventListener('cleanMessage', (event) => {
       func({
