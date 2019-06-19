@@ -1,16 +1,18 @@
 const db = {
   init() {
     this.name = 'db';
+    return this;
   },
 
   bindEvents(func) {
-    window.addEventListener('upsertDoc', function(event) {
+    window.addEventListener('upsertDoc', (event) => {
       const request = new XMLHttpRequest;
 
-      request.addEventListener('load', function() {
+      request.addEventListener('load', () => {
         func({
-          type: 'docSaved',
-          data: {},
+          source: this.name,
+          type:   'docSaved',
+          data:   {},
         });
       });
 
@@ -18,13 +20,14 @@ const db = {
       request.send(JSON.stringify(event.detail));
     });
 
-    window.addEventListener('readDoc', function(event) {
+    window.addEventListener('readDoc', (event) => {
       const request = new XMLHttpRequest;
 
-      request.addEventListener('load', function() {
+      request.addEventListener('load', () => {
         func({
-          type: 'setDoc',
-          data: {
+          source: this.name,
+          type:   'setDoc',
+          data:   {
             doc: request.response
           },
         });
@@ -35,13 +38,14 @@ const db = {
       request.send();
     });
 
-    window.addEventListener('loadDocIDs', function(event) {
+    window.addEventListener('loadDocIDs', (event) => {
       const request = new XMLHttpRequest;
 
-      request.addEventListener('load', function() {
+      request.addEventListener('load', () => {
         func({
-          type: 'updateDocList',
-          data: {
+          source: this.name,
+          type:   'updateDocList',
+          data:   {
             docIDs: request.response
           },
         });

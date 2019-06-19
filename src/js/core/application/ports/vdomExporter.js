@@ -55,13 +55,15 @@ const vdomExporter = {
             'data-key': identifier.payload._id,
             'data-type': 'doc-identifier',
           }, identifier.key)
+          // ^ TODO: what is identifier.key anyway?
+          //   This is where we need to put the *name* of the document
       ));
     }
 
     const container = h('div', { class: 'pure-menu pure-menu-horizontal' },
       h('ul', { class: 'pure-menu-list' },
         h('li', { class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover'},
-          h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Docs'),
+          h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
           vDocs
         )
       )
@@ -74,6 +76,13 @@ const vdomExporter = {
     return h('ul', { id: 'buttons' },
       h('li', {},
         h('button', {
+          id: 'importButton',
+          class: 'pure-button grayedout',
+          'data-type': 'importButton',
+        }, 'Import')
+      ),
+      h('li', {},
+        h('button', {
           id: 'newDocButton',
           class: 'pure-button',
           'data-type': 'newDocButton',
@@ -82,10 +91,17 @@ const vdomExporter = {
       this.docs(store),
       h('li', {},
         h('button', {
-          id: 'pen',
-          'data-type': 'pen',
+          id: 'undo',
+          'data-type': 'undo',
           class: 'pure-button',
-        }, 'Pen')
+        }, 'Undo')
+      ),
+      h('li', {},
+        h('button', {
+          id: 'redo',
+          'data-type': 'redo',
+          class: 'pure-button',
+        }, 'Redo')
       ),
       h('li', {},
         h('button', {
@@ -93,6 +109,27 @@ const vdomExporter = {
           'data-type': 'select',
           class: 'pure-button',
         }, 'Select')
+      ),
+      h('li', {},
+        h('button', {
+          id: 'group',
+          'data-type': 'group',
+          class: 'pure-button grayedout',
+        }, 'Group')
+      ),
+      h('li', {},
+        h('button', {
+          id: 'ungroup',
+          'data-type': 'ungroup',
+          class: 'pure-button grayedout',
+        }, 'Ungroup')
+      ),
+      h('li', {},
+        h('button', {
+          id: 'pen',
+          'data-type': 'pen',
+          class: 'pure-button',
+        }, 'Pen')
       )
     );
   },
@@ -102,7 +139,7 @@ const vdomExporter = {
       h('li', {},
         h('button', {
           id: 'message',
-        }, 'message')
+        }, store.message.payload.text)
       )
     );
   },

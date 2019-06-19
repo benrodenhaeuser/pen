@@ -22,6 +22,7 @@ const htmlns  = 'http://www.w3.org/1999/xhtml';
 const ui = {
   init() {
     this.name = 'ui';
+    return this;
   },
 
   bindEvents(func) {
@@ -34,6 +35,7 @@ const ui = {
         }
 
         func({
+          source: this.name,
           type:   event.type,
           target: event.target.dataset.type,
           key:    event.target.dataset.key,
@@ -42,6 +44,13 @@ const ui = {
         });
       });
     }
+
+    window.addEventListener('cleanMessage', (event) => {
+      func({
+        source: this.name,
+        type:   'cleanMessage',
+      });
+    })
   },
 
   coordinates(event) {
@@ -62,6 +71,8 @@ const ui = {
   },
 
   receive(state) {
+    this.setMessageTimer();
+
     if (state.label === 'start') {
       this.dom = this.createElement(state.vDOM);
       this.mount(this.dom, document.body);
@@ -157,6 +168,21 @@ const ui = {
 
       $index += 1;
     }
+  },
+
+  // TODO: we periodically clean the message every second
+  // it would be more elegant to only do cleaning when
+  // message changes have occured
+  setMessageTimer() {
+    const cleanMessage = () => {
+      window.dispatchEvent(new Event('cleanMessage'));
+    };
+
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+
+    this.timer = window.setTimeout(cleanMessage, 1000);
   },
 };
 

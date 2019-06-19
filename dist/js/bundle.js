@@ -3118,13 +3118,15 @@
               'data-key': identifier.payload._id,
               'data-type': 'doc-identifier',
             }, identifier.key)
+            // ^ TODO: what is identifier.key anyway?
+            //   This is where we need to put the *name* of the document
         ));
       }
 
       const container = h('div', { class: 'pure-menu pure-menu-horizontal' },
         h('ul', { class: 'pure-menu-list' },
           h('li', { class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover'},
-            h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Docs'),
+            h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
             vDocs
           )
         )
@@ -3137,6 +3139,13 @@
       return h('ul', { id: 'buttons' },
         h('li', {},
           h('button', {
+            id: 'importButton',
+            class: 'pure-button grayedout',
+            'data-type': 'importButton',
+          }, 'Import')
+        ),
+        h('li', {},
+          h('button', {
             id: 'newDocButton',
             class: 'pure-button',
             'data-type': 'newDocButton',
@@ -3145,10 +3154,17 @@
         this.docs(store),
         h('li', {},
           h('button', {
-            id: 'pen',
-            'data-type': 'pen',
+            id: 'undo',
+            'data-type': 'undo',
             class: 'pure-button',
-          }, 'Pen')
+          }, 'Undo')
+        ),
+        h('li', {},
+          h('button', {
+            id: 'redo',
+            'data-type': 'redo',
+            class: 'pure-button',
+          }, 'Redo')
         ),
         h('li', {},
           h('button', {
@@ -3156,6 +3172,27 @@
             'data-type': 'select',
             class: 'pure-button',
           }, 'Select')
+        ),
+        h('li', {},
+          h('button', {
+            id: 'group',
+            'data-type': 'group',
+            class: 'pure-button grayedout',
+          }, 'Group')
+        ),
+        h('li', {},
+          h('button', {
+            id: 'ungroup',
+            'data-type': 'ungroup',
+            class: 'pure-button grayedout',
+          }, 'Ungroup')
+        ),
+        h('li', {},
+          h('button', {
+            id: 'pen',
+            'data-type': 'pen',
+            class: 'pure-button',
+          }, 'Pen')
         )
       );
     },
@@ -3165,7 +3202,7 @@
         h('li', {},
           h('button', {
             id: 'message',
-          }, 'message')
+          }, store.message.payload.text)
         )
       );
     },
@@ -3537,7 +3574,7 @@
     buildStore() {
       const store   = Store.create();
       const docs    = Docs.create();
-      const message = Message.create();
+      const message = this.buildMessage();
       const doc     = this.buildDoc();
 
       store.append(docs);
@@ -3545,6 +3582,12 @@
       store.append(message);
 
       return store;
+    },
+
+    buildMessage() {
+      const message = Message.create();
+      message.payload.text = 'Welcome!';
+      return message;
     },
 
     buildDoc() {
@@ -3896,9 +3939,26 @@
       state.doc.replaceWith(state.importFromPlain(input.data.doc));
     },
 
+    // Messages
+
     // from db: doc has just been saved
     setSavedMessage(state, input) {
-      // ... should trigger user output
+      state.store.message.payload.text = 'Saved';
+    },
+
+    // from ui: message can now be cleaned
+    cleanMessage(state, input) {
+      state.store.message.payload.text = '';
+    },
+
+    // History
+
+    undo(state, input) {
+      window.history.back();
+    },
+
+    redo(state, input) {
+      window.history.forward();
     },
   };
 
@@ -3908,14 +3968,14 @@
   const transitions = [
     { from: 'start', type: 'go', do: 'go', to: 'idle' },
     { from: 'idle', type: 'mousemove', do: 'focus' },
+    { type: 'cleanMessage', do: 'cleanMessage' },
 
     // SELECT
-    // activate select tool
     { type: 'click', target: 'select', do: 'deedit', to: 'idle' },
-
-    // transform updates
     { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
     { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
+
+    // TRANSFORM
     { from: 'shifting', type: 'mousemove', do: 'shift' },
     { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
     { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
@@ -3926,7 +3986,6 @@
     { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
 
     // PEN
-    // activate pen tool
     { from: 'idle', type: 'click', target: 'pen', do: 'deselect', to: 'pen' },
     // adding controls
     { from: 'pen', type: 'mousedown', target: 'content', do: 'placeAnchor', to: 'addingHandle' },
@@ -3942,6 +4001,8 @@
     // OTHER
     { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
     { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
+    { type: 'click', target: 'undo', do: 'undo', to: 'idle' },
+    { type: 'click', target: 'redo', do: 'redo', to: 'idle' },
     { type: 'docSaved', do: 'setSavedMessage' },
     { type: 'updateDocList', do: 'updateDocList' },
     { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
@@ -3990,12 +4051,12 @@
       this.state.store.scene.viewBox.height = canvasSize.height;
 
       this.publish();
-      this.compute({ type: 'go' });
+      this.compute({ source: 'core', type: 'go' });
     },
 
     compute(input) {
       this.state.input = input;
-
+      
       if (input.type === 'undo') {
         this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
         this.publish();
@@ -4049,6 +4110,7 @@
   const ui = {
     init() {
       this.name = 'ui';
+      return this;
     },
 
     bindEvents(func) {
@@ -4061,6 +4123,7 @@
           }
 
           func({
+            source: this.name,
             type:   event.type,
             target: event.target.dataset.type,
             key:    event.target.dataset.key,
@@ -4069,6 +4132,13 @@
           });
         });
       }
+
+      window.addEventListener('cleanMessage', (event) => {
+        func({
+          source: this.name,
+          type:   'cleanMessage',
+        });
+      });
     },
 
     coordinates(event) {
@@ -4089,6 +4159,8 @@
     },
 
     receive(state) {
+      this.setMessageTimer();
+
       if (state.label === 'start') {
         this.dom = this.createElement(state.vDOM);
         this.mount(this.dom, document.body);
@@ -4185,21 +4257,38 @@
         $index += 1;
       }
     },
+
+    // TODO: we periodically clean the message every second
+    // it would be more elegant to only do cleaning when
+    // message changes have occured
+    setMessageTimer() {
+      const cleanMessage = () => {
+        window.dispatchEvent(new Event('cleanMessage'));
+      };
+
+      if (this.timer) {
+        clearTimeout(this.timer);
+      }
+
+      this.timer = window.setTimeout(cleanMessage, 1000);
+    },
   };
 
   const db = {
     init() {
       this.name = 'db';
+      return this;
     },
 
     bindEvents(func) {
-      window.addEventListener('upsertDoc', function(event) {
+      window.addEventListener('upsertDoc', (event) => {
         const request = new XMLHttpRequest;
 
-        request.addEventListener('load', function() {
+        request.addEventListener('load', () => {
           func({
-            type: 'docSaved',
-            data: {},
+            source: this.name,
+            type:   'docSaved',
+            data:   {},
           });
         });
 
@@ -4207,13 +4296,14 @@
         request.send(JSON.stringify(event.detail));
       });
 
-      window.addEventListener('readDoc', function(event) {
+      window.addEventListener('readDoc', (event) => {
         const request = new XMLHttpRequest;
 
-        request.addEventListener('load', function() {
+        request.addEventListener('load', () => {
           func({
-            type: 'setDoc',
-            data: {
+            source: this.name,
+            type:   'setDoc',
+            data:   {
               doc: request.response
             },
           });
@@ -4224,13 +4314,14 @@
         request.send();
       });
 
-      window.addEventListener('loadDocIDs', function(event) {
+      window.addEventListener('loadDocIDs', (event) => {
         const request = new XMLHttpRequest;
 
-        request.addEventListener('load', function() {
+        request.addEventListener('load', () => {
           func({
-            type: 'updateDocList',
-            data: {
+            source: this.name,
+            type:   'updateDocList',
+            data:   {
               docIDs: request.response
             },
           });
@@ -4271,8 +4362,9 @@
       window.addEventListener('popstate', (event) => {
         if (event.state) {
           func({
-            type: 'undo',
-            data: event.state,
+            source: this.name,
+            type:   'undo',
+            data:   event.state,
           });
         }
       });

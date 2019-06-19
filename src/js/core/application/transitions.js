@@ -4,14 +4,14 @@
 const transitions = [
   { from: 'start', type: 'go', do: 'go', to: 'idle' },
   { from: 'idle', type: 'mousemove', do: 'focus' },
+  { type: 'cleanMessage', do: 'cleanMessage' },
 
   // SELECT
-  // activate select tool
   { type: 'click', target: 'select', do: 'deedit', to: 'idle' },
-
-  // transform updates
   { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
   { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
+
+  // TRANSFORM
   { from: 'shifting', type: 'mousemove', do: 'shift' },
   { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
   { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
@@ -22,7 +22,6 @@ const transitions = [
   { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
 
   // PEN
-  // activate pen tool
   { from: 'idle', type: 'click', target: 'pen', do: 'deselect', to: 'pen' },
   // adding controls
   { from: 'pen', type: 'mousedown', target: 'content', do: 'placeAnchor', to: 'addingHandle' },
@@ -38,6 +37,8 @@ const transitions = [
   // OTHER
   { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
   { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
+  { type: 'click', target: 'undo', do: 'undo', to: 'idle' },
+  { type: 'click', target: 'redo', do: 'redo', to: 'idle' },
   { type: 'docSaved', do: 'setSavedMessage' },
   { type: 'updateDocList', do: 'updateDocList' },
   { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?

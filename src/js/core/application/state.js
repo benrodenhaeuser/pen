@@ -25,7 +25,7 @@ const State = {
   buildStore() {
     const store   = Store.create();
     const docs    = Docs.create();
-    const message = Message.create();
+    const message = this.buildMessage();
     const doc     = this.buildDoc();
 
     store.append(docs);
@@ -33,6 +33,12 @@ const State = {
     store.append(message);
 
     return store;
+  },
+
+  buildMessage() {
+    const message = Message.create();
+    message.payload.text = 'Welcome!';
+    return message;
   },
 
   buildDoc() {

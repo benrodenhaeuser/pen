@@ -8,8 +8,9 @@ const hist = {
     window.addEventListener('popstate', (event) => {
       if (event.state) {
         func({
-          type: 'undo',
-          data: event.state,
+          source: this.name,
+          type:   'undo',
+          data:   event.state,
         });
       }
     });

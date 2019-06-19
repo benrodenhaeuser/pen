@@ -54,15 +54,15 @@ main {
   display: inline;
 }
 
-/* #buttons li button {
-  margin: 0 5px;
-} */
+/* TODO for development only */
+button.grayedout {
+  color: #d3d3d3;
+}
 
 #message {
   position: fixed;
   right: 10px;
-  color: black;
-  /* background-color: #f6f6f6; */
+  color: #d3d3d3;
   background-color: transparent;
   border: 0px;
 }

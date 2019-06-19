@@ -232,9 +232,26 @@ const updates = {
     state.doc.replaceWith(state.importFromPlain(input.data.doc));
   },
 
+  // Messages
+
   // from db: doc has just been saved
   setSavedMessage(state, input) {
-    // ... should trigger user output
+    state.store.message.payload.text = 'Saved';
+  },
+
+  // from ui: message can now be cleaned
+  cleanMessage(state, input) {
+    state.store.message.payload.text = '';
+  },
+
+  // History
+
+  undo(state, input) {
+    window.history.back();
+  },
+
+  redo(state, input) {
+    window.history.forward();
   },
 };
 

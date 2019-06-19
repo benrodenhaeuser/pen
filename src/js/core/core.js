@@ -21,12 +21,12 @@ const core = {
     this.state.store.scene.viewBox.height = canvasSize.height;
 
     this.publish();
-    this.compute({ type: 'go' });
+    this.compute({ source: 'core', type: 'go' });
   },
 
   compute(input) {
     this.state.input = input;
-
+    
     if (input.type === 'undo') {
       this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
       this.publish();
