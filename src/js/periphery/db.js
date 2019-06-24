@@ -66,7 +66,7 @@ const db = {
       window.dispatchEvent(
         new CustomEvent('readDoc', { detail: state.input.key })
       );
-    } else if (['release', 'releasePen'].includes(state.update)) {
+    } else if (['release', 'releasePen', 'changeMarkup'].includes(state.update)) {
       window.dispatchEvent(
         new CustomEvent('upsertDoc', { detail: state.plain.doc })
       );

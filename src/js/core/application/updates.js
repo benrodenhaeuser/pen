@@ -253,6 +253,13 @@ const updates = {
   redo(state, input) {
     window.history.forward();
   },
+
+  // Markup
+
+  // from ui: user has changed markup
+  changeMarkup(state, input) {
+    state.store.markup.payload.text = input.value;
+  },
 };
 
 export { updates };

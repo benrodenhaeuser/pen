@@ -20,7 +20,7 @@ const app = {
 
   getCanvasSize() {
     const canvasWidth   = 600;
-    const canvasHeight  = 700 - 35;
+    const canvasHeight  = 400 - 35;
     const canvasSize    = { width: canvasWidth, height: canvasHeight };
 
     return canvasSize;

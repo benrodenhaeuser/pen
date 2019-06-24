@@ -1,6 +1,7 @@
 import { State        } from './application/state.js';
 import { updates      } from './application/updates.js';
 import { transitions  } from './application/transitions.js';
+import { createID     } from './application/domain/createID';
 
 const core = {
   init() {
@@ -26,9 +27,11 @@ const core = {
 
   compute(input) {
     this.state.input = input;
+    // console.log(this.state.exportToSVG());
 
     if (input.type === 'undo') {
       this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
+      this.state.store.markup.key = createID(); // TODO: hack
       this.publish();
     } else {
       const transition = transitions.get(this.state, input);

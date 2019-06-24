@@ -22,19 +22,23 @@ HandleIn.type  = 'handleIn';
 HandleOut.type = 'handleOut';
 
 // other types of nodes
-const Store      = Object.create(Node); // TODO: State
+const Store      = Object.create(Node);
 const Doc        = Object.create(Node);
 const Docs       = Object.create(Node);
+const Markup     = Object.create(Node);
 const Message    = Object.create(Node);
 const Text       = Object.create(Node);
 const Identifier = Object.create(Node);
 
-Store.type      = 'store'; // TODO: state
+Store.type      = 'store';
 Doc.type        = 'doc';
 Docs.type       = 'docs';
+Markup.type     = 'markup';
 Message.type    = 'message';
 Text.type       = 'text';
 Identifier.type = 'identifier';
+
+// toVDOMNode
 
 Scene.toVDOMNode = function() {
   return {
@@ -74,6 +78,47 @@ Shape.toVDOMNode = function() {
       class:       this.class.toString(),
     },
   };
+};
+
+// toSVGNode
+
+Scene.toSVGNode = function() {
+  return {
+    tag:      'svg',
+    children: [],
+    props: {
+      'viewBox': this.viewBox.toString(),
+      xmlns:     'http://www.w3.org/2000/svg',
+    },
+  };
+};
+
+Group.toSVGNode = function() {
+  const svgNode = {
+    tag:      'g',
+    children: [],
+    props:    {},
+  };
+
+  if (this.payload.transform) {
+    svgNode.props.transform = this.transform.toString();
+  }
+
+  return svgNode;
+};
+
+Shape.toSVGNode = function() {
+  const svgNode = {
+    tag:      'path',
+    children: [],
+    props:    { d: this.pathString() },
+  };
+
+  if (this.payload.transform) {
+    svgNode.props.transform = this.transform.toString();
+  }
+
+  return svgNode;
 };
 
 // SHAPE
@@ -229,6 +274,7 @@ export {
   Store, // TODO: State
   Doc,
   Docs,
+  Markup,
   Message,
   Text,
   Identifier

@@ -23,11 +23,13 @@ const hist = {
   },
 
   isRelevant(update) {
-    const release    = update === 'release' ;
-    const releasePen = update === "releasePen";
-    const go         = update === 'go';
+    const release      = update === 'release' ;
+    const releasePen   = update === "releasePen";
+    const go           = update === 'go';
+    const changeMarkup = update === "changeMarkup";
 
-    return release || releasePen || go;
+
+    return release || releasePen || go || changeMarkup;
   },
 };
 

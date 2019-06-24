@@ -7,18 +7,6 @@ const svgTags = [
   'line'
 ];
 
-const eventTypes = [
-  'mousedown',
-  'mousemove',
-  'mouseup',
-  'click',
-  'dblclick'
-];
-
-const clickLike = (event) => {
-  return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
-}
-
 const svgns   = 'http://www.w3.org/2000/svg';
 const xmlns   = 'http://www.w3.org/2000/xmlns/';
 const htmlns  = 'http://www.w3.org/1999/xhtml';
@@ -30,14 +18,26 @@ const ui = {
   },
 
   bindEvents(func) {
-    for (let eventType of eventTypes) {
+    const mouseEvents = [
+      'mousedown',
+      'mousemove',
+      'mouseup',
+      'click',
+      'dblclick',
+    ];
+
+    for (let eventType of mouseEvents) {
       document.addEventListener(eventType, (event) => {
-        // so as not to interfere with form input and double clicks:
         if (
-          clickLike(event) &&
+          this.clickLike(event) &&
           (event.target.tagName === 'TEXTAREA' || event.detail > 1)
         ) {
           return;
+        }
+
+        // clicking outside textarea
+        if (event.type === 'click') {
+          document.querySelector('textarea').blur();
         }
 
         event.preventDefault();
@@ -46,6 +46,7 @@ const ui = {
           source: this.name,
           type:   event.type,
           target: event.target.dataset.type,
+          value:  event.target.value,
           key:    event.target.dataset.key,
           x:      this.coordinates(event).x,
           y:      this.coordinates(event).y,
@@ -54,7 +55,13 @@ const ui = {
     }
 
     document.addEventListener('input', (event) => {
-      console.log('input received'); // fine
+      event.preventDefault();
+
+      func({
+        source: this.name,
+        type:   event.type,
+        value:  event.target.value,
+      });
     });
 
     window.addEventListener('cleanMessage', (event) => {
@@ -62,7 +69,24 @@ const ui = {
         source: this.name,
         type:   'cleanMessage',
       });
-    })
+    });
+  },
+
+  receive(state) {
+    if (state.label === 'start') {
+      this.dom = this.createElement(state.vDOM);
+      this.mount(this.dom, document.body);
+    } else {
+      this.reconcile(this.previousVDOM, state.vDOM, this.dom);
+    }
+
+    this.previousVDOM = state.vDOM;
+
+    this.setMessageTimer();
+  },
+
+  clickLike(event) {
+    return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
   },
 
   coordinates(event) {
@@ -80,19 +104,6 @@ const ui = {
     }
 
     return coords;
-  },
-
-  receive(state) {
-    this.setMessageTimer();
-
-    if (state.label === 'start') {
-      this.dom = this.createElement(state.vDOM);
-      this.mount(this.dom, document.body);
-    } else {
-      this.reconcile(this.previousVDOM, state.vDOM, this.dom);
-    }
-
-    this.previousVDOM = state.vDOM;
   },
 
   mount($node, $mountPoint) {
@@ -129,10 +140,16 @@ const ui = {
   },
 
   reconcile(oldVNode, newVNode, $node) {
+
+    // TODO: clean up this conditional.
     if (typeof newVNode === 'string') {
       if (newVNode !== oldVNode) {
         $node.replaceWith(this.createElement(newVNode));
       }
+    } else if (newVNode.tag === 'textarea' && newVNode.props['data-key'] !== oldVNode.props['data-key']) {
+      console.log('re-rendering textarea');
+      // special case to correctly render textarea changes:
+      $node.replaceWith(this.createElement(newVNode));
     } else if (oldVNode.tag !== newVNode.tag) {
       $node.replaceWith(this.createElement(newVNode));
     }
@@ -182,10 +199,9 @@ const ui = {
     }
   },
 
-  // TODO: we periodically clean the message every second
-  // it would be more elegant to only do cleaning when
-  // message changes have occured
   setMessageTimer() {
+    const msgNode = document.querySelector('#message');
+
     const cleanMessage = () => {
       window.dispatchEvent(new Event('cleanMessage'));
     };
@@ -194,7 +210,11 @@ const ui = {
       clearTimeout(this.timer);
     }
 
-    this.timer = window.setTimeout(cleanMessage, 1000);
+    // if there is a message being displayed ...
+    if (msgNode && msgNode.innerHTML !== '') {
+      // ... then delete the message after one second
+      this.timer = window.setTimeout(cleanMessage, 1000);
+    }
   },
 };
 

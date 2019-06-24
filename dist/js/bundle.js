@@ -2222,7 +2222,7 @@
       const node = Object.create(this).init(opts);
 
       if (Object.getPrototypeOf(node) === Doc) {
-        node._id = createID();
+        node._id = createID(); // NOTE: docs have an _id
       }
 
       return node;
@@ -2237,11 +2237,11 @@
 
     defaults() {
       return {
-        key:      createID(),
+        key:      createID(), // all nodes have a key
         children: [],
         parent:   null,
         payload: {
-          transform: Matrix.identity(),
+          transform: null,
           class:     Class.create(),
           bounds:    null,
         },
@@ -2305,6 +2305,12 @@
       );
     },
 
+    get markup() {
+      return this.root.findDescendant(
+        node => node.type === 'markup'
+      );
+    },
+
     get leaves() {
       return this.findDescendants(
         node => node.children.length === 0
@@ -2362,7 +2368,7 @@
     // payload (getters/setters)
 
     get transform() {
-      return this.payload.transform;
+      return this.payload.transform || Matrix.identity();
     },
 
     set transform(value) {
@@ -2685,19 +2691,23 @@
   HandleOut.type = 'handleOut';
 
   // other types of nodes
-  const Store      = Object.create(Node); // TODO: State
+  const Store      = Object.create(Node);
   const Doc        = Object.create(Node);
   const Docs       = Object.create(Node);
+  const Markup     = Object.create(Node);
   const Message    = Object.create(Node);
   const Text       = Object.create(Node);
   const Identifier$1 = Object.create(Node);
 
-  Store.type      = 'store'; // TODO: state
+  Store.type      = 'store';
   Doc.type        = 'doc';
   Docs.type       = 'docs';
+  Markup.type     = 'markup';
   Message.type    = 'message';
   Text.type       = 'text';
   Identifier$1.type = 'identifier';
+
+  // toVDOMNode
 
   Scene.toVDOMNode = function() {
     return {
@@ -2737,6 +2747,47 @@
         class:       this.class.toString(),
       },
     };
+  };
+
+  // toSVGNode
+
+  Scene.toSVGNode = function() {
+    return {
+      tag:      'svg',
+      children: [],
+      props: {
+        'viewBox': this.viewBox.toString(),
+        xmlns:     'http://www.w3.org/2000/svg',
+      },
+    };
+  };
+
+  Group.toSVGNode = function() {
+    const svgNode = {
+      tag:      'g',
+      children: [],
+      props:    {},
+    };
+
+    if (this.payload.transform) {
+      svgNode.props.transform = this.transform.toString();
+    }
+
+    return svgNode;
+  };
+
+  Shape.toSVGNode = function() {
+    const svgNode = {
+      tag:      'path',
+      children: [],
+      props:    { d: this.pathString() },
+    };
+
+    if (this.payload.transform) {
+      svgNode.props.transform = this.transform.toString();
+    }
+
+    return svgNode;
   };
 
   // SHAPE
@@ -3061,6 +3112,63 @@
     },
   };
 
+  const svgExporter = {
+    build(store) {
+      const markup = [];
+      const vNode = this.buildSceneNode(store.scene);
+
+      return this.convertToMarkup(markup, vNode);
+    },
+
+    buildSceneNode(node, svgParent = null) {
+      const svgNode = node.toSVGNode();
+
+      if (svgParent) {
+        svgParent.children.push(svgNode);
+      }
+
+      for (let child of node.graphicsChildren) {
+        this.buildSceneNode(child, svgNode);
+      }
+
+      return svgNode;
+    },
+
+    // -- TODO: get spacing right
+    // -- TODO: prettification (line breaks and indents)
+
+    convertToMarkup(markup, svgNode) {
+      this.appendOpenTag(markup, svgNode);
+      for (let child of svgNode.children) {
+        this.convertToMarkup(markup, child);
+      }
+      this.appendCloseTag(markup, svgNode);
+
+      return markup.join('');
+    },
+
+    appendOpenTag(markup, svgNode) {
+      markup.push('<');
+      markup.push(svgNode.tag);
+      markup.push(' ');
+
+      for (let [key, value] of Object.entries(svgNode.props)) {
+        markup.push(key);
+        markup.push('="');
+        markup.push(value);
+        markup.push('"');
+      }
+
+      markup.push('>');
+    },
+
+    appendCloseTag(markup, svgNode) {
+      markup.push('</');
+      markup.push(svgNode.tag);
+      markup.push('>');
+    },
+  };
+
   const LENGTHS_IN_PX = {
     cornerSideLength: 8,
     dotDiameter:      18,
@@ -3075,89 +3183,26 @@
     };
   };
 
-  // TODO: for development purposes only
-  const markup = `<g><rect x="260" y="250" width="100" height="100"></rect><g><rect x="400" y="260" width="100" height="100"></rect><rect x="550" y="260" width="100" height="100"></rect></g></g><rect x="600" y="600" width="100" height="100"></rect>`;
-
-  const beautify = function(xml) {
-          var reg = /(>)\s*(<)(\/*)/g; // updated Mar 30, 2015
-          var wsexp = / *(.*) +\n/g;
-          var contexp = /(<.+>)(.+\n)/g;
-          xml = xml.replace(reg, '$1\n$2$3').replace(wsexp, '$1\n').replace(contexp, '$1\n$2');
-          var formatted = '';
-          var lines = xml.split('\n');
-          var indent = 0;
-          var lastType = 'other';
-          // 4 types of tags - single, closing, opening, other (text, doctype, comment) - 4*4 = 16 transitions
-          var transitions = {
-              'single->single': 0,
-              'single->closing': -1,
-              'single->opening': 0,
-              'single->other': 0,
-              'closing->single': 0,
-              'closing->closing': -1,
-              'closing->opening': 0,
-              'closing->other': 0,
-              'opening->single': 1,
-              'opening->closing': 0,
-              'opening->opening': 1,
-              'opening->other': 1,
-              'other->single': 0,
-              'other->closing': -1,
-              'other->opening': 0,
-              'other->other': 0
-          };
-
-          for (var i = 0; i < lines.length; i++) {
-              var ln = lines[i];
-
-              // Luca Viggiani 2017-07-03: handle optional <?xml ... ?> declaration
-              if (ln.match(/\s*<\?xml/)) {
-                  formatted += ln + "\n";
-                  continue;
-              }
-              // ---
-
-              var single = Boolean(ln.match(/<.+\/>/)); // is this line a single tag? ex. <br />
-              var closing = Boolean(ln.match(/<\/.+>/)); // is this a closing tag? ex. </a>
-              var opening = Boolean(ln.match(/<[^!].*>/)); // is this even a tag (that's not <!something>)
-              var type = single ? 'single' : closing ? 'closing' : opening ? 'opening' : 'other';
-              var fromTo = lastType + '->' + type;
-              lastType = type;
-              var padding = '';
-
-              indent += transitions[fromTo];
-              for (var j = 0; j < indent; j++) {
-                  padding += '  ';
-              }
-              if (fromTo == 'opening->closing')
-                  formatted = formatted.substr(0, formatted.length - 1) + ln + '\n'; // substr removes line break (\n) from prev loop
-              else
-                  formatted += padding + ln + '\n';
-          }
-
-          return formatted;
-      };
-
   const vdomExporter = {
-    renderApp(store) {
-      const comps = this.comps(store);
+    renderApp(state) {
+      const components = this.components(state);
 
       return h('main', { id: 'app' },
-        comps.canvas,
-        comps.editor,
+        components.canvas,
+        components.editor,
         h('div', { id: 'toolbar' },
-          comps.buttons,
-          comps.message
+          components.buttons,
+          components.message
         ),
       );
     },
 
-    comps(store) {
+    components(state) {
       return {
-        buttons:  this.buttons(store),
-        message:  this.message(store),
-        editor:   this.editor(store),
-        canvas:   this.canvas(store),
+        buttons:  this.buttons(state.store),
+        message:  this.message(state.store),
+        editor:   this.editor(state),
+        canvas:   this.canvas(state.store),
       };
     },
 
@@ -3179,7 +3224,7 @@
               'data-key': identifier.payload._id,
               'data-type': 'doc-identifier',
             }, identifier.payload._id)
-            //  TODO: This is where we need to put the *name* of the document
+            //  TODO: This is where we would need to put the *name* of the document.
         ));
       }
 
@@ -3246,7 +3291,7 @@
       );
     },
 
-    editor(store) {
+    editor(state) {
       return h('div', {
         id: 'editor',
       }, h('form', {
@@ -3254,8 +3299,9 @@
           'data-type': 'form',
         }, h('textarea', {
             form: 'form',
+            'data-key': state.store.markup.key,
             spellcheck: false,
-          }, beautify(markup)
+          }, state.exportToSVG() // state.store.markup.payload.text
           )
         )
       );
@@ -3270,7 +3316,6 @@
     },
 
     renderScene(store) {
-      // case: nothing to render
       if (store.scene === null) {
         return '';
       }
@@ -3523,6 +3568,9 @@
         case 'message':
           node = Message.create();
           break;
+        case 'markup':
+          node = Markup.create();
+          break;
         case 'scene':
           node = Scene.create();
           break;
@@ -3552,6 +3600,7 @@
 
       node.type = object.type;
       node.key = object.key;
+      node._id = object._id;
       this.setPayload(node, object);
 
       for (let child of object.children) {
@@ -3573,6 +3622,9 @@
           case 'class':
             node.class = Class.create(value);
             break;
+          case 'text':
+            node.payload.text = value;
+            break;
           case 'bounds':
             if (value) {
               node.bounds = Rectangle.createFromObject(value);
@@ -3591,8 +3643,7 @@
       return {
         doc:  JSON.parse(JSON.stringify(store.doc)),
         docs: store.docs.children.map(child => child.payload.id),
-        // ^ TODO: note that we don't have the appropriate interface yet
-        // and question: why are we doing this?
+        // ^ TODO: I think we don't need `docs`
       };
     },
   };
@@ -3633,21 +3684,29 @@
     },
 
     buildDoc() {
-      const doc   = Doc.create();
-      const scene = Scene.create();
+      const doc    = Doc.create();
+      const scene  = Scene.create();
+      const markup = Markup.create();
 
       const width = this.width || 0;
       const height = this.height || 0;
 
       scene.viewBox = Rectangle.createFromDimensions(0, 0, width, height);
 
+      markup.payload.text = '';
+
       doc.append(scene);
+      doc.append(markup);
 
       return doc;
     },
 
     get scene() {
       return this.store.scene;
+    },
+
+    get markup() {
+      return this.store.markup;
     },
 
     get doc() {
@@ -3678,9 +3737,13 @@
       return svgImporter.build(markup);
     },
 
+    exportToSVG() {
+      return svgExporter.build(this.store);
+    },
+
     // returns a Doc node and a list of ids (for docs)
     exportToVDOM() {
-      return vdomExporter.renderApp(this.store);
+      return vdomExporter.renderApp(this);
     },
 
     // returns a plain representation of Doc node and a list of ids (for docs)
@@ -3688,6 +3751,23 @@
       return plainExporter.build(this.store);
     },
   };
+
+  // hard-coded markup
+  //
+  // const markup = `
+  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
+  //
+  //     <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
+  //
+  //     <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
+  //
+  //     <g>
+  //       <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
+  //
+  //       <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
+  //     </g>
+  //   </svg>
+  // `;
 
   // const markup = `
   //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 400"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
@@ -3985,6 +4065,13 @@
     redo(state, input) {
       window.history.forward();
     },
+
+    // Markup
+
+    // from ui: user has changed markup
+    changeMarkup(state, input) {
+      state.store.markup.payload.text = input.value;
+    },
   };
 
   // 'type' is mandatory
@@ -4032,6 +4119,9 @@
     { type: 'updateDocList', do: 'updateDocList' },
     { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
     { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
+
+    // INPUT
+    { type: 'input', do: 'changeMarkup' }
   ];
 
   transitions.get = function(state, input) {
@@ -4081,9 +4171,11 @@
 
     compute(input) {
       this.state.input = input;
+      // console.log(this.state.exportToSVG());
 
       if (input.type === 'undo') {
         this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
+        this.state.store.markup.key = createID(); // TODO: hack
         this.publish();
       } else {
         const transition = transitions.get(this.state, input);
@@ -4120,18 +4212,6 @@
     'line'
   ];
 
-  const eventTypes = [
-    'mousedown',
-    'mousemove',
-    'mouseup',
-    'click',
-    'dblclick'
-  ];
-
-  const clickLike = (event) => {
-    return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
-  };
-
   const svgns   = 'http://www.w3.org/2000/svg';
   const xmlns   = 'http://www.w3.org/2000/xmlns/';
   const htmlns  = 'http://www.w3.org/1999/xhtml';
@@ -4143,14 +4223,26 @@
     },
 
     bindEvents(func) {
-      for (let eventType of eventTypes) {
+      const mouseEvents = [
+        'mousedown',
+        'mousemove',
+        'mouseup',
+        'click',
+        'dblclick',
+      ];
+
+      for (let eventType of mouseEvents) {
         document.addEventListener(eventType, (event) => {
-          // so as not to interfere with form input and double clicks:
           if (
-            clickLike(event) &&
+            this.clickLike(event) &&
             (event.target.tagName === 'TEXTAREA' || event.detail > 1)
           ) {
             return;
+          }
+
+          // clicking outside textarea
+          if (event.type === 'click') {
+            document.querySelector('textarea').blur();
           }
 
           event.preventDefault();
@@ -4159,6 +4251,7 @@
             source: this.name,
             type:   event.type,
             target: event.target.dataset.type,
+            value:  event.target.value,
             key:    event.target.dataset.key,
             x:      this.coordinates(event).x,
             y:      this.coordinates(event).y,
@@ -4167,7 +4260,13 @@
       }
 
       document.addEventListener('input', (event) => {
-        console.log('input received'); // fine
+        event.preventDefault();
+
+        func({
+          source: this.name,
+          type:   event.type,
+          value:  event.target.value,
+        });
       });
 
       window.addEventListener('cleanMessage', (event) => {
@@ -4176,6 +4275,23 @@
           type:   'cleanMessage',
         });
       });
+    },
+
+    receive(state) {
+      if (state.label === 'start') {
+        this.dom = this.createElement(state.vDOM);
+        this.mount(this.dom, document.body);
+      } else {
+        this.reconcile(this.previousVDOM, state.vDOM, this.dom);
+      }
+
+      this.previousVDOM = state.vDOM;
+
+      this.setMessageTimer();
+    },
+
+    clickLike(event) {
+      return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
     },
 
     coordinates(event) {
@@ -4193,19 +4309,6 @@
       }
 
       return coords;
-    },
-
-    receive(state) {
-      this.setMessageTimer();
-
-      if (state.label === 'start') {
-        this.dom = this.createElement(state.vDOM);
-        this.mount(this.dom, document.body);
-      } else {
-        this.reconcile(this.previousVDOM, state.vDOM, this.dom);
-      }
-
-      this.previousVDOM = state.vDOM;
     },
 
     mount($node, $mountPoint) {
@@ -4242,10 +4345,16 @@
     },
 
     reconcile(oldVNode, newVNode, $node) {
+
+      // TODO: clean up this conditional.
       if (typeof newVNode === 'string') {
         if (newVNode !== oldVNode) {
           $node.replaceWith(this.createElement(newVNode));
         }
+      } else if (newVNode.tag === 'textarea' && newVNode.props['data-key'] !== oldVNode.props['data-key']) {
+        console.log('re-rendering textarea');
+        // special case to correctly render textarea changes:
+        $node.replaceWith(this.createElement(newVNode));
       } else if (oldVNode.tag !== newVNode.tag) {
         $node.replaceWith(this.createElement(newVNode));
       }
@@ -4295,10 +4404,9 @@
       }
     },
 
-    // TODO: we periodically clean the message every second
-    // it would be more elegant to only do cleaning when
-    // message changes have occured
     setMessageTimer() {
+      const msgNode = document.querySelector('#message');
+
       const cleanMessage = () => {
         window.dispatchEvent(new Event('cleanMessage'));
       };
@@ -4307,7 +4415,11 @@
         clearTimeout(this.timer);
       }
 
-      this.timer = window.setTimeout(cleanMessage, 1000);
+      // if there is a message being displayed ...
+      if (msgNode && msgNode.innerHTML !== '') {
+        // ... then delete the message after one second
+        this.timer = window.setTimeout(cleanMessage, 1000);
+      }
     },
   };
 
@@ -4379,7 +4491,7 @@
         window.dispatchEvent(
           new CustomEvent('readDoc', { detail: state.input.key })
         );
-      } else if (['release', 'releasePen'].includes(state.update)) {
+      } else if (['release', 'releasePen', 'changeMarkup'].includes(state.update)) {
         window.dispatchEvent(
           new CustomEvent('upsertDoc', { detail: state.plain.doc })
         );
@@ -4414,11 +4526,13 @@
     },
 
     isRelevant(update) {
-      const release    = update === 'release' ;
-      const releasePen = update === "releasePen";
-      const go         = update === 'go';
+      const release      = update === 'release' ;
+      const releasePen   = update === "releasePen";
+      const go           = update === 'go';
+      const changeMarkup = update === "changeMarkup";
 
-      return release || releasePen || go;
+
+      return release || releasePen || go || changeMarkup;
     },
   };
 
@@ -4439,7 +4553,7 @@
 
     getCanvasSize() {
       const canvasWidth   = 600;
-      const canvasHeight  = 700 - 35;
+      const canvasHeight  = 400 - 35;
       const canvasSize    = { width: canvasWidth, height: canvasHeight };
 
       return canvasSize;

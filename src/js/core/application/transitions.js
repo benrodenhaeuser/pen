@@ -43,6 +43,9 @@ const transitions = [
   { type: 'updateDocList', do: 'updateDocList' },
   { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
+
+  // INPUT
+  { type: 'input', do: 'changeMarkup' }
 ];
 
 transitions.get = function(state, input) {

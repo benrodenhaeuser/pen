@@ -4,19 +4,14 @@ import { Rectangle } from './rectangle.js';  // bounds, viewBox
 import { Class     } from './class.js';      // class list
 import { Curve     } from './curve.js';      // Bezier curves
 import { Doc       } from './types.js';
-
-const createID = () => {
-  const randomString = Math.random().toString(36).substring(2);
-  const timestamp    = (new Date()).getTime().toString(36);
-  return randomString + timestamp;
-};
+import { createID  } from './createID.js';
 
 const Node = {
   create(opts = {}) {
     const node = Object.create(this).init(opts);
 
     if (Object.getPrototypeOf(node) === Doc) {
-      node._id = createID();
+      node._id = createID(); // NOTE: docs have an _id
     }
 
     return node;
@@ -31,11 +26,11 @@ const Node = {
 
   defaults() {
     return {
-      key:      createID(),
+      key:      createID(), // all nodes have a key
       children: [],
       parent:   null,
       payload: {
-        transform: Matrix.identity(),
+        transform: null,
         class:     Class.create(),
         bounds:    null,
       },
@@ -99,6 +94,12 @@ const Node = {
     );
   },
 
+  get markup() {
+    return this.root.findDescendant(
+      node => node.type === 'markup'
+    );
+  },
+
   get leaves() {
     return this.findDescendants(
       node => node.children.length === 0
@@ -156,7 +157,7 @@ const Node = {
   // payload (getters/setters)
 
   get transform() {
-    return this.payload.transform;
+    return this.payload.transform || Matrix.identity();
   },
 
   set transform(value) {
