@@ -11,15 +11,19 @@ import { SVGPathDataTransformer  } from 'svg-pathdata'; // TODO: put this in ext
 const svgImporter = {
   build(markup) {
     const $svg = new DOMParser()
-      .parseFromString(markup, "application/xml")
+      .parseFromString(markup, "image/svg+xml")
       .documentElement;
 
-    const scene = Scene.create();
+    if ($svg instanceof SVGElement) {
+      const scene = Scene.create();
+      this.buildTree($svg, scene);
+      scene.setFrontier();
+      return scene;
+    }
 
-    this.buildTree($svg, scene);
-    scene.setFrontier();
+    console.log('svg import did not succeed');
 
-    return scene;
+    return null;
   },
 
   copyStyles($node, node) {

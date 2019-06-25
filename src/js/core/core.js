@@ -14,12 +14,12 @@ const core = {
     this.periphery[name] = func;
   },
 
-  kickoff(canvasSize) {
-    this.state.width = canvasSize.width;   // TODO: stopgap
-    this.state.height = canvasSize.height; // TODO: stopgap
-
-    this.state.store.scene.viewBox.width  = canvasSize.width;
-    this.state.store.scene.viewBox.height = canvasSize.height;
+  kickoff() {
+    // this.state.width = canvasSize.width;   // TODO: stopgap
+    // this.state.height = canvasSize.height; // TODO: stopgap
+    //
+    // this.state.store.scene.viewBox.width  = canvasSize.width;
+    // this.state.store.scene.viewBox.height = canvasSize.height;
 
     this.publish();
     this.compute({ source: 'core', type: 'go' });
@@ -27,11 +27,11 @@ const core = {
 
   compute(input) {
     this.state.input = input;
-    // console.log(this.state.exportToSVG());
 
-    if (input.type === 'undo') {
+    // TODO: do we need this special logic? can't we do it in an update function?
+    // (i.e., without any special logic) 
+    if (input.type === 'undo') { // TODO: 'undo' really means 'undoOrRedo' so this is confusing naming
       this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
-      this.state.store.markup.key = createID(); // TODO: hack
       this.publish();
     } else {
       const transition = transitions.get(this.state, input);

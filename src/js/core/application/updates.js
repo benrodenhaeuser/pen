@@ -260,6 +260,13 @@ const updates = {
   changeMarkup(state, input) {
     state.store.markup.payload.text = input.value;
   },
+
+  // from ui: textarea submitted
+  submitChanges(state, input) {
+    console.log(state.store.markup.payload.text);
+    const newScene = state.importFromSVG(input.value);
+    state.store.scene.replaceWith(newScene);
+  },
 };
 
 export { updates };

@@ -30,7 +30,7 @@ const Node = {
       children: [],
       parent:   null,
       payload: {
-        transform: null,
+        transform: Matrix.identity(),
         class:     Class.create(),
         bounds:    null,
       },
@@ -157,7 +157,7 @@ const Node = {
   // payload (getters/setters)
 
   get transform() {
-    return this.payload.transform || Matrix.identity();
+    return this.payload.transform;
   },
 
   set transform(value) {

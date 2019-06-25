@@ -45,7 +45,8 @@ const transitions = [
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
 
   // INPUT
-  { type: 'input', do: 'changeMarkup' }
+  { type: 'input', do: 'changeMarkup' },
+  { type: 'submit', do: 'submitChanges' }
 ];
 
 transitions.get = function(state, input) {

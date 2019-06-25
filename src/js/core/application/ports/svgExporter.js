@@ -3,7 +3,7 @@ const svgExporter = {
     const markup = [];
     const vNode = this.buildSceneNode(store.scene);
 
-    return this.convertToMarkup(markup, vNode);
+    return this.convertToMarkup(markup, vNode, 0);
   },
 
   buildSceneNode(node, svgParent = null) {
@@ -20,38 +20,62 @@ const svgExporter = {
     return svgNode;
   },
 
-  // -- TODO: get spacing right
-  // -- TODO: prettification (line breaks and indents)
-
-  convertToMarkup(markup, svgNode) {
-    this.appendOpenTag(markup, svgNode);
+  convertToMarkup(markup, svgNode, level) {
+    this.appendOpenTag(markup, svgNode, level);
     for (let child of svgNode.children) {
-      this.convertToMarkup(markup, child);
+      this.convertToMarkup(markup, child, level + 1);
     }
-    this.appendCloseTag(markup, svgNode);
+    this.appendCloseTag(markup, svgNode, level);
 
     return markup.join('');
   },
 
-  appendOpenTag(markup, svgNode) {
-    markup.push('<');
-    markup.push(svgNode.tag);
-    markup.push(' ');
+  appendOpenTag(markup, svgNode, level) {
+    const tag = [];
 
-    for (let [key, value] of Object.entries(svgNode.props)) {
-      markup.push(key);
-      markup.push('="');
-      markup.push(value);
-      markup.push('"');
+    for (let i = 0; i < level; i += 1) {
+      tag.push('    ');
     }
 
-    markup.push('>');
+    tag.push('<');
+    tag.push(svgNode.tag);
+
+    const propsList = [];
+
+    for (let [key, value] of Object.entries(svgNode.props)) {
+      propsList.push(`${key}="${value}"`);
+    }
+
+    if (propsList.length > 0) {
+      tag.push(' ');
+    }
+
+    tag.push(propsList.join(' '));
+
+    tag.push('>');
+
+    // if (svgNode.tag !== 'path') {
+      tag.push('\n');
+    // }
+
+    markup.push(tag.join(''));
   },
 
-  appendCloseTag(markup, svgNode) {
-    markup.push('</');
-    markup.push(svgNode.tag);
-    markup.push('>');
+  appendCloseTag(markup, svgNode, level) {
+    const tag = [];
+
+    // if (svgNode.tag !== 'path') {
+      for (let i = 0; i < level; i += 1) {
+        tag.push('    ');
+      }
+    // }
+
+    tag.push('</');
+    tag.push(svgNode.tag);
+    tag.push('>');
+    tag.push('\n');
+
+    markup.push(tag.join(''));
   },
 };
 

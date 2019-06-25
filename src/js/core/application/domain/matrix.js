@@ -27,11 +27,12 @@ const Matrix = {
   // return value: string
   toString() {
     const sixValueMatrix = [
-      this.m[0][0], this.m[1][0], this.m[0][1],
-      this.m[1][1], this.m[0][2], this.m[1][2]
+      this.m[0][0].toFixed(3), this.m[1][0].toFixed(3),
+      this.m[0][1].toFixed(3), this.m[1][1].toFixed(3),
+      this.m[0][2].toFixed(3), this.m[1][2].toFixed(3)
     ];
 
-    return `matrix(${sixValueMatrix})`;
+    return `matrix(${sixValueMatrix.join(', ')})`;
   },
 
   // return value: new Vector instance

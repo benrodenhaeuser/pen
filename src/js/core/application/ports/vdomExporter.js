@@ -106,6 +106,15 @@ const vdomExporter = {
           'data-type': 'pen',
           class: 'pure-button',
         }, 'Pen')
+      ),
+      h('li', {},
+        h('button', {
+          id: 'submit',
+          'data-type': 'submit',
+          class: 'pure-button',
+          form: 'form',
+          type: 'submit',
+        }, 'Submit')
       )
     );
   },
@@ -121,6 +130,8 @@ const vdomExporter = {
   },
 
   editor(state) {
+    // console.log('export', state.exportToSVG()); // logs correct values
+
     return h('div', {
       id: 'editor',
     }, h('form', {

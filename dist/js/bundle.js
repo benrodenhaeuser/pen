@@ -95,11 +95,12 @@
     // return value: string
     toString() {
       const sixValueMatrix = [
-        this.m[0][0], this.m[1][0], this.m[0][1],
-        this.m[1][1], this.m[0][2], this.m[1][2]
+        this.m[0][0].toFixed(3), this.m[1][0].toFixed(3),
+        this.m[0][1].toFixed(3), this.m[1][1].toFixed(3),
+        this.m[0][2].toFixed(3), this.m[1][2].toFixed(3)
       ];
 
-      return `matrix(${sixValueMatrix})`;
+      return `matrix(${sixValueMatrix.join(', ')})`;
     },
 
     // return value: new Vector instance
@@ -2241,7 +2242,7 @@
         children: [],
         parent:   null,
         payload: {
-          transform: null,
+          transform: Matrix.identity(),
           class:     Class.create(),
           bounds:    null,
         },
@@ -2368,7 +2369,7 @@
     // payload (getters/setters)
 
     get transform() {
-      return this.payload.transform || Matrix.identity();
+      return this.payload.transform;
     },
 
     set transform(value) {
@@ -2769,9 +2770,9 @@
       props:    {},
     };
 
-    if (this.payload.transform) {
-      svgNode.props.transform = this.transform.toString();
-    }
+    // if (this.payload.transform) {
+    svgNode.props.transform = this.transform.toString();
+    // }
 
     return svgNode;
   };
@@ -2783,9 +2784,10 @@
       props:    { d: this.pathString() },
     };
 
-    if (this.payload.transform) {
-      svgNode.props.transform = this.transform.toString();
-    }
+    // TODO: don't want to set a transform if it's a trivial transform
+    // if (this.payload.transform) {
+    svgNode.props.transform = this.transform.toString();
+    // }
 
     return svgNode;
   };
@@ -2812,11 +2814,11 @@
         }
 
         if (prevSeg.handleOut) {
-          d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
+          d += ` ${prevSeg.handleOut.x.toFixed()} ${prevSeg.handleOut.y.toFixed()}`;
         }
 
         if (currSeg.handleIn) {
-          d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
+          d += ` ${currSeg.handleIn.x.toFixed()} ${currSeg.handleIn.y.toFixed()}`;
         }
 
         d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
@@ -2936,15 +2938,19 @@
   const svgImporter = {
     build(markup) {
       const $svg = new DOMParser()
-        .parseFromString(markup, "application/xml")
+        .parseFromString(markup, "image/svg+xml")
         .documentElement;
 
-      const scene = Scene.create();
+      if ($svg instanceof SVGElement) {
+        const scene = Scene.create();
+        this.buildTree($svg, scene);
+        scene.setFrontier();
+        return scene;
+      }
 
-      this.buildTree($svg, scene);
-      scene.setFrontier();
+      console.log('svg import did not succeed');
 
-      return scene;
+      return null;
     },
 
     copyStyles($node, node) {
@@ -3117,7 +3123,7 @@
       const markup = [];
       const vNode = this.buildSceneNode(store.scene);
 
-      return this.convertToMarkup(markup, vNode);
+      return this.convertToMarkup(markup, vNode, 0);
     },
 
     buildSceneNode(node, svgParent = null) {
@@ -3134,38 +3140,62 @@
       return svgNode;
     },
 
-    // -- TODO: get spacing right
-    // -- TODO: prettification (line breaks and indents)
-
-    convertToMarkup(markup, svgNode) {
-      this.appendOpenTag(markup, svgNode);
+    convertToMarkup(markup, svgNode, level) {
+      this.appendOpenTag(markup, svgNode, level);
       for (let child of svgNode.children) {
-        this.convertToMarkup(markup, child);
+        this.convertToMarkup(markup, child, level + 1);
       }
-      this.appendCloseTag(markup, svgNode);
+      this.appendCloseTag(markup, svgNode, level);
 
       return markup.join('');
     },
 
-    appendOpenTag(markup, svgNode) {
-      markup.push('<');
-      markup.push(svgNode.tag);
-      markup.push(' ');
+    appendOpenTag(markup, svgNode, level) {
+      const tag = [];
 
-      for (let [key, value] of Object.entries(svgNode.props)) {
-        markup.push(key);
-        markup.push('="');
-        markup.push(value);
-        markup.push('"');
+      for (let i = 0; i < level; i += 1) {
+        tag.push('    ');
       }
 
-      markup.push('>');
+      tag.push('<');
+      tag.push(svgNode.tag);
+
+      const propsList = [];
+
+      for (let [key, value] of Object.entries(svgNode.props)) {
+        propsList.push(`${key}="${value}"`);
+      }
+
+      if (propsList.length > 0) {
+        tag.push(' ');
+      }
+
+      tag.push(propsList.join(' '));
+
+      tag.push('>');
+
+      // if (svgNode.tag !== 'path') {
+        tag.push('\n');
+      // }
+
+      markup.push(tag.join(''));
     },
 
-    appendCloseTag(markup, svgNode) {
-      markup.push('</');
-      markup.push(svgNode.tag);
-      markup.push('>');
+    appendCloseTag(markup, svgNode, level) {
+      const tag = [];
+
+      // if (svgNode.tag !== 'path') {
+        for (let i = 0; i < level; i += 1) {
+          tag.push('    ');
+        }
+      // }
+
+      tag.push('</');
+      tag.push(svgNode.tag);
+      tag.push('>');
+      tag.push('\n');
+
+      markup.push(tag.join(''));
     },
   };
 
@@ -3277,6 +3307,15 @@
             'data-type': 'pen',
             class: 'pure-button',
           }, 'Pen')
+        ),
+        h('li', {},
+          h('button', {
+            id: 'submit',
+            'data-type': 'submit',
+            class: 'pure-button',
+            form: 'form',
+            type: 'submit',
+          }, 'Submit')
         )
       );
     },
@@ -3292,6 +3331,8 @@
     },
 
     editor(state) {
+      // console.log('export', state.exportToSVG()); // logs correct values
+
       return h('div', {
         id: 'editor',
       }, h('form', {
@@ -3659,7 +3700,11 @@
       this.update = '';
       this.store  = this.buildStore();
 
-      // this.store.scene.replaceWith(this.importFromSVG(markup));
+      // const svgImport = this.importFromSVG(markup);
+      //
+      // if (svgImport !== null) {
+      //   this.store.scene.replaceWith(this.importFromSVG(markup));
+      // }
 
       return this;
     },
@@ -3691,7 +3736,7 @@
       const width = this.width || 0;
       const height = this.height || 0;
 
-      scene.viewBox = Rectangle.createFromDimensions(0, 0, width, height);
+      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
 
       markup.payload.text = '';
 
@@ -3751,23 +3796,6 @@
       return plainExporter.build(this.store);
     },
   };
-
-  // hard-coded markup
-  //
-  // const markup = `
-  //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 100.17"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
-  //
-  //     <path class="cls-1" d="M69.74,14H35.82S37,54.54,10.37,76.65v7.27H51.27V97.55s-1.51,7.27-12.42,7.27v6.06H87.31v-6.66S74.59,106,74.59,98.46V83.91h13v-7h-13V34.4L51.21,55.31V77H17.34S65.5,32.43,69.74,14" transform="translate(-10.37 -12.38)"/>
-  //
-  //     <path class="cls-1" d="M142,39.59q0-14.42-3.23-20.89a6.56,6.56,0,0,0-6.32-3.82q-9.71,0-9.71,21.77t10.74,21.62a6.73,6.73,0,0,0,6.62-4.12Q142,50,142,39.59m3.83,49.13q0-15.59-2.87-21.92t-10.08-6.32a10.21,10.21,0,0,0-9.78,5.88q-3,5.88-3,19.12,0,12.94,3.46,18.75T134.63,110q6,0,8.61-4.93t2.58-16.4m24-4.41q0,10.59-8.53,18.39-10.74,9.86-27.51,9.86-16.19,0-26.77-7.65T96.38,85.49q0-13.83,10.88-20.45,5.15-3.09,14.56-5.59l-0.15-.74q-20.89-5.3-20.89-21.77a21.6,21.6,0,0,1,8.68-17.65q8.68-6.91,22.21-6.91,14.56,0,23.39,6.77a21.35,21.35,0,0,1,8.83,17.8q0,15-19,21.92v0.59q24.86,5.44,24.86,24.86" transform="translate(-10.37 -12.38)"/>
-  //
-  //     <g>
-  //       <path class="cls-1" d="M185.85,53.73V34.82c0-4.55-1.88-6.9-9.41-8.47V20.7L203.67,14h5.49V53.73H185.85Z" transform="translate(-10.37 -12.38)"/>
-  //
-  //       <path class="cls-1" d="M232,55.82c0-1.73-.63-2.2-8-2v-6.9h38v6.9c-11.26.45-11.9,1.84-20.68,9.37L236,67.73l18,22.91c8.63,10.83,11,13.71,17.1,14.34v5.9H227.57a37.69,37.69,0,0,1,0-5.9,5,5,0,0,0,5-3.78L218.23,83.54s-8.77,6.94-9.18,12.28c-0.57,7.27,5.19,9.16,11,9.16v5.9H176.69V105S232,56.76,232,55.82Z" transform="translate(-10.37 -12.38)"/>
-  //     </g>
-  //   </svg>
-  // `;
 
   // const markup = `
   //   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.73 400"><defs><style>.cls-1{fill:#2a2a2a;}</style></defs><title>Logo_48_Web_160601</title>
@@ -4072,6 +4100,13 @@
     changeMarkup(state, input) {
       state.store.markup.payload.text = input.value;
     },
+
+    // from ui: textarea submitted
+    submitChanges(state, input) {
+      console.log(state.store.markup.payload.text);
+      const newScene = state.importFromSVG(input.value);
+      state.store.scene.replaceWith(newScene);
+    },
   };
 
   // 'type' is mandatory
@@ -4121,7 +4156,8 @@
     { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
 
     // INPUT
-    { type: 'input', do: 'changeMarkup' }
+    { type: 'input', do: 'changeMarkup' },
+    { type: 'submit', do: 'submitChanges' }
   ];
 
   transitions.get = function(state, input) {
@@ -4158,12 +4194,12 @@
       this.periphery[name] = func;
     },
 
-    kickoff(canvasSize) {
-      this.state.width = canvasSize.width;   // TODO: stopgap
-      this.state.height = canvasSize.height; // TODO: stopgap
-
-      this.state.store.scene.viewBox.width  = canvasSize.width;
-      this.state.store.scene.viewBox.height = canvasSize.height;
+    kickoff() {
+      // this.state.width = canvasSize.width;   // TODO: stopgap
+      // this.state.height = canvasSize.height; // TODO: stopgap
+      //
+      // this.state.store.scene.viewBox.width  = canvasSize.width;
+      // this.state.store.scene.viewBox.height = canvasSize.height;
 
       this.publish();
       this.compute({ source: 'core', type: 'go' });
@@ -4171,11 +4207,11 @@
 
     compute(input) {
       this.state.input = input;
-      // console.log(this.state.exportToSVG());
 
       if (input.type === 'undo') {
         this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
         this.state.store.markup.key = createID(); // TODO: hack
+        // will force textarea to re-render
         this.publish();
       } else {
         const transition = transitions.get(this.state, input);
@@ -4231,8 +4267,11 @@
         'dblclick',
       ];
 
+      // canvas
       for (let eventType of mouseEvents) {
         document.addEventListener(eventType, (event) => {
+          // console.log(event.target);
+
           if (
             this.clickLike(event) &&
             (event.target.tagName === 'TEXTAREA' || event.detail > 1)
@@ -4240,7 +4279,7 @@
             return;
           }
 
-          // clicking outside textarea
+          // clicking (outside textarea)
           if (event.type === 'click') {
             document.querySelector('textarea').blur();
           }
@@ -4259,6 +4298,7 @@
         });
       }
 
+      // editor
       document.addEventListener('input', (event) => {
         event.preventDefault();
 
@@ -4269,6 +4309,18 @@
         });
       });
 
+      // works only via double click
+      window.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        func({
+          source: this.name,
+          type:   event.type,
+          value:  event.target.children[0].value, // textarea content
+        });
+      });
+
+      // custom event
       window.addEventListener('cleanMessage', (event) => {
         func({
           source: this.name,
@@ -4278,6 +4330,11 @@
     },
 
     receive(state) {
+      // const form = document.querySelector('form');
+      // if (form) {
+      //   form.reset();
+      // }
+
       if (state.label === 'start') {
         this.dom = this.createElement(state.vDOM);
         this.mount(this.dom, document.body);
@@ -4318,7 +4375,8 @@
 
     createElement(vNode) {
       if (typeof vNode === 'string') {
-        return document.createTextNode(vNode);
+        const tNode = document.createTextNode(vNode);
+        return tNode;
       }
 
       let $node;
@@ -4345,16 +4403,12 @@
     },
 
     reconcile(oldVNode, newVNode, $node) {
-
-      // TODO: clean up this conditional.
       if (typeof newVNode === 'string') {
         if (newVNode !== oldVNode) {
           $node.replaceWith(this.createElement(newVNode));
         }
-      } else if (newVNode.tag === 'textarea' && newVNode.props['data-key'] !== oldVNode.props['data-key']) {
-        console.log('re-rendering textarea');
-        // special case to correctly render textarea changes:
-        $node.replaceWith(this.createElement(newVNode));
+      } else if ($node.tagName === 'TEXTAREA' && document.activeElement !== $node) {
+        $node.value = newVNode.children[0];
       } else if (oldVNode.tag !== newVNode.tag) {
         $node.replaceWith(this.createElement(newVNode));
       }
@@ -4536,28 +4590,26 @@
     },
   };
 
-  const peripherals = [ui, db, hist];
-
   const app = {
     init() {
       core.init();
 
-      for (let peripheral of peripherals) {
+      for (let peripheral of [ui, db, hist]) {
         peripheral.init();
         peripheral.bindEvents(core.compute.bind(core));
         core.attach(peripheral.name, peripheral.receive.bind(peripheral));
       }
 
-      core.kickoff(this.getCanvasSize());
+      core.kickoff();
     },
 
-    getCanvasSize() {
-      const canvasWidth   = 600;
-      const canvasHeight  = 400 - 35;
-      const canvasSize    = { width: canvasWidth, height: canvasHeight };
-
-      return canvasSize;
-    }
+    // getCanvasSize() {
+    //   const canvasWidth   = 600;
+    //   const canvasHeight  = 395;
+    //   const canvasSize    = { width: canvasWidth, height: canvasHeight };
+    //
+    //   return canvasSize;
+    // }
   };
 
   document.addEventListener('DOMContentLoaded', app.init.bind(app));

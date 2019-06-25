@@ -100,9 +100,9 @@ Group.toSVGNode = function() {
     props:    {},
   };
 
-  if (this.payload.transform) {
-    svgNode.props.transform = this.transform.toString();
-  }
+  // if (this.payload.transform) {
+  svgNode.props.transform = this.transform.toString();
+  // }
 
   return svgNode;
 };
@@ -114,9 +114,10 @@ Shape.toSVGNode = function() {
     props:    { d: this.pathString() },
   };
 
-  if (this.payload.transform) {
-    svgNode.props.transform = this.transform.toString();
-  }
+  // TODO: don't want to set a transform if it's a trivial transform
+  // if (this.payload.transform) {
+  svgNode.props.transform = this.transform.toString();
+  // }
 
   return svgNode;
 };
@@ -143,11 +144,11 @@ Shape.pathString = function() {
       }
 
       if (prevSeg.handleOut) {
-        d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
+        d += ` ${prevSeg.handleOut.x.toFixed()} ${prevSeg.handleOut.y.toFixed()}`;
       }
 
       if (currSeg.handleIn) {
-        d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
+        d += ` ${currSeg.handleIn.x.toFixed()} ${currSeg.handleIn.y.toFixed()}`;
       }
 
       d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;

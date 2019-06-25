@@ -26,8 +26,11 @@ const ui = {
       'dblclick',
     ];
 
+    // canvas
     for (let eventType of mouseEvents) {
       document.addEventListener(eventType, (event) => {
+        // console.log(event.target);
+
         if (
           this.clickLike(event) &&
           (event.target.tagName === 'TEXTAREA' || event.detail > 1)
@@ -35,7 +38,7 @@ const ui = {
           return;
         }
 
-        // clicking outside textarea
+        // clicking (outside textarea)
         if (event.type === 'click') {
           document.querySelector('textarea').blur();
         }
@@ -54,6 +57,7 @@ const ui = {
       });
     }
 
+    // editor
     document.addEventListener('input', (event) => {
       event.preventDefault();
 
@@ -64,6 +68,18 @@ const ui = {
       });
     });
 
+    // works only via double click
+    window.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      func({
+        source: this.name,
+        type:   event.type,
+        value:  event.target.children[0].value, // textarea content
+      });
+    });
+
+    // custom event
     window.addEventListener('cleanMessage', (event) => {
       func({
         source: this.name,
@@ -73,6 +89,11 @@ const ui = {
   },
 
   receive(state) {
+    // const form = document.querySelector('form');
+    // if (form) {
+    //   form.reset();
+    // }
+
     if (state.label === 'start') {
       this.dom = this.createElement(state.vDOM);
       this.mount(this.dom, document.body);
@@ -113,7 +134,8 @@ const ui = {
 
   createElement(vNode) {
     if (typeof vNode === 'string') {
-      return document.createTextNode(vNode);
+      const tNode = document.createTextNode(vNode);
+      return tNode;
     }
 
     let $node;
@@ -140,16 +162,12 @@ const ui = {
   },
 
   reconcile(oldVNode, newVNode, $node) {
-
-    // TODO: clean up this conditional.
     if (typeof newVNode === 'string') {
       if (newVNode !== oldVNode) {
         $node.replaceWith(this.createElement(newVNode));
       }
-    } else if (newVNode.tag === 'textarea' && newVNode.props['data-key'] !== oldVNode.props['data-key']) {
-      console.log('re-rendering textarea');
-      // special case to correctly render textarea changes:
-      $node.replaceWith(this.createElement(newVNode));
+    } else if (this.isBlurredTextarea($node)) {
+      $node.value = newVNode.children[0];
     } else if (oldVNode.tag !== newVNode.tag) {
       $node.replaceWith(this.createElement(newVNode));
     }
@@ -198,6 +216,10 @@ const ui = {
       $index += 1;
     }
   },
+
+  isBlurredTextarea($node) {
+    return $node.tagName === 'TEXTAREA' && document.activeElement !== $node;
+  }
 
   setMessageTimer() {
     const msgNode = document.querySelector('#message');
