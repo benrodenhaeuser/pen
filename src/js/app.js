@@ -1,5 +1,6 @@
 import { core } from './core/core.js';
-import {  ui  } from './periphery/ui.js';
+// import {  ui  } from './periphery/ui.js';
+import { canvas } from  './periphery/ui/canvas.js';
 import {  db  } from './periphery/db.js';
 import { hist } from './periphery/hist.js';
 
