@@ -2,14 +2,8 @@ import { UIComponent } from './ui.js';
 
 const message = Object.assign(Object.create(UIComponent), {
   init(state) {
-    this.name       = 'message';
-    this.mountPoint = document.querySelector('#message');
-
-    // TODO: this should be encapsulated in a function
-    this.dom = this.createElement(state.vDOM[this.name]);
-    this.mount(this.dom, this.mountPoint);
-    this.previousVDOM = state.vDOM[this.name];
-
+    this.name = 'message';
+    UIComponent.init.bind(this)(state);
     return this;
   },
 
@@ -28,7 +22,7 @@ const message = Object.assign(Object.create(UIComponent), {
       clearTimeout(this.timer);
     }
 
-    // if there is a new message, show it
+    // if there is a new message, display it
     if (oldVNode !== newVNode) {
       $node.textContent = newVNode;
     }

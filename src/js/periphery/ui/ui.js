@@ -1,7 +1,15 @@
 const UIComponent = {
-  mount($node, $mountPoint) {
-    $mountPoint.innerHTML = '';
-    $mountPoint.appendChild($node);
+  init(state) {
+    this.mountPoint   = document.querySelector(`#${this.name}`);
+    this.dom          = this.createElement(state.vDOM[this.name]);
+    this.previousVDOM = state.vDOM[this.name];
+
+    this.mount();
+  },
+
+  mount() {
+    this.mountPoint.innerHTML = '';
+    this.mountPoint.appendChild(this.dom);
   },
 
   react(state) {

@@ -2,14 +2,8 @@ import { UIComponent } from './ui.js';
 
 const tools = Object.assign(Object.create(UIComponent), {
   init(state) {
-    this.name       = 'tools';
-    this.mountPoint = document.querySelector('#tools');
-
-    // TODO: this should be encapsulated in a function
-    this.dom = this.createElement(state.vDOM[this.name]);
-    this.mount(this.dom, this.mountPoint);
-    this.previousVDOM = state.vDOM[this.name];
-
+    this.name = 'tools';
+    UIComponent.init.bind(this)(state);
     return this;
   },
 

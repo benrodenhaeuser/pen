@@ -3,13 +3,7 @@ import { UIComponent } from './ui.js';
 const editor = Object.assign(Object.create(UIComponent), {
   init(state) {
     this.name       = 'editor';
-    this.mountPoint = document.querySelector('#editor');
-
-    // TODO: this should be encapsulated in a function
-    this.dom = this.createElement(state.vDOM[this.name]);
-    this.mount(this.dom, this.mountPoint);
-    this.previousVDOM = state.vDOM[this.name];
-
+    UIComponent.init.bind(this)(state);
     return this;
   },
 

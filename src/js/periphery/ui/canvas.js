@@ -5,14 +5,8 @@ const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
 const canvas = Object.assign(Object.create(UIComponent), {
   init(state) {
-    this.name       = 'canvas';
-    this.mountPoint = document.querySelector('#canvas');
-
-    // TODO: this should be encapsulated in a function
-    this.dom = this.createElement(state.vDOM[this.name]);
-    this.mount(this.dom, this.mountPoint);
-    this.previousVDOM = state.vDOM[this.name];
-
+    this.name = 'canvas';
+    UIComponent.init.bind(this)(state);
     return this;
   },
 
