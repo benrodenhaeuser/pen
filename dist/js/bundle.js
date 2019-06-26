@@ -4160,7 +4160,7 @@
     { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
     { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' },
 
-    // OTHER
+    // VARIOUS
     { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
     { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
     { type: 'click', target: 'getPrevious', do: 'getPrevious', to: 'idle' },
@@ -4206,45 +4206,35 @@
       return this;
     },
 
-    attach(name, func) {
-      this.periphery[name] = func;
-    },
-
-    kickoff() {
-      // this.state.width = canvasSize.width;   // TODO: stopgap
-      // this.state.height = canvasSize.height; // TODO: stopgap
-      //
-      // this.state.store.scene.viewBox.width  = canvasSize.width;
-      // this.state.store.scene.viewBox.height = canvasSize.height;
-
-      this.publish();
-      this.compute({ source: 'core', type: 'go' });
-    },
-
     compute(input) {
       this.state.input = input;
 
       const transition = transitions.get(this.state, input);
 
       if (transition) {
-        this.makeTransition(input, transition);
+        this.state.update = transition.do;
+        this.state.label  = transition.to;
+
+        const update = updates[transition.do];
+        update && update.bind(updates)(this.state, input);
+
         this.publish();
       }
     },
 
-    makeTransition(input, transition) {
-      this.state.update = transition.do;
-      this.state.label  = transition.to;
-
-      const update = updates[transition.do];
-      update && update.bind(updates)(this.state, input);
+    attach(name, func) {
+      this.periphery[name] = func;
     },
 
     publish() {
-      const keys = Object.keys(this.periphery);
-      for (let key of keys) {
+      for (let key of Object.keys(this.periphery)) {
         this.periphery[key](this.state.export());
       }
+    },
+
+    kickoff() {
+      this.publish();
+      this.compute({ source: 'core', type: 'go' });
     },
   };
 
@@ -4617,14 +4607,6 @@
 
       core.kickoff();
     },
-
-    // getCanvasSize() {
-    //   const canvasWidth   = 600;
-    //   const canvasHeight  = 395;
-    //   const canvasSize    = { width: canvasWidth, height: canvasHeight };
-    //
-    //   return canvasSize;
-    // }
   };
 
   document.addEventListener('DOMContentLoaded', app.init.bind(app));

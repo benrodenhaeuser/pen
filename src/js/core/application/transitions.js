@@ -34,7 +34,7 @@ const transitions = [
   { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
   { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' },
 
-  // OTHER
+  // VARIOUS
   { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
   { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
   { type: 'click', target: 'getPrevious', do: 'getPrevious', to: 'idle' },

@@ -15,14 +15,6 @@ const app = {
 
     core.kickoff();
   },
-
-  // getCanvasSize() {
-  //   const canvasWidth   = 600;
-  //   const canvasHeight  = 395;
-  //   const canvasSize    = { width: canvasWidth, height: canvasHeight };
-  //
-  //   return canvasSize;
-  // }
 };
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app));
