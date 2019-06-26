@@ -17,7 +17,7 @@ const message = Object.assign(Object.create(UIComponent), {
     });
   },
 
-  reconcile(oldVNode, newVNode, $node) {
+  react(oldVNode, newVNode, $node) {
     // if a timer has been set, clear it
     if (this.timer) {
       clearTimeout(this.timer);

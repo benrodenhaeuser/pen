@@ -9,7 +9,7 @@ const UIComponent = {
       this.dom = this.createElement(state.vDOM[this.name]);
       this.mount(this.dom, this.mountPoint);
     } else {
-      this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
+      this.react(this.previousVDOM, state.vDOM[this.name], this.dom);
     }
 
     this.previousVDOM = state.vDOM[this.name];
@@ -34,7 +34,7 @@ const UIComponent = {
     return $node;
   },
 
-  reconcile(oldVNode, newVNode, $node) {
+  react(oldVNode, newVNode, $node) {
     if (typeof newVNode === 'string') {
       if (newVNode !== oldVNode) {
         $node.replaceWith(this.createElement(newVNode));
@@ -81,7 +81,7 @@ const UIComponent = {
       } else if (oldVChild === undefined) {
         $node.appendChild(this.createElement(newVChild));
       } else {
-        this.reconcile(oldVChild, newVChild, $child);
+        this.react(oldVChild, newVChild, $child);
       }
 
       $index += 1;

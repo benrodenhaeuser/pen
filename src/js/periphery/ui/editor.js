@@ -20,7 +20,7 @@ const editor = Object.assign(Object.create(UIComponent), {
     });
   },
 
-  reconcile(oldVNode, newVNode, $node) {
+  react(oldVNode, newVNode, $node) {
     if (
       $node.tagName === 'TEXTAREA' &&
       document.activeElement !== $node &&

@@ -4201,7 +4201,7 @@
         this.dom = this.createElement(state.vDOM[this.name]);
         this.mount(this.dom, this.mountPoint);
       } else {
-        this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
+        this.react(this.previousVDOM, state.vDOM[this.name], this.dom);
       }
 
       this.previousVDOM = state.vDOM[this.name];
@@ -4226,7 +4226,7 @@
       return $node;
     },
 
-    reconcile(oldVNode, newVNode, $node) {
+    react(oldVNode, newVNode, $node) {
       if (typeof newVNode === 'string') {
         if (newVNode !== oldVNode) {
           $node.replaceWith(this.createElement(newVNode));
@@ -4273,7 +4273,7 @@
         } else if (oldVChild === undefined) {
           $node.appendChild(this.createElement(newVChild));
         } else {
-          this.reconcile(oldVChild, newVChild, $child);
+          this.react(oldVChild, newVChild, $child);
         }
 
         $index += 1;
@@ -4386,7 +4386,7 @@
       });
     },
 
-    reconcile(oldVNode, newVNode, $node) {
+    react(oldVNode, newVNode, $node) {
       if (
         $node.tagName === 'TEXTAREA' &&
         document.activeElement !== $node &&
@@ -4437,7 +4437,7 @@
       });
     },
 
-    reconcile(oldVNode, newVNode, $node) {
+    react(oldVNode, newVNode, $node) {
       // if a timer has been set, clear it
       if (this.timer) {
         clearTimeout(this.timer);
