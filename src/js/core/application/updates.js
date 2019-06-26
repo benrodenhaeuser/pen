@@ -264,6 +264,7 @@ const updates = {
   // from ui: user has changed markup
   changeMarkup(state, input) {
     state.store.markup.payload.text = input.value;
+    // TODO: I wonder if we need this at all. I don't think so.
 
     const newScene = state.importFromSVG(input.value);
 
@@ -272,16 +273,8 @@ const updates = {
     } else {
       state.store.message.payload.text = 'Invalid markup';
     }
-
-
   },
 
-  // from ui: textarea submitted
-  // submitChanges(state, input) {
-  //   console.log(state.store.markup.payload.text);
-  //   const newScene = state.importFromSVG(input.value);
-  //   state.store.scene.replaceWith(newScene);
-  // },
 };
 
 export { updates };

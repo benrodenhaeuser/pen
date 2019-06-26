@@ -1,30 +1,48 @@
 const UIComponent = {
-  receive(state) {
-    if (state.label === 'start') {
-      this.dom = this.createElement(state.vDOM);
-      this.mount(this.dom, document.body);
-    } else {
-      this.reconcile(this.previousVDOM, state.vDOM, this.dom);
-    }
-
-    this.previousVDOM = state.vDOM;
-  },
-
   mount($node, $mountPoint) {
     $mountPoint.innerHTML = '';
     $mountPoint.appendChild($node);
   },
 
+  receive(state) {
+    if (state.label === 'start') {
+      this.dom = this.createElement(state.vDOM[this.name]);
+      this.mount(this.dom, this.mountPoint);
+    } else {
+      this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
+    }
+
+    this.previousVDOM = state.vDOM[this.name];
+  },
+
   createElement(vNode) {
-    // TODO: generic method here.
+    if (typeof vNode === 'string') {
+      const tNode = document.createTextNode(vNode);
+      return tNode;
+    }
+
+    const $node = document.createElement(vNode.tag);
+
+    for (let [key, value] of Object.entries(vNode.props)) {
+      $node.setAttribute(key, value);
+    }
+
+    for (let vChild of vNode.children) {
+      $node.appendChild(this.createElement(vChild));
+    }
+
+    return $node;
   },
 
   reconcile(oldVNode, newVNode, $node) {
-    if (typeof newVNode === 'string' && newVNode !== oldVNode) {
-      $node.replaceWith(this.createElement(newVNode));
+    if (typeof newVNode === 'string') {
+      if (newVNode !== oldVNode) {
+        $node.replaceWith(this.createElement(newVNode));
+      }
     } else if (oldVNode.tag !== newVNode.tag) {
       $node.replaceWith(this.createElement(newVNode));
-    } else {
+    }
+     else {
       this.reconcileProps(oldVNode, newVNode, $node);
       this.reconcileChildren(oldVNode, newVNode, $node);
     }

@@ -3216,24 +3216,11 @@
 
   const vdomExporter = {
     renderApp(state) {
-      const components = this.components(state);
-
-      return h('main', { id: 'app' },
-        components.canvas,
-        components.editor,
-        h('div', { id: 'toolbar' },
-          components.buttons,
-          components.message
-        ),
-      );
-    },
-
-    components(state) {
       return {
-        buttons:  this.buttons(state.store),
-        message:  this.message(state.store),
+        tools:    this.tools(state.store),
         editor:   this.editor(state),
         canvas:   this.canvas(state.store),
+        message:  this.message(state.store),
       };
     },
 
@@ -3271,7 +3258,7 @@
       return container;
     },
 
-    buttons(store) {
+    tools(store) {
       return h('ul', { id: 'buttons' },
         h('li', {},
           h('button', {
@@ -3309,52 +3296,25 @@
             class: 'pure-button',
           }, 'Pen')
         )
-        // h('li', {},
-        //   h('button', {
-        //     id: 'submit',
-        //     'data-type': 'submit',
-        //     class: 'pure-button',
-        //     form: 'form',
-        //     type: 'submit',
-        //   }, 'Submit')
-        // )
       );
     },
 
     message(store) {
-      return h('ul', { class: 'message' },
-        h('li', {},
-          h('button', {
-            id: 'message',
-          }, store.message.payload.text)
-        )
-      );
+      return store.message.payload.text;
     },
 
     editor(state) {
-      // console.log('export', state.exportToSVG()); // logs correct values
-
-      return h('div', {
-        id: 'editor',
-      }, h('form', {
-          id: 'form',
-          'data-type': 'form',
-        }, h('textarea', {
+      return h('textarea', {
             form: 'form',
             'data-key': state.store.markup.key,
             spellcheck: false,
-          }, state.exportToSVG() // state.store.markup.payload.text
+          }, state.exportToSVG()
           )
-        )
-      );
+      ;
     },
 
     canvas(store) {
-      return h('div', {
-        'data-type': 'doc',
-        id: 'canvas',
-        'data-key': store.doc.key,
-      }, this.renderScene(store));
+      return this.renderScene(store);
     },
 
     renderScene(store) {
@@ -3583,8 +3543,6 @@
       });
     },
 
-    // TODO: in general, we would need to take into account here
-    // the ratio between the svg viewport width and the canvas width
     scale(node, length) {
       return length / node.globalScaleFactor();
     },
@@ -4105,6 +4063,7 @@
     // from ui: user has changed markup
     changeMarkup(state, input) {
       state.store.markup.payload.text = input.value;
+      // TODO: I wonder if we need this at all. I don't think so.
 
       const newScene = state.importFromSVG(input.value);
 
@@ -4113,16 +4072,8 @@
       } else {
         state.store.message.payload.text = 'Invalid markup';
       }
-
-
     },
 
-    // from ui: textarea submitted
-    // submitChanges(state, input) {
-    //   console.log(state.store.markup.payload.text);
-    //   const newScene = state.importFromSVG(input.value);
-    //   state.store.scene.replaceWith(newScene);
-    // },
   };
 
   // 'type' is mandatory
@@ -4240,32 +4191,50 @@
   };
 
   const UIComponent = {
-    receive(state) {
-      if (state.label === 'start') {
-        this.dom = this.createElement(state.vDOM);
-        this.mount(this.dom, document.body);
-      } else {
-        this.reconcile(this.previousVDOM, state.vDOM, this.dom);
-      }
-
-      this.previousVDOM = state.vDOM;
-    },
-
     mount($node, $mountPoint) {
       $mountPoint.innerHTML = '';
       $mountPoint.appendChild($node);
     },
 
+    receive(state) {
+      if (state.label === 'start') {
+        this.dom = this.createElement(state.vDOM[this.name]);
+        this.mount(this.dom, this.mountPoint);
+      } else {
+        this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
+      }
+
+      this.previousVDOM = state.vDOM[this.name];
+    },
+
     createElement(vNode) {
-      // TODO: generic method here.
+      if (typeof vNode === 'string') {
+        const tNode = document.createTextNode(vNode);
+        return tNode;
+      }
+
+      const $node = document.createElement(vNode.tag);
+
+      for (let [key, value] of Object.entries(vNode.props)) {
+        $node.setAttribute(key, value);
+      }
+
+      for (let vChild of vNode.children) {
+        $node.appendChild(this.createElement(vChild));
+      }
+
+      return $node;
     },
 
     reconcile(oldVNode, newVNode, $node) {
-      if (typeof newVNode === 'string' && newVNode !== oldVNode) {
-        $node.replaceWith(this.createElement(newVNode));
+      if (typeof newVNode === 'string') {
+        if (newVNode !== oldVNode) {
+          $node.replaceWith(this.createElement(newVNode));
+        }
       } else if (oldVNode.tag !== newVNode.tag) {
         $node.replaceWith(this.createElement(newVNode));
-      } else {
+      }
+       else {
         this.reconcileProps(oldVNode, newVNode, $node);
         this.reconcileChildren(oldVNode, newVNode, $node);
       }
@@ -4312,23 +4281,28 @@
     },
   };
 
-  const svgns       = 'http://www.w3.org/2000/svg';
-  const xmlns       = 'http://www.w3.org/2000/xmlns/';
-  const mouseEvents = ['mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'];
+  const svgns  = 'http://www.w3.org/2000/svg';
+  const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
-  const canvas = Object.create(UIComponent);
-
-  Object.assign(canvas, {
+  const canvas = Object.assign(Object.create(UIComponent), {
     init() {
-      this.name = 'canvas'; // TODO: not sure if this works
+      this.name       = 'canvas';
+      this.mountPoint = document.querySelector('#canvas');
+
       return this;
     },
 
     bindEvents(func) {
+      const mouseEvents = ['mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'];
+
       for (let eventType of mouseEvents) {
-        document.addEventListener(eventType, (event) => {
+        this.mountPoint.addEventListener(eventType, (event) => {
           if (this.clickLike(event) && event.detail > 1) {
             return;
+          }
+
+          if (event.type === 'mousedown') {
+            document.querySelector('textarea').blur();
           }
 
           event.preventDefault();
@@ -4337,7 +4311,6 @@
             source: this.name,
             type:   event.type,
             target: event.target.dataset.type,
-            value:  event.target.value,
             key:    event.target.dataset.key,
             x:      this.coordinates(event).x,
             y:      this.coordinates(event).y,
@@ -4369,19 +4342,10 @@
       return $node;
     },
 
-    reconcile(oldVNode, newVNode, $node) {
-      if (typeof newVNode === 'string' && newVNode !== oldVNode) {
-        $node.replaceWith(this.createElement(newVNode));
-      } else if (oldVNode.tag !== newVNode.tag) {
-        $node.replaceWith(this.createElement(newVNode));
-      } else {
-        this.reconcileProps(oldVNode, newVNode, $node);
-        this.reconcileChildren(oldVNode, newVNode, $node);
-      }
-    },
-
     clickLike(event) {
-      return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
+      return event.type === 'click' ||
+             event.type === 'mousedown' ||
+             event.type === 'mouseup';
     },
 
     coordinates(event) {
@@ -4399,6 +4363,99 @@
       }
 
       return coords;
+    },
+  });
+
+  const editor = Object.assign(Object.create(UIComponent), {
+    init() {
+      this.name       = 'editor';
+      this.mountPoint = document.querySelector('#editor');
+
+      return this;
+    },
+
+    bindEvents(func) {
+      this.mountPoint.addEventListener('input', (event) => {
+        event.preventDefault();
+
+        func({
+          source: this.name,
+          type:   event.type,
+          value:  event.target.value,
+        });
+      });
+    },
+
+    reconcile(oldVNode, newVNode, $node) {
+      if (
+        $node.tagName === 'TEXTAREA' &&
+        document.activeElement !== $node &&
+        newVNode.children[0] !== oldVNode.children[0]
+      ) {
+        $node.value = newVNode.children[0];
+      }
+    },
+  });
+
+  const tools = Object.assign(Object.create(UIComponent), {
+    init() {
+      this.name       = 'tools';
+      this.mountPoint = document.querySelector('#tools');
+
+      return this;
+    },
+
+    bindEvents(func) {
+      this.mountPoint.addEventListener('click', (event) => {
+        event.preventDefault();
+        document.querySelector('textarea').blur();
+
+        func({
+          source: this.name,
+          type:   event.type,
+          target: event.target.dataset.type,
+          key:    event.target.dataset.key,
+        });
+      });
+    },
+  });
+
+  const message = Object.assign(Object.create(UIComponent), {
+    init() {
+      this.name       = 'message';
+      this.mountPoint = document.querySelector('#message');
+
+      return this;
+    },
+
+    bindEvents(func) {
+      window.addEventListener('cleanMessage', (event) => {
+        func({
+          source: this.name,
+          type:   'cleanMessage',
+        });
+      });
+    },
+
+    reconcile(oldVNode, newVNode, $node) {
+      // if a timer has been set, clear it
+      if (this.timer) {
+        clearTimeout(this.timer);
+      }
+
+      // if there is a new message, show it
+      if (oldVNode !== newVNode) {
+        $node.textContent = newVNode;
+      }
+
+      // if the message is non-empty, delete it after one second
+      if (newVNode !== '') {
+        this.timer = window.setTimeout(this.cleanMessage, 1000);
+      }
+    },
+
+    cleanMessage() {
+      window.dispatchEvent(new Event('cleanMessage'));
     },
   });
 
@@ -4515,14 +4572,16 @@
     },
   };
 
+  const components = [canvas, editor, tools, message, db, hist];
+
   const app = {
     init() {
       core.init();
 
-      for (let peripheral of [ui, db, hist]) {
-        peripheral.init();
-        peripheral.bindEvents(core.compute.bind(core));
-        core.attach(peripheral.name, peripheral.receive.bind(peripheral));
+      for (let component of components) {
+        component.init();
+        component.bindEvents(core.compute.bind(core));
+        core.attach(component.name, component.receive.bind(component));
       }
 
       core.kickoff();

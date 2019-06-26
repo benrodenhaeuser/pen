@@ -1,22 +1,27 @@
 import { UIComponent } from '../ui.js';
 
-const svgns       = 'http://www.w3.org/2000/svg';
-const xmlns       = 'http://www.w3.org/2000/xmlns/';
-const mouseEvents = ['mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'];
+const svgns  = 'http://www.w3.org/2000/svg';
+const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
-const canvas = Object.create(UIComponent);
-
-Object.assign(canvas, {
+const canvas = Object.assign(Object.create(UIComponent), {
   init() {
-    this.name = 'canvas'; // TODO: not sure if this works
+    this.name       = 'canvas';
+    this.mountPoint = document.querySelector('#canvas');
+
     return this;
   },
 
   bindEvents(func) {
+    const mouseEvents = ['mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'];
+
     for (let eventType of mouseEvents) {
-      document.addEventListener(eventType, (event) => {
+      this.mountPoint.addEventListener(eventType, (event) => {
         if (this.clickLike(event) && event.detail > 1) {
           return;
+        }
+
+        if (event.type === 'mousedown') {
+          document.querySelector('textarea').blur();
         }
 
         event.preventDefault();
@@ -25,7 +30,6 @@ Object.assign(canvas, {
           source: this.name,
           type:   event.type,
           target: event.target.dataset.type,
-          value:  event.target.value,
           key:    event.target.dataset.key,
           x:      this.coordinates(event).x,
           y:      this.coordinates(event).y,
@@ -57,19 +61,10 @@ Object.assign(canvas, {
     return $node;
   },
 
-  reconcile(oldVNode, newVNode, $node) {
-    if (typeof newVNode === 'string' && newVNode !== oldVNode) {
-      $node.replaceWith(this.createElement(newVNode));
-    } else if (oldVNode.tag !== newVNode.tag) {
-      $node.replaceWith(this.createElement(newVNode));
-    } else {
-      this.reconcileProps(oldVNode, newVNode, $node);
-      this.reconcileChildren(oldVNode, newVNode, $node);
-    }
-  },
-
   clickLike(event) {
-    return event.type === 'click' || event.type === 'mousedown' || event.type === 'mouseup';
+    return event.type === 'click' ||
+           event.type === 'mousedown' ||
+           event.type === 'mouseup';
   },
 
   coordinates(event) {

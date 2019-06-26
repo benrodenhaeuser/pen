@@ -14,24 +14,11 @@ const h = (tag, props = {}, ...children) => {
 
 const vdomExporter = {
   renderApp(state) {
-    const components = this.components(state);
-
-    return h('main', { id: 'app' },
-      components.canvas,
-      components.editor,
-      h('div', { id: 'toolbar' },
-        components.buttons,
-        components.message
-      ),
-    );
-  },
-
-  components(state) {
     return {
-      buttons:  this.buttons(state.store),
-      message:  this.message(state.store),
+      tools:    this.tools(state.store),
       editor:   this.editor(state),
       canvas:   this.canvas(state.store),
+      message:  this.message(state.store),
     };
   },
 
@@ -69,7 +56,7 @@ const vdomExporter = {
     return container;
   },
 
-  buttons(store) {
+  tools(store) {
     return h('ul', { id: 'buttons' },
       h('li', {},
         h('button', {
@@ -107,52 +94,25 @@ const vdomExporter = {
           class: 'pure-button',
         }, 'Pen')
       )
-      // h('li', {},
-      //   h('button', {
-      //     id: 'submit',
-      //     'data-type': 'submit',
-      //     class: 'pure-button',
-      //     form: 'form',
-      //     type: 'submit',
-      //   }, 'Submit')
-      // )
     );
   },
 
   message(store) {
-    return h('ul', { class: 'message' },
-      h('li', {},
-        h('button', {
-          id: 'message',
-        }, store.message.payload.text)
-      )
-    );
+    return store.message.payload.text;
   },
 
   editor(state) {
-    // console.log('export', state.exportToSVG()); // logs correct values
-
-    return h('div', {
-      id: 'editor',
-    }, h('form', {
-        id: 'form',
-        'data-type': 'form',
-      }, h('textarea', {
+    return h('textarea', {
           form: 'form',
           'data-key': state.store.markup.key,
           spellcheck: false,
-        }, state.exportToSVG() // state.store.markup.payload.text
+        }, state.exportToSVG()
         )
-      )
-    );
+    ;
   },
 
   canvas(store) {
-    return h('div', {
-      'data-type': 'doc',
-      id: 'canvas',
-      'data-key': store.doc.key,
-    }, this.renderScene(store));
+    return this.renderScene(store);
   },
 
   renderScene(store) {
@@ -381,8 +341,6 @@ const vdomExporter = {
     });
   },
 
-  // TODO: in general, we would need to take into account here
-  // the ratio between the svg viewport width and the canvas width
   scale(node, length) {
     return length / node.globalScaleFactor();
   },

@@ -1,17 +1,22 @@
-import { core } from './core/core.js';
-// import {  ui  } from './periphery/ui.js';
-import { canvas } from  './periphery/ui/canvas.js';
-import {  db  } from './periphery/db.js';
-import { hist } from './periphery/hist.js';
+import { core   } from './core/core.js';
+
+import { canvas } from './periphery/ui/canvas.js';
+import { editor } from './periphery/ui/editor.js';
+import { tools  } from './periphery/ui/tools.js';
+import { message } from './periphery/ui/message.js';
+import { db     } from './periphery/db.js';
+import { hist   } from './periphery/hist.js';
+
+const components = [canvas, editor, tools, message, db, hist];
 
 const app = {
   init() {
     core.init();
 
-    for (let peripheral of [ui, db, hist]) {
-      peripheral.init();
-      peripheral.bindEvents(core.compute.bind(core));
-      core.attach(peripheral.name, peripheral.receive.bind(peripheral));
+    for (let component of components) {
+      component.init();
+      component.bindEvents(core.compute.bind(core));
+      core.attach(component.name, component.receive.bind(component));
     }
 
     core.kickoff();
