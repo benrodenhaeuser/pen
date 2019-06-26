@@ -2945,10 +2945,11 @@
         const scene = Scene.create();
         this.buildTree($svg, scene);
         scene.setFrontier();
+        console.log('done importing svg markup');
         return scene;
       }
 
-      console.log('svg import did not succeed');
+      console.log('import from svg markup did not succeed');
 
       return null;
     },
@@ -4088,11 +4089,11 @@
 
     getPrevious(state, input) {
       console.log('calling getPrevious update');
-      window.history.back();
+      window.history.back(); // TODO: should we do this inside of hist?
     },
 
     getNext(state, input) {
-      window.history.forward();
+      window.history.forward(); // TODO: should we do this inside of hist?
     },
 
     changeState(state, input) {

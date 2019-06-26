@@ -248,11 +248,11 @@ const updates = {
 
   getPrevious(state, input) {
     console.log('calling getPrevious update');
-    window.history.back();
+    window.history.back(); // TODO: should we do this inside of hist?
   },
 
   getNext(state, input) {
-    window.history.forward();
+    window.history.forward(); // TODO: should we do this inside of hist?
   },
 
   changeState(state, input) {

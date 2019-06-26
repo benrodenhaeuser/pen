@@ -18,10 +18,11 @@ const svgImporter = {
       const scene = Scene.create();
       this.buildTree($svg, scene);
       scene.setFrontier();
+      console.log('done importing svg markup');
       return scene;
     }
 
-    console.log('svg import did not succeed');
+    console.log('import from svg markup did not succeed');
 
     return null;
   },
