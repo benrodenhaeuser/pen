@@ -37,16 +37,17 @@ const transitions = [
   // OTHER
   { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
   { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
-  { type: 'click', target: 'undo', do: 'undo', to: 'idle' },
-  { type: 'click', target: 'redo', do: 'redo', to: 'idle' },
+  { type: 'click', target: 'getPrevious', do: 'getPrevious', to: 'idle' },
+  { type: 'click', target: 'getNext', do: 'getNext', to: 'idle' },
+  { type: 'changeState', do: 'changeState' },
   { type: 'docSaved', do: 'setSavedMessage' },
   { type: 'updateDocList', do: 'updateDocList' },
-  { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
+  { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: redundant?
   { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
 
   // INPUT
   { type: 'input', do: 'changeMarkup' },
-  { type: 'submit', do: 'submitChanges' }
+  // { type: 'submit', do: 'submitChanges' }
 ];
 
 transitions.get = function(state, input) {

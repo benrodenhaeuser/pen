@@ -81,15 +81,15 @@ const vdomExporter = {
       this.docs(store),
       h('li', {},
         h('button', {
-          id: 'undo',
-          'data-type': 'undo',
+          id: 'getPrevious',
+          'data-type': 'getPrevious',
           class: 'pure-button',
         }, 'Undo')
       ),
       h('li', {},
         h('button', {
-          id: 'redo',
-          'data-type': 'redo',
+          id: 'getNext',
+          'data-type': 'getNext',
           class: 'pure-button',
         }, 'Redo')
       ),
@@ -106,16 +106,16 @@ const vdomExporter = {
           'data-type': 'pen',
           class: 'pure-button',
         }, 'Pen')
-      ),
-      h('li', {},
-        h('button', {
-          id: 'submit',
-          'data-type': 'submit',
-          class: 'pure-button',
-          form: 'form',
-          type: 'submit',
-        }, 'Submit')
       )
+      // h('li', {},
+      //   h('button', {
+      //     id: 'submit',
+      //     'data-type': 'submit',
+      //     class: 'pure-button',
+      //     form: 'form',
+      //     type: 'submit',
+      //   }, 'Submit')
+      // )
     );
   },
 

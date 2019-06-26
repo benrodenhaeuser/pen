@@ -9,7 +9,7 @@ const hist = {
       if (event.state) {
         func({
           source: this.name,
-          type:   'undo',
+          type:   'changeState',
           data:   event.state,
         });
       }

@@ -28,18 +28,11 @@ const core = {
   compute(input) {
     this.state.input = input;
 
-    // TODO: do we need this special logic? can't we do it in an update function?
-    // (i.e., without any special logic) 
-    if (input.type === 'undo') { // TODO: 'undo' really means 'undoOrRedo' so this is confusing naming
-      this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
-      this.publish();
-    } else {
-      const transition = transitions.get(this.state, input);
+    const transition = transitions.get(this.state, input);
 
-      if (transition) {
-        this.makeTransition(input, transition);
-        this.publish();
-      }
+    if (transition) {
+      this.makeTransition(input, transition);
+      this.publish();
     }
   },
 

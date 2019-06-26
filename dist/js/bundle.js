@@ -3282,15 +3282,15 @@
         this.docs(store),
         h('li', {},
           h('button', {
-            id: 'undo',
-            'data-type': 'undo',
+            id: 'getPrevious',
+            'data-type': 'getPrevious',
             class: 'pure-button',
           }, 'Undo')
         ),
         h('li', {},
           h('button', {
-            id: 'redo',
-            'data-type': 'redo',
+            id: 'getNext',
+            'data-type': 'getNext',
             class: 'pure-button',
           }, 'Redo')
         ),
@@ -3307,16 +3307,16 @@
             'data-type': 'pen',
             class: 'pure-button',
           }, 'Pen')
-        ),
-        h('li', {},
-          h('button', {
-            id: 'submit',
-            'data-type': 'submit',
-            class: 'pure-button',
-            form: 'form',
-            type: 'submit',
-          }, 'Submit')
         )
+        // h('li', {},
+        //   h('button', {
+        //     id: 'submit',
+        //     'data-type': 'submit',
+        //     class: 'pure-button',
+        //     form: 'form',
+        //     type: 'submit',
+        //   }, 'Submit')
+        // )
       );
     },
 
@@ -4086,12 +4086,17 @@
 
     // History
 
-    undo(state, input) {
+    getPrevious(state, input) {
+      console.log('calling getPrevious update');
       window.history.back();
     },
 
-    redo(state, input) {
+    getNext(state, input) {
       window.history.forward();
+    },
+
+    changeState(state, input) {
+      state.store.scene.replaceWith(state.importFromPlain(input.data.doc));
     },
 
     // Markup
@@ -4112,11 +4117,11 @@
     },
 
     // from ui: textarea submitted
-    submitChanges(state, input) {
-      console.log(state.store.markup.payload.text);
-      const newScene = state.importFromSVG(input.value);
-      state.store.scene.replaceWith(newScene);
-    },
+    // submitChanges(state, input) {
+    //   console.log(state.store.markup.payload.text);
+    //   const newScene = state.importFromSVG(input.value);
+    //   state.store.scene.replaceWith(newScene);
+    // },
   };
 
   // 'type' is mandatory
@@ -4158,16 +4163,17 @@
     // OTHER
     { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
     { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
-    { type: 'click', target: 'undo', do: 'undo', to: 'idle' },
-    { type: 'click', target: 'redo', do: 'redo', to: 'idle' },
+    { type: 'click', target: 'getPrevious', do: 'getPrevious', to: 'idle' },
+    { type: 'click', target: 'getNext', do: 'getNext', to: 'idle' },
+    { type: 'changeState', do: 'changeState' },
     { type: 'docSaved', do: 'setSavedMessage' },
     { type: 'updateDocList', do: 'updateDocList' },
-    { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: seems redundant?
+    { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: redundant?
     { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
 
     // INPUT
     { type: 'input', do: 'changeMarkup' },
-    { type: 'submit', do: 'submitChanges' }
+    // { type: 'submit', do: 'submitChanges' }
   ];
 
   transitions.get = function(state, input) {
@@ -4218,18 +4224,11 @@
     compute(input) {
       this.state.input = input;
 
-      // TODO: do we need this special logic? can't we do it in an update function?
-      // (i.e., without any special logic) 
-      if (input.type === 'undo') { // TODO: 'undo' really means 'undoOrRedo' so this is confusing naming
-        this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
-        this.publish();
-      } else {
-        const transition = transitions.get(this.state, input);
+      const transition = transitions.get(this.state, input);
 
-        if (transition) {
-          this.makeTransition(input, transition);
-          this.publish();
-        }
+      if (transition) {
+        this.makeTransition(input, transition);
+        this.publish();
       }
     },
 
@@ -4582,7 +4581,7 @@
         if (event.state) {
           func({
             source: this.name,
-            type:   'undo',
+            type:   'changeState',
             data:   event.state,
           });
         }

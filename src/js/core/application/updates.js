@@ -246,12 +246,17 @@ const updates = {
 
   // History
 
-  undo(state, input) {
+  getPrevious(state, input) {
+    console.log('calling getPrevious update');
     window.history.back();
   },
 
-  redo(state, input) {
+  getNext(state, input) {
     window.history.forward();
+  },
+
+  changeState(state, input) {
+    state.store.scene.replaceWith(state.importFromPlain(input.data.doc));
   },
 
   // Markup
@@ -272,11 +277,11 @@ const updates = {
   },
 
   // from ui: textarea submitted
-  submitChanges(state, input) {
-    console.log(state.store.markup.payload.text);
-    const newScene = state.importFromSVG(input.value);
-    state.store.scene.replaceWith(newScene);
-  },
+  // submitChanges(state, input) {
+  //   console.log(state.store.markup.payload.text);
+  //   const newScene = state.importFromSVG(input.value);
+  //   state.store.scene.replaceWith(newScene);
+  // },
 };
 
 export { updates };
