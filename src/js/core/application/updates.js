@@ -259,6 +259,16 @@ const updates = {
   // from ui: user has changed markup
   changeMarkup(state, input) {
     state.store.markup.payload.text = input.value;
+
+    const newScene = state.importFromSVG(input.value);
+
+    if (newScene !== null) {
+      state.store.scene.replaceWith(newScene);
+    } else {
+      state.store.message.payload.text = 'Invalid markup';
+    }
+
+
   },
 
   // from ui: textarea submitted

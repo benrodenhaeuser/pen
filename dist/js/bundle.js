@@ -4099,6 +4099,16 @@
     // from ui: user has changed markup
     changeMarkup(state, input) {
       state.store.markup.payload.text = input.value;
+
+      const newScene = state.importFromSVG(input.value);
+
+      if (newScene !== null) {
+        state.store.scene.replaceWith(newScene);
+      } else {
+        state.store.message.payload.text = 'Invalid markup';
+      }
+
+
     },
 
     // from ui: textarea submitted
@@ -4208,10 +4218,10 @@
     compute(input) {
       this.state.input = input;
 
-      if (input.type === 'undo') {
+      // TODO: do we need this special logic? can't we do it in an update function?
+      // (i.e., without any special logic) 
+      if (input.type === 'undo') { // TODO: 'undo' really means 'undoOrRedo' so this is confusing naming
         this.state.store.scene.replaceWith(this.state.importFromPlain(input.data.doc));
-        this.state.store.markup.key = createID(); // TODO: hack
-        // will force textarea to re-render
         this.publish();
       } else {
         const transition = transitions.get(this.state, input);
@@ -4407,7 +4417,7 @@
         if (newVNode !== oldVNode) {
           $node.replaceWith(this.createElement(newVNode));
         }
-      } else if ($node.tagName === 'TEXTAREA' && document.activeElement !== $node) {
+      } else if (this.isBlurredChangedTextarea(oldVNode, newVNode, $node)) {
         $node.value = newVNode.children[0];
       } else if (oldVNode.tag !== newVNode.tag) {
         $node.replaceWith(this.createElement(newVNode));
@@ -4456,6 +4466,12 @@
 
         $index += 1;
       }
+    },
+
+    isBlurredChangedTextarea(oldVNode, newVNode, $node) {
+      return $node.tagName === 'TEXTAREA' &&
+             document.activeElement !== $node &&
+             newVNode.children[0] !== oldVNode.children[0];
     },
 
     setMessageTimer() {

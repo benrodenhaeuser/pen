@@ -166,7 +166,7 @@ const ui = {
       if (newVNode !== oldVNode) {
         $node.replaceWith(this.createElement(newVNode));
       }
-    } else if (this.isBlurredTextarea($node)) {
+    } else if (this.isBlurredChangedTextarea(oldVNode, newVNode, $node)) {
       $node.value = newVNode.children[0];
     } else if (oldVNode.tag !== newVNode.tag) {
       $node.replaceWith(this.createElement(newVNode));
@@ -217,9 +217,11 @@ const ui = {
     }
   },
 
-  isBlurredTextarea($node) {
-    return $node.tagName === 'TEXTAREA' && document.activeElement !== $node;
-  }
+  isBlurredChangedTextarea(oldVNode, newVNode, $node) {
+    return $node.tagName === 'TEXTAREA' &&
+           document.activeElement !== $node &&
+           newVNode.children[0] !== oldVNode.children[0];
+  },
 
   setMessageTimer() {
     const msgNode = document.querySelector('#message');
