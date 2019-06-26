@@ -36,8 +36,7 @@ const core = {
   },
 
   kickoff() {
-    this.publish();
-    this.compute({ source: 'core', type: 'go' });
+    this.compute({ type: 'go' });
   },
 };
 

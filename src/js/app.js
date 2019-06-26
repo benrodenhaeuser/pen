@@ -1,11 +1,10 @@
-import { core   } from './core/core.js';
-
-import { canvas } from './periphery/ui/canvas.js';
-import { editor } from './periphery/ui/editor.js';
-import { tools  } from './periphery/ui/tools.js';
+import { core    } from './core/core.js';
+import { canvas  } from './periphery/ui/canvas.js';
+import { editor  } from './periphery/ui/editor.js';
+import { tools   } from './periphery/ui/tools.js';
 import { message } from './periphery/ui/message.js';
-import { db     } from './periphery/db.js';
-import { hist   } from './periphery/hist.js';
+import { db      } from './periphery/db.js';
+import { hist    } from './periphery/hist.js';
 
 const components = [canvas, editor, tools, message, db, hist];
 
@@ -14,9 +13,9 @@ const app = {
     core.init();
 
     for (let component of components) {
-      component.init();
+      component.init(core.state.export());
       component.bindEvents(core.compute.bind(core));
-      core.attach(component.name, component.receive.bind(component));
+      core.attach(component.name, component.react.bind(component));
     }
 
     core.kickoff();

@@ -1,5 +1,5 @@
 const db = {
-  init() {
+  init(state) {
     this.name = 'db';
     return this;
   },
@@ -57,7 +57,7 @@ const db = {
     });
   },
 
-  receive(state) {
+  react(state) {
     if (state.update === 'go') {
       window.dispatchEvent(
         new Event('loadDocIDs')

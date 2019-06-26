@@ -4,14 +4,8 @@ const UIComponent = {
     $mountPoint.appendChild($node);
   },
 
-  receive(state) {
-    if (state.label === 'start') {
-      this.dom = this.createElement(state.vDOM[this.name]);
-      this.mount(this.dom, this.mountPoint);
-    } else {
-      this.react(this.previousVDOM, state.vDOM[this.name], this.dom);
-    }
-
+  react(state) {
+    this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
     this.previousVDOM = state.vDOM[this.name];
   },
 
@@ -34,7 +28,7 @@ const UIComponent = {
     return $node;
   },
 
-  react(oldVNode, newVNode, $node) {
+  reconcile(oldVNode, newVNode, $node) {
     if (typeof newVNode === 'string') {
       if (newVNode !== oldVNode) {
         $node.replaceWith(this.createElement(newVNode));
@@ -81,7 +75,7 @@ const UIComponent = {
       } else if (oldVChild === undefined) {
         $node.appendChild(this.createElement(newVChild));
       } else {
-        this.react(oldVChild, newVChild, $child);
+        this.reconcile(oldVChild, newVChild, $child);
       }
 
       $index += 1;

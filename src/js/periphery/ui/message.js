@@ -1,9 +1,14 @@
-import { UIComponent } from '../ui.js';
+import { UIComponent } from './ui.js';
 
 const message = Object.assign(Object.create(UIComponent), {
-  init() {
+  init(state) {
     this.name       = 'message';
     this.mountPoint = document.querySelector('#message');
+
+    // TODO: this should be encapsulated in a function
+    this.dom = this.createElement(state.vDOM[this.name]);
+    this.mount(this.dom, this.mountPoint);
+    this.previousVDOM = state.vDOM[this.name];
 
     return this;
   },
@@ -17,7 +22,7 @@ const message = Object.assign(Object.create(UIComponent), {
     });
   },
 
-  react(oldVNode, newVNode, $node) {
+  reconcile(oldVNode, newVNode, $node) {
     // if a timer has been set, clear it
     if (this.timer) {
       clearTimeout(this.timer);

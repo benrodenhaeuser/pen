@@ -1,12 +1,17 @@
-import { UIComponent } from '../ui.js';
+import { UIComponent } from './ui.js';
 
 const svgns  = 'http://www.w3.org/2000/svg';
 const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
 const canvas = Object.assign(Object.create(UIComponent), {
-  init() {
+  init(state) {
     this.name       = 'canvas';
     this.mountPoint = document.querySelector('#canvas');
+
+    // TODO: this should be encapsulated in a function
+    this.dom = this.createElement(state.vDOM[this.name]);
+    this.mount(this.dom, this.mountPoint);
+    this.previousVDOM = state.vDOM[this.name];
 
     return this;
   },

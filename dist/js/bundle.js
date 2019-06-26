@@ -3659,12 +3659,6 @@
       this.update = '';
       this.store  = this.buildStore();
 
-      // const svgImport = this.importFromSVG(markup);
-      //
-      // if (svgImport !== null) {
-      //   this.store.scene.replaceWith(this.importFromSVG(markup));
-      // }
-
       return this;
     },
 
@@ -4185,8 +4179,7 @@
     },
 
     kickoff() {
-      this.publish();
-      this.compute({ source: 'core', type: 'go' });
+      this.compute({ type: 'go' });
     },
   };
 
@@ -4196,14 +4189,8 @@
       $mountPoint.appendChild($node);
     },
 
-    receive(state) {
-      if (state.label === 'start') {
-        this.dom = this.createElement(state.vDOM[this.name]);
-        this.mount(this.dom, this.mountPoint);
-      } else {
-        this.react(this.previousVDOM, state.vDOM[this.name], this.dom);
-      }
-
+    react(state) {
+      this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
       this.previousVDOM = state.vDOM[this.name];
     },
 
@@ -4226,7 +4213,7 @@
       return $node;
     },
 
-    react(oldVNode, newVNode, $node) {
+    reconcile(oldVNode, newVNode, $node) {
       if (typeof newVNode === 'string') {
         if (newVNode !== oldVNode) {
           $node.replaceWith(this.createElement(newVNode));
@@ -4273,7 +4260,7 @@
         } else if (oldVChild === undefined) {
           $node.appendChild(this.createElement(newVChild));
         } else {
-          this.react(oldVChild, newVChild, $child);
+          this.reconcile(oldVChild, newVChild, $child);
         }
 
         $index += 1;
@@ -4285,9 +4272,14 @@
   const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
   const canvas = Object.assign(Object.create(UIComponent), {
-    init() {
+    init(state) {
       this.name       = 'canvas';
       this.mountPoint = document.querySelector('#canvas');
+
+      // TODO: this should be encapsulated in a function
+      this.dom = this.createElement(state.vDOM[this.name]);
+      this.mount(this.dom, this.mountPoint);
+      this.previousVDOM = state.vDOM[this.name];
 
       return this;
     },
@@ -4367,9 +4359,14 @@
   });
 
   const editor = Object.assign(Object.create(UIComponent), {
-    init() {
+    init(state) {
       this.name       = 'editor';
       this.mountPoint = document.querySelector('#editor');
+
+      // TODO: this should be encapsulated in a function
+      this.dom = this.createElement(state.vDOM[this.name]);
+      this.mount(this.dom, this.mountPoint);
+      this.previousVDOM = state.vDOM[this.name];
 
       return this;
     },
@@ -4386,7 +4383,7 @@
       });
     },
 
-    react(oldVNode, newVNode, $node) {
+    reconcile(oldVNode, newVNode, $node) {
       if (
         $node.tagName === 'TEXTAREA' &&
         document.activeElement !== $node &&
@@ -4398,9 +4395,14 @@
   });
 
   const tools = Object.assign(Object.create(UIComponent), {
-    init() {
+    init(state) {
       this.name       = 'tools';
       this.mountPoint = document.querySelector('#tools');
+
+      // TODO: this should be encapsulated in a function
+      this.dom = this.createElement(state.vDOM[this.name]);
+      this.mount(this.dom, this.mountPoint);
+      this.previousVDOM = state.vDOM[this.name];
 
       return this;
     },
@@ -4421,9 +4423,14 @@
   });
 
   const message = Object.assign(Object.create(UIComponent), {
-    init() {
+    init(state) {
       this.name       = 'message';
       this.mountPoint = document.querySelector('#message');
+
+      // TODO: this should be encapsulated in a function
+      this.dom = this.createElement(state.vDOM[this.name]);
+      this.mount(this.dom, this.mountPoint);
+      this.previousVDOM = state.vDOM[this.name];
 
       return this;
     },
@@ -4437,7 +4444,7 @@
       });
     },
 
-    react(oldVNode, newVNode, $node) {
+    reconcile(oldVNode, newVNode, $node) {
       // if a timer has been set, clear it
       if (this.timer) {
         clearTimeout(this.timer);
@@ -4460,7 +4467,7 @@
   });
 
   const db = {
-    init() {
+    init(state) {
       this.name = 'db';
       return this;
     },
@@ -4518,7 +4525,7 @@
       });
     },
 
-    receive(state) {
+    react(state) {
       if (state.update === 'go') {
         window.dispatchEvent(
           new Event('loadDocIDs')
@@ -4555,7 +4562,7 @@
       });
     },
 
-    receive(state) {
+    react(state) {
       if (this.isRelevant(state.update)) {
         window.history.pushState(state.plain, 'entry');
       }
@@ -4579,9 +4586,9 @@
       core.init();
 
       for (let component of components) {
-        component.init();
+        component.init(core.state.export());
         component.bindEvents(core.compute.bind(core));
-        core.attach(component.name, component.receive.bind(component));
+        core.attach(component.name, component.react.bind(component));
       }
 
       core.kickoff();

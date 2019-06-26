@@ -16,7 +16,7 @@ const hist = {
     });
   },
 
-  receive(state) {
+  react(state) {
     if (this.isRelevant(state.update)) {
       window.history.pushState(state.plain, 'entry');
     }

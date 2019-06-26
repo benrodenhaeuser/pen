@@ -18,12 +18,6 @@ const State = {
     this.update = '';
     this.store  = this.buildStore();
 
-    // const svgImport = this.importFromSVG(markup);
-    //
-    // if (svgImport !== null) {
-    //   this.store.scene.replaceWith(this.importFromSVG(markup));
-    // }
-
     return this;
   },
 
