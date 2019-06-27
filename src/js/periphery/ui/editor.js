@@ -1,9 +1,11 @@
 import { UI } from './ui.js';
+import { CodeMirror } from './codemirror/codemirror.js';
 
 const editor = Object.assign(Object.create(UI), {
   init(state) {
     this.name = 'editor';
     UI.init.bind(this)(state);
+
     return this;
   },
 
@@ -42,4 +44,4 @@ export { editor };
 //   - let's assume we are passed a string (i..e., the markup).
 //   - then we can proceed in analogy to what we have now.
 //
-// what happens on first render? 
+// what happens on first render?
