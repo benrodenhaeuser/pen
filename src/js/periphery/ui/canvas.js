@@ -1,12 +1,12 @@
-import { UIComponent } from './ui.js';
+import { UI } from './ui.js';
 
 const svgns  = 'http://www.w3.org/2000/svg';
 const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
-const canvas = Object.assign(Object.create(UIComponent), {
+const canvas = Object.assign(Object.create(UI), {
   init(state) {
     this.name = 'canvas';
-    UIComponent.init.bind(this)(state);
+    UI.init.bind(this)(state);
     return this;
   },
 
@@ -39,8 +39,7 @@ const canvas = Object.assign(Object.create(UIComponent), {
 
   createElement(vNode) {
     if (typeof vNode === 'string') {
-      const tNode = document.createTextNode(vNode);
-      return tNode;
+      return document.createTextNode(vNode);
     }
 
     const $node = document.createElementNS(svgns, vNode.tag);

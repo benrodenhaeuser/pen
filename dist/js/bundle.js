@@ -3599,8 +3599,8 @@
       }
 
       node.type = object.type;
-      node.key = object.key;
-      node._id = object._id;
+      node.key  = object.key;
+      node._id  = object._id;
       this.setPayload(node, object);
 
       for (let child of object.children) {
@@ -4097,9 +4097,14 @@
 
   const core = {
     init() {
-      this.state = State.create();
+      this.state     = State.create();
       this.periphery = [];
+      
       return this;
+    },
+
+    attach(name, func) {
+      this.periphery[name] = func;
     },
 
     compute(input) {
@@ -4118,10 +4123,6 @@
       }
     },
 
-    attach(name, func) {
-      this.periphery[name] = func;
-    },
-
     publish() {
       for (let key of Object.keys(this.periphery)) {
         this.periphery[key](this.state.export());
@@ -4130,10 +4131,11 @@
 
     kickoff() {
       this.compute({ type: 'go' });
+      // ^ needed to populate "Open" menu with docs retrieved from backend
     },
   };
 
-  const UIComponent = {
+  const UI = {
     init(state) {
       this.mountPoint   = document.querySelector(`#${this.name}`);
       this.dom          = this.createElement(state.vDOM[this.name]);
@@ -4154,8 +4156,7 @@
 
     createElement(vNode) {
       if (typeof vNode === 'string') {
-        const tNode = document.createTextNode(vNode);
-        return tNode;
+        return document.createTextNode(vNode);
       }
 
       const $node = document.createElement(vNode.tag);
@@ -4229,10 +4230,10 @@
   const svgns  = 'http://www.w3.org/2000/svg';
   const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
-  const canvas = Object.assign(Object.create(UIComponent), {
+  const canvas = Object.assign(Object.create(UI), {
     init(state) {
       this.name = 'canvas';
-      UIComponent.init.bind(this)(state);
+      UI.init.bind(this)(state);
       return this;
     },
 
@@ -4265,8 +4266,7 @@
 
     createElement(vNode) {
       if (typeof vNode === 'string') {
-        const tNode = document.createTextNode(vNode);
-        return tNode;
+        return document.createTextNode(vNode);
       }
 
       const $node = document.createElementNS(svgns, vNode.tag);
@@ -4310,10 +4310,10 @@
     },
   });
 
-  const editor = Object.assign(Object.create(UIComponent), {
+  const editor = Object.assign(Object.create(UI), {
     init(state) {
-      this.name       = 'editor';
-      UIComponent.init.bind(this)(state);
+      this.name = 'editor';
+      UI.init.bind(this)(state);
       return this;
     },
 
@@ -4330,6 +4330,9 @@
     },
 
     reconcile(oldVNode, newVNode, $node) {
+      // if the textarea is out of focus and new text
+      // content is available, set that text content as
+      // the textarea's value:
       if (
         $node.tagName === 'TEXTAREA' &&
         document.activeElement !== $node &&
@@ -4340,10 +4343,19 @@
     },
   });
 
-  const tools = Object.assign(Object.create(UIComponent), {
+
+  // init: wire up the codemirror instance and register it as `this.editor`
+  // bindEvents: `this.editor.on('change', ...)`
+  // reconcile:
+  //   - let's assume we are passed a string (i..e., the markup).
+  //   - then we can proceed in analogy to what we have now.
+  //
+  // what happens on first render?
+
+  const tools = Object.assign(Object.create(UI), {
     init(state) {
       this.name = 'tools';
-      UIComponent.init.bind(this)(state);
+      UI.init.bind(this)(state);
       return this;
     },
 
@@ -4362,10 +4374,10 @@
     },
   });
 
-  const message = Object.assign(Object.create(UIComponent), {
+  const message = Object.assign(Object.create(UI), {
     init(state) {
       this.name = 'message';
-      UIComponent.init.bind(this)(state);
+      UI.init.bind(this)(state);
       return this;
     },
 
@@ -4379,14 +4391,14 @@
     },
 
     reconcile(oldVNode, newVNode, $node) {
-      // if a timer has been set, clear it
-      if (this.timer) {
-        clearTimeout(this.timer);
-      }
-
-      // if there is a new message, display it
+      // if the message has changed, replace it
       if (oldVNode !== newVNode) {
         $node.textContent = newVNode;
+      }
+
+      // if a timer has been set earlier, clear it
+      if (this.timer) {
+        clearTimeout(this.timer);
       }
 
       // if the message is non-empty, delete it after one second
@@ -4513,7 +4525,7 @@
     },
   };
 
-  const components = [canvas, editor, tools, message, db, hist];
+  const components = [canvas, editor, tools, message, hist, db];
 
   const app = {
     init() {

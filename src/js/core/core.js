@@ -4,9 +4,14 @@ import { transitions  } from './application/transitions.js';
 
 const core = {
   init() {
-    this.state = State.create();
+    this.state     = State.create();
     this.periphery = [];
+    
     return this;
+  },
+
+  attach(name, func) {
+    this.periphery[name] = func;
   },
 
   compute(input) {
@@ -25,10 +30,6 @@ const core = {
     }
   },
 
-  attach(name, func) {
-    this.periphery[name] = func;
-  },
-
   publish() {
     for (let key of Object.keys(this.periphery)) {
       this.periphery[key](this.state.export());
@@ -37,6 +38,7 @@ const core = {
 
   kickoff() {
     this.compute({ type: 'go' });
+    // ^ needed to populate "Open" menu with docs retrieved from backend
   },
 };
 

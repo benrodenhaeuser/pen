@@ -6,7 +6,7 @@ import { message } from './periphery/ui/message.js';
 import { db      } from './periphery/db.js';
 import { hist    } from './periphery/history.js';
 
-const components = [canvas, editor, tools, message, db, hist];
+const components = [canvas, editor, tools, message, hist, db];
 
 const app = {
   init() {

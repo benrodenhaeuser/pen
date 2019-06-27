@@ -1,9 +1,9 @@
-import { UIComponent } from './ui.js';
+import { UI } from './ui.js';
 
-const message = Object.assign(Object.create(UIComponent), {
+const message = Object.assign(Object.create(UI), {
   init(state) {
     this.name = 'message';
-    UIComponent.init.bind(this)(state);
+    UI.init.bind(this)(state);
     return this;
   },
 
@@ -17,14 +17,14 @@ const message = Object.assign(Object.create(UIComponent), {
   },
 
   reconcile(oldVNode, newVNode, $node) {
-    // if a timer has been set, clear it
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
-
-    // if there is a new message, display it
+    // if the message has changed, replace it
     if (oldVNode !== newVNode) {
       $node.textContent = newVNode;
+    }
+
+    // if a timer has been set earlier, clear it
+    if (this.timer) {
+      clearTimeout(this.timer);
     }
 
     // if the message is non-empty, delete it after one second

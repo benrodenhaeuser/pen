@@ -1,4 +1,4 @@
-const UIComponent = {
+const UI = {
   init(state) {
     this.mountPoint   = document.querySelector(`#${this.name}`);
     this.dom          = this.createElement(state.vDOM[this.name]);
@@ -19,8 +19,7 @@ const UIComponent = {
 
   createElement(vNode) {
     if (typeof vNode === 'string') {
-      const tNode = document.createTextNode(vNode);
-      return tNode;
+      return document.createTextNode(vNode);
     }
 
     const $node = document.createElement(vNode.tag);
@@ -91,4 +90,4 @@ const UIComponent = {
   },
 };
 
-export { UIComponent };
+export { UI };

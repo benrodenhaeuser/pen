@@ -58,8 +58,8 @@ const plainImporter = {
     }
 
     node.type = object.type;
-    node.key = object.key;
-    node._id = object._id;
+    node.key  = object.key;
+    node._id  = object._id;
     this.setPayload(node, object);
 
     for (let child of object.children) {

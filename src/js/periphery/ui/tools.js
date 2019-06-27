@@ -1,9 +1,9 @@
-import { UIComponent } from './ui.js';
+import { UI } from './ui.js';
 
-const tools = Object.assign(Object.create(UIComponent), {
+const tools = Object.assign(Object.create(UI), {
   init(state) {
     this.name = 'tools';
-    UIComponent.init.bind(this)(state);
+    UI.init.bind(this)(state);
     return this;
   },
 
