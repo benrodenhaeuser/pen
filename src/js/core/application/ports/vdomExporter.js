@@ -102,13 +102,7 @@ const vdomExporter = {
   },
 
   editor(state) {
-    return h('textarea', {
-          form: 'form',
-          'data-key': state.store.markup.key,
-          spellcheck: false,
-        }, state.exportToSVG()
-        )
-    ;
+    return state.exportToSVG();
   },
 
   canvas(store) {

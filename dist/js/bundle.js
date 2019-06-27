@@ -3304,13 +3304,7 @@
     },
 
     editor(state) {
-      return h('textarea', {
-            form: 'form',
-            'data-key': state.store.markup.key,
-            spellcheck: false,
-          }, state.exportToSVG()
-          )
-      ;
+      return state.exportToSVG();
     },
 
     canvas(store) {
@@ -13976,46 +13970,39 @@
 
   const editor = Object.assign(Object.create(UI), {
     init(state) {
-      this.name = 'editor';
-      UI.init.bind(this)(state);
+      this.name       = 'editor';
+      this.mountPoint = document.querySelector(`#editor`);
+      this.editor     = CodeMirror(this.mountPoint, {
+        lineNumbers: true,
+        mode: 'xml', // TODO: not functional so far
+        value: state.vDOM['editor'],
+      });
+
+      this.previousMarkup = state.vDOM['editor'];
 
       return this;
     },
 
     bindEvents(func) {
-      this.mountPoint.addEventListener('input', (event) => {
-        event.preventDefault();
-
-        func({
-          source: this.name,
-          type:   event.type,
-          value:  event.target.value,
-        });
+      this.editor.on('change', () => {
+        if (this.editor.hasFocus()) {
+          func({
+            source: this.name,
+            type:   'input',
+            value:  this.editor.getValue(),
+          });
+        }
       });
     },
 
-    reconcile(oldVNode, newVNode, $node) {
-      // if the textarea is out of focus and new text
-      // content is available, set that text content as
-      // the textarea's value:
-      if (
-        $node.tagName === 'TEXTAREA' &&
-        document.activeElement !== $node &&
-        newVNode.children[0] !== oldVNode.children[0]
-      ) {
-        $node.value = newVNode.children[0];
+    react(state) {
+      if (!this.editor.hasFocus() && state.vDOM['editor'] !== this.previousMarkup) {
+        this.editor.getDoc().setValue(state.vDOM['editor']);
       }
+
+      this.previousMarkup = state.vDOM['editor'];
     },
   });
-
-
-  // init: wire up the codemirror instance and register it as `this.editor`
-  // bindEvents: `this.editor.on('change', ...)`
-  // reconcile:
-  //   - let's assume we are passed a string (i..e., the markup).
-  //   - then we can proceed in analogy to what we have now.
-  //
-  // what happens on first render?
 
   const tools = Object.assign(Object.create(UI), {
     init(state) {
