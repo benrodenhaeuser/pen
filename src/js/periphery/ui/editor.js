@@ -5,9 +5,10 @@ const editor = {
     this.name       = 'editor';
     this.mountPoint = document.querySelector(`#editor`);
     this.editor     = CodeMirror(this.mountPoint, {
-      lineNumbers: true,
-      mode: 'xml', // TODO: not functional so far
-      value: state.vDOM['editor'],
+      lineNumbers:  true,
+      lineWrapping: true,
+      mode:         'xml', // TODO: not functional so far
+      value:        state.vDOM['editor'],
     });
 
     this.previousMarkup = state.vDOM['editor'];
@@ -34,6 +35,6 @@ const editor = {
 
     this.previousMarkup = state.vDOM['editor'];
   },
-});
+};
 
 export { editor };

@@ -34,7 +34,7 @@ const svgExporter = {
     const tag = [];
 
     for (let i = 0; i < level; i += 1) {
-      tag.push('    ');
+      tag.push('  ');
     }
 
     tag.push('<');
@@ -66,7 +66,7 @@ const svgExporter = {
 
     // if (svgNode.tag !== 'path') {
       for (let i = 0; i < level; i += 1) {
-        tag.push('    ');
+        tag.push('  ');
       }
     // }
 

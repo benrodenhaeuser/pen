@@ -9,7 +9,7 @@ import { indexOf } from "../util/misc.js"
 import { defineOptions } from "./options.js"
 
 defineOptions(CodeMirror)
-
+ 
 import addEditorMethods from "./methods.js"
 
 addEditorMethods(CodeMirror)

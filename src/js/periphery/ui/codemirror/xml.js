@@ -1,6 +1,5 @@
-import { CodeMirror } from "./edit/main.js"
-
-// XML Mode (TODO: put it somewhere else!)
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
@@ -401,5 +400,3 @@ if (!CodeMirror.mimeModes.hasOwnProperty("text/html"))
   CodeMirror.defineMIME("text/html", {name: "xml", htmlMode: true});
 
 });
-
-export { CodeMirror }

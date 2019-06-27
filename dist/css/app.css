@@ -26,6 +26,9 @@ main {
 .CodeMirror {
   height: 100%;
   border-radius: 5px;
+  font-family: 'Roboto Mono';
+  font-size: 13px;
+  color: #333;
 }
 
 #tools {
@@ -55,7 +58,6 @@ main {
 }
 
 #editor {
-  /* padding: 15px; */
   height: 399px;
 }
 
@@ -217,6 +219,6 @@ path, line {
 }
 
 /* temporary */
-body {
+#canvas {
   cursor: crosshair;
 }
