@@ -1,6 +1,6 @@
 import { CodeMirror } from '/vendor/codemirror/codemirror.js';
 
-const editor = {
+const editor = { 
   init(state) {
     this.name       = 'editor';
     this.mountPoint = document.querySelector(`#editor`);
@@ -65,8 +65,8 @@ const editor = {
       return undefined;
     }
 
-    let start = this.findStart();  // beginning of inserted slice of text
-    let end = this.findEnd();    // end of inserted slice of text
+    let start;  // beginning of inserted slice of text
+    let end;    // end of inserted slice of text
 
     for (let i = 0; i < currentLength; i += 1) {
       if (this.currentMarkup[i] !== this.previousMarkup[i]) {

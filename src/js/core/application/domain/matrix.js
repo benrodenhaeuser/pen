@@ -1,4 +1,5 @@
-import { Vector   } from './vector.js';
+import { Vector } from './vector.js';
+import * as math from 'mathjs';
 
 const Matrix = {
   create(m) {
