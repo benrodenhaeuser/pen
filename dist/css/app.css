@@ -54,7 +54,7 @@ main {
 #canvas, #editor {
   background-color: white;
   border-radius: 5px;
-  box-shadow: 10px 10px 15px 0px rgba(200, 200, 200, 0.75);
+  box-shadow: 5px 5px 10px 0px rgba(200, 200, 200, 0.75);
 }
 
 #editor {
@@ -86,6 +86,10 @@ textarea:focus {
   display: inline;
 }
 
+.mark {
+  background-color: yellow;
+}
+
 #message {
   position: absolute;
   right: 10px;
@@ -98,14 +102,13 @@ textarea:focus {
 .pure-button {
   background-color: transparent;
   color: black;
-  border-radius: 0px;
+  border-radius: 5px;
 }
 
-.pure-button:hover, .pure-menu-link:hover {
+.pure-button:hover, .pure-button:focus, .pure-menu-link:hover {
   background-image: none;
   background-color: white;
-  border-radius: 5px;
-  box-shadow: 3px 3px 15px 0px rgba(200, 200, 200, 0.75);
+  /* box-shadow: 3px 3px 15px 0px rgba(200, 200, 200, 0.75); */
 }
 
 /* .pure-menu-link:hover {

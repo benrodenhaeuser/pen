@@ -1,11 +1,11 @@
 import { svgImporter   } from './ports/svgImporter.js';
 import { svgExporter   } from './ports/svgExporter.js';
-import { vdomExporter  } from './ports/vdomExporter.js';
+import { exportToVDOM  } from './ports/exportToVDOM.js';
 import { plainImporter } from './ports/plainImporter.js';
 import { plainExporter } from './ports/plainExporter.js';
+import { Rectangle     } from './domain/rectangle.js';
 
 import { Store, Docs, Doc, Message, Scene, Markup } from './domain/types.js';
-import { Rectangle                                } from './domain/rectangle.js';
 
 const State = {
   create() {
@@ -100,7 +100,7 @@ const State = {
 
   // returns a Doc node and a list of ids (for docs)
   exportToVDOM() {
-    return vdomExporter.renderApp(this);
+    return exportToVDOM(this);
   },
 
   // returns a plain representation of Doc node and a list of ids (for docs)

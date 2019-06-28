@@ -1,12 +1,12 @@
-import { Scene, Shape, Group      } from '../domain/types.js';
+import { Scene, Shape, Group     } from '../domain/types.js';
 import { Spline, Segment, Anchor } from '../domain/types.js';
 import { HandleIn, HandleOut     } from '../domain/types.js';
 import { Matrix                  } from '../domain/matrix.js';
 import { Vector                  } from '../domain/vector.js';
 import { Rectangle               } from '../domain/rectangle.js';
 import { Class                   } from '../domain/class.js';
-import { SVGPathData             } from 'svg-pathdata'; // TODO: put this in ext folder?
-import { SVGPathDataTransformer  } from 'svg-pathdata'; // TODO: put this in ext folder?
+import { SVGPathData             } from 'svg-pathdata';
+import { SVGPathDataTransformer  } from 'svg-pathdata';
 
 const svgImporter = {
   build(markup) {

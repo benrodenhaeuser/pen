@@ -1,6 +1,7 @@
+import { Bezier    } from '/vendor/bezier/bezier.js';
 import { Rectangle } from './rectangle.js';
 import { Vector    } from './vector.js';
-import { Bezier    } from './bezier/bezier.js';
+
 
 const Curve = {
   // the params are Vector instances

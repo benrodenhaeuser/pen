@@ -42,7 +42,7 @@ const svgExporter = {
 
     const propsList = [];
 
-    for (let [key, value] of Object.entries(svgNode.props)) {
+    for (let [key, value] of Object.entries(svgNode.props)) {    
       propsList.push(`${key}="${value}"`);
     }
 
