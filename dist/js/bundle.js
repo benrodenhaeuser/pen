@@ -63886,6 +63886,8 @@
     const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
     const radius    = diameter / 2;
 
+    console.log(radius);
+
     for (let vDot of vDots) {
       Object.assign(vDot.props, {
         'data-type':      'dot',
@@ -74941,9 +74943,6 @@
     convertToRange(indices) {
       const from = this.editor.doc.posFromIndex(indices[0]);
       const to   = this.editor.doc.posFromIndex(indices[1] + 2);
-
-      console.log('token at from', this.editor.getTokenAt(from));
-      console.log('token at end', this.editor.getTokenAt(from));
 
       return [from, to];
     },
