@@ -183,27 +183,6 @@
   }
 
   /**
-   * Rotates a mat2d by the given angle
-   *
-   * @param {mat2d} out the receiving matrix
-   * @param {mat2d} a the matrix to rotate
-   * @param {Number} rad the angle to rotate the matrix by
-   * @returns {mat2d} out
-   */
-  function rotate(out, a, rad) {
-    let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5];
-    let s = Math.sin(rad);
-    let c = Math.cos(rad);
-    out[0] = a0 *  c + a2 * s;
-    out[1] = a1 *  c + a3 * s;
-    out[2] = a0 * -s + a2 * c;
-    out[3] = a1 * -s + a3 * c;
-    out[4] = a4;
-    out[5] = a5;
-    return out;
-  }
-
-  /**
    * Scales the mat2d by the dimensions in the given vec2
    *
    * @param {mat2d} out the receiving matrix
@@ -334,6 +313,9 @@
         [$matrix.a, $matrix.b, $matrix.c, $matrix.d, $matrix.e, $matrix.f]
       ;
 
+      // TODO: is this the right order? I don't think so.
+      // used (only once) in svg importer
+
       return Matrix.create(m);
     },
 
@@ -343,7 +325,7 @@
 
     // return value: string
     toString() {
-      return `matrix(${this.m.join(', ')})`;
+      return `matrix(${this.m.join(', ')})`; // TODO: need to reorder it, I think.
     },
 
     // return value: new Vector instance
@@ -374,18 +356,27 @@
 
     // return value: new Matrix instance
     identity() {
+      // console.log(mat2d.create());
+      // const newInst = Matrix.create(mat2d.create());
+      // console.log(newInst.m);
       return Matrix.create(create());
     },
 
-    // return value: new Matrix instance
     rotation(angle$$1, origin) {
-      const m = create();
-      rotate(m, this.m, angle$$1.toArray(), );
+      const sin                = Math.sin(angle$$1);
+      const cos                = Math.cos(angle$$1);
+
+      const m =
+        [cos, sin, -sin, cos, -origin.x * cos + origin.y * sin + origin.x, -origin.x * sin - origin.y * cos + origin.y];
+
+        // right order?
+
       return Matrix.create(m);
     },
 
     // return value: new Matrix instance
     translation(vector) {
+      console.log(this); // has no m attribute. how is that possible?
       const m = create();
       translate(m, this.m, vector.toArray());
       return Matrix.create(m);
@@ -398,9 +389,6 @@
       return Matrix.create(m);
     },
   };
-
-  // rotation around origin with given angle:
-  // translate rotate translate (?)
 
   const Rectangle = {
     // => two vectors (origin and size)
