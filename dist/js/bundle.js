@@ -59642,7 +59642,7 @@
   const Matrix$1 = {
     create(m) {
       return Object.create(Matrix$1).init(m);
-    }, 
+    },
 
     init(m) {
       this.m = m;
@@ -63885,8 +63885,6 @@
     const vDots     = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
     const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
     const radius    = diameter / 2;
-
-    console.log(radius);
 
     for (let vDot of vDots) {
       Object.assign(vDot.props, {

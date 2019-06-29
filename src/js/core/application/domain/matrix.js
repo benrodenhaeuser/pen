@@ -1,10 +1,10 @@
 import { Vector } from './vector.js';
-import * as math from 'mathjs';
+import { multiply, inv } from 'mathjs';
 
 const Matrix = {
   create(m) {
     return Object.create(Matrix).init(m);
-  }, 
+  },
 
   init(m) {
     this.m = m;
@@ -51,14 +51,14 @@ const Matrix = {
 
   // return value: new Matrix instance
   multiply(other) {
-    const m = math.multiply(this.m, other.m);
+    const m = multiply(this.m, other.m);
     return Matrix.create(m);
   },
 
   // return value: new Matrix instance
   invert() {
     const m = JSON.parse(JSON.stringify(this.m));
-    return Matrix.create(math.inv(m));
+    return Matrix.create(inv(m));
   },
 
   // return value: new Matrix instance
