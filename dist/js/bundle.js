@@ -183,46 +183,6 @@
   }
 
   /**
-   * Scales the mat2d by the dimensions in the given vec2
-   *
-   * @param {mat2d} out the receiving matrix
-   * @param {mat2d} a the matrix to translate
-   * @param {vec2} v the vec2 to scale the matrix by
-   * @returns {mat2d} out
-   **/
-  function scale(out, a, v) {
-    let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5];
-    let v0 = v[0], v1 = v[1];
-    out[0] = a0 * v0;
-    out[1] = a1 * v0;
-    out[2] = a2 * v1;
-    out[3] = a3 * v1;
-    out[4] = a4;
-    out[5] = a5;
-    return out;
-  }
-
-  /**
-   * Translates the mat2d by the dimensions in the given vec2
-   *
-   * @param {mat2d} out the receiving matrix
-   * @param {mat2d} a the matrix to translate
-   * @param {vec2} v the vec2 to translate the matrix by
-   * @returns {mat2d} out
-   **/
-  function translate(out, a, v) {
-    let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5];
-    let v0 = v[0], v1 = v[1];
-    out[0] = a0;
-    out[1] = a1;
-    out[2] = a2;
-    out[3] = a3;
-    out[4] = a0 * v0 + a2 * v1 + a4;
-    out[5] = a1 * v0 + a3 * v1 + a5;
-    return out;
-  }
-
-  /**
    * 2 Dimensional Vector
    * @module vec2
    */
@@ -310,11 +270,13 @@
 
     createFromDOMMatrix($matrix) {
       const m =
-        [$matrix.a, $matrix.b, $matrix.c, $matrix.d, $matrix.e, $matrix.f]
+        [
+          $matrix.a, $matrix.c, $matrix.e,
+          $matrix.b, $matrix.d, $matrix.f
+        ]
       ;
 
-      // TODO: is this the right order? I don't think so.
-      // used (only once) in svg importer
+      // is this the right order?
 
       return Matrix.create(m);
     },
@@ -325,7 +287,7 @@
 
     // return value: string
     toString() {
-      return `matrix(${this.m.join(', ')})`; // TODO: need to reorder it, I think.
+      return `matrix(${this.m.join(', ')})`; // TODO: wrong order?
     },
 
     // return value: new Vector instance
@@ -354,38 +316,42 @@
       return Matrix.create(m);
     },
 
-    // return value: new Matrix instance
+    // return value: new Matrix instance (this is a "class method")
     identity() {
-      // console.log(mat2d.create());
-      // const newInst = Matrix.create(mat2d.create());
-      // console.log(newInst.m);
+
       return Matrix.create(create());
     },
 
+    // return value: new Matrix instance (this is a "class method")
     rotation(angle$$1, origin) {
-      const sin                = Math.sin(angle$$1);
-      const cos                = Math.cos(angle$$1);
+      const sin = Math.sin(angle$$1);
+      const cos = Math.cos(angle$$1);
 
-      const m =
-        [cos, sin, -sin, cos, -origin.x * cos + origin.y * sin + origin.x, -origin.x * sin - origin.y * cos + origin.y];
-
-        // right order?
+      const m = [
+        cos, -sin, -origin.x * cos + origin.y * sin + origin.x,
+        sin,  cos, -origin.x * sin - origin.y * cos + origin.y
+      ];
 
       return Matrix.create(m);
     },
 
-    // return value: new Matrix instance
+    // return value: new Matrix instance (this is a "class method")
     translation(vector) {
-      console.log(this); // has no m attribute. how is that possible?
-      const m = create();
-      translate(m, this.m, vector.toArray());
+      const m = [
+        1, 0, vector.x,
+        0, 1, vector.y
+      ];
+
       return Matrix.create(m);
     },
 
-    // return value: new Matrix instance
+    // return value: new Matrix instance (this is a "class method")
     scale(factor, origin = Vector.create(0, 0)) {
-      const m = create();
-      scale(m, this.m, origin.toArray());
+      const m = [
+        factor, 0,      origin.x - factor * origin.x,
+        0,      factor, origin.y - factor * origin.y
+      ];
+
       return Matrix.create(m);
     },
   };

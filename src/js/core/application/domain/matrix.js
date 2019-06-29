@@ -14,11 +14,13 @@ const Matrix = {
 
   createFromDOMMatrix($matrix) {
     const m =
-      [$matrix.a, $matrix.b, $matrix.c, $matrix.d, $matrix.e, $matrix.f]
+      [
+        $matrix.a, $matrix.c, $matrix.e,
+        $matrix.b, $matrix.d, $matrix.f
+      ]
     ;
 
-    // TODO: is this the right order? I don't think so.
-    // used (only once) in svg importer
+    // is this the right order? I think so.
 
     return Matrix.create(m);
   },
@@ -29,7 +31,14 @@ const Matrix = {
 
   // return value: string
   toString() {
-    return `matrix(${this.m.join(', ')})`; // TODO: need to reorder it, I think.
+    console.log('calling toString on matrix'); // never called? why?
+
+    const m = [
+      this.m[0], this.m[3], this.m[1], this.m[4], this.m[2], this.m[5];
+    ]
+    // right order? I think so.
+
+    return `matrix(${m.join(', ')})`;
   },
 
   // return value: new Vector instance
@@ -58,38 +67,46 @@ const Matrix = {
     return Matrix.create(m);
   },
 
-  // return value: new Matrix instance
+  // return value: new Matrix instance (this is a "class method")
   identity() {
-    // console.log(mat2d.create());
-    // const newInst = Matrix.create(mat2d.create());
-    // console.log(newInst.m);
+    const m = [
+      1, 0, 0,
+      0, 1, 0
+    ];
+
     return Matrix.create(mat2d.create());
   },
 
+  // return value: new Matrix instance (this is a "class method")
   rotation(angle, origin) {
-    const sin                = Math.sin(angle);
-    const cos                = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const cos = Math.cos(angle);
 
-    const m =
-      [cos, sin, -sin, cos, -origin.x * cos + origin.y * sin + origin.x, -origin.x * sin - origin.y * cos + origin.y];
-
-      // right order?
+    const m = [
+      cos, -sin, -origin.x * cos + origin.y * sin + origin.x,
+      sin,  cos, -origin.x * sin - origin.y * cos + origin.y
+    ];
 
     return Matrix.create(m);
   },
 
-  // return value: new Matrix instance
+  // return value: new Matrix instance (this is a "class method")
   translation(vector) {
-    console.log(this); // has no m attribute. how is that possible?
-    const m = mat2d.create();
-    mat2d.translate(m, this.m, vector.toArray());
+    const m = [
+      1, 0, vector.x,
+      0, 1, vector.y
+    ];
+
     return Matrix.create(m);
   },
 
-  // return value: new Matrix instance
+  // return value: new Matrix instance (this is a "class method")
   scale(factor, origin = Vector.create(0, 0)) {
-    const m = mat2d.create();
-    mat2d.scale(m, this.m, origin.toArray());
+    const m = [
+      factor, 0,      origin.x - factor * origin.x,
+      0,      factor, origin.y - factor * origin.y
+    ];
+
     return Matrix.create(m);
   },
 };
