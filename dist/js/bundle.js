@@ -123,10 +123,10 @@
       return { x: this.x, y: this.y };
     },
 
-    // return value: new Vector instance // TODO
+    // return value: new Vector instance
     transform(matrix) {
-      const out = [];
-      const m = [...matrix.m[0], ...matrix.m[1]];
+      const m = [matrix.m[0][0], matrix.m[1][0], matrix.m[0][1], matrix.m[1][1], matrix.m[0][2], matrix.m[1][2]];
+      const out = create();
       transformMat2d(out, this.toArray(), m);
       return Vector.create(...out);
     },
@@ -177,6 +177,43 @@
       return [this.x, this.y];
     }
   };
+
+  /**
+   * 2x3 Matrix
+   * @module mat2d
+   *
+   * @description
+   * A mat2d contains six elements defined as:
+   * <pre>
+   * [a, b, c,
+   *  d, tx, ty]
+   * </pre>
+   * This is a short form for the 3x3 matrix:
+   * <pre>
+   * [a, b, 0,
+   *  c, d, 0,
+   *  tx, ty, 1]
+   * </pre>
+   * The last column is ignored so the array is shorter and operations are faster.
+   */
+
+  /**
+   * Creates a new identity mat2d
+   *
+   * @returns {mat2d} a new 2x3 matrix
+   */
+  function create$1() {
+    let out = new ARRAY_TYPE(6);
+    if(ARRAY_TYPE != Float32Array) {
+      out[1] = 0;
+      out[2] = 0;
+      out[4] = 0;
+      out[5] = 0;
+    }
+    out[0] = 1;
+    out[3] = 1;
+    return out;
+  }
 
   /**
    * Inverts a mat2d
@@ -262,41 +299,40 @@
       return this.m;
     },
 
-    // return value: new Matrix instance // TODO
+    // return value: new Matrix instance
     multiply(other) {
-      const m1 = [...this.m[0], ...this.m[1]];
-      const m2 = [...other.m[0], ...other.m[1]];
+      const m1 = [this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]];
+      const m2 = [other.m[0][0], other.m[1][0], other.m[0][1], other.m[1][1], other.m[0][2], other.m[1][2]];
 
-      const m = [];
+      const out = create$1();
 
-      multiply$1(m, m1, m2);
-
-      const out = [
-        [m[0], m[1], m[2]],
-        [m[3], m[4], m[5]],
-        [0, 0, 1]
-      ];
-
-      return Matrix.create(out);
-    },
-
-    // return value: new Matrix instance // TODO
-    invert() {
-      const m1 = [...this.m[0], ...this.m[1]];
-
-      const m = [];
-
-      invert(m, m1);
+      multiply$1(out, m1, m2);
 
       return Matrix.create([
-        [m[0], m[1], m[2]],
-        [m[3], m[4], m[5]],
+        [out[0], out[2], out[4]],
+        [out[1], out[3], out[5]],
+        [0, 0, 1]
+      ]);
+    },
+
+    // return value: new Matrix instance
+    invert() {
+      const inp = [this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]];
+
+      const out = create$1();
+
+      invert(out, inp);
+
+      return Matrix.create([
+        [out[0], out[2], out[4]],
+        [out[1], out[3], out[5]],
         [0, 0, 1]
       ]);
     },
 
     // return value: new Matrix instance
     identity() {
+      // TODO: what is this JSON stuff?
       const m = JSON.parse(JSON.stringify(
         [
           [1, 0, 0],
@@ -309,9 +345,9 @@
     },
 
     // return value: new Matrix instance
-    rotation(angle$$1, origin) {
-      const sin = Math.sin(angle$$1);
-      const cos = Math.cos(angle$$1);
+    rotation(angle, origin) {
+      const sin = Math.sin(angle);
+      const cos = Math.cos(angle);
 
       const m = [
         [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
