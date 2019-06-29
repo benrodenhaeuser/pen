@@ -14,18 +14,18 @@ gulp.task('rollup', () => {
     ]
   }).then(bundle => {
     return bundle.write({
-      banner: `// - The Bezier.js library is copyright (c) by Pomax
+      banner: `// - Bezier.js is copyright (c) by Pomax
 //   Distributed under an MIT license
 //   https://github.com/Pomax/bezierjs
 // - CodeMirror is copyright (c) by Marijn Haverbeke and others
 //   Distributed under an MIT license
 //   https://codemirror.net/LICENSE
-// - The SVG PathData library is copyright (c) by Nicolas Froidure
+// - svg-pathdata library is copyright (c) by Nicolas Froidure
 //   Distributed under an MIT license
 //   https://github.com/nfroidure/svg-pathdata
-// - The Math.js library is copyright (c) Jos de Jong
-//   Distributed under an Apache License
-//   https://github.com/josdejong/mathjs
+// - gl-matrix is copyright (c) Brandon Jones, Colin MacKenzie IV
+//   Distributed under an MIT License
+//   https://github.com/toji/gl-matrix
     `,
       file: './dist/js/bundle.js',
       format: 'iife',
