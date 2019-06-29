@@ -65,6 +65,10 @@ const Vector = {
   length() {
     return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
   },
+
+  toArray() {
+    return [this.x, this.y];
+  }
 };
 
 export { Vector };
