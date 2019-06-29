@@ -1,9 +1,9 @@
-import { UI } from './ui.js';
+import { UIModule } from './ui.js';
 
-const message = Object.assign(Object.create(UI), {
+const message = Object.assign(Object.create(UIModule), {
   init(state) {
     this.name = 'message';
-    UI.init.bind(this)(state);
+    UIModule.init.bind(this)(state);
     return this;
   },
 

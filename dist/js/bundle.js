@@ -59642,7 +59642,7 @@
   const Matrix$1 = {
     create(m) {
       return Object.create(Matrix$1).init(m);
-    },
+    }, 
 
     init(m) {
       this.m = m;
@@ -64566,13 +64566,13 @@
   const core = {
     init() {
       this.state     = State.create();
-      this.periphery = [];
-      
+      this.modules = [];
+
       return this;
     },
 
     attach(name, func) {
-      this.periphery[name] = func;
+      this.modules[name] = func;
     },
 
     compute(input) {
@@ -64592,8 +64592,8 @@
     },
 
     publish() {
-      for (let key of Object.keys(this.periphery)) {
-        this.periphery[key](this.state.export());
+      for (let key of Object.keys(this.modules)) {
+        this.modules[key](this.state.export());
       }
     },
 
@@ -64603,7 +64603,7 @@
     },
   };
 
-  const UI = {
+  const UIModule = {
     init(state) {
       this.mountPoint   = document.querySelector(`#${this.name}`);
       this.dom          = this.createElement(state.vDOM[this.name]);
@@ -64698,10 +64698,10 @@
   const svgns  = 'http://www.w3.org/2000/svg';
   const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
-  const canvas$1 = Object.assign(Object.create(UI), {
+  const canvas$1 = Object.assign(Object.create(UIModule), {
     init(state) {
       this.name = 'canvas';
-      UI.init.bind(this)(state);
+      UIModule.init.bind(this)(state);
       return this;
     },
 
@@ -74843,7 +74843,7 @@
 
   });
 
-  const editor$1 = { 
+  const editor$1 = {
     init(state) {
       this.name       = 'editor';
       this.mountPoint = document.querySelector(`#editor`);
@@ -74942,14 +74942,17 @@
       const from = this.editor.doc.posFromIndex(indices[0]);
       const to   = this.editor.doc.posFromIndex(indices[1] + 2);
 
+      console.log('token at from', this.editor.getTokenAt(from));
+      console.log('token at end', this.editor.getTokenAt(from));
+
       return [from, to];
     },
   };
 
-  const tools$1 = Object.assign(Object.create(UI), {
+  const tools$1 = Object.assign(Object.create(UIModule), {
     init(state) {
       this.name = 'tools';
-      UI.init.bind(this)(state);
+      UIModule.init.bind(this)(state);
       return this;
     },
 
@@ -74966,12 +74969,16 @@
         });
       });
     },
+
+    react() {
+      return;
+    }
   });
 
-  const message$1 = Object.assign(Object.create(UI), {
+  const message$1 = Object.assign(Object.create(UIModule), {
     init(state) {
       this.name = 'message';
-      UI.init.bind(this)(state);
+      UIModule.init.bind(this)(state);
       return this;
     },
 
@@ -75119,16 +75126,16 @@
     },
   };
 
-  const components = [canvas$1, editor$1, tools$1, message$1, hist, db];
+  const modules = [canvas$1, editor$1, tools$1, message$1, hist, db];
 
   const app = {
     init() {
       core.init();
 
-      for (let component of components) {
-        component.init(core.state.export());
-        component.bindEvents(core.compute.bind(core));
-        core.attach(component.name, component.react.bind(component));
+      for (let module of modules) {
+        module.init(core.state.export());
+        module.bindEvents(core.compute.bind(core));
+        core.attach(module.name, module.react.bind(module));
       }
 
       core.kickoff();

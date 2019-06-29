@@ -1,21 +1,21 @@
 import { core    } from './core/core.js';
-import { canvas  } from './periphery/ui/canvas.js';
-import { editor  } from './periphery/ui/editor.js';
-import { tools   } from './periphery/ui/tools.js';
-import { message } from './periphery/ui/message.js';
-import { db      } from './periphery/db.js';
-import { hist    } from './periphery/history.js';
+import { canvas  } from './modules/ui/canvas.js';
+import { editor  } from './modules/ui/editor.js';
+import { tools   } from './modules/ui/tools.js';
+import { message } from './modules/ui/message.js';
+import { db      } from './modules/db.js';
+import { hist    } from './modules/history.js';
 
-const components = [canvas, editor, tools, message, hist, db];
+const modules = [canvas, editor, tools, message, hist, db];
 
 const app = {
   init() {
     core.init();
 
-    for (let component of components) {
-      component.init(core.state.export());
-      component.bindEvents(core.compute.bind(core));
-      core.attach(component.name, component.react.bind(component));
+    for (let module of modules) {
+      module.init(core.state.export());
+      module.bindEvents(core.compute.bind(core));
+      core.attach(module.name, module.react.bind(module));
     }
 
     core.kickoff();

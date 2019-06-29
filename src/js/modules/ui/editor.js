@@ -1,6 +1,6 @@
 import { CodeMirror } from '/vendor/codemirror/codemirror.js';
 
-const editor = { 
+const editor = {
   init(state) {
     this.name       = 'editor';
     this.mountPoint = document.querySelector(`#editor`);
@@ -99,6 +99,9 @@ const editor = {
   convertToRange(indices) {
     const from = this.editor.doc.posFromIndex(indices[0]);
     const to   = this.editor.doc.posFromIndex(indices[1] + 2);
+
+    console.log('token at from', this.editor.getTokenAt(from));
+    console.log('token at end', this.editor.getTokenAt(from));
 
     return [from, to];
   },

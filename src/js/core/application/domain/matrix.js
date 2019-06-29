@@ -4,7 +4,7 @@ import * as math from 'mathjs';
 const Matrix = {
   create(m) {
     return Object.create(Matrix).init(m);
-  },
+  }, 
 
   init(m) {
     this.m = m;

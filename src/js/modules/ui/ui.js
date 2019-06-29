@@ -1,4 +1,4 @@
-const UI = {
+const UIModule = {
   init(state) {
     this.mountPoint   = document.querySelector(`#${this.name}`);
     this.dom          = this.createElement(state.vDOM[this.name]);
@@ -90,4 +90,4 @@ const UI = {
   },
 };
 
-export { UI };
+export { UIModule };

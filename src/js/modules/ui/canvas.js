@@ -1,12 +1,12 @@
-import { UI } from './ui.js';
+import { UIModule } from './ui.js';
 
 const svgns  = 'http://www.w3.org/2000/svg';
 const xmlns  = 'http://www.w3.org/2000/xmlns/';
 
-const canvas = Object.assign(Object.create(UI), {
+const canvas = Object.assign(Object.create(UIModule), {
   init(state) {
     this.name = 'canvas';
-    UI.init.bind(this)(state);
+    UIModule.init.bind(this)(state);
     return this;
   },
 

@@ -5,13 +5,13 @@ import { transitions  } from './application/transitions.js';
 const core = {
   init() {
     this.state     = State.create();
-    this.periphery = [];
-    
+    this.modules = [];
+
     return this;
   },
 
   attach(name, func) {
-    this.periphery[name] = func;
+    this.modules[name] = func;
   },
 
   compute(input) {
@@ -31,8 +31,8 @@ const core = {
   },
 
   publish() {
-    for (let key of Object.keys(this.periphery)) {
-      this.periphery[key](this.state.export());
+    for (let key of Object.keys(this.modules)) {
+      this.modules[key](this.state.export());
     }
   },
 

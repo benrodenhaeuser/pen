@@ -1,9 +1,9 @@
-import { UI } from './ui.js';
+import { UIModule } from './ui.js';
 
-const tools = Object.assign(Object.create(UI), {
+const tools = Object.assign(Object.create(UIModule), {
   init(state) {
     this.name = 'tools';
-    UI.init.bind(this)(state);
+    UIModule.init.bind(this)(state);
     return this;
   },
 
@@ -20,6 +20,10 @@ const tools = Object.assign(Object.create(UI), {
       });
     });
   },
+
+  react() {
+    return;
+  }
 });
 
 export { tools };
