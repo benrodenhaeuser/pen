@@ -1,4 +1,5 @@
 import { Matrix } from './matrix.js';
+import * as vec2  from '/vendor/glmatrix/vec2.js';
 
 const Vector = {
   create(x = 0, y = 0) {
@@ -21,7 +22,10 @@ const Vector = {
 
   // return value: new Vector instance
   transform(matrix) {
-    return matrix.transform(this);
+    const m = [matrix.m[0][0], matrix.m[1][0], matrix.m[0][1], matrix.m[1][1], matrix.m[0][2], matrix.m[1][2]];
+    const out = vec2.create();
+    vec2.transformMat2d(out, this.toArray(), m);
+    return Vector.create(...out);
   },
 
   // return value: new Vector instance
@@ -65,6 +69,10 @@ const Vector = {
   length() {
     return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
   },
+
+  toArray() {
+    return [this.x, this.y];
+  }
 };
 
 export { Vector };

@@ -144,11 +144,11 @@ Shape.pathString = function() {
       }
 
       if (prevSeg.handleOut) {
-        d += ` ${prevSeg.handleOut.x.toFixed()} ${prevSeg.handleOut.y.toFixed()}`;
+        d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
       }
 
       if (currSeg.handleIn) {
-        d += ` ${currSeg.handleIn.x.toFixed()} ${currSeg.handleIn.y.toFixed()}`;
+        d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
       }
 
       d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;

@@ -100,6 +100,12 @@ const editor = {
     const from = this.editor.doc.posFromIndex(indices[0]);
     const to   = this.editor.doc.posFromIndex(indices[1] + 2);
 
+<<<<<<< HEAD
+=======
+    // console.log('token at from', this.editor.getTokenAt(from));
+    // console.log('token at end', this.editor.getTokenAt(from));
+
+>>>>>>> mat2d
     return [from, to];
   },
 };
