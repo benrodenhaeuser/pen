@@ -14,6 +14,96 @@
 (function () {
   'use strict';
 
+  /**
+   * Common utilities
+   * @module glMatrix
+   */
+  let ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array;
+
+  const degree = Math.PI / 180;
+
+  if (!Math.hypot) Math.hypot = function() {
+    var y = 0, i = arguments.length;
+    while (i--) y += arguments[i] * arguments[i];
+    return Math.sqrt(y);
+  };
+
+  /**
+   * 2 Dimensional Vector
+   * @module vec2
+   */
+
+  /**
+   * Creates a new, empty vec2
+   *
+   * @returns {vec2} a new 2D vector
+   */
+  function create() {
+    let out = new ARRAY_TYPE(2);
+    if(ARRAY_TYPE != Float32Array) {
+      out[0] = 0;
+      out[1] = 0;
+    }
+    return out;
+  }
+
+  /**
+   * Transforms the vec2 with a mat2d
+   *
+   * @param {vec2} out the receiving vector
+   * @param {vec2} a the vector to transform
+   * @param {mat2d} m matrix to transform with
+   * @returns {vec2} out
+   */
+  function transformMat2d(out, a, m) {
+    var x = a[0],
+      y = a[1];
+    out[0] = m[0] * x + m[2] * y + m[4];
+    out[1] = m[1] * x + m[3] * y + m[5];
+    return out;
+  }
+
+  /**
+   * Perform some operation over an array of vec2s.
+   *
+   * @param {Array} a the array of vectors to iterate over
+   * @param {Number} stride Number of elements between the start of each vec2. If 0 assumes tightly packed
+   * @param {Number} offset Number of elements to skip at the beginning of the array
+   * @param {Number} count Number of vec2s to iterate over. If 0 iterates over entire array
+   * @param {Function} fn Function to call for each vector in the array
+   * @param {Object} [arg] additional argument to pass to fn
+   * @returns {Array} a
+   * @function
+   */
+  const forEach = (function() {
+    let vec = create();
+
+    return function(a, stride, offset, count, fn, arg) {
+      let i, l;
+      if(!stride) {
+        stride = 2;
+      }
+
+      if(!offset) {
+        offset = 0;
+      }
+
+      if(count) {
+        l = Math.min((count * stride) + offset, a.length);
+      } else {
+        l = a.length;
+      }
+
+      for(i = offset; i < l; i += stride) {
+        vec[0] = a[i]; vec[1] = a[i+1];
+        fn(vec, vec, arg);
+        a[i] = vec[0]; a[i+1] = vec[1];
+      }
+
+      return a;
+    };
+  })();
+
   const Vector = {
     create(x = 0, y = 0) {
       return Object.create(Vector).init(x, y);
@@ -33,13 +123,16 @@
       return { x: this.x, y: this.y };
     },
 
-    // return value: new Vector instance
+    // return value: new Vector instance // TODO
     transform(matrix) {
-      return matrix.transform(this);
+      const out = [];
+      const m = [...matrix.m[0], ...matrix.m[1]];
+      transformMat2d(out, this.toArray(), m);
+      return Vector.create(...out);
     },
 
     // return value: new Vector instance
-    rotate(angle, vector) {
+    rotate(angle$$1, vector) {
       return this.transform(Matrix.rotation(Math.PI, vector));
     },
 
@@ -86,57 +179,6 @@
   };
 
   /**
-   * Common utilities
-   * @module glMatrix
-   */
-  let ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array;
-
-  const degree = Math.PI / 180;
-
-  if (!Math.hypot) Math.hypot = function() {
-    var y = 0, i = arguments.length;
-    while (i--) y += arguments[i] * arguments[i];
-    return Math.sqrt(y);
-  };
-
-  /**
-   * 2x3 Matrix
-   * @module mat2d
-   *
-   * @description
-   * A mat2d contains six elements defined as:
-   * <pre>
-   * [a, b, c,
-   *  d, tx, ty]
-   * </pre>
-   * This is a short form for the 3x3 matrix:
-   * <pre>
-   * [a, b, 0,
-   *  c, d, 0,
-   *  tx, ty, 1]
-   * </pre>
-   * The last column is ignored so the array is shorter and operations are faster.
-   */
-
-  /**
-   * Creates a new identity mat2d
-   *
-   * @returns {mat2d} a new 2x3 matrix
-   */
-  function create() {
-    let out = new ARRAY_TYPE(6);
-    if(ARRAY_TYPE != Float32Array) {
-      out[1] = 0;
-      out[2] = 0;
-      out[4] = 0;
-      out[5] = 0;
-    }
-    out[0] = 1;
-    out[3] = 1;
-    return out;
-  }
-
-  /**
    * Inverts a mat2d
    *
    * @param {mat2d} out the receiving matrix
@@ -170,7 +212,7 @@
    * @param {mat2d} b the second operand
    * @returns {mat2d} out
    */
-  function multiply(out, a, b) {
+  function multiply$1(out, a, b) {
     let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5];
     let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3], b4 = b[4], b5 = b[5];
     out[0] = a0 * b0 + a2 * b1;
@@ -181,82 +223,6 @@
     out[5] = a1 * b4 + a3 * b5 + a5;
     return out;
   }
-
-  /**
-   * 2 Dimensional Vector
-   * @module vec2
-   */
-
-  /**
-   * Creates a new, empty vec2
-   *
-   * @returns {vec2} a new 2D vector
-   */
-  function create$1() {
-    let out = new ARRAY_TYPE(2);
-    if(ARRAY_TYPE != Float32Array) {
-      out[0] = 0;
-      out[1] = 0;
-    }
-    return out;
-  }
-
-  /**
-   * Transforms the vec2 with a mat2d
-   *
-   * @param {vec2} out the receiving vector
-   * @param {vec2} a the vector to transform
-   * @param {mat2d} m matrix to transform with
-   * @returns {vec2} out
-   */
-  function transformMat2d(out, a, m) {
-    var x = a[0],
-      y = a[1];
-    out[0] = m[0] * x + m[2] * y + m[4];
-    out[1] = m[1] * x + m[3] * y + m[5];
-    return out;
-  }
-
-  /**
-   * Perform some operation over an array of vec2s.
-   *
-   * @param {Array} a the array of vectors to iterate over
-   * @param {Number} stride Number of elements between the start of each vec2. If 0 assumes tightly packed
-   * @param {Number} offset Number of elements to skip at the beginning of the array
-   * @param {Number} count Number of vec2s to iterate over. If 0 iterates over entire array
-   * @param {Function} fn Function to call for each vector in the array
-   * @param {Object} [arg] additional argument to pass to fn
-   * @returns {Array} a
-   * @function
-   */
-  const forEach = (function() {
-    let vec = create$1();
-
-    return function(a, stride, offset, count, fn, arg) {
-      let i, l;
-      if(!stride) {
-        stride = 2;
-      }
-
-      if(!offset) {
-        offset = 0;
-      }
-
-      if(count) {
-        l = Math.min((count * stride) + offset, a.length);
-      } else {
-        l = a.length;
-      }
-
-      for(i = offset; i < l; i += stride) {
-        vec[0] = a[i]; vec[1] = a[i+1];
-        fn(vec, vec, arg);
-        a[i] = vec[0]; a[i+1] = vec[1];
-      }
-
-      return a;
-    };
-  })();
 
   const Matrix = {
     create(m) {
@@ -269,14 +235,11 @@
     },
 
     createFromDOMMatrix($matrix) {
-      const m =
-        [
-          $matrix.a, $matrix.c, $matrix.e,
-          $matrix.b, $matrix.d, $matrix.f
-        ]
-      ;
-
-      // is this the right order?
+      const m = [
+        [$matrix.a, $matrix.c, $matrix.e],
+        [$matrix.b, $matrix.d, $matrix.f],
+        [0,         0,         1        ]
+      ];
 
       return Matrix.create(m);
     },
@@ -287,14 +250,11 @@
 
     // return value: string
     toString() {
-      return `matrix(${this.m.join(', ')})`; // TODO: wrong order?
-    },
+      const sixValueMatrix = [
+        this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]
+      ];
 
-    // return value: new Vector instance
-    transform(vector) {
-      const out = create$1();
-      transformMat2d(out, vector.toArray(), this.m);
-      return Vector.create(...out);
+      return `matrix(${sixValueMatrix.join(', ')})`;
     },
 
     // return value: Array
@@ -302,54 +262,83 @@
       return this.m;
     },
 
-    // return value: new Matrix instance
+    // return value: new Matrix instance // TODO
     multiply(other) {
-      const m = create();
-      multiply(m, this.m, other.m);
+      const m1 = [...this.m[0], ...this.m[1]];
+      const m2 = [...other.m[0], ...other.m[1]];
+
+      const m = [];
+
+      multiply$1(m, m1, m2);
+
+      const out = [
+        [m[0], m[1], m[2]],
+        [m[3], m[4], m[5]],
+        [0, 0, 1]
+      ];
+
+      return Matrix.create(out);
+    },
+
+    // return value: new Matrix instance // TODO
+    invert() {
+      const m1 = [...this.m[0], ...this.m[1]];
+
+      const m = [];
+
+      invert(m, m1);
+
+      return Matrix.create([
+        [m[0], m[1], m[2]],
+        [m[3], m[4], m[5]],
+        [0, 0, 1]
+      ]);
+    },
+
+    // return value: new Matrix instance
+    identity() {
+      const m = JSON.parse(JSON.stringify(
+        [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ]
+      ));
+
       return Matrix.create(m);
     },
 
     // return value: new Matrix instance
-    invert() {
-      const m = create();
-      invert(m, this.m);
-      return Matrix.create(m);
-    },
-
-    // return value: new Matrix instance (this is a "class method")
-    identity() {
-
-      return Matrix.create(create());
-    },
-
-    // return value: new Matrix instance (this is a "class method")
     rotation(angle$$1, origin) {
       const sin = Math.sin(angle$$1);
       const cos = Math.cos(angle$$1);
 
       const m = [
-        cos, -sin, -origin.x * cos + origin.y * sin + origin.x,
-        sin,  cos, -origin.x * sin - origin.y * cos + origin.y
+        [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
+        [sin,  cos, -origin.x * sin - origin.y * cos + origin.y],
+        [0,    0,    1                                         ]
       ];
 
       return Matrix.create(m);
     },
 
-    // return value: new Matrix instance (this is a "class method")
+    // return value: new Matrix instance
     translation(vector) {
       const m = [
-        1, 0, vector.x,
-        0, 1, vector.y
+        [1, 0, vector.x],
+        [0, 1, vector.y],
+        [0, 0, 1       ]
       ];
 
       return Matrix.create(m);
     },
 
-    // return value: new Matrix instance (this is a "class method")
+    // return value: new Matrix instance
     scale(factor, origin = Vector.create(0, 0)) {
       const m = [
-        factor, 0,      origin.x - factor * origin.x,
-        0,      factor, origin.y - factor * origin.y
+        [factor, 0,      origin.x - factor * origin.x],
+        [0,      factor, origin.y - factor * origin.y],
+        [0,      0,      1                           ]
       ];
 
       return Matrix.create(m);
@@ -3896,11 +3885,11 @@
         }
 
         if (prevSeg.handleOut) {
-          d += ` ${prevSeg.handleOut.x.toFixed()} ${prevSeg.handleOut.y.toFixed()}`;
+          d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
         }
 
         if (currSeg.handleIn) {
-          d += ` ${currSeg.handleIn.x.toFixed()} ${currSeg.handleIn.y.toFixed()}`;
+          d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
         }
 
         d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
