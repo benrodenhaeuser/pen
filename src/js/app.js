@@ -6,7 +6,14 @@ import { message } from './modules/ui/message.js';
 import { db      } from './modules/db.js';
 import { hist    } from './modules/history.js';
 
-const modules = [canvas, editor, tools, message, hist, db];
+const modules = [
+  canvas,
+  editor,
+  tools,
+  message,
+  hist,
+  db
+];
 
 const app = {
   init() {

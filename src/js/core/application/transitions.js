@@ -32,7 +32,7 @@ const transitions = [
   { from: 'continuePen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
   { from: 'pen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
   { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
-  { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' },
+  { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' }, 
 
   // VARIOUS
   { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },

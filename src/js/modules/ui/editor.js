@@ -7,6 +7,7 @@ const editor = {
     this.editor     = CodeMirror(this.mountPoint, {
       lineNumbers:  true,
       lineWrapping: true,
+      // mode:         null,
       mode:         'xml',
       value:        state.vDOM['editor'],
     });
@@ -34,15 +35,18 @@ const editor = {
   },
 
   react(state) {
-    const currentMarkup  = state.vDOM['editor'];
-    const previousMarkup = this.previousMarkup;
+    if (['release', 'releasePen'].includes(state.update)) {
+      const currentMarkup  = state.vDOM['editor'];
+      const previousMarkup = this.previousMarkup;
 
-    if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
-      this.editor.getDoc().setValue(currentMarkup);
-      this.markChange(state);
+      // first conjunct of inner conditionals follows from outer conditional
+      if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
+        this.editor.getDoc().setValue(currentMarkup);
+        this.markChange(state);
+      }
+
+      this.previousMarkup = state.vDOM['editor'];
     }
-
-    this.previousMarkup = state.vDOM['editor'];
   },
 
   markChange(state) {

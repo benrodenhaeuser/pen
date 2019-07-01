@@ -178,14 +178,13 @@ const Node = {
       return null;
     }
 
-    if (this.payload.bounds !== null) {
+    if (this.payload.bounds) {
       return this.payload.bounds;
     }
 
     return this.memoizeBounds();
   },
 
-  // TODO isnt' this the same as a setter with a different name?
   memoizeBounds() {
     const ignoredTypes = [
       'store',

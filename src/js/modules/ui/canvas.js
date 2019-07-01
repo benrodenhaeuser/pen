@@ -20,7 +20,8 @@ const canvas = Object.assign(Object.create(UIModule), {
         }
 
         if (event.type === 'mousedown') {
-          document.querySelector('textarea').blur();
+          const textarea = document.querySelector('textarea')
+          if (textarea) { textarea.blur(); }
         }
 
         event.preventDefault();

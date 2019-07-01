@@ -1,15 +1,15 @@
-// - The Bezier.js library is copyright (c) by Pomax
+// - Bezier.js is copyright (c) by Pomax
 //   Distributed under an MIT license
 //   https://github.com/Pomax/bezierjs
 // - CodeMirror is copyright (c) by Marijn Haverbeke and others
 //   Distributed under an MIT license
 //   https://codemirror.net/LICENSE
-// - The SVG PathData library is copyright (c) by Nicolas Froidure
+// - svg-pathdata library is copyright (c) by Nicolas Froidure
 //   Distributed under an MIT license
 //   https://github.com/nfroidure/svg-pathdata
-// - The Math.js library is copyright (c) Jos de Jong
-//   Distributed under an Apache License
-//   https://github.com/josdejong/mathjs
+// - gl-matrix is copyright (c) Brandon Jones, Colin MacKenzie IV
+//   Distributed under an MIT License
+//   https://github.com/toji/gl-matrix
     
 (function () {
   'use strict';
@@ -3494,14 +3494,13 @@
         return null;
       }
 
-      if (this.payload.bounds !== null) {
+      if (this.payload.bounds) {
         return this.payload.bounds;
       }
 
       return this.memoizeBounds();
     },
 
-    // TODO isnt' this the same as a setter with a different name?
     memoizeBounds() {
       const ignoredTypes = [
         'store',
@@ -4902,7 +4901,7 @@
     },
 
     focus(state, input) {
-      state.scene.unfocusAll(); // expensive but effective
+      state.scene.unfocusAll(); // TODO: expensive (but effective)
 
       const target = state.scene.findDescendantByKey(input.key);
       const hit    = Vector.create(input.x, input.y);
@@ -4920,7 +4919,20 @@
       state.scene.deselectAll();
     },
 
+    // TODO: naming. this is more like "drop pen tool"
+    // => it should happen whenever we drop the pen tool
+    // => on the other hand, it is what happens when we click the select button!
     deedit(state, event) {
+      const current = state.scene.editing;
+
+      if (current) {
+        for (let ancestor of current.ancestors) {
+          ancestor.memoizeBounds();
+        }
+      }
+
+      this.aux = {};
+
       state.scene.deeditAll();
     },
 
@@ -5151,7 +5163,7 @@
     { from: 'continuePen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
     { from: 'pen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
     { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
-    { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' },
+    { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' }, 
 
     // VARIOUS
     { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
@@ -5344,7 +5356,8 @@
           }
 
           if (event.type === 'mousedown') {
-            document.querySelector('textarea').blur();
+            const textarea = document.querySelector('textarea');
+            if (textarea) { textarea.blur(); }
           }
 
           event.preventDefault();
@@ -15479,6 +15492,7 @@
       this.editor     = CodeMirror(this.mountPoint, {
         lineNumbers:  true,
         lineWrapping: true,
+        // mode:         null,
         mode:         'xml',
         value:        state.vDOM['editor'],
       });
@@ -15505,15 +15519,18 @@
     },
 
     react(state) {
-      const currentMarkup  = state.vDOM['editor'];
-      const previousMarkup = this.previousMarkup;
+      if (['release', 'releasePen'].includes(state.update)) {
+        const currentMarkup  = state.vDOM['editor'];
+        const previousMarkup = this.previousMarkup;
 
-      if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
-        this.editor.getDoc().setValue(currentMarkup);
-        this.markChange(state);
+        // first conjunct of inner conditionals follows from outer conditional
+        if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
+          this.editor.getDoc().setValue(currentMarkup);
+          this.markChange(state);
+        }
+
+        this.previousMarkup = state.vDOM['editor'];
       }
-
-      this.previousMarkup = state.vDOM['editor'];
     },
 
     markChange(state) {
@@ -15585,7 +15602,9 @@
     bindEvents(func) {
       this.mountPoint.addEventListener('click', (event) => {
         event.preventDefault();
-        document.querySelector('textarea').blur();
+
+        const textarea = document.querySelector('textarea');
+        if (textarea) { textarea.blur(); }
 
         func({
           source: this.name,
@@ -15752,7 +15771,14 @@
     },
   };
 
-  const modules = [canvas$1, editor$1, tools$1, message$1, hist, db];
+  const modules = [
+    canvas$1,
+    editor$1,
+    tools$1,
+    message$1,
+    hist,
+    db
+  ];
 
   const app = {
     init() {

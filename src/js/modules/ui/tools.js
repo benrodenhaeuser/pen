@@ -10,7 +10,9 @@ const tools = Object.assign(Object.create(UIModule), {
   bindEvents(func) {
     this.mountPoint.addEventListener('click', (event) => {
       event.preventDefault();
-      document.querySelector('textarea').blur();
+
+      const textarea = document.querySelector('textarea')
+      if (textarea) { textarea.blur(); }
 
       func({
         source: this.name,

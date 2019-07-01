@@ -62,7 +62,7 @@ const updates = {
   },
 
   focus(state, input) {
-    state.scene.unfocusAll(); // expensive but effective
+    state.scene.unfocusAll(); // TODO: expensive (but effective)
 
     const target = state.scene.findDescendantByKey(input.key);
     const hit    = Vector.create(input.x, input.y);
@@ -80,7 +80,20 @@ const updates = {
     state.scene.deselectAll();
   },
 
+  // TODO: naming. this is more like "drop pen tool"
+  // => it should happen whenever we drop the pen tool
+  // => on the other hand, it is what happens when we click the select button!
   deedit(state, event) {
+    const current = state.scene.editing;
+
+    if (current) {
+      for (let ancestor of current.ancestors) {
+        ancestor.memoizeBounds();
+      }
+    }
+
+    this.aux = {};
+
     state.scene.deeditAll();
   },
 
