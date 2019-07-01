@@ -2,7 +2,6 @@ import { Scene, Shape, Group     } from './domain/types.js';
 import { Spline, Segment, Anchor } from './domain/types.js';
 import { HandleIn, HandleOut     } from './domain/types.js';
 import { Identifier, Doc         } from './domain/types.js';
-
 import { Vector                  } from './domain/vector.js';
 import { Matrix                  } from './domain/matrix.js';
 import { Rectangle               } from './domain/rectangle.js';
@@ -47,7 +46,7 @@ const updates = {
     if (target.isSelected()) {
       target.edit();
       state.scene.unfocusAll();
-      state.label = 'pen'; // TODO: hack! could the update initiate an input?
+      state.label = 'penMode'; // TODO: hack! an update that changes the machine state
     } else {
       const toSelect = target.findAncestor((node) => {
         return node.parent && node.parent.class.includes('frontier');
@@ -76,14 +75,7 @@ const updates = {
     }
   },
 
-  deselect(state, event) {
-    state.scene.deselectAll();
-  },
-
-  // TODO: naming. this is more like "drop pen tool"
-  // => it should happen whenever we drop the pen tool
-  // => on the other hand, it is what happens when we click the select button!
-  deedit(state, event) {
+  clean(state, event) {
     const current = state.scene.editing;
 
     if (current) {
@@ -92,9 +84,10 @@ const updates = {
       }
     }
 
-    this.aux = {};
-
+    state.scene.deselectAll();
     state.scene.deeditAll();
+
+    this.aux = {};
   },
 
   // Transform
@@ -158,7 +151,7 @@ const updates = {
 
   // Pen
 
-  placeAnchor(state, input) {
+  createShape(state, input) {
     const shape   = Shape.create();
     const spline  = Spline.create();
     const segment = Segment.create();
@@ -177,7 +170,7 @@ const updates = {
     aux.segment = segment;
   },
 
-  addHandles(state, input) {
+  setHandles(state, input) {
     const segment     = aux.segment;
     const anchor      = segment.anchor;
     const handleIn    = Vector.create(input.x, input.y);
@@ -198,6 +191,8 @@ const updates = {
     aux.segment = segment;
     // TODO: bounds
   },
+
+  // TODO: further pen actions
 
   pickControl(state, input) {
     // initiate edit of control point:
@@ -240,11 +235,6 @@ const updates = {
     state.store.docs.children = identNodes;
   },
 
-  // from db: doc has been retrieved
-  setDoc(state, input) {
-    state.doc.replaceWith(state.importFromPlain(input.data.doc));
-  },
-
   // Messages
 
   // from db: doc has just been saved
@@ -253,14 +243,13 @@ const updates = {
   },
 
   // from ui: message can now be cleaned
-  cleanMessage(state, input) {
+  wipeMessage(state, input) {
     state.store.message.payload.text = '';
   },
 
   // History
 
   getPrevious(state, input) {
-    console.log('calling getPrevious update');
     window.history.back(); // TODO: should we do this inside of hist?
   },
 
@@ -268,8 +257,9 @@ const updates = {
     window.history.forward(); // TODO: should we do this inside of hist?
   },
 
-  changeState(state, input) {
+  switchDocument(state, input) {
     state.store.scene.replaceWith(state.importFromPlain(input.data.doc));
+    this.clean(state, input);
   },
 
   // Markup

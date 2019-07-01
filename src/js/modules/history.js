@@ -9,7 +9,7 @@ const hist = {
       if (event.state) {
         func({
           source: this.name,
-          type:   'changeState',
+          type:   'switchDocument',
           data:   event.state,
         });
       }

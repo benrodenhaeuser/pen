@@ -35,6 +35,7 @@ const editor = {
   },
 
   react(state) {
+    // TODO: release and releasePen are not enough! (e.g., undo)
     if (['release', 'releasePen'].includes(state.update)) {
       const currentMarkup  = state.vDOM['editor'];
       const previousMarkup = this.previousMarkup;

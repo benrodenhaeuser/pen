@@ -26,7 +26,7 @@ const db = {
       request.addEventListener('load', () => {
         func({
           source: this.name,
-          type:   'setDoc',
+          type:   'switchDocument',
           data:   {
             doc: request.response
           },

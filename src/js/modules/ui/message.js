@@ -8,10 +8,10 @@ const message = Object.assign(Object.create(UIModule), {
   },
 
   bindEvents(func) {
-    window.addEventListener('cleanMessage', (event) => {
+    window.addEventListener('wipeMessage', (event) => {
       func({
         source: this.name,
-        type:   'cleanMessage',
+        type:   'wipeMessage',
       });
     });
   },
@@ -29,12 +29,12 @@ const message = Object.assign(Object.create(UIModule), {
 
     // if the message is non-empty, delete it after one second
     if (newVNode !== '') {
-      this.timer = window.setTimeout(this.cleanMessage, 1000);
+      this.timer = window.setTimeout(this.wipeMessage, 1000);
     }
   },
 
-  cleanMessage() {
-    window.dispatchEvent(new Event('cleanMessage'));
+  wipeMessage() {
+    window.dispatchEvent(new Event('wipeMessage'));
   },
 });
 

@@ -177,7 +177,15 @@ Spline.curves = function() {
 
 Spline.memoizeBounds = function() {
   const curves = this.curves();
-  let bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
+  let bounds;
+
+  if (curves.length === 0) {
+    bounds = Rectangle.create();
+    this.payload.bounds = bounds;
+    return bounds;
+  }
+
+  bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
 
   for (let i = 1; i < curves.length; i += 1) {
     const curveBounds = curves[i].bounds;

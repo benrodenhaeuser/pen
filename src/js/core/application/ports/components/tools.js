@@ -26,15 +26,15 @@ const tools = (store) => {
     ),
     h('li', {},
       h('button', {
-        id: 'select',
-        'data-type': 'select',
+        id: 'selectButton',
+        'data-type': 'selectButton',
         class: 'pure-button',
       }, 'Select')
     ),
     h('li', {},
       h('button', {
-        id: 'pen',
-        'data-type': 'pen',
+        id: 'penButton',
+        'data-type': 'penButton',
         class: 'pure-button',
       }, 'Pen')
     )

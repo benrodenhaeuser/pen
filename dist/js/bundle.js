@@ -3950,7 +3950,15 @@
 
   Spline.memoizeBounds = function() {
     const curves = this.curves();
-    let bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
+    let bounds;
+
+    if (curves.length === 0) {
+      bounds = Rectangle.create();
+      this.payload.bounds = bounds;
+      return bounds;
+    }
+
+    bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
 
     for (let i = 1; i < curves.length; i += 1) {
       const curveBounds = curves[i].bounds;
@@ -4337,15 +4345,15 @@
       ),
       h('li', {},
         h('button', {
-          id: 'select',
-          'data-type': 'select',
+          id: 'selectButton',
+          'data-type': 'selectButton',
           class: 'pure-button',
         }, 'Select')
       ),
       h('li', {},
         h('button', {
-          id: 'pen',
-          'data-type': 'pen',
+          id: 'penButton',
+          'data-type': 'penButton',
           class: 'pure-button',
         }, 'Pen')
       )
@@ -4886,7 +4894,7 @@
       if (target.isSelected()) {
         target.edit();
         state.scene.unfocusAll();
-        state.label = 'pen'; // TODO: hack! could the update initiate an input?
+        state.label = 'penMode'; // TODO: hack! an update that changes the machine state
       } else {
         const toSelect = target.findAncestor((node) => {
           return node.parent && node.parent.class.includes('frontier');
@@ -4915,14 +4923,7 @@
       }
     },
 
-    deselect(state, event) {
-      state.scene.deselectAll();
-    },
-
-    // TODO: naming. this is more like "drop pen tool"
-    // => it should happen whenever we drop the pen tool
-    // => on the other hand, it is what happens when we click the select button!
-    deedit(state, event) {
+    clean(state, event) {
       const current = state.scene.editing;
 
       if (current) {
@@ -4931,9 +4932,10 @@
         }
       }
 
-      this.aux = {};
-
+      state.scene.deselectAll();
       state.scene.deeditAll();
+
+      this.aux = {};
     },
 
     // Transform
@@ -4997,7 +4999,7 @@
 
     // Pen
 
-    placeAnchor(state, input) {
+    createShape(state, input) {
       const shape   = Shape.create();
       const spline  = Spline.create();
       const segment = Segment.create();
@@ -5016,7 +5018,7 @@
       aux.segment = segment;
     },
 
-    addHandles(state, input) {
+    setHandles(state, input) {
       const segment     = aux.segment;
       const anchor      = segment.anchor;
       const handleIn    = Vector.create(input.x, input.y);
@@ -5037,6 +5039,8 @@
       aux.segment = segment;
       // TODO: bounds
     },
+
+    // TODO: further pen actions
 
     pickControl(state, input) {
       // initiate edit of control point:
@@ -5079,11 +5083,6 @@
       state.store.docs.children = identNodes;
     },
 
-    // from db: doc has been retrieved
-    setDoc(state, input) {
-      state.doc.replaceWith(state.importFromPlain(input.data.doc));
-    },
-
     // Messages
 
     // from db: doc has just been saved
@@ -5092,14 +5091,13 @@
     },
 
     // from ui: message can now be cleaned
-    cleanMessage(state, input) {
+    wipeMessage(state, input) {
       state.store.message.payload.text = '';
     },
 
     // History
 
     getPrevious(state, input) {
-      console.log('calling getPrevious update');
       window.history.back(); // TODO: should we do this inside of hist?
     },
 
@@ -5107,8 +5105,9 @@
       window.history.forward(); // TODO: should we do this inside of hist?
     },
 
-    changeState(state, input) {
+    switchDocument(state, input) {
       state.store.scene.replaceWith(state.importFromPlain(input.data.doc));
+      this.clean(state, input);
     },
 
     // Markup
@@ -5129,56 +5128,257 @@
 
   };
 
-  // 'type' is mandatory
-  // 'from', 'target', 'to' and `do` are optional
+  // NOTE: 'type' is mandatory. 'from', 'target', 'to' and `do` are optional
 
   const transitions = [
-    { from: 'start', type: 'go', do: 'go', to: 'idle' },
-    { from: 'idle', type: 'mousemove', do: 'focus' },
-    { type: 'cleanMessage', do: 'cleanMessage' },
+    // KICKOFF
+    {
+      from: 'start',
+      type: 'go',
+      do: 'go',
+      to: 'selectMode'
+    },
 
-    // SELECT
-    { type: 'click', target: 'select', do: 'deedit', to: 'idle' },
-    { from: 'idle', type: 'dblclick', target: 'content', do: 'deepSelect' },
-    { from: 'idle', type: 'mousedown', target: 'content', do: 'select', to: 'shifting' },
+    // TOOLS PALETTE
 
-    // TRANSFORM
-    { from: 'shifting', type: 'mousemove', do: 'shift' },
-    { from: 'shifting', type: 'mouseup', do: 'release', to: 'idle' },
-    { from: 'idle', type: 'mousedown', target: 'dot', do: 'initTransform', to: 'rotating' },
-    { from: 'rotating', type: 'mousemove', do: 'rotate' },
-    { from: 'rotating', type: 'mouseup', do: 'release', to: 'idle' },
-    { from: 'idle', type: 'mousedown', target: 'corner', do: 'initTransform', to: 'scaling' },
-    { from: 'scaling', type: 'mousemove', do: 'scale' },
-    { from: 'scaling', type: 'mouseup', do: 'release', to: 'idle' },
+    // create a new document
+    {
+      type: 'click',
+      target: 'newDocButton',
+      do: 'createDoc',
+      to: 'selectMode'
+    },
 
-    // PEN
-    { from: 'idle', type: 'click', target: 'pen', do: 'deselect', to: 'pen' },
-    // adding controls
-    { from: 'pen', type: 'mousedown', target: 'content', do: 'placeAnchor', to: 'addingHandle' },
-    { from: 'addingHandle', type: 'mousemove', do: 'addHandles', to: 'addingHandle' },
-    { from: 'addingHandle', type: 'mouseup', do: 'releasePen', to: 'continuePen' },
-    { from: 'continuePen', type: 'mousedown', target: 'content', do: 'addSegment', to: 'addingHandle' },
-    // editing controls
-    { from: 'continuePen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
-    { from: 'pen', type: 'mousedown', target: 'control', do: 'pickControl', to: 'editingControl' },
-    { from: 'editingControl', type: 'mousemove', do: 'moveControl', to: 'editingControl' },
-    { from: 'editingControl', type: 'mouseup', do: 'releasePen', to: 'pen' }, 
+    // request document
+    {
+      type: 'click',
+      target: 'doc-identifier',
+      do: 'requestDoc',
+    },
 
-    // VARIOUS
-    { type: 'click', target: 'doc-identifier', do: 'requestDoc', to: 'busy' },
-    { type: 'click', target: 'newDocButton', do: 'createDoc', to: 'idle' },
-    { type: 'click', target: 'getPrevious', do: 'getPrevious', to: 'idle' },
-    { type: 'click', target: 'getNext', do: 'getNext', to: 'idle' },
-    { type: 'changeState', do: 'changeState' },
-    { type: 'docSaved', do: 'setSavedMessage' },
-    { type: 'updateDocList', do: 'updateDocList' },
-    { type: 'requestDoc', do: 'requestDoc', to: 'busy' }, // TODO: redundant?
-    { from: 'busy', type: 'setDoc', do: 'setDoc', to: 'idle' },
+    // activate select mode
+    {
+      type: 'click',
+      target: 'selectButton',
+      do: 'clean',
+      to: 'selectMode'
+    },
 
-    // INPUT
-    { type: 'input', do: 'changeMarkup' },
-    // { type: 'submit', do: 'submitChanges' }
+    // activate pen mode
+    {
+      type: 'click',
+      target: 'penButton',
+      do: 'clean',
+      to: 'penMode'
+    },
+
+    // undo action
+    {
+      type: 'click',
+      target: 'getPrevious',
+      do: 'getPrevious',
+      to: 'selectMode'
+    },
+
+    // redo action
+    {
+      type: 'click',
+      target: 'getNext',
+      do: 'getNext',
+      to: 'selectMode'
+    },
+
+    // SELECT MODE
+
+    // focus a shape when hovering
+    {
+      from: 'selectMode',
+      type: 'mousemove',
+      do: 'focus'
+    },
+
+    // click through a group
+    {
+      from: 'selectMode',
+      type: 'dblclick',
+      target: 'content',
+      do: 'deepSelect'
+    },
+
+    // initiate shift transformation
+    {
+      from: 'selectMode',
+      type: 'mousedown',
+      target: 'content',
+      do: 'select',
+      to: 'shifting'
+    },
+
+    // initate rotate transformation
+    {
+      from: 'selectMode',
+      type: 'mousedown',
+      target: 'dot',
+      do: 'initTransform',
+      to: 'rotating'
+    },
+
+    // initiate scale transformation
+    {
+      from: 'selectMode',
+      type: 'mousedown',
+      target: 'corner',
+      do: 'initTransform',
+      to: 'scaling'
+    },
+
+    // shift the shape
+    {
+      from: 'shifting',
+      type: 'mousemove',
+      do: 'shift'
+    },
+
+    // finalize shift translation
+    {
+      from: 'shifting',
+      type: 'mouseup',
+      do: 'release',
+      to: 'selectMode'
+    },
+
+    // rotate the shape
+    {
+      from: 'rotating',
+      type: 'mousemove',
+      do: 'rotate'
+    },
+
+    // finalize rotate transformation
+    {
+      from: 'rotating',
+      type: 'mouseup',
+      do: 'release',
+      to: 'selectMode'
+    },
+
+    // scale the shape
+    {
+      from: 'scaling',
+      type: 'mousemove',
+      do: 'scale'
+    },
+
+    // finalize scale transformation
+    {
+      from: 'scaling',
+      type: 'mouseup',
+      do: 'release',
+      to: 'selectMode'
+    },
+
+    // PEN MODE
+
+    // create shape (with initial anchor)
+    {
+      from: 'penMode',
+      type: 'mousedown',
+      target: 'content',
+      do: 'createShape',
+      to: 'settingHandles'
+    },
+
+    // set handles for current shape segment
+    {
+      from: 'settingHandles',
+      type: 'mousemove',
+      do: 'setHandles',
+      to: 'settingHandles'
+    },
+
+    // finish up setting handles
+    {
+      from: 'settingHandles',
+      type: 'mouseup',
+      do: 'releasePen',
+      to: 'expandingShape'
+    },
+
+    // add segment to current shape
+    {
+      from: 'expandingShape',
+      type: 'mousedown',
+      target: 'content',
+      do: 'addSegment',
+      to: 'settingHandles'
+    },
+
+    // initiate edit of control (anchor or handle) of current shape (TODO)
+    // TODO: could unify with next transition?
+    {
+      from: 'expandingShape',
+      type: 'mousedown',
+      target: 'control',
+      do: 'pickControl',
+      to: 'editingControl'
+    },
+
+    // initiate edit of control (anchor or handle) of current shape (TODO)
+    {
+      from: 'penMode',
+      type: 'mousedown',
+      target: 'control',
+      do: 'pickControl',
+      to: 'editingControl'
+    },
+
+    // move control of current shape (TODO)
+    {
+      from: 'editingControl',
+      type: 'mousemove',
+      do: 'moveControl',
+      to: 'editingControl'
+    },
+
+    // finish editing control of current shape (TODO)
+    {
+      from: 'editingControl',
+      type: 'mouseup',
+      do: 'releasePen',
+      to: 'penMode'
+    },
+
+    // MISCELLANEOUS
+
+    // initiate display of saved message (to message module)
+    {
+      type: 'docSaved',
+      do: 'setSavedMessage'
+    },
+
+    // wipe current message displayed to user (to message module)
+    {
+      type: 'wipeMessage',
+      do: 'wipeMessage'
+    },
+
+    // update document list (to tools module)
+    {
+      type: 'updateDocList',
+      do: 'updateDocList'
+    },
+
+    // switch to document provided as input (from db module or hist module)
+    {
+      type: 'switchDocument',
+      do: 'switchDocument',
+    },
+
+    // user has typed something in editor (from editor module)
+    {
+      type: 'input',
+      do: 'changeMarkup'
+    },
   ];
 
   transitions.get = function(state, input) {
@@ -15519,6 +15719,7 @@
     },
 
     react(state) {
+      // TODO: release and releasePen are not enough! (e.g., undo)
       if (['release', 'releasePen'].includes(state.update)) {
         const currentMarkup  = state.vDOM['editor'];
         const previousMarkup = this.previousMarkup;
@@ -15615,9 +15816,7 @@
       });
     },
 
-    react() {
-      return;
-    }
+    // TODO: custom react function? only need to update documents (Open menu item)
   });
 
   const message$1 = Object.assign(Object.create(UIModule), {
@@ -15628,10 +15827,10 @@
     },
 
     bindEvents(func) {
-      window.addEventListener('cleanMessage', (event) => {
+      window.addEventListener('wipeMessage', (event) => {
         func({
           source: this.name,
-          type:   'cleanMessage',
+          type:   'wipeMessage',
         });
       });
     },
@@ -15649,12 +15848,12 @@
 
       // if the message is non-empty, delete it after one second
       if (newVNode !== '') {
-        this.timer = window.setTimeout(this.cleanMessage, 1000);
+        this.timer = window.setTimeout(this.wipeMessage, 1000);
       }
     },
 
-    cleanMessage() {
-      window.dispatchEvent(new Event('cleanMessage'));
+    wipeMessage() {
+      window.dispatchEvent(new Event('wipeMessage'));
     },
   });
 
@@ -15686,7 +15885,7 @@
         request.addEventListener('load', () => {
           func({
             source: this.name,
-            type:   'setDoc',
+            type:   'switchDocument',
             data:   {
               doc: request.response
             },
@@ -15747,7 +15946,7 @@
         if (event.state) {
           func({
             source: this.name,
-            type:   'changeState',
+            type:   'switchDocument',
             data:   event.state,
           });
         }
