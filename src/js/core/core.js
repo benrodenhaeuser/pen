@@ -4,7 +4,9 @@ import { transitions  } from './application/transitions.js';
 
 const core = {
   init() {
-    this.state     = State.create();
+    updates.init();
+
+    this.state   = State.create();
     this.modules = [];
 
     return this;
@@ -24,7 +26,12 @@ const core = {
       this.state.label  = transition.to;
 
       const update = updates[transition.do];
-      update && update.bind(updates)(this.state, input);
+
+      if (update) {
+        update.bind(updates)(this.state, input);
+        updates.after(this.state, input);
+      }
+
 
       this.publish();
     }

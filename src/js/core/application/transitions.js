@@ -9,7 +9,7 @@ const transitions = [
     to: 'selectMode'
   },
 
-  // TOOLS PALETTE
+  // TOOLS
 
   // create a new document
   {
@@ -19,7 +19,7 @@ const transitions = [
     to: 'selectMode'
   },
 
-  // request document
+  // request stored document
   {
     type: 'click',
     target: 'doc-identifier',
@@ -30,7 +30,7 @@ const transitions = [
   {
     type: 'click',
     target: 'selectButton',
-    do: 'clean',
+    do: 'cleanup',
     to: 'selectMode'
   },
 
@@ -38,11 +38,11 @@ const transitions = [
   {
     type: 'click',
     target: 'penButton',
-    do: 'clean',
+    do: 'cleanup',
     to: 'penMode'
   },
 
-  // undo action
+  // trigger undo
   {
     type: 'click',
     target: 'getPrevious',
@@ -50,7 +50,7 @@ const transitions = [
     to: 'selectMode'
   },
 
-  // redo action
+  // trigger redo
   {
     type: 'click',
     target: 'getNext',
@@ -60,7 +60,7 @@ const transitions = [
 
   // SELECT MODE
 
-  // focus a shape when hovering
+  // focus shape on hover
   {
     from: 'selectMode',
     type: 'mousemove',
@@ -149,16 +149,16 @@ const transitions = [
 
   // PEN MODE
 
-  // create shape (with initial anchor)
+  // add segment to (current or new) shape
   {
     from: 'penMode',
     type: 'mousedown',
     target: 'content',
-    do: 'createShape',
+    do: 'addSegment',
     to: 'settingHandles'
   },
 
-  // set handles for current shape segment
+  // set handles for current segment
   {
     from: 'settingHandles',
     type: 'mousemove',
@@ -171,17 +171,10 @@ const transitions = [
     from: 'settingHandles',
     type: 'mouseup',
     do: 'releasePen',
-    to: 'expandingShape'
+    to: 'penMode'
   },
 
-  // add segment to current shape
-  {
-    from: 'expandingShape',
-    type: 'mousedown',
-    target: 'content',
-    do: 'addSegment',
-    to: 'settingHandles'
-  },
+  // TODO: updates for following set of transitions is not implemented
 
   // initiate edit of control (anchor or handle) of current shape (TODO)
   // TODO: could unify with next transition?
@@ -220,31 +213,31 @@ const transitions = [
 
   // MISCELLANEOUS
 
-  // initiate display of saved message (to message module)
+  // set message to "Saved" (=> to message module)
   {
     type: 'docSaved',
     do: 'setSavedMessage'
   },
 
-  // wipe current message displayed to user (to message module)
+  // wipe current message (=> to message module)
   {
     type: 'wipeMessage',
     do: 'wipeMessage'
   },
 
-  // update document list (to tools module)
+  // update document list (=> to tools module)
   {
     type: 'updateDocList',
     do: 'updateDocList'
   },
 
-  // switch to document provided as input (from db module or hist module)
+  // switch to document given by input (=> from db module or hist module)
   {
     type: 'switchDocument',
     do: 'switchDocument',
   },
 
-  // user has typed something in editor (from editor module)
+  // process editor input (=> from editor module)
   {
     type: 'input',
     do: 'changeMarkup'

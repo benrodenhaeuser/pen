@@ -35,8 +35,7 @@ const editor = {
   },
 
   react(state) {
-    // TODO: release and releasePen are not enough! (e.g., undo)
-    if (['release', 'releasePen'].includes(state.update)) {
+    if (['penMode', 'selectMode'].includes(state.label)) {
       const currentMarkup  = state.vDOM['editor'];
       const previousMarkup = this.previousMarkup;
 
@@ -45,6 +44,8 @@ const editor = {
         this.editor.getDoc().setValue(currentMarkup);
         this.markChange(state);
       }
+
+      // console.dir(this.editor.getDoc());
 
       this.previousMarkup = state.vDOM['editor'];
     }

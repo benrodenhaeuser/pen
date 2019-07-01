@@ -6,12 +6,16 @@ import { Vector                  } from './domain/vector.js';
 import { Matrix                  } from './domain/matrix.js';
 import { Rectangle               } from './domain/rectangle.js';
 
-let aux = {};
-
 const updates = {
+  init() {
+    this.aux = {};
+  },
 
-  // Select
+  after(state, input) {
+    
+  },
 
+  // select a target node
   select(state, input) {
     const target = state.scene.findDescendantByKey(input.key);
     const node = target && target.findAncestorByClass('frontier');
@@ -75,7 +79,7 @@ const updates = {
     }
   },
 
-  clean(state, event) {
+  cleanup(state, event) {
     const current = state.scene.editing;
 
     if (current) {
@@ -94,8 +98,8 @@ const updates = {
 
   initTransform(state, input) {
     const node = state.scene.selected;
-    aux.from   = Vector.create(input.x, input.y); // global coordinates
-    aux.center = node.bounds.center.transform(node.globalTransform());
+    this.aux.from   = Vector.create(input.x, input.y); // global coordinates
+    this.aux.center = node.bounds.center.transform(node.globalTransform());
     // ^ global coordinates (globalTransform transforms local coords to global coords)
   },
 
@@ -107,12 +111,12 @@ const updates = {
     }
 
     const to     = Vector.create(input.x, input.y); // global coordinates
-    const from   = aux.from;
+    const from   = this.aux.from;
     const offset = to.minus(from);
 
     node.translate(offset);
 
-    aux.from = to;
+    this.aux.from = to;
   },
 
   rotate(state, input) {
@@ -123,13 +127,13 @@ const updates = {
     }
 
     const to     = Vector.create(input.x, input.y);
-    const from   = aux.from;
-    const center = aux.center;
+    const from   = this.aux.from;
+    const center = this.aux.center;
     const angle  = center.angle(from, to);
 
     node.rotate(angle, center);
 
-    aux.from = to;
+    this.aux.from = to;
   },
 
   scale(state, input) {
@@ -140,56 +144,54 @@ const updates = {
     }
 
     const to     = Vector.create(input.x, input.y);
-    const from   = aux.from;
-    const center = aux.center;
+    const from   = this.aux.from;
+    const center = this.aux.center;
     const factor = to.minus(center).length() / from.minus(center).length();
 
     node.scale(factor, center);
 
-    aux.from = to;
+    this.aux.from = to;
   },
 
   // Pen
+  addSegment(state, input) {
+    if (this.aux.spline) {
+      const spline  = this.aux.spline;
+      const segment = Segment.create();
+      const anchor  = Anchor.create();
 
-  createShape(state, input) {
-    const shape   = Shape.create();
-    const spline  = Spline.create();
-    const segment = Segment.create();
-    const anchor  = Anchor.create();
+      anchor.payload.vector = Vector.create(input.x, input.y);
+      segment.append(anchor);
+      spline.append(segment);
 
-    shape.append(spline);
-    spline.append(segment);
-    segment.append(anchor);
-    state.scene.append(shape);
+      this.aux.segment = segment;
+    } else {
+      const shape   = Shape.create();
+      const spline  = Spline.create();
+      const segment = Segment.create();
+      const anchor  = Anchor.create();
 
-    anchor.payload.vector = Vector.create(input.x, input.y);
-    shape.edit();
-    shape.payload.bounds = Rectangle.create(); // TODO: hack
+      shape.append(spline);
+      spline.append(segment);
+      segment.append(anchor);
+      state.scene.append(shape);
 
-    aux.spline  = spline;
-    aux.segment = segment;
+      anchor.payload.vector = Vector.create(input.x, input.y);
+      shape.edit();
+      shape.payload.bounds = Rectangle.create(); // TODO: hack
+
+      this.aux.spline  = spline;
+      this.aux.segment = segment;
+    }
   },
 
   setHandles(state, input) {
-    const segment     = aux.segment;
+    const segment     = this.aux.segment;
     const anchor      = segment.anchor;
     const handleIn    = Vector.create(input.x, input.y);
     const handleOut   = handleIn.rotate(Math.PI, anchor);
     segment.handleIn  = handleIn;
     segment.handleOut = handleOut;
-  },
-
-  addSegment(state, input) {
-    const spline  = aux.spline;
-    const segment = Segment.create();
-    const anchor  = Anchor.create();
-
-    anchor.payload.vector = Vector.create(input.x, input.y);
-    segment.append(anchor);
-    spline.append(segment);
-
-    aux.segment = segment;
-    // TODO: bounds
   },
 
   // TODO: further pen actions
@@ -259,7 +261,7 @@ const updates = {
 
   switchDocument(state, input) {
     state.store.scene.replaceWith(state.importFromPlain(input.data.doc));
-    this.clean(state, input);
+    this.cleanup(state, input);
   },
 
   // Markup
