@@ -1,0 +1,120 @@
+/* SVG */
+
+path, line, circle, rect {
+  vector-effect: non-scaling-stroke;
+}
+
+path, line {
+  fill: none;
+}
+
+rect, circ {
+  stroke-width: 1px;
+}
+
+path {
+  stroke-width: 2px;
+  stroke: #242424;
+}
+
+line {
+  stroke-width: 1px;
+  stroke: #d3d3d3;
+}
+
+[data-type="corner"] {
+  stroke: #d3d3d3;
+  stroke-width: 1px;
+  fill: #FFFFFF;
+  -webkit-filter: drop-shadow(0 1px 1.5px #000);
+}
+
+[data-type="dot"] {
+
+  fill: none;
+  pointer-events: visible;
+}
+
+[data-type="control"] {
+  stroke: #5DADE2;
+  fill: #FFFFFF;
+}
+
+[data-type="frame"] {
+  stroke: #d3d3d3;
+  fill: none;
+  pointer-events: none;
+}
+
+[data-type="outerUI"] {
+  pointer-events: visiblePainted;
+  visibility: hidden;
+}
+
+[data-type="innerUI"] {
+  pointer-events: visible;
+  visibility: hidden;
+}
+
+[data-type="shape-wrapper"], [data-type="group-wrapper"] {
+  pointer-events: none;
+}
+
+[data-type="content"] {
+  pointer-events: bounding-box;
+}
+
+[data-type="content"].editing {
+  pointer-events: none;
+}
+
+
+[data-type="curve"], [data-type="curve-stroke"] {
+  pointer-events: none;
+}
+
+[data-type="curve"] {
+  stroke: transparent;
+  stroke-width: 40px;
+}
+
+.editing > [data-type="curve"] {
+  pointer-events: stroke;
+}
+
+.editing > [data-type="curve"]:hover + [data-type="curve-stroke"] {
+  stroke: red;
+}
+
+[data-type="poly-curve"] {
+  pointer-events: none;
+  stroke: transparent;
+}
+
+.focus ~ [data-type="outerUI"] > [data-type="frame"] {
+  stroke: #5DADE2;
+  stroke-width: 3px;
+}
+
+.selected ~ [data-type="outerUI"] > [data-type="frame"] {
+  stroke: #d3d3d3;
+  stroke-width: 1px;
+}
+
+.selected ~ [data-type="outerUI"] {
+  visibility: visible;
+}
+
+.editing ~ [data-type="innerUI"] {
+  visibility: visible;
+}
+
+.focus ~ g > [data-type="frame"] {
+  visibility: visible;
+}
+
+[data-type="splitter"] {
+  fill: white;
+  stroke: #5DADE2;
+  pointer-events: none;
+}

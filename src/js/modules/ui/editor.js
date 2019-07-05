@@ -19,7 +19,9 @@ const editor = {
 
   bindEvents(func) {
     this.editor.on('focus', () => {
-      this.textMarker.clear();
+      if (this.textMarker) {
+        this.textMarker.clear();
+      }
     })
 
     this.editor.on('change', () => {
@@ -39,7 +41,7 @@ const editor = {
       const currentMarkup  = state.vDOM['editor'];
       const previousMarkup = this.previousMarkup;
 
-      // first conjunct of inner conditionals follows from outer conditional
+      // TODO: should we maybe more explicitly distinguish an "editorMode"
       if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
         this.editor.getDoc().setValue(currentMarkup);
         this.markChange(state);

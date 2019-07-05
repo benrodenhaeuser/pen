@@ -5,17 +5,29 @@ import { Identifier, Doc         } from './domain/types.js';
 import { Vector                  } from './domain/vector.js';
 import { Matrix                  } from './domain/matrix.js';
 import { Rectangle               } from './domain/rectangle.js';
+import { Curve                   } from './domain/curve.js';
+import { Bezier                  } from '/vendor/bezier/bezier.js';
 
 const updates = {
   init() {
     this.aux = {};
   },
 
-  after(state, input) {
-    
+  exitEdit(state, input) {
+    if (state.label === 'penMode') {
+      const target = state.scene.editing;
+      this.cleanup(state, input);
+      target.select();
+      state.label = 'selectMode';
+    } else if (state.label === 'selectMode') {
+      this.cleanup(state, input);
+    }
   },
 
-  // select a target node
+  after(state, input) {
+    // TODO
+  },
+
   select(state, input) {
     const target = state.scene.findDescendantByKey(input.key);
     const node = target && target.findAncestorByClass('frontier');
@@ -33,7 +45,7 @@ const updates = {
 
     if (current) {
       for (let ancestor of current.ancestors) {
-        ancestor.memoizeBounds();
+        ancestor.updateBounds();
       }
     }
 
@@ -50,7 +62,7 @@ const updates = {
     if (target.isSelected()) {
       target.edit();
       state.scene.unfocusAll();
-      state.label = 'penMode'; // TODO: hack! an update that changes the machine state
+      state.label = 'penMode';
     } else {
       const toSelect = target.findAncestor((node) => {
         return node.parent && node.parent.class.includes('frontier');
@@ -65,7 +77,7 @@ const updates = {
   },
 
   focus(state, input) {
-    state.scene.unfocusAll(); // TODO: expensive (but effective)
+    state.scene.unfocusAll();
 
     const target = state.scene.findDescendantByKey(input.key);
     const hit    = Vector.create(input.x, input.y);
@@ -83,8 +95,14 @@ const updates = {
     const current = state.scene.editing;
 
     if (current) {
+      // update bounds of splines of current shape:
+      for (let child of current.children) {
+        child.updateBounds();
+      }
+
+      // update bounds of shape itself and its proper ancestors:
       for (let ancestor of current.ancestors) {
-        ancestor.memoizeBounds();
+        ancestor.updateBounds();
       }
     }
 
@@ -94,13 +112,10 @@ const updates = {
     this.aux = {};
   },
 
-  // Transform
-
   initTransform(state, input) {
     const node = state.scene.selected;
-    this.aux.from   = Vector.create(input.x, input.y); // global coordinates
+    this.aux.from   = Vector.create(input.x, input.y);
     this.aux.center = node.bounds.center.transform(node.globalTransform());
-    // ^ global coordinates (globalTransform transforms local coords to global coords)
   },
 
   shift(state, input) {
@@ -110,7 +125,7 @@ const updates = {
       return;
     }
 
-    const to     = Vector.create(input.x, input.y); // global coordinates
+    const to     = Vector.create(input.x, input.y);
     const from   = this.aux.from;
     const offset = to.minus(from);
 
@@ -153,110 +168,166 @@ const updates = {
     this.aux.from = to;
   },
 
-  // Pen
   addSegment(state, input) {
-    if (this.aux.spline) {
-      const spline  = this.aux.spline;
-      const segment = Segment.create();
-      const anchor  = Anchor.create();
+    let shape;
+    let spline;
 
-      anchor.payload.vector = Vector.create(input.x, input.y);
-      segment.append(anchor);
-      spline.append(segment);
-
-      this.aux.segment = segment;
+    if (state.scene.editing) {
+      shape  = state.scene.editing;
+      spline = shape.lastChild;
     } else {
-      const shape   = Shape.create();
-      const spline  = Spline.create();
-      const segment = Segment.create();
-      const anchor  = Anchor.create();
-
-      shape.append(spline);
-      spline.append(segment);
-      segment.append(anchor);
+      shape  = Shape.create();
       state.scene.append(shape);
 
-      anchor.payload.vector = Vector.create(input.x, input.y);
-      shape.edit();
-      shape.payload.bounds = Rectangle.create(); // TODO: hack
+      spline = Spline.create();
+      shape.append(spline);
 
-      this.aux.spline  = spline;
-      this.aux.segment = segment;
+      shape.edit();
     }
+
+    const segment = Segment.create();
+    spline.append(segment);
+
+    const anchor  = Anchor.create();
+    segment.append(anchor);
+
+    anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(shape);
+
+    this.aux.shape   = shape;
+    this.aux.segment = segment;
   },
 
   setHandles(state, input) {
+    const shape       = this.aux.shape;
     const segment     = this.aux.segment;
+
     const anchor      = segment.anchor;
-    const handleIn    = Vector.create(input.x, input.y);
+    const handleIn    = Vector.create(input.x, input.y).transformToLocal(shape);
     const handleOut   = handleIn.rotate(Math.PI, anchor);
     segment.handleIn  = handleIn;
     segment.handleOut = handleOut;
   },
 
-  // TODO: further pen actions
+  initEditSegment(state, input) {
+    const control   = state.scene.findDescendantByKey(input.key);
+    const shape     = control.parent.parent.parent;
+    const from      = Vector.create(input.x, input.y).transformToLocal(shape);
 
-  pickControl(state, input) {
-    // initiate edit of control point:
-    // identify the control by its id
-    // ... store it
+    this.aux.from    = from;
+    this.aux.control = control;
   },
 
-  moveControl(state, input) {
-    // move control point:
-    // retrieve stored control
-    // ... move it
-    // need to move handles along with anchors
-    // and opposite handles together
+  editSegment(state, input) {
+    const control          = this.aux.control;
+    const from             = this.aux.from;
+    const segment          = control.parent;
+    const shape            = segment.parent.parent;
+    const to               = Vector.create(input.x, input.y).transformToLocal(shape);
+    const change           = to.minus(from);
+    control.payload.vector = control.payload.vector.add(change);
+
+    switch (control.type) {
+      case 'anchor':
+        if (segment.handleIn) {
+          segment.handleIn = segment.handleIn.add(change);
+        }
+        if (segment.handleOut) {
+          segment.handleOut = segment.handleOut.add(change);
+        }
+        break;
+      case 'handleIn':
+        segment.handleOut = segment.handleIn.rotate(Math.PI, segment.anchor);
+        break;
+      case 'handleOut':
+        segment.handleIn = segment.handleOut.rotate(Math.PI, segment.anchor);
+        break;
+    }
+
+    this.aux.from = to;
   },
 
-  insertAnchor(state, input) {
-    // insert anchor
-    // need to make sure that this update does not
-    // affect the existing curve (i.e., it splits the curve,
-    // but does not change it)
+  projectInput(state, input) {
+    const startSegment      = state.scene.findDescendantByKey(input.key);
+    const spline            = startSegment.parent;
+    const startIndex        = spline.children.indexOf(startSegment);
+    const endSegment        = spline.children[startIndex + 1];
+    const curve             = Curve.createFromSegments(startSegment, endSegment);
+    const bCurve            = new Bezier(...curve.coords());
+    const point             = { x: input.x, y: input.y };
+    const projected         = bCurve.project(point);
+    const shape             = spline.parent;
+    shape.splitter          = Vector.createFromObject(projected);
+
+    this.aux.spline         = spline;
+    this.aux.splitter       = shape.splitter;
+    this.aux.startSegment   = startSegment;
+    this.aux.endSegment     = endSegment;
+    this.aux.insertionIndex = startIndex + 1;
+    this.aux.bCurve         = bCurve;
+    this.aux.curveTime      = projected.t;
+    this.aux.from           = Vector.create(input.x, input.y);
   },
 
-  // Doc(s)
+  splitCurve(state, input) {
+    const spline           = this.aux.spline;
+    const newAnchor        = this.aux.splitter; // careful: a vector, not a node!
+    const startSegment     = this.aux.startSegment;
+    const endSegment       = this.aux.endSegment;
+    const insertionIndex   = this.aux.insertionIndex;
+    const bCurve           = this.aux.bCurve;
+    const curveTime        = this.aux.curveTime;
 
-  // from ui: user has requested fresh document
+    const splitCurves      = bCurve.split(curveTime);
+    const left             = splitCurves.left;
+    const right            = splitCurves.right;
+    const newSegment       = Segment.create();
+    newSegment.anchor      = newAnchor;
+    newSegment.handleIn    = Vector.createFromObject(left.points[2]);
+    newSegment.handleOut   = Vector.createFromObject(right.points[1]);
+    startSegment.handleOut = Vector.createFromObject(left.points[1]);
+    endSegment.handleIn    = Vector.createFromObject(right.points[2]);
+
+    spline.insertChild(newSegment, insertionIndex);
+
+    this.aux.control = newSegment.findDescendant((node) => node.type === 'anchor');
+    this.hideSplitter(state, input);
+    this.editSegment(state, input);
+  },
+
+  hideSplitter(state, input) {
+    const segment = state.scene.findDescendantByKey(input.key);
+    const shape = segment.parent.parent;
+    shape.splitter = Vector.create(-20, -20); // => put it off-canvas
+  },
+
   createDoc(state, input) {
     state.store.doc.replaceWith(state.buildDoc());
   },
 
-  // from db: doc list has been obtained
   updateDocList(state, input) {
-    const identNodes = [];
+    state.store.docs.children = [];
 
     for (let id of input.data.docIDs) {
       const identNode = Identifier.create();
       identNode.payload._id = id;
-      identNodes.push(identNode);
+      state.store.docs.append(identNode);
     }
-
-    state.store.docs.children = identNodes;
   },
 
-  // Messages
-
-  // from db: doc has just been saved
   setSavedMessage(state, input) {
     state.store.message.payload.text = 'Saved';
   },
 
-  // from ui: message can now be cleaned
   wipeMessage(state, input) {
     state.store.message.payload.text = '';
   },
 
-  // History
-
   getPrevious(state, input) {
-    window.history.back(); // TODO: should we do this inside of hist?
+    window.history.back(); // TODO: shouldn't we do this inside of hist?
   },
 
   getNext(state, input) {
-    window.history.forward(); // TODO: should we do this inside of hist?
+    window.history.forward(); // TODO: shouldn't we do this inside of hist?
   },
 
   switchDocument(state, input) {
@@ -264,12 +335,8 @@ const updates = {
     this.cleanup(state, input);
   },
 
-  // Markup
-
-  // from ui: user has changed markup
   changeMarkup(state, input) {
     state.store.markup.payload.text = input.value;
-    // TODO: I wonder if we need this at all. I don't think so.
 
     const newScene = state.importFromSVG(input.value);
 
@@ -277,6 +344,7 @@ const updates = {
       state.store.scene.replaceWith(newScene);
     } else {
       state.store.message.payload.text = 'Invalid markup';
+      // TODO: this is never shown, because it's overwritten
     }
   },
 

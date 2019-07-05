@@ -109,8 +109,8 @@
       return Object.create(Vector).init(x, y);
     },
 
-    createFromObject(object) {
-      return Object.create(Vector).init(object.x, object.y);
+    createFromObject(obj) {
+      return Object.create(Vector).init(obj.x, obj.y);
     },
 
     init(x, y) {
@@ -129,6 +129,10 @@
       const out = create();
       transformMat2d(out, this.toArray(), m);
       return Vector.create(...out);
+    },
+
+    transformToLocal(shape) {
+      return this.transform(shape.globalTransform().invert());
     },
 
     // return value: new Vector instance
@@ -175,6 +179,10 @@
 
     toArray() {
       return [this.x, this.y];
+    },
+
+    toString() {
+      return `${this.x} ${this.y}`;
     }
   };
 
@@ -3247,6 +3255,17 @@
       return Object.create(Curve).init(anchor1, anchor2, handle1, handle2);
     },
 
+    // TODO: this assumes cubic coordinates
+    // coords is an array of points of the form { x: .., y: ...}
+    createFromCoordinates(coords) {
+      return Curve.create(
+        Vector.create(coords[0]),
+        Vector.create(coords[1]),
+        Vector.create(coords[2]),
+        Vector.create(coords[3]),
+      );
+    },
+
     // the params are Segment instances
     createFromSegments(segment1, segment2) {
       return Curve.create(
@@ -3268,6 +3287,7 @@
 
     // NOTE: the order of points is crucial. It is required
     // by the Bezier constructor of the Pomax Bezier library!
+    // It is also the order in which points occur in a path string.
     points() {
       const pts = [this.anchor1, this.handle1, this.handle2, this.anchor2]
         .filter((point) => {
@@ -3282,16 +3302,73 @@
       return cds;
     },
 
+    toPathString() {
+      const a1 = this.anchor1 && this.anchor1.toString();
+      const a2 = this.anchor2 && this.anchor2.toString();
+      const h1 = this.handle1 && this.handle1.toString();
+      const h2 = this.handle2 && this.handle2.toString();
+
+      if (this.isDegenerate()) {
+        return `M ${a1}`;
+      } else if (this.isLine()) {
+        return `M ${a1} L ${a2}`;
+      } else if (this.isQuadratic()) {
+        return `M ${a1} Q ${h1 || h2} ${a2}`;
+      } else if (this.isCubic()) {
+        return `M ${a1} C ${h1} ${h2} ${a2}`;
+      }
+    },
+
+    isInvalid() {
+      return this.hasNoAnchor();
+    },
+
+    isDegenerate() {
+      return this.hasOneAnchor();
+    },
+
     isLine() {
-      return (this.handle1 === undefined || this.handle1 === null) && (this.handle2 === undefined || this.handle1 === null);
+      return this.hasTwoAnchors() && this.hasNoHandle();
     },
 
     isQuadratic() {
-      return (this.handle1 !== undefined || this.handle1 === null) && (this.handle2 === undefined || this.handle1 === null);
+      return this.hasTwoAnchors() && this.hasOneHandle();
     },
 
     isCubic() {
-      return (this.handle1 !== undefined || this.handle1 === null) && (this.handle2 !== undefined || this.handle1 === null);
+      return this.hasTwoAnchors() && this.hasTwoHandles();
+    },
+
+    hasAnchor() {
+      return this.anchor1 || this.anchor2;
+    },
+
+    hasHandle() {
+      return this.handle1 || this.handle2;
+    },
+
+    hasTwoAnchors() {
+      return this.anchor1 && this.anchor2;
+    },
+
+    hasTwoHandles() {
+      return this.handle1 && this.handle2;
+    },
+
+    hasOneAnchor() {
+      return this.hasAnchor() && !this.hasTwoAnchors();
+    },
+
+    hasOneHandle() {
+      return this.hasHandle() && !this.hasTwoHandles();
+    },
+
+    hasNoAnchor() {
+      return !this.hasAnchor();
+    },
+
+    hasNoHandle() {
+      return !this.hasHandle();
     },
 
     get bounds() {
@@ -3350,6 +3427,7 @@
           class:     Class.create(),
           bounds:    null,
         },
+        splitter: Vector.create(-20, -20), // off-canvas
       };
     },
 
@@ -3470,6 +3548,10 @@
       });
     },
 
+    get lastChild() {
+      return this.children[this.children.length - 1];
+    },
+
     // payload (getters/setters)
 
     get transform() {
@@ -3498,10 +3580,10 @@
         return this.payload.bounds;
       }
 
-      return this.memoizeBounds();
+      return this.updateBounds();
     },
 
-    memoizeBounds() {
+    updateBounds() {
       const ignoredTypes = [
         'store',
         'doc',
@@ -3614,13 +3696,19 @@
       });
     },
 
+    findDescendantByClass(className) {
+      return this.findDescendant((node) => {
+        return node.class.includes(className);
+      });
+    },
+
     findAncestorByClass(className) {
       return this.findAncestor((node) => {
         return node.class.includes(className);
       })
     },
 
-    // append
+    // tree manipulation
 
     append(node) {
       this.children = this.children.concat([node]);
@@ -3633,7 +3721,12 @@
       this.parent.children.splice(index, 1, node);
     },
 
-     // hit testing
+    insertChild(node, index) {
+      node.parent = this;
+      this.children.splice(index, 0, node);
+    },
+
+     // hit testing: is a point within the bounding box of this shape?
 
     contains(globalPoint) {
       return globalPoint
@@ -3775,6 +3868,8 @@
     },
   };
 
+  // Types of nodes we use
+
   // scene graph nodes
   const Scene     = Object.create(Node);
   const Group     = Object.create(Node);
@@ -3811,7 +3906,9 @@
   Text.type       = 'text';
   Identifier$1.type = 'identifier';
 
-  // toVDOMNode
+  // Special stuff for groups and shapes
+
+  // generate vDom nodes for scene, group and shape nodes
 
   Scene.toVDOMNode = function() {
     return {
@@ -3844,16 +3941,51 @@
       tag:      'path',
       children: [],
       props: {
-        'data-key':   this.key,
-        'data-type': 'content',
+        'data-type': 'poly-curve',
         d:           this.pathString(),
         transform:   this.transform.toString(),
-        class:       this.class.toString(),
       },
     };
   };
 
-  // toSVGNode
+  Shape.toVDOMCurveNodes = function() {
+    const nodes   = [];
+    const splines = this.children;
+
+    for (let spline of splines) {
+      const segments = spline.children;
+      const curves   = spline.curves();
+
+      for (let i = 0; i < curves.length; i += 1) {
+        // this node will be the hit target for the curve:
+        nodes.push({
+          tag:      'path',
+          children: [],
+          props: {
+            'data-type': 'curve',
+            'data-key':   segments[i].key,
+            d:           curves[i].toPathString(),
+            transform:   this.transform.toString(),
+          },
+        });
+
+        // this node will display the curve stroke:
+        nodes.push({
+          tag:      'path',
+          children: [],
+          props: {
+            'data-type': 'curve-stroke',
+            d:           curves[i].toPathString(),
+            transform:   this.transform.toString(),
+          },
+        });
+      }
+    }
+
+    return nodes;
+  };
+
+  // generate svg-specific vDOM nodes for scene, group and shape
 
   Scene.toSVGNode = function() {
     return {
@@ -3873,9 +4005,7 @@
       props:    {},
     };
 
-    // if (this.payload.transform) {
     svgNode.props.transform = this.transform.toString();
-    // }
 
     return svgNode;
   };
@@ -3888,14 +4018,18 @@
     };
 
     // TODO: don't want to set a transform if it's a trivial transform
-    // if (this.payload.transform) {
     svgNode.props.transform = this.transform.toString();
-    // }
 
     return svgNode;
   };
 
   // SHAPE
+
+  // generate string for d attribute of svg path node
+  // (for a shape with a single segment, we will create a string
+  // of the form `M x y`).
+
+  // TODO: might be worth refactoring.
 
   Shape.pathString = function() {
     let d = '';
@@ -3933,11 +4067,24 @@
 
   // SPLINE
 
+  // generate array of curves given by a spline
+  // (used to compute bounding boxes)
+
   Spline.curves = function() {
     const theCurves = [];
 
-    // the children of a Spline node are Segment nodes
-    // from n segments, we obtain n - 1 curves
+    // this conditional creates a degenerate curve if
+    // there is exactly 1 segment in the spline
+    // TODO: this could be a problem!
+    if (this.children.length === 1) {
+      const start = this.children[0];
+      const end   = Segment.create();
+
+      theCurves.push(Curve.createFromSegments(start, end));
+    }
+
+    // if spline has exactly 1 segment, no curves will be
+    // generated by the following code
     for (let i = 0; i + 1 < this.children.length; i += 1) {
       const start = this.children[i];
       const end = this.children[i + 1];
@@ -3948,15 +4095,27 @@
     return theCurves;
   };
 
-  Spline.memoizeBounds = function() {
+  // update bounding box of a spline
+
+  Spline.updateBounds = function() {
     const curves = this.curves();
     let bounds;
 
+    // no curves
     if (curves.length === 0) {
       bounds = Rectangle.create();
       this.payload.bounds = bounds;
       return bounds;
     }
+
+    // a single, degenerate curve
+    if (curves.length === 1 && curves[0].isDegenerate()) {
+      bounds = Rectangle.create();
+      this.payload.bounds = bounds;
+      return bounds;
+    }
+
+    // one or more (non-degenerate) curves
 
     bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
 
@@ -3970,6 +4129,8 @@
   };
 
   // SEGMENT
+
+  // convenience API for getting/setting anchor and handle values of a segment
 
   Object.defineProperty(Segment, 'anchor', {
     get() {
@@ -3987,8 +4148,8 @@
       if (this.anchor) {
         anchorNode = this.children.find(child => child.type === 'anchor');
       } else {
-        anchorNode = anchorNode.create();
-        this.children = this.children.concat([anchorNode]);
+        anchorNode = Anchor.create();
+        this.append(anchorNode);
       }
 
       anchorNode.vector = value;
@@ -4012,7 +4173,7 @@
         handleNode = this.children.find(child => child.type === 'handleIn');
       } else {
         handleNode = HandleIn.create();
-        this.children = this.children.concat([handleNode]);
+        this.append(handleNode);
       }
 
       handleNode.vector = value;
@@ -4036,7 +4197,7 @@
         handleNode = this.children.find(child => child.type === 'handleOut');
       } else {
         handleNode = HandleOut.create();
-        this.children = this.children.concat([handleNode]);
+        this.append(handleNode);
       }
 
       handleNode.vector = value;
@@ -4158,7 +4319,10 @@
 
     buildSplineTree(sequence) {
       const spline = Spline.create();
-      spline.children = this.buildSegmentList(sequence);
+      for (let segment of this.buildSegmentList(sequence)) {
+        spline.append(segment);
+      }
+      
       return spline;
     },
 
@@ -4418,11 +4582,33 @@
       return '';
     }
 
-    return buildSceneNode(store.scene);
+    return buildTree(store.scene);
   };
 
-  const buildSceneNode = (node, vParent = null) => {
-    const vNode = node.toVDOMNode();
+  const buildTree = (node, vParent = null) => {
+    let vNode;
+
+    if (node.type === 'shape') {
+      const diameter  = scale$2(node, LENGTHS_IN_PX.controlDiameter);
+      const radius    = diameter / 2;
+
+      const vParts = node.toVDOMCurveNodes();
+      const splitter = h('circle', {
+        'data-type': 'splitter',
+        r:           radius,
+        cx: node.splitter.x,
+        cy: node.splitter.y,
+      });
+
+      vNode = h('g', {
+        'data-type': 'content',
+        class:       node.class.toString(),
+        'data-key':  node.key,
+      }, node.toVDOMNode(), ...vParts, splitter);
+      // ^ the whole path followed by its curves
+    } else {
+      vNode = node.toVDOMNode();
+    }
 
     if (vParent) {
       const vWrapper = wrap(vNode, node);
@@ -4430,7 +4616,7 @@
     }
 
     for (let child of node.graphicsChildren) {
-      buildSceneNode(child, vNode);
+      buildTree(child, vNode);
     }
 
     return vNode;
@@ -4438,11 +4624,12 @@
 
   const wrap = (vNode, node) => {
     const vWrapper = h('g', {
-      'data-type': 'wrapper',
+      'data-type': `${node.type}-wrapper`,
       'data-key':   node.key,
     });
 
     vWrapper.children.push(vNode);
+
     if (node.type === 'shape') { vWrapper.children.push(innerUI(node)); }
     vWrapper.children.push(outerUI(node));
 
@@ -4456,8 +4643,8 @@
     });
 
     const vFrame   = frame(node);
-    const vDots    = dots(node);    // for rotation
-    const vCorners = corners(node); // for scaling
+    const vDots    = dots(node);    // for rotation UI
+    const vCorners = corners(node); // for scaling UI
 
     vOuterUI.children.push(vFrame);
 
@@ -4859,11 +5046,21 @@
       this.aux = {};
     },
 
-    after(state, input) {
-      
+    exitEdit(state, input) {
+      if (state.label === 'penMode') {
+        const target = state.scene.editing;
+        this.cleanup(state, input);
+        target.select();
+        state.label = 'selectMode';
+      } else if (state.label === 'selectMode') {
+        this.cleanup(state, input);
+      }
     },
 
-    // select a target node
+    after(state, input) {
+      // TODO
+    },
+
     select(state, input) {
       const target = state.scene.findDescendantByKey(input.key);
       const node = target && target.findAncestorByClass('frontier');
@@ -4881,7 +5078,7 @@
 
       if (current) {
         for (let ancestor of current.ancestors) {
-          ancestor.memoizeBounds();
+          ancestor.updateBounds();
         }
       }
 
@@ -4898,7 +5095,7 @@
       if (target.isSelected()) {
         target.edit();
         state.scene.unfocusAll();
-        state.label = 'penMode'; // TODO: hack! an update that changes the machine state
+        state.label = 'penMode';
       } else {
         const toSelect = target.findAncestor((node) => {
           return node.parent && node.parent.class.includes('frontier');
@@ -4913,7 +5110,7 @@
     },
 
     focus(state, input) {
-      state.scene.unfocusAll(); // TODO: expensive (but effective)
+      state.scene.unfocusAll();
 
       const target = state.scene.findDescendantByKey(input.key);
       const hit    = Vector.create(input.x, input.y);
@@ -4931,8 +5128,14 @@
       const current = state.scene.editing;
 
       if (current) {
+        // update bounds of splines of current shape:
+        for (let child of current.children) {
+          child.updateBounds();
+        }
+
+        // update bounds of shape itself and its proper ancestors:
         for (let ancestor of current.ancestors) {
-          ancestor.memoizeBounds();
+          ancestor.updateBounds();
         }
       }
 
@@ -4942,13 +5145,10 @@
       this.aux = {};
     },
 
-    // Transform
-
     initTransform(state, input) {
       const node = state.scene.selected;
-      this.aux.from   = Vector.create(input.x, input.y); // global coordinates
+      this.aux.from   = Vector.create(input.x, input.y);
       this.aux.center = node.bounds.center.transform(node.globalTransform());
-      // ^ global coordinates (globalTransform transforms local coords to global coords)
     },
 
     shift(state, input) {
@@ -4958,7 +5158,7 @@
         return;
       }
 
-      const to     = Vector.create(input.x, input.y); // global coordinates
+      const to     = Vector.create(input.x, input.y);
       const from   = this.aux.from;
       const offset = to.minus(from);
 
@@ -5001,110 +5201,166 @@
       this.aux.from = to;
     },
 
-    // Pen
     addSegment(state, input) {
-      if (this.aux.spline) {
-        const spline  = this.aux.spline;
-        const segment = Segment.create();
-        const anchor  = Anchor.create();
+      let shape;
+      let spline;
 
-        anchor.payload.vector = Vector.create(input.x, input.y);
-        segment.append(anchor);
-        spline.append(segment);
-
-        this.aux.segment = segment;
+      if (state.scene.editing) {
+        shape  = state.scene.editing;
+        spline = shape.lastChild;
       } else {
-        const shape   = Shape.create();
-        const spline  = Spline.create();
-        const segment = Segment.create();
-        const anchor  = Anchor.create();
-
-        shape.append(spline);
-        spline.append(segment);
-        segment.append(anchor);
+        shape  = Shape.create();
         state.scene.append(shape);
 
-        anchor.payload.vector = Vector.create(input.x, input.y);
-        shape.edit();
-        shape.payload.bounds = Rectangle.create(); // TODO: hack
+        spline = Spline.create();
+        shape.append(spline);
 
-        this.aux.spline  = spline;
-        this.aux.segment = segment;
+        shape.edit();
       }
+
+      const segment = Segment.create();
+      spline.append(segment);
+
+      const anchor  = Anchor.create();
+      segment.append(anchor);
+
+      anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(shape);
+
+      this.aux.shape   = shape;
+      this.aux.segment = segment;
     },
 
     setHandles(state, input) {
+      const shape       = this.aux.shape;
       const segment     = this.aux.segment;
+
       const anchor      = segment.anchor;
-      const handleIn    = Vector.create(input.x, input.y);
+      const handleIn    = Vector.create(input.x, input.y).transformToLocal(shape);
       const handleOut   = handleIn.rotate(Math.PI, anchor);
       segment.handleIn  = handleIn;
       segment.handleOut = handleOut;
     },
 
-    // TODO: further pen actions
+    initEditSegment(state, input) {
+      const control   = state.scene.findDescendantByKey(input.key);
+      const shape     = control.parent.parent.parent;
+      const from      = Vector.create(input.x, input.y).transformToLocal(shape);
 
-    pickControl(state, input) {
-      // initiate edit of control point:
-      // identify the control by its id
-      // ... store it
+      this.aux.from    = from;
+      this.aux.control = control;
     },
 
-    moveControl(state, input) {
-      // move control point:
-      // retrieve stored control
-      // ... move it
-      // need to move handles along with anchors
-      // and opposite handles together
+    editSegment(state, input) {
+      const control          = this.aux.control;
+      const from             = this.aux.from;
+      const segment          = control.parent;
+      const shape            = segment.parent.parent;
+      const to               = Vector.create(input.x, input.y).transformToLocal(shape);
+      const change           = to.minus(from);
+      control.payload.vector = control.payload.vector.add(change);
+
+      switch (control.type) {
+        case 'anchor':
+          if (segment.handleIn) {
+            segment.handleIn = segment.handleIn.add(change);
+          }
+          if (segment.handleOut) {
+            segment.handleOut = segment.handleOut.add(change);
+          }
+          break;
+        case 'handleIn':
+          segment.handleOut = segment.handleIn.rotate(Math.PI, segment.anchor);
+          break;
+        case 'handleOut':
+          segment.handleIn = segment.handleOut.rotate(Math.PI, segment.anchor);
+          break;
+      }
+
+      this.aux.from = to;
     },
 
-    insertAnchor(state, input) {
-      // insert anchor
-      // need to make sure that this update does not
-      // affect the existing curve (i.e., it splits the curve,
-      // but does not change it)
+    projectInput(state, input) {
+      const startSegment      = state.scene.findDescendantByKey(input.key);
+      const spline            = startSegment.parent;
+      const startIndex        = spline.children.indexOf(startSegment);
+      const endSegment        = spline.children[startIndex + 1];
+      const curve             = Curve.createFromSegments(startSegment, endSegment);
+      const bCurve            = new Bezier$1(...curve.coords());
+      const point             = { x: input.x, y: input.y };
+      const projected         = bCurve.project(point);
+      const shape             = spline.parent;
+      shape.splitter          = Vector.createFromObject(projected);
+
+      this.aux.spline         = spline;
+      this.aux.splitter       = shape.splitter;
+      this.aux.startSegment   = startSegment;
+      this.aux.endSegment     = endSegment;
+      this.aux.insertionIndex = startIndex + 1;
+      this.aux.bCurve         = bCurve;
+      this.aux.curveTime      = projected.t;
+      this.aux.from           = Vector.create(input.x, input.y);
     },
 
-    // Doc(s)
+    splitCurve(state, input) {
+      const spline           = this.aux.spline;
+      const newAnchor        = this.aux.splitter; // careful: a vector, not a node!
+      const startSegment     = this.aux.startSegment;
+      const endSegment       = this.aux.endSegment;
+      const insertionIndex   = this.aux.insertionIndex;
+      const bCurve           = this.aux.bCurve;
+      const curveTime        = this.aux.curveTime;
 
-    // from ui: user has requested fresh document
+      const splitCurves      = bCurve.split(curveTime);
+      const left             = splitCurves.left;
+      const right            = splitCurves.right;
+      const newSegment       = Segment.create();
+      newSegment.anchor      = newAnchor;
+      newSegment.handleIn    = Vector.createFromObject(left.points[2]);
+      newSegment.handleOut   = Vector.createFromObject(right.points[1]);
+      startSegment.handleOut = Vector.createFromObject(left.points[1]);
+      endSegment.handleIn    = Vector.createFromObject(right.points[2]);
+
+      spline.insertChild(newSegment, insertionIndex);
+
+      this.aux.control = newSegment.findDescendant((node) => node.type === 'anchor');
+      this.hideSplitter(state, input);
+      this.editSegment(state, input);
+    },
+
+    hideSplitter(state, input) {
+      const segment = state.scene.findDescendantByKey(input.key);
+      const shape = segment.parent.parent;
+      shape.splitter = Vector.create(-20, -20); // => put it off-canvas
+    },
+
     createDoc(state, input) {
       state.store.doc.replaceWith(state.buildDoc());
     },
 
-    // from db: doc list has been obtained
     updateDocList(state, input) {
-      const identNodes = [];
+      state.store.docs.children = [];
 
       for (let id of input.data.docIDs) {
         const identNode = Identifier$1.create();
         identNode.payload._id = id;
-        identNodes.push(identNode);
+        state.store.docs.append(identNode);
       }
-
-      state.store.docs.children = identNodes;
     },
 
-    // Messages
-
-    // from db: doc has just been saved
     setSavedMessage(state, input) {
       state.store.message.payload.text = 'Saved';
     },
 
-    // from ui: message can now be cleaned
     wipeMessage(state, input) {
       state.store.message.payload.text = '';
     },
 
-    // History
-
     getPrevious(state, input) {
-      window.history.back(); // TODO: should we do this inside of hist?
+      window.history.back(); // TODO: shouldn't we do this inside of hist?
     },
 
     getNext(state, input) {
-      window.history.forward(); // TODO: should we do this inside of hist?
+      window.history.forward(); // TODO: shouldn't we do this inside of hist?
     },
 
     switchDocument(state, input) {
@@ -5112,12 +5368,8 @@
       this.cleanup(state, input);
     },
 
-    // Markup
-
-    // from ui: user has changed markup
     changeMarkup(state, input) {
       state.store.markup.payload.text = input.value;
-      // TODO: I wonder if we need this at all. I don't think so.
 
       const newScene = state.importFromSVG(input.value);
 
@@ -5125,6 +5377,7 @@
         state.store.scene.replaceWith(newScene);
       } else {
         state.store.message.payload.text = 'Invalid markup';
+        // TODO: this is never shown, because it's overwritten
       }
     },
 
@@ -5143,7 +5396,7 @@
 
     // TOOLS
 
-    // create a new document
+    // create new document
     {
       type: 'click',
       target: 'newDocButton',
@@ -5158,7 +5411,7 @@
       do: 'requestDoc',
     },
 
-    // activate select mode
+    // switch to select mode
     {
       type: 'click',
       target: 'selectButton',
@@ -5166,7 +5419,7 @@
       to: 'selectMode'
     },
 
-    // activate pen mode
+    // switch to pen mode
     {
       type: 'click',
       target: 'penButton',
@@ -5190,6 +5443,14 @@
       to: 'selectMode'
     },
 
+    // INPUT MODES
+
+    {
+      type: 'keydown',
+      target: 'esc',
+      do: 'exitEdit',
+    },
+
     // SELECT MODE
 
     // focus shape on hover
@@ -5199,7 +5460,7 @@
       do: 'focus'
     },
 
-    // click through a group
+    // open a group
     {
       from: 'selectMode',
       type: 'dblclick',
@@ -5306,41 +5567,58 @@
       to: 'penMode'
     },
 
-    // TODO: updates for following set of transitions is not implemented
-
-    // initiate edit of control (anchor or handle) of current shape (TODO)
-    // TODO: could unify with next transition?
-    {
-      from: 'expandingShape',
-      type: 'mousedown',
-      target: 'control',
-      do: 'pickControl',
-      to: 'editingControl'
-    },
-
-    // initiate edit of control (anchor or handle) of current shape (TODO)
+    // initiate editing of segment
     {
       from: 'penMode',
       type: 'mousedown',
       target: 'control',
-      do: 'pickControl',
-      to: 'editingControl'
+      do: 'initEditSegment',
+      to: 'editingSegment'
     },
 
-    // move control of current shape (TODO)
+    // edit segment
     {
-      from: 'editingControl',
+      from: 'editingSegment',
       type: 'mousemove',
-      do: 'moveControl',
-      to: 'editingControl'
+      do: 'editSegment',
+      to: 'editingSegment'
     },
 
-    // finish editing control of current shape (TODO)
+    // finish up editing segment
     {
-      from: 'editingControl',
+      from: 'editingSegment',
       type: 'mouseup',
       do: 'releasePen',
       to: 'penMode'
+    },
+
+    // place split point
+    {
+      from: 'penMode',
+      type: 'mousemove',
+      target: 'curve',
+      do: 'projectInput',
+      to: 'penMode'
+    },
+
+    // hide split point
+
+    {
+      from: 'penMode',
+      type: 'mouseout',
+      target: 'curve',
+      do: 'hideSplitter',
+      to: 'penMode'
+    },
+
+    // split curve
+
+    {
+      from: 'penMode',
+      type: 'mousedown',
+      target: 'curve',
+      do: 'splitCurve',
+      to: 'editingSegment'
     },
 
     // MISCELLANEOUS
@@ -5363,7 +5641,7 @@
       do: 'updateDocList'
     },
 
-    // switch to document given by input (=> from db module or hist module)
+    // switch to document provided (=> from db module or hist module)
     {
       type: 'switchDocument',
       do: 'switchDocument',
@@ -5442,7 +5720,6 @@
 
     kickoff() {
       this.compute({ type: 'go' });
-      // ^ needed to populate "Open" menu with docs retrieved from backend
     },
   };
 
@@ -5549,7 +5826,14 @@
     },
 
     bindEvents(func) {
-      const mouseEvents = ['mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'];
+      const mouseEvents = [
+        'mousedown',
+        'mousemove',
+        'mouseup',
+        'mouseout',
+        'click',
+        'dblclick'
+      ];
 
       for (let eventType of mouseEvents) {
         this.mountPoint.addEventListener(eventType, (event) => {
@@ -5557,6 +5841,11 @@
             return;
           }
 
+          // if (event.type === 'mouseout') {
+          //   console.log('mouseout event!');
+          // }
+
+          // TODO: ugly
           if (event.type === 'mousedown') {
             const textarea = document.querySelector('textarea');
             if (textarea) { textarea.blur(); }
@@ -5574,6 +5863,16 @@
           });
         });
       }
+
+      window.addEventListener("keydown", event => {
+        if (event.keyCode === 27) {
+          func({
+            source: this.name,
+            type:   event.type,
+            target: 'esc',
+          });
+        }
+      });
     },
 
     createElement(vNode) {
@@ -15706,7 +16005,9 @@
 
     bindEvents(func) {
       this.editor.on('focus', () => {
-        this.textMarker.clear();
+        if (this.textMarker) {
+          this.textMarker.clear();
+        }
       });
 
       this.editor.on('change', () => {
@@ -15725,7 +16026,7 @@
         const currentMarkup  = state.vDOM['editor'];
         const previousMarkup = this.previousMarkup;
 
-        // first conjunct of inner conditionals follows from outer conditional
+        // TODO: should we maybe more explicitly distinguish an "editorMode"
         if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
           this.editor.getDoc().setValue(currentMarkup);
           this.markChange(state);

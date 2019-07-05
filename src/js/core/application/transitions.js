@@ -11,7 +11,7 @@ const transitions = [
 
   // TOOLS
 
-  // create a new document
+  // create new document
   {
     type: 'click',
     target: 'newDocButton',
@@ -26,7 +26,7 @@ const transitions = [
     do: 'requestDoc',
   },
 
-  // activate select mode
+  // switch to select mode
   {
     type: 'click',
     target: 'selectButton',
@@ -34,7 +34,7 @@ const transitions = [
     to: 'selectMode'
   },
 
-  // activate pen mode
+  // switch to pen mode
   {
     type: 'click',
     target: 'penButton',
@@ -58,6 +58,14 @@ const transitions = [
     to: 'selectMode'
   },
 
+  // INPUT MODES
+
+  {
+    type: 'keydown',
+    target: 'esc',
+    do: 'exitEdit',
+  },
+
   // SELECT MODE
 
   // focus shape on hover
@@ -67,7 +75,7 @@ const transitions = [
     do: 'focus'
   },
 
-  // click through a group
+  // open a group
   {
     from: 'selectMode',
     type: 'dblclick',
@@ -174,41 +182,58 @@ const transitions = [
     to: 'penMode'
   },
 
-  // TODO: updates for following set of transitions is not implemented
-
-  // initiate edit of control (anchor or handle) of current shape (TODO)
-  // TODO: could unify with next transition?
-  {
-    from: 'expandingShape',
-    type: 'mousedown',
-    target: 'control',
-    do: 'pickControl',
-    to: 'editingControl'
-  },
-
-  // initiate edit of control (anchor or handle) of current shape (TODO)
+  // initiate editing of segment
   {
     from: 'penMode',
     type: 'mousedown',
     target: 'control',
-    do: 'pickControl',
-    to: 'editingControl'
+    do: 'initEditSegment',
+    to: 'editingSegment'
   },
 
-  // move control of current shape (TODO)
+  // edit segment
   {
-    from: 'editingControl',
+    from: 'editingSegment',
     type: 'mousemove',
-    do: 'moveControl',
-    to: 'editingControl'
+    do: 'editSegment',
+    to: 'editingSegment'
   },
 
-  // finish editing control of current shape (TODO)
+  // finish up editing segment
   {
-    from: 'editingControl',
+    from: 'editingSegment',
     type: 'mouseup',
     do: 'releasePen',
     to: 'penMode'
+  },
+
+  // place split point
+  {
+    from: 'penMode',
+    type: 'mousemove',
+    target: 'curve',
+    do: 'projectInput',
+    to: 'penMode'
+  },
+
+  // hide split point
+
+  {
+    from: 'penMode',
+    type: 'mouseout',
+    target: 'curve',
+    do: 'hideSplitter',
+    to: 'penMode'
+  },
+
+  // split curve
+
+  {
+    from: 'penMode',
+    type: 'mousedown',
+    target: 'curve',
+    do: 'splitCurve',
+    to: 'editingSegment'
   },
 
   // MISCELLANEOUS
@@ -231,7 +256,7 @@ const transitions = [
     do: 'updateDocList'
   },
 
-  // switch to document given by input (=> from db module or hist module)
+  // switch to document provided (=> from db module or hist module)
   {
     type: 'switchDocument',
     do: 'switchDocument',

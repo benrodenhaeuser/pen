@@ -45,7 +45,6 @@ const core = {
 
   kickoff() {
     this.compute({ type: 'go' });
-    // ^ needed to populate "Open" menu with docs retrieved from backend
   },
 };
 

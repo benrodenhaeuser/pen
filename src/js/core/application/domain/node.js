@@ -34,6 +34,7 @@ const Node = {
         class:     Class.create(),
         bounds:    null,
       },
+      splitter: Vector.create(-20, -20), // off-canvas
     };
   },
 
@@ -154,6 +155,10 @@ const Node = {
     });
   },
 
+  get lastChild() {
+    return this.children[this.children.length - 1];
+  },
+
   // payload (getters/setters)
 
   get transform() {
@@ -182,10 +187,10 @@ const Node = {
       return this.payload.bounds;
     }
 
-    return this.memoizeBounds();
+    return this.updateBounds();
   },
 
-  memoizeBounds() {
+  updateBounds() {
     const ignoredTypes = [
       'store',
       'doc',
@@ -298,13 +303,19 @@ const Node = {
     });
   },
 
+  findDescendantByClass(className) {
+    return this.findDescendant((node) => {
+      return node.class.includes(className);
+    });
+  },
+
   findAncestorByClass(className) {
     return this.findAncestor((node) => {
       return node.class.includes(className);
     })
   },
 
-  // append
+  // tree manipulation
 
   append(node) {
     this.children = this.children.concat([node]);
@@ -317,7 +328,12 @@ const Node = {
     this.parent.children.splice(index, 1, node);
   },
 
-   // hit testing
+  insertChild(node, index) {
+    node.parent = this;
+    this.children.splice(index, 0, node);
+  },
+
+   // hit testing: is a point within the bounding box of this shape?
 
   contains(globalPoint) {
     return globalPoint

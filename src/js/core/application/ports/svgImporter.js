@@ -120,7 +120,10 @@ const svgImporter = {
 
   buildSplineTree(sequence) {
     const spline = Spline.create();
-    spline.children = this.buildSegmentList(sequence);
+    for (let segment of this.buildSegmentList(sequence)) {
+      spline.append(segment);
+    }
+    
     return spline;
   },
 

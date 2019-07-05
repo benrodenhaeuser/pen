@@ -16,11 +16,33 @@ const renderScene = (store) => {
     return '';
   }
 
-  return buildSceneNode(store.scene);
+  return buildTree(store.scene);
 };
 
-const buildSceneNode = (node, vParent = null) => {
-  const vNode = node.toVDOMNode();
+const buildTree = (node, vParent = null) => {
+  let vNode;
+
+  if (node.type === 'shape') {
+    const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
+    const radius    = diameter / 2;
+
+    const vParts = node.toVDOMCurveNodes();
+    const splitter = h('circle', {
+      'data-type': 'splitter',
+      r:           radius,
+      cx: node.splitter.x,
+      cy: node.splitter.y,
+    });
+
+    vNode = h('g', {
+      'data-type': 'content',
+      class:       node.class.toString(),
+      'data-key':  node.key,
+    }, node.toVDOMNode(), ...vParts, splitter);
+    // ^ the whole path followed by its curves
+  } else {
+    vNode = node.toVDOMNode();
+  }
 
   if (vParent) {
     const vWrapper = wrap(vNode, node);
@@ -28,7 +50,7 @@ const buildSceneNode = (node, vParent = null) => {
   }
 
   for (let child of node.graphicsChildren) {
-    buildSceneNode(child, vNode);
+    buildTree(child, vNode);
   }
 
   return vNode;
@@ -36,11 +58,12 @@ const buildSceneNode = (node, vParent = null) => {
 
 const wrap = (vNode, node) => {
   const vWrapper = h('g', {
-    'data-type': 'wrapper',
+    'data-type': `${node.type}-wrapper`,
     'data-key':   node.key,
   });
 
   vWrapper.children.push(vNode);
+
   if (node.type === 'shape') { vWrapper.children.push(innerUI(node)); }
   vWrapper.children.push(outerUI(node));
 
@@ -54,8 +77,8 @@ const outerUI = (node) => {
   });
 
   const vFrame   = frame(node);
-  const vDots    = dots(node);    // for rotation
-  const vCorners = corners(node); // for scaling
+  const vDots    = dots(node);    // for rotation UI
+  const vCorners = corners(node); // for scaling UI
 
   vOuterUI.children.push(vFrame);
 

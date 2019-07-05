@@ -11,7 +11,14 @@ const canvas = Object.assign(Object.create(UIModule), {
   },
 
   bindEvents(func) {
-    const mouseEvents = ['mousedown', 'mousemove', 'mouseup', 'click', 'dblclick'];
+    const mouseEvents = [
+      'mousedown',
+      'mousemove',
+      'mouseup',
+      'mouseout',
+      'click',
+      'dblclick'
+    ];
 
     for (let eventType of mouseEvents) {
       this.mountPoint.addEventListener(eventType, (event) => {
@@ -19,6 +26,11 @@ const canvas = Object.assign(Object.create(UIModule), {
           return;
         }
 
+        // if (event.type === 'mouseout') {
+        //   console.log('mouseout event!');
+        // }
+
+        // TODO: ugly
         if (event.type === 'mousedown') {
           const textarea = document.querySelector('textarea')
           if (textarea) { textarea.blur(); }
@@ -36,6 +48,16 @@ const canvas = Object.assign(Object.create(UIModule), {
         });
       });
     }
+
+    window.addEventListener("keydown", event => {
+      if (event.keyCode === 27) {
+        func({
+          source: this.name,
+          type:   event.type,
+          target: 'esc',
+        });
+      }
+    });
   },
 
   createElement(vNode) {
