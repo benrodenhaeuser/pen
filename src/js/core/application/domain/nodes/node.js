@@ -1,10 +1,11 @@
-import { Matrix    } from '../geometry.js';     // transforms
-import { Vector    } from '../geometry.js';     // control points ('vector' prop)
-import { Rectangle } from '../geometry.js';  // bounds, viewBox
-import { Class     } from '../helpers.js';      // class list
-import { Curve     } from '../geometry.js';      // Bezier curves
+import { Matrix    } from '../geometry.js';
+import { Vector    } from '../geometry.js';
+import { Rectangle } from '../geometry.js';
+import { Curve     } from '../geometry.js';
 import { Doc       } from '../nodes.js';
+import { Class     } from '../helpers.js';   
 import { createID  } from '../helpers.js';
+
 
 const Node = {
   create(opts = {}) {

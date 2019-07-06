@@ -1,4 +1,4 @@
-import { UIModule } from './ui.js';
+import { UIModule } from './uiModule.js';
 
 const tools = Object.assign(Object.create(UIModule), {
   init(state) {

@@ -5807,6 +5807,119 @@
     },
   };
 
+  const db = {
+    init(state) {
+      this.name = 'db';
+      return this;
+    },
+
+    bindEvents(func) {
+      window.addEventListener('upsertDoc', (event) => {
+        const request = new XMLHttpRequest;
+
+        request.addEventListener('load', () => {
+          func({
+            source: this.name,
+            type:   'docSaved',
+            data:   {},
+          });
+        });
+
+        request.open('POST', "/docs/" + event.detail._id);
+        request.send(JSON.stringify(event.detail));
+      });
+
+      window.addEventListener('readDoc', (event) => {
+        const request = new XMLHttpRequest;
+
+        request.addEventListener('load', () => {
+          func({
+            source: this.name,
+            type:   'switchDocument',
+            data:   {
+              doc: request.response
+            },
+          });
+        });
+
+        request.open('GET', "/docs/" + event.detail);
+        request.responseType = 'json';
+        request.send();
+      });
+
+      window.addEventListener('loadDocIDs', (event) => {
+        const request = new XMLHttpRequest;
+
+        request.addEventListener('load', () => {
+          func({
+            source: this.name,
+            type:   'updateDocList',
+            data:   {
+              docIDs: request.response
+            },
+          });
+        });
+
+        request.open('GET', "/ids");
+        request.responseType = 'json';
+        request.send();
+      });
+    },
+
+    react(state) {
+      if (state.update === 'go') {
+        window.dispatchEvent(
+          new Event('loadDocIDs')
+        );
+      } else if (state.update === 'requestDoc') {
+        window.dispatchEvent(
+          new CustomEvent('readDoc', { detail: state.input.key })
+        );
+      } else if (['release', 'releasePen', 'changeMarkup'].includes(state.update)) {
+        window.dispatchEvent(
+          new CustomEvent('upsertDoc', { detail: state.plain.doc })
+        );
+      }
+
+      this.previous = state;
+    },
+  };
+
+  const hist = {
+    init() {
+      this.name = 'hist';
+      return this;
+    },
+
+    bindEvents(func) {
+      window.addEventListener('popstate', (event) => {
+        if (event.state) {
+          func({
+            source: this.name,
+            type:   'switchDocument',
+            data:   event.state,
+          });
+        }
+      });
+    },
+
+    react(state) {
+      if (this.isRelevant(state.update)) {
+        window.history.pushState(state.plain, 'entry');
+      }
+    },
+
+    isRelevant(update) {
+      const release      = update === 'release' ;
+      const releasePen   = update === "releasePen";
+      const go           = update === 'go';
+      const changeMarkup = update === "changeMarkup";
+
+
+      return release || releasePen || go || changeMarkup;
+    },
+  };
+
   const UIModule = {
     init(state) {
       this.mountPoint   = document.querySelector(`#${this.name}`);
@@ -16244,119 +16357,6 @@
       window.dispatchEvent(new Event('wipeMessage'));
     },
   });
-
-  const db = {
-    init(state) {
-      this.name = 'db';
-      return this;
-    },
-
-    bindEvents(func) {
-      window.addEventListener('upsertDoc', (event) => {
-        const request = new XMLHttpRequest;
-
-        request.addEventListener('load', () => {
-          func({
-            source: this.name,
-            type:   'docSaved',
-            data:   {},
-          });
-        });
-
-        request.open('POST', "/docs/" + event.detail._id);
-        request.send(JSON.stringify(event.detail));
-      });
-
-      window.addEventListener('readDoc', (event) => {
-        const request = new XMLHttpRequest;
-
-        request.addEventListener('load', () => {
-          func({
-            source: this.name,
-            type:   'switchDocument',
-            data:   {
-              doc: request.response
-            },
-          });
-        });
-
-        request.open('GET', "/docs/" + event.detail);
-        request.responseType = 'json';
-        request.send();
-      });
-
-      window.addEventListener('loadDocIDs', (event) => {
-        const request = new XMLHttpRequest;
-
-        request.addEventListener('load', () => {
-          func({
-            source: this.name,
-            type:   'updateDocList',
-            data:   {
-              docIDs: request.response
-            },
-          });
-        });
-
-        request.open('GET', "/ids");
-        request.responseType = 'json';
-        request.send();
-      });
-    },
-
-    react(state) {
-      if (state.update === 'go') {
-        window.dispatchEvent(
-          new Event('loadDocIDs')
-        );
-      } else if (state.update === 'requestDoc') {
-        window.dispatchEvent(
-          new CustomEvent('readDoc', { detail: state.input.key })
-        );
-      } else if (['release', 'releasePen', 'changeMarkup'].includes(state.update)) {
-        window.dispatchEvent(
-          new CustomEvent('upsertDoc', { detail: state.plain.doc })
-        );
-      }
-
-      this.previous = state;
-    },
-  };
-
-  const hist = {
-    init() {
-      this.name = 'hist';
-      return this;
-    },
-
-    bindEvents(func) {
-      window.addEventListener('popstate', (event) => {
-        if (event.state) {
-          func({
-            source: this.name,
-            type:   'switchDocument',
-            data:   event.state,
-          });
-        }
-      });
-    },
-
-    react(state) {
-      if (this.isRelevant(state.update)) {
-        window.history.pushState(state.plain, 'entry');
-      }
-    },
-
-    isRelevant(update) {
-      const release      = update === 'release' ;
-      const releasePen   = update === "releasePen";
-      const go           = update === 'go';
-      const changeMarkup = update === "changeMarkup";
-
-
-      return release || releasePen || go || changeMarkup;
-    },
-  };
 
   const modules = [
     canvas$1,

@@ -1,4 +1,4 @@
-import { UIModule } from './ui.js';
+import { UIModule } from './uiModule.js';
 
 const svgns  = 'http://www.w3.org/2000/svg';
 const xmlns  = 'http://www.w3.org/2000/xmlns/';
