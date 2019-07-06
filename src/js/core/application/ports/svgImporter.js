@@ -4,7 +4,7 @@ import { HandleIn, HandleOut     } from '../domain/nodes.js';
 import { Matrix                  } from '../domain/geometry.js';
 import { Vector                  } from '../domain/geometry.js';
 import { Rectangle               } from '../domain/geometry.js';
-import { Class                   } from '../domain/class.js';
+import { Class                   } from '../domain/helpers.js';
 import { SVGPathData             } from 'svg-pathdata';
 import { SVGPathDataTransformer  } from 'svg-pathdata';
 
