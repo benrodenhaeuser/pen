@@ -1,9 +1,9 @@
-import { Scene, Shape, Group     } from '../domain/types.js';
-import { Spline, Segment, Anchor } from '../domain/types.js';
-import { HandleIn, HandleOut     } from '../domain/types.js';
-import { Matrix                  } from '../domain/matrix.js';
-import { Vector                  } from '../domain/vector.js';
-import { Rectangle               } from '../domain/rectangle.js';
+import { Scene, Shape, Group     } from '../domain/nodes.js';
+import { Spline, Segment, Anchor } from '../domain/nodes.js';
+import { HandleIn, HandleOut     } from '../domain/nodes.js';
+import { Matrix                  } from '../domain/geometry.js';
+import { Vector                  } from '../domain/geometry.js';
+import { Rectangle               } from '../domain/geometry.js';
 import { Class                   } from '../domain/class.js';
 import { SVGPathData             } from 'svg-pathdata';
 import { SVGPathDataTransformer  } from 'svg-pathdata';
@@ -123,7 +123,7 @@ const svgImporter = {
     for (let segment of this.buildSegmentList(sequence)) {
       spline.append(segment);
     }
-    
+
     return spline;
   },
 

@@ -1,11 +1,11 @@
-import { Scene, Shape, Group     } from './domain/types.js';
-import { Spline, Segment, Anchor } from './domain/types.js';
-import { HandleIn, HandleOut     } from './domain/types.js';
-import { Identifier, Doc         } from './domain/types.js';
-import { Vector                  } from './domain/vector.js';
-import { Matrix                  } from './domain/matrix.js';
-import { Rectangle               } from './domain/rectangle.js';
-import { Curve                   } from './domain/curve.js';
+import { Scene, Shape, Group     } from './domain/nodes.js';
+import { Spline, Segment, Anchor } from './domain/nodes.js';
+import { HandleIn, HandleOut     } from './domain/nodes.js';
+import { Identifier, Doc         } from './domain/nodes.js';
+import { Vector                  } from './domain/geometry.js';
+import { Matrix                  } from './domain/geometry.js';
+import { Rectangle               } from './domain/geometry.js';
+import { Curve                   } from './domain/geometry.js';
 import { Bezier                  } from '/vendor/bezier/bezier.js';
 
 const updates = {
@@ -298,7 +298,7 @@ const updates = {
   hideSplitter(state, input) {
     const segment = state.scene.findDescendantByKey(input.key);
     const shape = segment.parent.parent;
-    shape.splitter = Vector.create(-1000, -1000); 
+    shape.splitter = Vector.create(-1000, -1000);
   },
 
   createDoc(state, input) {

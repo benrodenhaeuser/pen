@@ -4,8 +4,7 @@ const exportToAST = (state) => {
   const root = freshNode();
   parse(state.store.scene, root);
 
-  console.log(root);
-  console.log(render(root));
+  console.log(flatten(root));
 
   // populate with length information
   // populate with key info etc
@@ -13,6 +12,7 @@ const exportToAST = (state) => {
   return root;
 };
 
+// produce an xml syntax tree from scenegraph node
 const parse = (node, astParent) => {
   const astOpen  = node.toOpeningTag();
   const astClose = node.toClosingTag();
@@ -33,16 +33,17 @@ const parse = (node, astParent) => {
   }
 };
 
-const render = (astNode, markup = []) => {
+// flatten tree to a list of markup strings
+const flatten = (astNode, list = []) => {
   if (astNode.markup) {
-    markup.push(astNode.markup);
+    list.push(astNode);
   } else {
     for (let child of astNode.children) {
-      render(child, markup);
+      flatten(child, list);
     }
   }
 
-  return markup.join('');
+  return list;
 }
 
 const freshNode = (tagName) => {

@@ -1,12 +1,16 @@
-import { svgImporter   } from './ports/svgImporter.js';
-import { svgExporter   } from './ports/svgExporter.js';
-import { exportToVDOM  } from './ports/exportToVDOM.js';
-import { exportToAST   } from './ports/exportToAST.js';
-import { plainImporter } from './ports/plainImporter.js';
-import { plainExporter } from './ports/plainExporter.js';
-import { Rectangle     } from './domain/rectangle.js';
-
-import { Store, Docs, Doc, Message, Scene, Markup } from './domain/types.js';
+import { svgImporter   } from './ports.js';
+import { svgExporter   } from './ports.js';
+import { exportToVDOM  } from './ports.js';
+import { exportToAST   } from './ports.js';
+import { plainImporter } from './ports.js';
+import { plainExporter } from './ports.js';
+import { Store         } from './domain/nodes.js';
+import { Docs          } from './domain/nodes.js';
+import { Doc           } from './domain/nodes.js';
+import { Message       } from './domain/nodes.js';
+import { Scene         } from './domain/nodes.js';
+import { Markup        } from './domain/nodes.js';
+import { Rectangle     } from './domain/geometry.js';
 
 const State = {
   create() {

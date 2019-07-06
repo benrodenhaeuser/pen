@@ -1,10 +1,10 @@
-import { Store, Docs, Doc, Message   } from '../domain/types.js';
-import { Scene, Shape, Group, Markup } from '../domain/types.js';
-import { Spline, Segment, Anchor     } from '../domain/types.js';
-import { HandleIn, HandleOut         } from '../domain/types.js';
-import { Matrix                      } from '../domain/matrix.js';
-import { Vector                      } from '../domain/vector.js';
-import { Rectangle                   } from '../domain/rectangle.js';
+import { Store, Docs, Doc, Message   } from '../domain/nodes.js';
+import { Scene, Shape, Group, Markup } from '../domain/nodes.js';
+import { Spline, Segment, Anchor     } from '../domain/nodes.js';
+import { HandleIn, HandleOut         } from '../domain/nodes.js';
+import { Matrix                      } from '../domain/geometry.js';
+import { Vector                      } from '../domain/geometry.js';
+import { Rectangle                   } from '../domain/geometry.js';
 import { Class                       } from '../domain/class.js';
 
 const plainImporter = {
