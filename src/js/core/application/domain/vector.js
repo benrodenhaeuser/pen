@@ -35,7 +35,7 @@ const Vector = {
 
   // return value: new Vector instance
   rotate(angle, vector) {
-    return this.transform(Matrix.rotation(Math.PI, vector));
+    return this.transform(Matrix.rotation(angle, vector));
   },
 
   // return value: new Vector instance

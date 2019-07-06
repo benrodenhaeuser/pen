@@ -22,7 +22,7 @@ const editor = {
       if (this.textMarker) {
         this.textMarker.clear();
       }
-    })
+    });
 
     this.editor.on('change', () => {
       if (this.editor.hasFocus()) {

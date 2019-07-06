@@ -32,6 +32,7 @@ const buildTree = (node, vParent = null) => {
       r:           radius,
       cx: node.splitter.x,
       cy: node.splitter.y,
+      transform:   node.transform.toString(),
     });
 
     vNode = h('g', {

@@ -137,7 +137,7 @@
 
     // return value: new Vector instance
     rotate(angle$$1, vector) {
-      return this.transform(Matrix.rotation(Math.PI, vector));
+      return this.transform(Matrix.rotation(angle$$1, vector));
     },
 
     // return value: new Vector instance
@@ -3427,7 +3427,7 @@
           class:     Class.create(),
           bounds:    null,
         },
-        splitter: Vector.create(-20, -20), // off-canvas
+        splitter: Vector.create(-1000, -1000), // off-canvas, far away
       };
     },
 
@@ -4023,6 +4023,33 @@
     return svgNode;
   };
 
+  // for producing an xml syntax tree
+
+  Scene.toOpeningTag = function() {
+    return { markup: '<svg>' };
+  };
+
+  Group.toOpeningTag = function() {
+    return { markup: '<g>' };
+  };
+
+  Shape.toOpeningTag = function() {
+    return { markup: '<path>'};
+  };
+
+  Scene.toClosingTag = function() {
+    return { markup: '</svg>' };
+  };
+
+  Group.toClosingTag = function() {
+    return { markup: '</g>' };
+  };
+
+  Shape.toClosingTag = function() {
+    return { markup: '</path>' };
+  };
+
+
   // SHAPE
 
   // generate string for d attribute of svg path node
@@ -4598,6 +4625,7 @@
         r:           radius,
         cx: node.splitter.x,
         cy: node.splitter.y,
+        transform:   node.transform.toString(),
       });
 
       vNode = h('g', {
@@ -4839,6 +4867,59 @@
     };
   };
 
+  // exploratory code
+
+  const exportToAST = (state) => {
+    const root = freshNode();
+    parse(state.store.scene, root);
+
+    console.log(root);
+    console.log(render(root));
+
+    // populate with length information
+    // populate with key info etc
+
+    return root;
+  };
+
+  const parse = (node, astParent) => {
+    const astOpen  = node.toOpeningTag();
+    const astClose = node.toClosingTag();
+
+    astParent.children.push(astOpen);
+
+    let fresh;
+
+    if (node.graphicsChildren.length > 0) {
+      fresh = freshNode();
+      astParent.children.push(fresh);
+    }
+
+    astParent.children.push(astClose);
+
+    for (let child of node.graphicsChildren) {
+      parse(child, fresh);
+    }
+  };
+
+  const render = (astNode, markup = []) => {
+    if (astNode.markup) {
+      markup.push(astNode.markup);
+    } else {
+      for (let child of astNode.children) {
+        render(child, markup);
+      }
+    }
+
+    return markup.join('');
+  };
+
+  const freshNode = (tagName) => {
+    return {
+      children: [],
+    };
+  };
+
   const plainImporter = {
     build(object) {
       let node;
@@ -5013,6 +5094,7 @@
         update: this.update,
         vDOM:   this.exportToVDOM(),
         plain:  this.exportToPlain(),
+        ast:    this.exportToAST(),
       };
     },
 
@@ -5033,6 +5115,10 @@
     // returns a Doc node and a list of ids (for docs)
     exportToVDOM() {
       return exportToVDOM(this);
+    },
+
+    exportToAST() {
+      return exportToAST(this);
     },
 
     // returns a plain representation of Doc node and a list of ids (for docs)
@@ -5282,14 +5368,15 @@
     projectInput(state, input) {
       const startSegment      = state.scene.findDescendantByKey(input.key);
       const spline            = startSegment.parent;
+      const shape             = spline.parent;
       const startIndex        = spline.children.indexOf(startSegment);
       const endSegment        = spline.children[startIndex + 1];
       const curve             = Curve.createFromSegments(startSegment, endSegment);
       const bCurve            = new Bezier$1(...curve.coords());
-      const point             = { x: input.x, y: input.y };
-      const projected         = bCurve.project(point);
-      const shape             = spline.parent;
-      shape.splitter          = Vector.createFromObject(projected);
+
+      const from              = Vector.create(input.x, input.y).transformToLocal(shape);
+      const pointOnCurve      = bCurve.project({ x: from.x, y: from.y });
+      shape.splitter          = Vector.createFromObject(pointOnCurve);
 
       this.aux.spline         = spline;
       this.aux.splitter       = shape.splitter;
@@ -5297,8 +5384,8 @@
       this.aux.endSegment     = endSegment;
       this.aux.insertionIndex = startIndex + 1;
       this.aux.bCurve         = bCurve;
-      this.aux.curveTime      = projected.t;
-      this.aux.from           = Vector.create(input.x, input.y);
+      this.aux.curveTime      = pointOnCurve.t;
+      this.aux.from           = from;
     },
 
     splitCurve(state, input) {
@@ -5330,7 +5417,7 @@
     hideSplitter(state, input) {
       const segment = state.scene.findDescendantByKey(input.key);
       const shape = segment.parent.parent;
-      shape.splitter = Vector.create(-20, -20); // => put it off-canvas
+      shape.splitter = Vector.create(-1000, -1000); 
     },
 
     createDoc(state, input) {

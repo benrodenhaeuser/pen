@@ -34,7 +34,7 @@ const Node = {
         class:     Class.create(),
         bounds:    null,
       },
-      splitter: Vector.create(-20, -20), // off-canvas
+      splitter: Vector.create(-1000, -1000), // off-canvas, far away
     };
   },
 

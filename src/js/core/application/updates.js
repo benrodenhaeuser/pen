@@ -249,14 +249,15 @@ const updates = {
   projectInput(state, input) {
     const startSegment      = state.scene.findDescendantByKey(input.key);
     const spline            = startSegment.parent;
+    const shape             = spline.parent;
     const startIndex        = spline.children.indexOf(startSegment);
     const endSegment        = spline.children[startIndex + 1];
     const curve             = Curve.createFromSegments(startSegment, endSegment);
     const bCurve            = new Bezier(...curve.coords());
-    const point             = { x: input.x, y: input.y };
-    const projected         = bCurve.project(point);
-    const shape             = spline.parent;
-    shape.splitter          = Vector.createFromObject(projected);
+
+    const from              = Vector.create(input.x, input.y).transformToLocal(shape);
+    const pointOnCurve      = bCurve.project({ x: from.x, y: from.y });
+    shape.splitter          = Vector.createFromObject(pointOnCurve);
 
     this.aux.spline         = spline;
     this.aux.splitter       = shape.splitter;
@@ -264,8 +265,8 @@ const updates = {
     this.aux.endSegment     = endSegment;
     this.aux.insertionIndex = startIndex + 1;
     this.aux.bCurve         = bCurve;
-    this.aux.curveTime      = projected.t;
-    this.aux.from           = Vector.create(input.x, input.y);
+    this.aux.curveTime      = pointOnCurve.t;
+    this.aux.from           = from;
   },
 
   splitCurve(state, input) {
@@ -297,7 +298,7 @@ const updates = {
   hideSplitter(state, input) {
     const segment = state.scene.findDescendantByKey(input.key);
     const shape = segment.parent.parent;
-    shape.splitter = Vector.create(-20, -20); // => put it off-canvas
+    shape.splitter = Vector.create(-1000, -1000); 
   },
 
   createDoc(state, input) {

@@ -157,6 +157,33 @@ Shape.toSVGNode = function() {
   return svgNode;
 };
 
+// for producing an xml syntax tree
+
+Scene.toOpeningTag = function() {
+  return { markup: '<svg>' };
+};
+
+Group.toOpeningTag = function() {
+  return { markup: '<g>' };
+};
+
+Shape.toOpeningTag = function() {
+  return { markup: '<path>'};
+};
+
+Scene.toClosingTag = function() {
+  return { markup: '</svg>' };
+};
+
+Group.toClosingTag = function() {
+  return { markup: '</g>' };
+};
+
+Shape.toClosingTag = function() {
+  return { markup: '</path>' };
+};
+
+
 // SHAPE
 
 // generate string for d attribute of svg path node

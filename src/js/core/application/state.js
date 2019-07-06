@@ -1,6 +1,7 @@
 import { svgImporter   } from './ports/svgImporter.js';
 import { svgExporter   } from './ports/svgExporter.js';
 import { exportToVDOM  } from './ports/exportToVDOM.js';
+import { exportToAST   } from './ports/exportToAST.js';
 import { plainImporter } from './ports/plainImporter.js';
 import { plainExporter } from './ports/plainExporter.js';
 import { Rectangle     } from './domain/rectangle.js';
@@ -81,6 +82,7 @@ const State = {
       update: this.update,
       vDOM:   this.exportToVDOM(),
       plain:  this.exportToPlain(),
+      ast:    this.exportToAST(),
     };
   },
 
@@ -101,6 +103,10 @@ const State = {
   // returns a Doc node and a list of ids (for docs)
   exportToVDOM() {
     return exportToVDOM(this);
+  },
+
+  exportToAST() {
+    return exportToAST(this);
   },
 
   // returns a plain representation of Doc node and a list of ids (for docs)
