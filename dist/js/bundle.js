@@ -16358,7 +16358,7 @@
     },
   });
 
-  const modules = [
+  const modules = [ 
     canvas$1,
     editor$1,
     tools$1,

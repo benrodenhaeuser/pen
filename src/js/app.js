@@ -1,12 +1,12 @@
-import { core    } from './core/core.js';
-import { db      } from './periphery/db.js';
-import { hist    } from './periphery/history.js';
-import { canvas  } from './periphery/ui.js';
-import { editor  } from './periphery/ui.js';
-import { tools   } from './periphery/ui.js';
-import { message } from './periphery/ui.js';
+import { core    } from './app/core.js';
+import { db      } from './app/periphery.js';
+import { hist    } from './app/periphery.js';
+import { canvas  } from './app/periphery.js';
+import { editor  } from './app/periphery.js';
+import { tools   } from './app/periphery.js';
+import { message } from './app/periphery.js';
 
-const modules = [
+const modules = [ 
   canvas,
   editor,
   tools,

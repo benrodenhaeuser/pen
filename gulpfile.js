@@ -8,7 +8,7 @@ gulp.task('rollup', () => {
   return rollup.rollup({
     input: './src/js/app.js',
     plugins: [
-      rootImport({ root: `${__dirname}/src`, useEntry: 'prepend' }),
+      rootImport({ root: `${__dirname}/src/js`, useEntry: 'prepend' }),
       resolve(),
       commonjs()
     ]
