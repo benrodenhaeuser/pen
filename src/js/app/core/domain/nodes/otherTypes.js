@@ -3,19 +3,19 @@ import { Node } from './node.js';
 const Anchor    = Object.create(Node);
 const HandleIn  = Object.create(Node);
 const HandleOut = Object.create(Node);
-const Store      = Object.create(Node);
 const Doc        = Object.create(Node);
-const Docs       = Object.create(Node);
-const Markup     = Object.create(Node);
-const Message    = Object.create(Node);
-const Text       = Object.create(Node);
-const Identifier = Object.create(Node);
+const Docs       = Object.create(Node); // TODO: get rid of this?
+const Store      = Object.create(Node); // TODO: get rid of this?
+const Markup     = Object.create(Node); // TODO: get rid of this?
+const Message    = Object.create(Node); // TODO: get rid of this?
+const Text       = Object.create(Node); // TODO: get rid of this?
+const Identifier = Object.create(Node); // TODO: get rid of this?
 
-Anchor.type    = 'anchor';
-HandleIn.type  = 'handleIn';
-HandleOut.type = 'handleOut';
-Store.type      = 'store';
+Anchor.type     = 'anchor';
+HandleIn.type   = 'handleIn';
+HandleOut.type  = 'handleOut';
 Doc.type        = 'doc';
+Store.type      = 'store';
 Docs.type       = 'docs';
 Markup.type     = 'markup';
 Message.type    = 'message';
@@ -26,8 +26,8 @@ export {
   Anchor,
   HandleIn,
   HandleOut,
-  Store,
   Doc,
+  Store,
   Docs,
   Markup,
   Message,
