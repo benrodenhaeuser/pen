@@ -228,6 +228,886 @@
     },
   };
 
+  const Class = {
+    create(classNames = []) {
+      return Object.create(Class).init(classNames);
+    },
+
+    init(classNames) {
+      if (classNames instanceof Array) {
+        this.set = new Set(classNames);
+      } else if (classNames instanceof Set) {
+        this.set = classNames;
+      } else {
+        throw new Error('Create Class instances from array or set');
+      }
+
+      return this;
+    },
+
+    // return value: string
+    toString() {
+      return Array.from(this.set).join(' ');
+    },
+
+    toJSON() {
+      return Array.from(this.set);
+    },
+
+    // return value: boolean
+    includes(className) {
+      return this.set.has(className);
+    },
+
+    // return value: new Class instance
+    add(className) {
+      return Class.create(this.set.add(className));
+    },
+
+    // return value: new Class instance
+    remove(className) {
+      this.set.delete(className);
+      return Class.create(this.set);
+    },
+  };
+
+  const createID = () => {
+    const randomString = Math.random().toString(36).substring(2);
+    const timestamp    = (new Date()).getTime().toString(36);
+    return randomString + timestamp;
+  };
+
+  const Node = {
+    create(opts = {}) {
+      const node = Object.create(this).init(opts);
+
+      if (Object.getPrototypeOf(node) === Doc) {
+        node._id = createID(); // NOTE: docs have an _id
+      }
+
+      return node;
+    },
+
+    init(opts) {
+      this.set(this.defaults());
+      this.set(opts);
+
+      return this;
+    },
+
+    defaults() {
+      return {
+        key:      createID(), // all nodes have a key
+        children: [],
+        parent:   null,
+        payload: {
+          transform: Matrix.identity(),
+          class:     Class.create(),
+          bounds:    null,
+        },
+        splitter: Vector.create(-1000, -1000), // off-canvas, far away
+      };
+    },
+
+    set(opts) {
+      for (let key of Object.keys(opts)) {
+        this[key] = opts[key];
+      }
+    },
+
+    // hierarchy (predicates)
+
+    isLeaf() {
+      return this.children.length === 0;
+    },
+
+    isRoot() {
+      return this.parent === null;
+    },
+
+    isSelected() {
+      return this.class.includes('selected');
+    },
+
+    // hierarchy (getters)
+    get root() {
+      return this.findAncestor(
+        node => node.parent === null
+      );
+    },
+
+    get store() {
+      return this.findAncestor(
+        node => node.type === 'store'
+      );
+    },
+
+    get message() {
+      return this.root.findDescendant(
+        node => node.type === 'message'
+      );
+    },
+
+    get scene() {
+      return this.root.findDescendant(
+        node => node.type === 'scene'
+      );
+    },
+
+    get docs() {
+      return this.root.findDescendant(
+        node => node.type === 'docs'
+      );
+    },
+
+    get doc() {
+      return this.root.findDescendant(
+        node => node.type === 'doc'
+      );
+    },
+
+    get markup() {
+      return this.root.findDescendant(
+        node => node.type === 'markup'
+      );
+    },
+
+    get leaves() {
+      return this.findDescendants(
+        node => node.children.length === 0
+      );
+    },
+
+    get ancestors() {
+      return this.findAncestors(
+        node => true
+      );
+    },
+
+    get properAncestors() {
+      return this.parent.findAncestors(
+        node => true
+      );
+    },
+
+    get descendants() {
+      return this.findDescendants(
+        node => true
+      );
+    },
+
+    get siblings() {
+      return this.parent.children.filter(
+        node => node !== this
+      );
+    },
+
+    get graphicsChildren() {
+      return this.children.filter(
+        node => ['group', 'shape'].includes(node.type)
+      );
+    },
+
+    get selected() {
+      return this.scene.findDescendant((node) => {
+        return node.class.includes('selected');
+      });
+    },
+
+    get editing() {
+      return this.scene.findDescendant((node) => {
+        return node.class.includes('editing');
+      });
+    },
+
+    get frontier() {
+      return this.scene.findDescendants((node) => {
+        return node.class.includes('frontier');
+      });
+    },
+
+    get lastChild() {
+      return this.children[this.children.length - 1];
+    },
+
+    // payload (getters/setters)
+
+    get transform() {
+      return this.payload.transform;
+    },
+
+    set transform(value) {
+      this.payload.transform = value;
+    },
+
+    get class() {
+      return this.payload.class;
+    },
+
+    set class(value) {
+      this.payload.class = value;
+    },
+
+    get bounds() {
+      if ([
+        'segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
+        return null;
+      }
+
+      if (this.payload.bounds) {
+        return this.payload.bounds;
+      }
+
+      return this.updateBounds();
+    },
+
+    updateBounds() {
+      const ignoredTypes = [
+        'store',
+        'doc',
+        'scene',
+        'segment',
+        'anchor',
+        'handleIn',
+        'handleOut'
+      ];
+
+      if (ignoredTypes.includes(this.type)) { return; }
+
+      const corners = [];
+      for (let child of this.children) {
+        for (let corner of child.bounds.corners) {
+          corners.push(corner.transform(child.transform));
+        }
+      }
+
+      const xValue  = vector => vector.x;
+      const xValues = corners.map(xValue);
+      const yValue  = vector => vector.y;
+      const yValues = corners.map(yValue);
+
+      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+      const bounds = Rectangle.createFromMinMax(min, max);
+
+      this.payload.bounds = bounds;
+      return bounds;
+    },
+
+    set bounds(value) {
+      this.payload.bounds = value;
+    },
+
+    get viewBox() {
+      return this.payload.viewBox;
+    },
+
+    set viewBox(value) {
+      this.payload.viewBox = value;
+    },
+
+    get vector() {
+      return this.payload.vector;
+    },
+
+    set vector(value) {
+      this.payload.vector = value;
+    },
+
+    // traversal
+
+    // NOTE: a node is an ancestor of itself
+    findAncestor(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else if (this.parent === null) {
+        return null;
+      } else {
+        return this.parent.findAncestor(predicate);
+      }
+    },
+
+    // NOTE: a node is an ancestor of itself
+    findAncestors(predicate, ancestors = []) {
+      if (predicate(this)) {
+        ancestors.push(this);
+      }
+
+      if (this.parent === null) {
+        return ancestors;
+      } else {
+        return this.parent.findAncestors(predicate, ancestors);
+      }
+    },
+
+    // NOTE: a node is a descendant of itself
+    findDescendant(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else {
+        for (let child of this.children) {
+          let val = child.findDescendant(predicate);
+          if (val) { return val; }
+        }
+      }
+
+      return null;
+    },
+
+    // NOTE: a node is a descendant of itself
+    findDescendants(predicate, descendants = []) {
+      if (predicate(this)) {
+        descendants.push(this);
+      }
+
+      for (let child of this.children) {
+        child.findDescendants(predicate, descendants);
+      }
+
+      return descendants;
+    },
+
+    findDescendantByKey(key) {
+      return this.findDescendant((node) => {
+        return node.key === key;
+      });
+    },
+
+    findDescendantByClass(className) {
+      return this.findDescendant((node) => {
+        return node.class.includes(className);
+      });
+    },
+
+    findAncestorByClass(className) {
+      return this.findAncestor((node) => {
+        return node.class.includes(className);
+      })
+    },
+
+    // tree manipulation
+
+    append(node) {
+      this.children = this.children.concat([node]);
+      node.parent = this;
+    },
+
+    replaceWith(node) {
+      node.parent = this.parent;
+      const index = this.parent.children.indexOf(this);
+      this.parent.children.splice(index, 1, node);
+    },
+
+    insertChild(node, index) {
+      node.parent = this;
+      this.children.splice(index, 0, node);
+    },
+
+     // hit testing: is a point within the bounding box of this shape?
+
+    contains(globalPoint) {
+      return globalPoint
+        .transform(this.globalTransform().invert())
+        .isWithin(this.bounds);
+    },
+
+    // classes
+
+    setFrontier() {
+      this.removeFrontier();
+
+      if (this.selected) {
+        this.selected.class = this.selected.class.add('frontier');
+
+        let node = this.selected;
+
+        do {
+          for (let sibling of node.siblings) {
+            sibling.class = sibling.class.add('frontier');
+          }
+          node = node.parent;
+        } while (node.parent !== null);
+      } else {
+        for (let child of this.scene.children) {
+          child.class = child.class.add('frontier');
+        }
+      }
+    },
+
+    removeFrontier() {
+      const frontier = this.scene.findDescendants((node) => {
+        return node.class.includes('frontier');
+      });
+
+      for (let node of frontier) {
+        node.class.remove('frontier');
+      }
+    },
+
+    focus() {
+      this.class = this.class.add('focus');
+    },
+
+    unfocusAll() {
+      const focussed = this.scene.findDescendants((node) => {
+        return node.class.includes('focus');
+      });
+
+      for (let node of focussed) {
+        node.class.remove('focus');
+      }
+    },
+
+    select() {
+      this.deselectAll();
+      this.class = this.class.add('selected');
+      this.setFrontier();
+    },
+
+    edit() {
+      this.deselectAll();
+      this.setFrontier();
+      this.class = this.class.add('editing');
+    },
+
+    deselectAll() {
+      if (this.selected) {
+        this.selected.class.remove('selected');
+      }
+      this.setFrontier();
+    },
+
+    deeditAll() {
+      if (this.editing) {
+        this.editing.class.remove('editing');
+      }
+    },
+
+    // transforms
+
+    globalTransform() {
+      return this.ancestorTransform().multiply(this.transform);
+    },
+
+    // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
+    ancestorTransform() {
+      let matrix = Matrix.identity();
+
+      // we use properAncestors, which does not include the current node:
+      for (let ancestor of this.properAncestors.reverse()) {
+        matrix = matrix.multiply(ancestor.transform);
+      }
+
+      return matrix;
+    },
+
+    rotate(angle, center) {
+      center = center.transform(this.ancestorTransform().invert());
+      this.transform = Matrix.rotation(angle, center).multiply(this.transform);
+    },
+
+    scale(factor, center) {
+      center = center.transform(this.ancestorTransform().invert());
+      this.transform = Matrix.scale(factor, center).multiply(this.transform);
+    },
+
+    translate(offset) {
+      this.transform = this
+        .ancestorTransform().invert()
+        .multiply(Matrix.translation(offset))
+        .multiply(this.globalTransform());
+    },
+
+    globalScaleFactor() {
+      const total  = this.globalTransform();
+      const a      = total.m[0][0];
+      const b      = total.m[1][0];
+
+      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+    },
+
+    // string encoding
+
+    toJSON() {
+      const plain = {
+        key: this.key,
+        type: this.type,
+        children: this.children,
+        payload: this.payload,
+      };
+
+      // TODO: awkward
+      if (this._id) {
+        plain._id = this._id;
+      }
+
+      return plain;
+    },
+  };
+
+  const Scene = Object.create(Node);
+  Scene.type  = 'scene';
+
+  const xmlns = 'http://www.w3.org/2000/svg';
+
+  Scene.toVDOMNode = function() {
+    return {
+      tag:      'svg',
+      children: [],
+      props: {
+        'data-key':   this.key,
+        'data-type': 'content',
+        'viewBox':    this.viewBox.toString(),
+        xmlns:       'http://www.w3.org/2000/svg',
+      },
+    };
+  };
+
+  Scene.toSVGNode = function() {
+    return {
+      tag:      'svg',
+      children: [],
+      props: {
+        'viewBox': this.viewBox.toString(),
+        xmlns:     xmlns,
+      },
+    };
+  };
+
+  Scene.toOpeningTag = function() {
+    return {
+      markup: `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`,
+      key: this.key,
+    };
+  };
+
+  Scene.toClosingTag = function() {
+    return {
+      markup: '</svg>',
+      key: this.key,
+    };
+  };
+
+  const Group = Object.create(Node);
+  Group.type  = 'group';
+
+  Group.toVDOMNode = function() {
+    return {
+      tag:      'g',
+      children: [],
+      props: {
+        'data-key':   this.key,
+        'data-type': 'content',
+        transform:   this.transform.toString(),
+        class:       this.class.toString(),
+      },
+    };
+  };
+
+  Group.toSVGNode = function() {
+    const svgNode = {
+      tag:      'g',
+      children: [],
+      props:    {},
+    };
+
+    svgNode.props.transform = this.transform.toString();
+
+    return svgNode;
+  };
+
+  Group.toOpeningTag = function() {
+    return {
+      markup: '<g>',
+      key: this.key,
+    };
+  };
+
+  Group.toClosingTag = function() {
+    return {
+      markup: '</g>',
+      key: this.key,
+    };
+  };
+
+  const Shape = Object.create(Node);
+  Shape.type  = 'shape';
+
+  Shape.toVDOMNode = function() {
+    return {
+      tag:      'path',
+      children: [],
+      props: {
+        'data-type': 'poly-curve',
+        d:           this.pathString(),
+        transform:   this.transform.toString(),
+      },
+    };
+  };
+
+  Shape.toVDOMCurves = function() {
+    const nodes   = [];
+    const splines = this.children;
+
+    for (let spline of splines) {
+      const segments = spline.children;
+      const curves   = spline.curves();
+
+      for (let i = 0; i < curves.length; i += 1) {
+        // this node will be the hit target for the curve:
+        nodes.push({
+          tag:      'path',
+          children: [],
+          props: {
+            'data-type': 'curve',
+            'data-key':   segments[i].key,
+            d:           curves[i].toPathString(),
+            transform:   this.transform.toString(),
+          },
+        });
+
+        // this node will display the curve stroke:
+        nodes.push({
+          tag:      'path',
+          children: [],
+          props: {
+            'data-type': 'curve-stroke',
+            d:           curves[i].toPathString(),
+            transform:   this.transform.toString(),
+          },
+        });
+      }
+    }
+
+    return nodes;
+  };
+
+  Shape.toSVGNode = function() {
+    const svgNode = {
+      tag:      'path',
+      children: [],
+      props:    { d: this.pathString() },
+    };
+
+    // TODO: don't want to set a transform if it's a trivial transform
+    svgNode.props.transform = this.transform.toString();
+
+    return svgNode;
+  };
+
+  Shape.toOpeningTag = function() {
+    return {
+      markup: `<path d="${this.pathString()}" transform="${this.transform.toString()}">`,
+      key:    this.key,
+    };
+  };
+
+  Shape.toClosingTag = function() {
+    return {
+      markup: '</path>',
+      key: this.key,
+    };
+  };
+
+  Shape.pathString = function() {
+    let d = '';
+
+    for (let spline of this.children) {
+      const segment = spline.children[0];
+      d += `M ${segment.anchor.x} ${segment.anchor.y}`;
+
+      for (let i = 1; i < spline.children.length; i += 1) {
+        const currSeg = spline.children[i];
+        const prevSeg = spline.children[i - 1];
+
+        if (prevSeg.handleOut && currSeg.handleIn) {
+          d += ' C';
+        } else if (currSeg.handleIn || prevSeg.handleOut) {
+          d += ' Q';
+        } else {
+          d += ' L';
+        }
+
+        if (prevSeg.handleOut) {
+          d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
+        }
+
+        if (currSeg.handleIn) {
+          d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
+        }
+
+        d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
+      }
+    }
+
+    return d;
+  };
+
+  const Anchor    = Object.create(Node);
+  const HandleIn  = Object.create(Node);
+  const HandleOut = Object.create(Node);
+  const Doc        = Object.create(Node);
+  const Docs       = Object.create(Node); // TODO: get rid of this?
+  const Store      = Object.create(Node); // TODO: get rid of this?
+  const Markup     = Object.create(Node); // TODO: get rid of this?
+  const Message    = Object.create(Node); // TODO: get rid of this?
+  const Text       = Object.create(Node); // TODO: get rid of this?
+  const Identifier$1 = Object.create(Node); // TODO: get rid of this?
+
+  Anchor.type     = 'anchor';
+  HandleIn.type   = 'handleIn';
+  HandleOut.type  = 'handleOut';
+  Doc.type        = 'doc';
+  Store.type      = 'store';
+  Docs.type       = 'docs';
+  Markup.type     = 'markup';
+  Message.type    = 'message';
+  Text.type       = 'text';
+  Identifier$1.type = 'identifier';
+
+  const Segment = Object.create(Node);
+  Segment.type  = 'segment';
+
+  // convenience API for getting/setting anchor and handle values of a segment
+
+  Object.defineProperty(Segment, 'anchor', {
+    get() {
+      const anchorNode = this.children.find(child => child.type === 'anchor');
+
+      if (anchorNode) {
+        return anchorNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let anchorNode;
+
+      if (this.anchor) {
+        anchorNode = this.children.find(child => child.type === 'anchor');
+      } else {
+        anchorNode = Anchor.create();
+        this.append(anchorNode);
+      }
+
+      anchorNode.vector = value;
+    },
+  });
+
+  Object.defineProperty(Segment, 'handleIn', {
+    get() {
+      const handleNode = this.children.find(child => child.type === 'handleIn');
+
+      if (handleNode) {
+        return handleNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let handleNode;
+
+      if (this.handleIn) {
+        handleNode = this.children.find(child => child.type === 'handleIn');
+      } else {
+        handleNode = HandleIn.create();
+        this.append(handleNode);
+      }
+
+      handleNode.vector = value;
+    },
+  });
+
+  Object.defineProperty(Segment, 'handleOut', {
+    get() {
+      const handleNode = this.children.find(child => child.type === 'handleOut');
+
+      if (handleNode) {
+        return handleNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let handleNode;
+
+      if (this.handleOut) {
+        handleNode = this.children.find(child => child.type === 'handleOut');
+      } else {
+        handleNode = HandleOut.create();
+        this.append(handleNode);
+      }
+
+      handleNode.vector = value;
+
+    },
+  });
+
+  const Spline = Object.create(Node);
+  Spline.type  = 'spline';
+
+  // generate array of curves given by a spline
+  // (used to compute bounding boxes)
+
+  Spline.curves = function() {
+    const theCurves = [];
+
+    // this conditional creates a degenerate curve if
+    // there is exactly 1 segment in the spline
+    // TODO: this could be a problem!
+    if (this.children.length === 1) {
+      const start = this.children[0];
+      const end   = Segment.create();
+
+      theCurves.push(Curve.createFromSegments(start, end));
+    }
+
+    // if spline has exactly 1 segment, no curves will be
+    // generated by the following code
+    for (let i = 0; i + 1 < this.children.length; i += 1) {
+      const start = this.children[i];
+      const end = this.children[i + 1];
+
+      theCurves.push(Curve.createFromSegments(start, end));
+    }
+
+    return theCurves;
+  };
+
+  // update bounding box of a spline
+
+  Spline.updateBounds = function() {
+    const curves = this.curves();
+    let bounds;
+
+    // no curves
+    if (curves.length === 0) {
+      bounds = Rectangle.create();
+      this.payload.bounds = bounds;
+      return bounds;
+    }
+
+    // a single, degenerate curve
+    if (curves.length === 1 && curves[0].isDegenerate()) {
+      bounds = Rectangle.create();
+      this.payload.bounds = bounds;
+      return bounds;
+    }
+
+    // one or more (non-degenerate) curves
+
+    bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
+
+    for (let i = 1; i < curves.length; i += 1) {
+      const curveBounds = curves[i].bounds;
+      bounds = bounds.getBoundingRect(curveBounds);
+    }
+
+    this.payload.bounds = bounds;
+    return bounds;
+  };
+
   /**
    * 2 Dimensional Vector
    * @module vec2
@@ -3350,884 +4230,6 @@
     },
   };
 
-  const Class = {
-    create(classNames = []) {
-      return Object.create(Class).init(classNames);
-    },
-
-    init(classNames) {
-      if (classNames instanceof Array) {
-        this.set = new Set(classNames);
-      } else if (classNames instanceof Set) {
-        this.set = classNames;
-      } else {
-        throw new Error('Create Class instances from array or set');
-      }
-
-      return this;
-    },
-
-    // return value: string
-    toString() {
-      return Array.from(this.set).join(' ');
-    },
-
-    toJSON() {
-      return Array.from(this.set);
-    },
-
-    // return value: boolean
-    includes(className) {
-      return this.set.has(className);
-    },
-
-    // return value: new Class instance
-    add(className) {
-      return Class.create(this.set.add(className));
-    },
-
-    // return value: new Class instance
-    remove(className) {
-      this.set.delete(className);
-      return Class.create(this.set);
-    },
-  };
-
-  const createID = () => {
-    const randomString = Math.random().toString(36).substring(2);
-    const timestamp    = (new Date()).getTime().toString(36);
-    return randomString + timestamp;
-  };
-
-  const Node = {
-    create(opts = {}) {
-      const node = Object.create(this).init(opts);
-
-      if (Object.getPrototypeOf(node) === Doc) {
-        node._id = createID(); // NOTE: docs have an _id
-      }
-
-      return node;
-    },
-
-    init(opts) {
-      this.set(this.defaults());
-      this.set(opts);
-
-      return this;
-    },
-
-    defaults() {
-      return {
-        key:      createID(), // all nodes have a key
-        children: [],
-        parent:   null,
-        payload: {
-          transform: Matrix.identity(),
-          class:     Class.create(),
-          bounds:    null,
-        },
-        splitter: Vector.create(-1000, -1000), // off-canvas, far away
-      };
-    },
-
-    set(opts) {
-      for (let key of Object.keys(opts)) {
-        this[key] = opts[key];
-      }
-    },
-
-    // hierarchy (predicates)
-
-    isLeaf() {
-      return this.children.length === 0;
-    },
-
-    isRoot() {
-      return this.parent === null;
-    },
-
-    isSelected() {
-      return this.class.includes('selected');
-    },
-
-    // hierarchy (getters)
-    get root() {
-      return this.findAncestor(
-        node => node.parent === null
-      );
-    },
-
-    get store() {
-      return this.findAncestor(
-        node => node.type === 'store'
-      );
-    },
-
-    get message() {
-      return this.root.findDescendant(
-        node => node.type === 'message'
-      );
-    },
-
-    get scene() {
-      return this.root.findDescendant(
-        node => node.type === 'scene'
-      );
-    },
-
-    get docs() {
-      return this.root.findDescendant(
-        node => node.type === 'docs'
-      );
-    },
-
-    get doc() {
-      return this.root.findDescendant(
-        node => node.type === 'doc'
-      );
-    },
-
-    get markup() {
-      return this.root.findDescendant(
-        node => node.type === 'markup'
-      );
-    },
-
-    get leaves() {
-      return this.findDescendants(
-        node => node.children.length === 0
-      );
-    },
-
-    get ancestors() {
-      return this.findAncestors(
-        node => true
-      );
-    },
-
-    get properAncestors() {
-      return this.parent.findAncestors(
-        node => true
-      );
-    },
-
-    get descendants() {
-      return this.findDescendants(
-        node => true
-      );
-    },
-
-    get siblings() {
-      return this.parent.children.filter(
-        node => node !== this
-      );
-    },
-
-    get graphicsChildren() {
-      return this.children.filter(
-        node => ['group', 'shape'].includes(node.type)
-      );
-    },
-
-    get selected() {
-      return this.scene.findDescendant((node) => {
-        return node.class.includes('selected');
-      });
-    },
-
-    get editing() {
-      return this.scene.findDescendant((node) => {
-        return node.class.includes('editing');
-      });
-    },
-
-    get frontier() {
-      return this.scene.findDescendants((node) => {
-        return node.class.includes('frontier');
-      });
-    },
-
-    get lastChild() {
-      return this.children[this.children.length - 1];
-    },
-
-    // payload (getters/setters)
-
-    get transform() {
-      return this.payload.transform;
-    },
-
-    set transform(value) {
-      this.payload.transform = value;
-    },
-
-    get class() {
-      return this.payload.class;
-    },
-
-    set class(value) {
-      this.payload.class = value;
-    },
-
-    get bounds() {
-      if ([
-        'segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
-        return null;
-      }
-
-      if (this.payload.bounds) {
-        return this.payload.bounds;
-      }
-
-      return this.updateBounds();
-    },
-
-    updateBounds() {
-      const ignoredTypes = [
-        'store',
-        'doc',
-        'scene',
-        'segment',
-        'anchor',
-        'handleIn',
-        'handleOut'
-      ];
-
-      if (ignoredTypes.includes(this.type)) { return; }
-
-      const corners = [];
-      for (let child of this.children) {
-        for (let corner of child.bounds.corners) {
-          corners.push(corner.transform(child.transform));
-        }
-      }
-
-      const xValue  = vector => vector.x;
-      const xValues = corners.map(xValue);
-      const yValue  = vector => vector.y;
-      const yValues = corners.map(yValue);
-
-      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
-
-      const bounds = Rectangle.createFromMinMax(min, max);
-
-      this.payload.bounds = bounds;
-      return bounds;
-    },
-
-    set bounds(value) {
-      this.payload.bounds = value;
-    },
-
-    get viewBox() {
-      return this.payload.viewBox;
-    },
-
-    set viewBox(value) {
-      this.payload.viewBox = value;
-    },
-
-    get vector() {
-      return this.payload.vector;
-    },
-
-    set vector(value) {
-      this.payload.vector = value;
-    },
-
-    // traversal
-
-    // NOTE: a node is an ancestor of itself
-    findAncestor(predicate) {
-      if (predicate(this)) {
-        return this;
-      } else if (this.parent === null) {
-        return null;
-      } else {
-        return this.parent.findAncestor(predicate);
-      }
-    },
-
-    // NOTE: a node is an ancestor of itself
-    findAncestors(predicate, ancestors = []) {
-      if (predicate(this)) {
-        ancestors.push(this);
-      }
-
-      if (this.parent === null) {
-        return ancestors;
-      } else {
-        return this.parent.findAncestors(predicate, ancestors);
-      }
-    },
-
-    // NOTE: a node is a descendant of itself
-    findDescendant(predicate) {
-      if (predicate(this)) {
-        return this;
-      } else {
-        for (let child of this.children) {
-          let val = child.findDescendant(predicate);
-          if (val) { return val; }
-        }
-      }
-
-      return null;
-    },
-
-    // NOTE: a node is a descendant of itself
-    findDescendants(predicate, descendants = []) {
-      if (predicate(this)) {
-        descendants.push(this);
-      }
-
-      for (let child of this.children) {
-        child.findDescendants(predicate, descendants);
-      }
-
-      return descendants;
-    },
-
-    findDescendantByKey(key) {
-      return this.findDescendant((node) => {
-        return node.key === key;
-      });
-    },
-
-    findDescendantByClass(className) {
-      return this.findDescendant((node) => {
-        return node.class.includes(className);
-      });
-    },
-
-    findAncestorByClass(className) {
-      return this.findAncestor((node) => {
-        return node.class.includes(className);
-      })
-    },
-
-    // tree manipulation
-
-    append(node) {
-      this.children = this.children.concat([node]);
-      node.parent = this;
-    },
-
-    replaceWith(node) {
-      node.parent = this.parent;
-      const index = this.parent.children.indexOf(this);
-      this.parent.children.splice(index, 1, node);
-    },
-
-    insertChild(node, index) {
-      node.parent = this;
-      this.children.splice(index, 0, node);
-    },
-
-     // hit testing: is a point within the bounding box of this shape?
-
-    contains(globalPoint) {
-      return globalPoint
-        .transform(this.globalTransform().invert())
-        .isWithin(this.bounds);
-    },
-
-    // classes
-
-    setFrontier() {
-      this.removeFrontier();
-
-      if (this.selected) {
-        this.selected.class = this.selected.class.add('frontier');
-
-        let node = this.selected;
-
-        do {
-          for (let sibling of node.siblings) {
-            sibling.class = sibling.class.add('frontier');
-          }
-          node = node.parent;
-        } while (node.parent !== null);
-      } else {
-        for (let child of this.scene.children) {
-          child.class = child.class.add('frontier');
-        }
-      }
-    },
-
-    removeFrontier() {
-      const frontier = this.scene.findDescendants((node) => {
-        return node.class.includes('frontier');
-      });
-
-      for (let node of frontier) {
-        node.class.remove('frontier');
-      }
-    },
-
-    focus() {
-      this.class = this.class.add('focus');
-    },
-
-    unfocusAll() {
-      const focussed = this.scene.findDescendants((node) => {
-        return node.class.includes('focus');
-      });
-
-      for (let node of focussed) {
-        node.class.remove('focus');
-      }
-    },
-
-    select() {
-      this.deselectAll();
-      this.class = this.class.add('selected');
-      this.setFrontier();
-    },
-
-    edit() {
-      this.deselectAll();
-      this.setFrontier();
-      this.class = this.class.add('editing');
-    },
-
-    deselectAll() {
-      if (this.selected) {
-        this.selected.class.remove('selected');
-      }
-      this.setFrontier();
-    },
-
-    deeditAll() {
-      if (this.editing) {
-        this.editing.class.remove('editing');
-      }
-    },
-
-    // transforms
-
-    globalTransform() {
-      return this.ancestorTransform().multiply(this.transform);
-    },
-
-    // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
-    ancestorTransform() {
-      let matrix = Matrix.identity();
-
-      // we use properAncestors, which does not include the current node:
-      for (let ancestor of this.properAncestors.reverse()) {
-        matrix = matrix.multiply(ancestor.transform);
-      }
-
-      return matrix;
-    },
-
-    rotate(angle, center) {
-      center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix.rotation(angle, center).multiply(this.transform);
-    },
-
-    scale(factor, center) {
-      center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix.scale(factor, center).multiply(this.transform);
-    },
-
-    translate(offset) {
-      this.transform = this
-        .ancestorTransform().invert()
-        .multiply(Matrix.translation(offset))
-        .multiply(this.globalTransform());
-    },
-
-    globalScaleFactor() {
-      const total  = this.globalTransform();
-      const a      = total.m[0][0];
-      const b      = total.m[1][0];
-
-      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-    },
-
-    // string encoding
-
-    toJSON() {
-      const plain = {
-        key: this.key,
-        type: this.type,
-        children: this.children,
-        payload: this.payload,
-      };
-
-      // TODO: awkward
-      if (this._id) {
-        plain._id = this._id;
-      }
-
-      return plain;
-    },
-  };
-
-  const Scene = Object.create(Node);
-  Scene.type  = 'scene';
-
-  Scene.toVDOMNode = function() {
-    return {
-      tag:      'svg',
-      children: [],
-      props: {
-        'data-key':   this.key,
-        'data-type': 'content',
-        'viewBox':    this.viewBox.toString(),
-        xmlns:       'http://www.w3.org/2000/svg',
-      },
-    };
-  };
-
-  Scene.toSVGNode = function() {
-    return {
-      tag:      'svg',
-      children: [],
-      props: {
-        'viewBox': this.viewBox.toString(),
-        xmlns:     'http://www.w3.org/2000/svg',
-      },
-    };
-  };
-
-  Scene.toOpeningTag = function() {
-    return {
-      markup: '<svg>',
-      key: this.key,
-    };
-  };
-
-  Scene.toClosingTag = function() {
-    return {
-      markup: '</svg>',
-      key: this.key,
-    };
-  };
-
-  const Group = Object.create(Node);
-  Group.type  = 'group';
-
-  Group.toVDOMNode = function() {
-    return {
-      tag:      'g',
-      children: [],
-      props: {
-        'data-key':   this.key,
-        'data-type': 'content',
-        transform:   this.transform.toString(),
-        class:       this.class.toString(),
-      },
-    };
-  };
-
-  Group.toSVGNode = function() {
-    const svgNode = {
-      tag:      'g',
-      children: [],
-      props:    {},
-    };
-
-    svgNode.props.transform = this.transform.toString();
-
-    return svgNode;
-  };
-
-  Group.toOpeningTag = function() {
-    return {
-      markup: '<g>',
-      key: this.key,
-    };
-  };
-
-  Group.toClosingTag = function() {
-    return {
-      markup: '</g>',
-      key: this.key,
-    };
-  };
-
-  const Shape = Object.create(Node);
-  Shape.type  = 'shape';
-
-  Shape.toVDOMNode = function() {
-    return {
-      tag:      'path',
-      children: [],
-      props: {
-        'data-type': 'poly-curve',
-        d:           this.pathString(),
-        transform:   this.transform.toString(),
-      },
-    };
-  };
-
-  Shape.toVDOMCurveNodes = function() {
-    const nodes   = [];
-    const splines = this.children;
-
-    for (let spline of splines) {
-      const segments = spline.children;
-      const curves   = spline.curves();
-
-      for (let i = 0; i < curves.length; i += 1) {
-        // this node will be the hit target for the curve:
-        nodes.push({
-          tag:      'path',
-          children: [],
-          props: {
-            'data-type': 'curve',
-            'data-key':   segments[i].key,
-            d:           curves[i].toPathString(),
-            transform:   this.transform.toString(),
-          },
-        });
-
-        // this node will display the curve stroke:
-        nodes.push({
-          tag:      'path',
-          children: [],
-          props: {
-            'data-type': 'curve-stroke',
-            d:           curves[i].toPathString(),
-            transform:   this.transform.toString(),
-          },
-        });
-      }
-    }
-
-    return nodes;
-  };
-
-  Shape.toSVGNode = function() {
-    const svgNode = {
-      tag:      'path',
-      children: [],
-      props:    { d: this.pathString() },
-    };
-
-    // TODO: don't want to set a transform if it's a trivial transform
-    svgNode.props.transform = this.transform.toString();
-
-    return svgNode;
-  };
-
-  Shape.toOpeningTag = function() {
-    return {
-      markup: '<path>',
-      key: this.key,
-    };
-  };
-
-  Shape.toClosingTag = function() {
-    return {
-      markup: '</path>',
-      key: this.key,
-    };
-  };
-
-  Shape.pathString = function() {
-    let d = '';
-
-    for (let spline of this.children) {
-      const segment = spline.children[0];
-      d += `M ${segment.anchor.x} ${segment.anchor.y}`;
-
-      for (let i = 1; i < spline.children.length; i += 1) {
-        const currSeg = spline.children[i];
-        const prevSeg = spline.children[i - 1];
-
-        if (prevSeg.handleOut && currSeg.handleIn) {
-          d += ' C';
-        } else if (currSeg.handleIn || prevSeg.handleOut) {
-          d += ' Q';
-        } else {
-          d += ' L';
-        }
-
-        if (prevSeg.handleOut) {
-          d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
-        }
-
-        if (currSeg.handleIn) {
-          d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
-        }
-
-        d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
-      }
-    }
-
-    return d;
-  };
-
-  const Anchor    = Object.create(Node);
-  const HandleIn  = Object.create(Node);
-  const HandleOut = Object.create(Node);
-  const Doc        = Object.create(Node);
-  const Docs       = Object.create(Node); // TODO: get rid of this?
-  const Store      = Object.create(Node); // TODO: get rid of this?
-  const Markup     = Object.create(Node); // TODO: get rid of this?
-  const Message    = Object.create(Node); // TODO: get rid of this?
-  const Text       = Object.create(Node); // TODO: get rid of this?
-  const Identifier$1 = Object.create(Node); // TODO: get rid of this?
-
-  Anchor.type     = 'anchor';
-  HandleIn.type   = 'handleIn';
-  HandleOut.type  = 'handleOut';
-  Doc.type        = 'doc';
-  Store.type      = 'store';
-  Docs.type       = 'docs';
-  Markup.type     = 'markup';
-  Message.type    = 'message';
-  Text.type       = 'text';
-  Identifier$1.type = 'identifier';
-
-  const Segment = Object.create(Node);
-  Segment.type  = 'segment';
-
-  // convenience API for getting/setting anchor and handle values of a segment
-
-  Object.defineProperty(Segment, 'anchor', {
-    get() {
-      const anchorNode = this.children.find(child => child.type === 'anchor');
-
-      if (anchorNode) {
-        return anchorNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let anchorNode;
-
-      if (this.anchor) {
-        anchorNode = this.children.find(child => child.type === 'anchor');
-      } else {
-        anchorNode = Anchor.create();
-        this.append(anchorNode);
-      }
-
-      anchorNode.vector = value;
-    },
-  });
-
-  Object.defineProperty(Segment, 'handleIn', {
-    get() {
-      const handleNode = this.children.find(child => child.type === 'handleIn');
-
-      if (handleNode) {
-        return handleNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let handleNode;
-
-      if (this.handleIn) {
-        handleNode = this.children.find(child => child.type === 'handleIn');
-      } else {
-        handleNode = HandleIn.create();
-        this.append(handleNode);
-      }
-
-      handleNode.vector = value;
-    },
-  });
-
-  Object.defineProperty(Segment, 'handleOut', {
-    get() {
-      const handleNode = this.children.find(child => child.type === 'handleOut');
-
-      if (handleNode) {
-        return handleNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let handleNode;
-
-      if (this.handleOut) {
-        handleNode = this.children.find(child => child.type === 'handleOut');
-      } else {
-        handleNode = HandleOut.create();
-        this.append(handleNode);
-      }
-
-      handleNode.vector = value;
-
-    },
-  });
-
-  const Spline = Object.create(Node);
-  Spline.type  = 'spline';
-
-  // generate array of curves given by a spline
-  // (used to compute bounding boxes)
-
-  Spline.curves = function() {
-    const theCurves = [];
-
-    // this conditional creates a degenerate curve if
-    // there is exactly 1 segment in the spline
-    // TODO: this could be a problem!
-    if (this.children.length === 1) {
-      const start = this.children[0];
-      const end   = Segment.create();
-
-      theCurves.push(Curve.createFromSegments(start, end));
-    }
-
-    // if spline has exactly 1 segment, no curves will be
-    // generated by the following code
-    for (let i = 0; i + 1 < this.children.length; i += 1) {
-      const start = this.children[i];
-      const end = this.children[i + 1];
-
-      theCurves.push(Curve.createFromSegments(start, end));
-    }
-
-    return theCurves;
-  };
-
-  // update bounding box of a spline
-
-  Spline.updateBounds = function() {
-    const curves = this.curves();
-    let bounds;
-
-    // no curves
-    if (curves.length === 0) {
-      bounds = Rectangle.create();
-      this.payload.bounds = bounds;
-      return bounds;
-    }
-
-    // a single, degenerate curve
-    if (curves.length === 1 && curves[0].isDegenerate()) {
-      bounds = Rectangle.create();
-      this.payload.bounds = bounds;
-      return bounds;
-    }
-
-    // one or more (non-degenerate) curves
-
-    bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
-
-    for (let i = 1; i < curves.length; i += 1) {
-      const curveBounds = curves[i].bounds;
-      bounds = bounds.getBoundingRect(curveBounds);
-    }
-
-    this.payload.bounds = bounds;
-    return bounds;
-  };
-
   var extendStatics=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(t,a){t.__proto__=a;}||function(t,a){for(var r in a)a.hasOwnProperty(r)&&(t[r]=a[r]);};function __extends(t,a){function r(){this.constructor=t;}extendStatics(t,a),t.prototype=null===a?Object.create(a):(r.prototype=a.prototype,new r);}function rotate$2(t,a){var r=t[0],e=t[1];return [r*Math.cos(a)-e*Math.sin(a),r*Math.sin(a)+e*Math.cos(a)]}function assertNumbers(){for(var t=[],a=0;a<arguments.length;a++)t[a]=arguments[a];for(var r=0;r<t.length;r++)if("number"!=typeof t[r])throw new Error("assertNumbers arguments["+r+"] is not a number. "+typeof t[r]+" == typeof "+t[r]);return !0}var PI=Math.PI;function annotateArcCommand(t,a,r){t.lArcFlag=0===t.lArcFlag?0:1,t.sweepFlag=0===t.sweepFlag?0:1;var e=t.rX,n=t.rY,i=t.x,o=t.y;e=Math.abs(t.rX),n=Math.abs(t.rY);var s=rotate$2([(a-i)/2,(r-o)/2],-t.xRot/180*PI),h=s[0],u=s[1],c=Math.pow(h,2)/Math.pow(e,2)+Math.pow(u,2)/Math.pow(n,2);1<c&&(e*=Math.sqrt(c),n*=Math.sqrt(c)),t.rX=e,t.rY=n;var m=Math.pow(e,2)*Math.pow(u,2)+Math.pow(n,2)*Math.pow(h,2),_=(t.lArcFlag!==t.sweepFlag?1:-1)*Math.sqrt(Math.max(0,(Math.pow(e,2)*Math.pow(n,2)-m)/m)),T=e*u/n*_,O=-n*h/e*_,p=rotate$2([T,O],t.xRot/180*PI);t.cX=p[0]+(a+i)/2,t.cY=p[1]+(r+o)/2,t.phi1=Math.atan2((u-O)/n,(h-T)/e),t.phi2=Math.atan2((-u-O)/n,(-h-T)/e),0===t.sweepFlag&&t.phi2>t.phi1&&(t.phi2-=2*PI),1===t.sweepFlag&&t.phi2<t.phi1&&(t.phi2+=2*PI),t.phi1*=180/PI,t.phi2*=180/PI;}function intersectionUnitCircleLine(t,a,r){assertNumbers(t,a,r);var e=t*t+a*a-r*r;if(0>e)return [];if(0===e)return [[t*r/(t*t+a*a),a*r/(t*t+a*a)]];var n=Math.sqrt(e);return [[(t*r+a*n)/(t*t+a*a),(a*r-t*n)/(t*t+a*a)],[(t*r-a*n)/(t*t+a*a),(a*r+t*n)/(t*t+a*a)]]}var SVGPathDataTransformer,DEG=Math.PI/180;function lerp$1(t,a,r){return (1-r)*t+r*a}function arcAt(t,a,r,e){return t+Math.cos(e/180*PI)*a+Math.sin(e/180*PI)*r}function bezierRoot(t,a,r,e){var n=a-t,i=r-a,o=3*n+3*(e-r)-6*i,s=6*(i-n),h=3*n;return Math.abs(o)<1e-6?[-h/s]:pqFormula(s/o,h/o,1e-6)}function bezierAt(t,a,r,e,n){var i=1-n;return t*(i*i*i)+a*(3*i*i*n)+r*(3*i*n*n)+e*(n*n*n)}function pqFormula(t,a,r){void 0===r&&(r=1e-6);var e=t*t/4-a;if(e<-r)return [];if(e<=r)return [-t/2];var n=Math.sqrt(e);return [-t/2-n,-t/2+n]}function a2c(t,a,r){var e,n,i,o;t.cX||annotateArcCommand(t,a,r);for(var s=Math.min(t.phi1,t.phi2),h=Math.max(t.phi1,t.phi2)-s,u=Math.ceil(h/90),c=new Array(u),m=a,_=r,T=0;T<u;T++){var O=lerp$1(t.phi1,t.phi2,T/u),p=lerp$1(t.phi1,t.phi2,(T+1)/u),y=p-O,S=4/3*Math.tan(y*DEG/4),f=[Math.cos(O*DEG)-S*Math.sin(O*DEG),Math.sin(O*DEG)+S*Math.cos(O*DEG)],V=f[0],N=f[1],D=[Math.cos(p*DEG),Math.sin(p*DEG)],P=D[0],l=D[1],v=[P+S*Math.sin(p*DEG),l-S*Math.cos(p*DEG)],E=v[0],A=v[1];c[T]={relative:t.relative,type:SVGPathData.CURVE_TO};var d=function(a,r){var e=rotate$2([a*t.rX,r*t.rY],t.xRot),n=e[0],i=e[1];return [t.cX+n,t.cY+i]};e=d(V,N),c[T].x1=e[0],c[T].y1=e[1],n=d(E,A),c[T].x2=n[0],c[T].y2=n[1],i=d(P,l),c[T].x=i[0],c[T].y=i[1],t.relative&&(c[T].x1-=m,c[T].y1-=_,c[T].x2-=m,c[T].y2-=_,c[T].x-=m,c[T].y-=_),m=(o=[c[T].x,c[T].y])[0],_=o[1];}return c}!function(t){function a(){return n(function(t,a,r){return t.relative&&(void 0!==t.x1&&(t.x1+=a),void 0!==t.y1&&(t.y1+=r),void 0!==t.x2&&(t.x2+=a),void 0!==t.y2&&(t.y2+=r),void 0!==t.x&&(t.x+=a),void 0!==t.y&&(t.y+=r),t.relative=!1),t})}function r(){var t=NaN,a=NaN,r=NaN,e=NaN;return n(function(n,i,o){return n.type&SVGPathData.SMOOTH_CURVE_TO&&(n.type=SVGPathData.CURVE_TO,t=isNaN(t)?i:t,a=isNaN(a)?o:a,n.x1=n.relative?i-t:2*i-t,n.y1=n.relative?o-a:2*o-a),n.type&SVGPathData.CURVE_TO?(t=n.relative?i+n.x2:n.x2,a=n.relative?o+n.y2:n.y2):(t=NaN,a=NaN),n.type&SVGPathData.SMOOTH_QUAD_TO&&(n.type=SVGPathData.QUAD_TO,r=isNaN(r)?i:r,e=isNaN(e)?o:e,n.x1=n.relative?i-r:2*i-r,n.y1=n.relative?o-e:2*o-e),n.type&SVGPathData.QUAD_TO?(r=n.relative?i+n.x1:n.x1,e=n.relative?o+n.y1:n.y1):(r=NaN,e=NaN),n})}function e(){var t=NaN,a=NaN;return n(function(r,e,n){if(r.type&SVGPathData.SMOOTH_QUAD_TO&&(r.type=SVGPathData.QUAD_TO,t=isNaN(t)?e:t,a=isNaN(a)?n:a,r.x1=r.relative?e-t:2*e-t,r.y1=r.relative?n-a:2*n-a),r.type&SVGPathData.QUAD_TO){t=r.relative?e+r.x1:r.x1,a=r.relative?n+r.y1:r.y1;var i=r.x1,o=r.y1;r.type=SVGPathData.CURVE_TO,r.x1=((r.relative?0:e)+2*i)/3,r.y1=((r.relative?0:n)+2*o)/3,r.x2=(r.x+2*i)/3,r.y2=(r.y+2*o)/3;}else t=NaN,a=NaN;return r})}function n(t){var a=0,r=0,e=NaN,n=NaN;return function(i){if(isNaN(e)&&!(i.type&SVGPathData.MOVE_TO))throw new Error("path must start with moveto");var o=t(i,a,r,e,n);return i.type&SVGPathData.CLOSE_PATH&&(a=e,r=n),void 0!==i.x&&(a=i.relative?a+i.x:i.x),void 0!==i.y&&(r=i.relative?r+i.y:i.y),i.type&SVGPathData.MOVE_TO&&(e=a,n=r),o}}function i(t,a,r,e,i,o){return assertNumbers(t,a,r,e,i,o),n(function(n,s,h,u){var c=n.x1,m=n.x2,_=n.relative&&!isNaN(u),T=void 0!==n.x?n.x:_?0:s,O=void 0!==n.y?n.y:_?0:h;function p(t){return t*t}n.type&SVGPathData.HORIZ_LINE_TO&&0!==a&&(n.type=SVGPathData.LINE_TO,n.y=n.relative?0:h),n.type&SVGPathData.VERT_LINE_TO&&0!==r&&(n.type=SVGPathData.LINE_TO,n.x=n.relative?0:s),void 0!==n.x&&(n.x=n.x*t+O*r+(_?0:i)),void 0!==n.y&&(n.y=T*a+n.y*e+(_?0:o)),void 0!==n.x1&&(n.x1=n.x1*t+n.y1*r+(_?0:i)),void 0!==n.y1&&(n.y1=c*a+n.y1*e+(_?0:o)),void 0!==n.x2&&(n.x2=n.x2*t+n.y2*r+(_?0:i)),void 0!==n.y2&&(n.y2=m*a+n.y2*e+(_?0:o));var y=t*e-a*r;if(void 0!==n.xRot&&(1!==t||0!==a||0!==r||1!==e))if(0===y)delete n.rX,delete n.rY,delete n.xRot,delete n.lArcFlag,delete n.sweepFlag,n.type=SVGPathData.LINE_TO;else{var S=n.xRot*Math.PI/180,f=Math.sin(S),V=Math.cos(S),N=1/p(n.rX),D=1/p(n.rY),P=p(V)*N+p(f)*D,l=2*f*V*(N-D),v=p(f)*N+p(V)*D,E=P*e*e-l*a*e+v*a*a,A=l*(t*e+a*r)-2*(P*r*e+v*t*a),d=P*r*r-l*t*r+v*t*t,G=(Math.atan2(A,E-d)+Math.PI)%Math.PI/2,C=Math.sin(G),x=Math.cos(G);n.rX=Math.abs(y)/Math.sqrt(E*p(x)+A*C*x+d*p(C)),n.rY=Math.abs(y)/Math.sqrt(E*p(C)-A*C*x+d*p(x)),n.xRot=180*G/Math.PI;}return void 0!==n.sweepFlag&&0>y&&(n.sweepFlag=+!n.sweepFlag),n})}function o(){return function(t){var a={};for(var r in t)a[r]=t[r];return a}}t.ROUND=function(t){function a(a){return Math.round(a*t)/t}return void 0===t&&(t=1e13),assertNumbers(t),function(t){return void 0!==t.x1&&(t.x1=a(t.x1)),void 0!==t.y1&&(t.y1=a(t.y1)),void 0!==t.x2&&(t.x2=a(t.x2)),void 0!==t.y2&&(t.y2=a(t.y2)),void 0!==t.x&&(t.x=a(t.x)),void 0!==t.y&&(t.y=a(t.y)),t}},t.TO_ABS=a,t.TO_REL=function(){return n(function(t,a,r){return t.relative||(void 0!==t.x1&&(t.x1-=a),void 0!==t.y1&&(t.y1-=r),void 0!==t.x2&&(t.x2-=a),void 0!==t.y2&&(t.y2-=r),void 0!==t.x&&(t.x-=a),void 0!==t.y&&(t.y-=r),t.relative=!0),t})},t.NORMALIZE_HVZ=function(t,a,r){return void 0===t&&(t=!0),void 0===a&&(a=!0),void 0===r&&(r=!0),n(function(e,n,i,o,s){if(isNaN(o)&&!(e.type&SVGPathData.MOVE_TO))throw new Error("path must start with moveto");return a&&e.type&SVGPathData.HORIZ_LINE_TO&&(e.type=SVGPathData.LINE_TO,e.y=e.relative?0:i),r&&e.type&SVGPathData.VERT_LINE_TO&&(e.type=SVGPathData.LINE_TO,e.x=e.relative?0:n),t&&e.type&SVGPathData.CLOSE_PATH&&(e.type=SVGPathData.LINE_TO,e.x=e.relative?o-n:o,e.y=e.relative?s-i:s),e.type&SVGPathData.ARC&&(0===e.rX||0===e.rY)&&(e.type=SVGPathData.LINE_TO,delete e.rX,delete e.rY,delete e.xRot,delete e.lArcFlag,delete e.sweepFlag),e})},t.NORMALIZE_ST=r,t.QT_TO_C=e,t.INFO=n,t.SANITIZE=function(t){void 0===t&&(t=0),assertNumbers(t);var a=NaN,r=NaN,e=NaN,i=NaN;return n(function(n,o,s,h,u){var c=Math.abs,m=!1,_=0,T=0;if(n.type&SVGPathData.SMOOTH_CURVE_TO&&(_=isNaN(a)?0:o-a,T=isNaN(r)?0:s-r),n.type&(SVGPathData.CURVE_TO|SVGPathData.SMOOTH_CURVE_TO)?(a=n.relative?o+n.x2:n.x2,r=n.relative?s+n.y2:n.y2):(a=NaN,r=NaN),n.type&SVGPathData.SMOOTH_QUAD_TO?(e=isNaN(e)?o:2*o-e,i=isNaN(i)?s:2*s-i):n.type&SVGPathData.QUAD_TO?(e=n.relative?o+n.x1:n.x1,i=n.relative?s+n.y1:n.y2):(e=NaN,i=NaN),n.type&SVGPathData.LINE_COMMANDS||n.type&SVGPathData.ARC&&(0===n.rX||0===n.rY||!n.lArcFlag)||n.type&SVGPathData.CURVE_TO||n.type&SVGPathData.SMOOTH_CURVE_TO||n.type&SVGPathData.QUAD_TO||n.type&SVGPathData.SMOOTH_QUAD_TO){var O=void 0===n.x?0:n.relative?n.x:n.x-o,p=void 0===n.y?0:n.relative?n.y:n.y-s;_=isNaN(e)?void 0===n.x1?_:n.relative?n.x:n.x1-o:e-o,T=isNaN(i)?void 0===n.y1?T:n.relative?n.y:n.y1-s:i-s;var y=void 0===n.x2?0:n.relative?n.x:n.x2-o,S=void 0===n.y2?0:n.relative?n.y:n.y2-s;c(O)<=t&&c(p)<=t&&c(_)<=t&&c(T)<=t&&c(y)<=t&&c(S)<=t&&(m=!0);}return n.type&SVGPathData.CLOSE_PATH&&c(o-h)<=t&&c(s-u)<=t&&(m=!0),m?[]:n})},t.MATRIX=i,t.ROTATE=function(t,a,r){void 0===a&&(a=0),void 0===r&&(r=0),assertNumbers(t,a,r);var e=Math.sin(t),n=Math.cos(t);return i(n,e,-e,n,a-a*n+r*e,r-a*e-r*n)},t.TRANSLATE=function(t,a){return void 0===a&&(a=0),assertNumbers(t,a),i(1,0,0,1,t,a)},t.SCALE=function(t,a){return void 0===a&&(a=t),assertNumbers(t,a),i(t,0,0,a,0,0)},t.SKEW_X=function(t){return assertNumbers(t),i(1,0,Math.atan(t),1,0,0)},t.SKEW_Y=function(t){return assertNumbers(t),i(1,Math.atan(t),0,1,0,0)},t.X_AXIS_SYMMETRY=function(t){return void 0===t&&(t=0),assertNumbers(t),i(-1,0,0,1,t,0)},t.Y_AXIS_SYMMETRY=function(t){return void 0===t&&(t=0),assertNumbers(t),i(1,0,0,-1,0,t)},t.A_TO_C=function(){return n(function(t,a,r){return SVGPathData.ARC===t.type?a2c(t,t.relative?0:a,t.relative?0:r):t})},t.ANNOTATE_ARCS=function(){return n(function(t,a,r){return t.relative&&(a=0,r=0),SVGPathData.ARC===t.type&&annotateArcCommand(t,a,r),t})},t.CLONE=o,t.CALCULATE_BOUNDS=function(){var t=function(t){var a={};for(var r in t)a[r]=t[r];return a},i=a(),o=e(),s=r(),h=n(function(a,r,e){var n=s(o(i(t(a))));function u(t){t>h.maxX&&(h.maxX=t),t<h.minX&&(h.minX=t);}function c(t){t>h.maxY&&(h.maxY=t),t<h.minY&&(h.minY=t);}if(n.type&SVGPathData.DRAWING_COMMANDS&&(u(r),c(e)),n.type&SVGPathData.HORIZ_LINE_TO&&u(n.x),n.type&SVGPathData.VERT_LINE_TO&&c(n.y),n.type&SVGPathData.LINE_TO&&(u(n.x),c(n.y)),n.type&SVGPathData.CURVE_TO){u(n.x),c(n.y);for(var m=0,_=bezierRoot(r,n.x1,n.x2,n.x);m<_.length;m++)0<(G=_[m])&&1>G&&u(bezierAt(r,n.x1,n.x2,n.x,G));for(var T=0,O=bezierRoot(e,n.y1,n.y2,n.y);T<O.length;T++)0<(G=O[T])&&1>G&&c(bezierAt(e,n.y1,n.y2,n.y,G));}if(n.type&SVGPathData.ARC){u(n.x),c(n.y),annotateArcCommand(n,r,e);for(var p=n.xRot/180*Math.PI,y=Math.cos(p)*n.rX,S=Math.sin(p)*n.rX,f=-Math.sin(p)*n.rY,V=Math.cos(p)*n.rY,N=n.phi1<n.phi2?[n.phi1,n.phi2]:-180>n.phi2?[n.phi2+360,n.phi1+360]:[n.phi2,n.phi1],D=N[0],P=N[1],l=function(t){var a=t[0],r=t[1],e=180*Math.atan2(r,a)/Math.PI;return e<D?e+360:e},v=0,E=intersectionUnitCircleLine(f,-y,0).map(l);v<E.length;v++)(G=E[v])>D&&G<P&&u(arcAt(n.cX,y,f,G));for(var A=0,d=intersectionUnitCircleLine(V,-S,0).map(l);A<d.length;A++){var G;(G=d[A])>D&&G<P&&c(arcAt(n.cY,S,V,G));}}return a});return h.minX=1/0,h.maxX=-1/0,h.minY=1/0,h.maxY=-1/0,h};}(SVGPathDataTransformer||(SVGPathDataTransformer={}));var _a,_a$1,TransformableSVG=function(){function t(){}return t.prototype.round=function(t){return this.transform(SVGPathDataTransformer.ROUND(t))},t.prototype.toAbs=function(){return this.transform(SVGPathDataTransformer.TO_ABS())},t.prototype.toRel=function(){return this.transform(SVGPathDataTransformer.TO_REL())},t.prototype.normalizeHVZ=function(t,a,r){return this.transform(SVGPathDataTransformer.NORMALIZE_HVZ(t,a,r))},t.prototype.normalizeST=function(){return this.transform(SVGPathDataTransformer.NORMALIZE_ST())},t.prototype.qtToC=function(){return this.transform(SVGPathDataTransformer.QT_TO_C())},t.prototype.aToC=function(){return this.transform(SVGPathDataTransformer.A_TO_C())},t.prototype.sanitize=function(t){return this.transform(SVGPathDataTransformer.SANITIZE(t))},t.prototype.translate=function(t,a){return this.transform(SVGPathDataTransformer.TRANSLATE(t,a))},t.prototype.scale=function(t,a){return this.transform(SVGPathDataTransformer.SCALE(t,a))},t.prototype.rotate=function(t,a,r){return this.transform(SVGPathDataTransformer.ROTATE(t,a,r))},t.prototype.matrix=function(t,a,r,e,n,i){return this.transform(SVGPathDataTransformer.MATRIX(t,a,r,e,n,i))},t.prototype.skewX=function(t){return this.transform(SVGPathDataTransformer.SKEW_X(t))},t.prototype.skewY=function(t){return this.transform(SVGPathDataTransformer.SKEW_Y(t))},t.prototype.xSymmetry=function(t){return this.transform(SVGPathDataTransformer.X_AXIS_SYMMETRY(t))},t.prototype.ySymmetry=function(t){return this.transform(SVGPathDataTransformer.Y_AXIS_SYMMETRY(t))},t.prototype.annotateArcs=function(){return this.transform(SVGPathDataTransformer.ANNOTATE_ARCS())},t}(),isWhiteSpace=function(t){return " "===t||"\t"===t||"\r"===t||"\n"===t},isDigit=function(t){return "0".charCodeAt(0)<=t.charCodeAt(0)&&t.charCodeAt(0)<="9".charCodeAt(0)},SVGPathDataParser$$1=function(t){function a(){var a=t.call(this)||this;return a.curNumber="",a.curCommandType=-1,a.curCommandRelative=!1,a.canParseCommandOrComma=!0,a.curNumberHasExp=!1,a.curNumberHasExpDigits=!1,a.curNumberHasDecimal=!1,a.curArgs=[],a}return __extends(a,t),a.prototype.finish=function(t){if(void 0===t&&(t=[]),this.parse(" ",t),0!==this.curArgs.length||!this.canParseCommandOrComma)throw new SyntaxError("Unterminated command at the path end.");return t},a.prototype.parse=function(t,a){var r=this;void 0===a&&(a=[]);for(var e=function(t){a.push(t),r.curArgs.length=0,r.canParseCommandOrComma=!0;},n=0;n<t.length;n++){var i=t[n];if(isDigit(i))this.curNumber+=i,this.curNumberHasExpDigits=this.curNumberHasExp;else if("e"!==i&&"E"!==i)if("-"!==i&&"+"!==i||!this.curNumberHasExp||this.curNumberHasExpDigits)if("."!==i||this.curNumberHasExp||this.curNumberHasDecimal){if(this.curNumber&&-1!==this.curCommandType){var o=Number(this.curNumber);if(isNaN(o))throw new SyntaxError("Invalid number ending at "+n);if(this.curCommandType===SVGPathData.ARC)if(0===this.curArgs.length||1===this.curArgs.length){if(0>o)throw new SyntaxError('Expected positive number, got "'+o+'" at index "'+n+'"')}else if((3===this.curArgs.length||4===this.curArgs.length)&&"0"!==this.curNumber&&"1"!==this.curNumber)throw new SyntaxError('Expected a flag, got "'+this.curNumber+'" at index "'+n+'"');this.curArgs.push(o),this.curArgs.length===COMMAND_ARG_COUNTS[this.curCommandType]&&(SVGPathData.HORIZ_LINE_TO===this.curCommandType?e({type:SVGPathData.HORIZ_LINE_TO,relative:this.curCommandRelative,x:o}):SVGPathData.VERT_LINE_TO===this.curCommandType?e({type:SVGPathData.VERT_LINE_TO,relative:this.curCommandRelative,y:o}):this.curCommandType===SVGPathData.MOVE_TO||this.curCommandType===SVGPathData.LINE_TO||this.curCommandType===SVGPathData.SMOOTH_QUAD_TO?(e({type:this.curCommandType,relative:this.curCommandRelative,x:this.curArgs[0],y:this.curArgs[1]}),SVGPathData.MOVE_TO===this.curCommandType&&(this.curCommandType=SVGPathData.LINE_TO)):this.curCommandType===SVGPathData.CURVE_TO?e({type:SVGPathData.CURVE_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x2:this.curArgs[2],y2:this.curArgs[3],x:this.curArgs[4],y:this.curArgs[5]}):this.curCommandType===SVGPathData.SMOOTH_CURVE_TO?e({type:SVGPathData.SMOOTH_CURVE_TO,relative:this.curCommandRelative,x2:this.curArgs[0],y2:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===SVGPathData.QUAD_TO?e({type:SVGPathData.QUAD_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===SVGPathData.ARC&&e({type:SVGPathData.ARC,relative:this.curCommandRelative,rX:this.curArgs[0],rY:this.curArgs[1],xRot:this.curArgs[2],lArcFlag:this.curArgs[3],sweepFlag:this.curArgs[4],x:this.curArgs[5],y:this.curArgs[6]})),this.curNumber="",this.curNumberHasExpDigits=!1,this.curNumberHasExp=!1,this.curNumberHasDecimal=!1,this.canParseCommandOrComma=!0;}if(!isWhiteSpace(i))if(","===i&&this.canParseCommandOrComma)this.canParseCommandOrComma=!1;else if("+"!==i&&"-"!==i&&"."!==i){if(0!==this.curArgs.length)throw new SyntaxError("Unterminated command at index "+n+".");if(!this.canParseCommandOrComma)throw new SyntaxError('Unexpected character "'+i+'" at index '+n+". Command cannot follow comma");if(this.canParseCommandOrComma=!1,"z"!==i&&"Z"!==i)if("h"===i||"H"===i)this.curCommandType=SVGPathData.HORIZ_LINE_TO,this.curCommandRelative="h"===i;else if("v"===i||"V"===i)this.curCommandType=SVGPathData.VERT_LINE_TO,this.curCommandRelative="v"===i;else if("m"===i||"M"===i)this.curCommandType=SVGPathData.MOVE_TO,this.curCommandRelative="m"===i;else if("l"===i||"L"===i)this.curCommandType=SVGPathData.LINE_TO,this.curCommandRelative="l"===i;else if("c"===i||"C"===i)this.curCommandType=SVGPathData.CURVE_TO,this.curCommandRelative="c"===i;else if("s"===i||"S"===i)this.curCommandType=SVGPathData.SMOOTH_CURVE_TO,this.curCommandRelative="s"===i;else if("q"===i||"Q"===i)this.curCommandType=SVGPathData.QUAD_TO,this.curCommandRelative="q"===i;else if("t"===i||"T"===i)this.curCommandType=SVGPathData.SMOOTH_QUAD_TO,this.curCommandRelative="t"===i;else{if("a"!==i&&"A"!==i)throw new SyntaxError('Unexpected character "'+i+'" at index '+n+".");this.curCommandType=SVGPathData.ARC,this.curCommandRelative="a"===i;}else a.push({type:SVGPathData.CLOSE_PATH}),this.canParseCommandOrComma=!0,this.curCommandType=-1;}else this.curNumber=i,this.curNumberHasDecimal="."===i;}else this.curNumber+=i,this.curNumberHasDecimal=!0;else this.curNumber+=i;else this.curNumber+=i,this.curNumberHasExp=!0;}return a},a.prototype.transform=function(t){return Object.create(this,{parse:{value:function(a,r){void 0===r&&(r=[]);for(var e=0,n=Object.getPrototypeOf(this).parse.call(this,a);e<n.length;e++){var i=n[e],o=t(i);Array.isArray(o)?r.push.apply(r,o):r.push(o);}return r}}})},a}(TransformableSVG),SVGPathData=function(t){function a(r){var e=t.call(this)||this;return e.commands="string"==typeof r?a.parse(r):r,e}return __extends(a,t),a.prototype.encode=function(){return a.encode(this.commands)},a.prototype.getBounds=function(){var t=SVGPathDataTransformer.CALCULATE_BOUNDS();return this.transform(t),t},a.prototype.transform=function(t){for(var a=[],r=0,e=this.commands;r<e.length;r++){var n=t(e[r]);Array.isArray(n)?a.push.apply(a,n):a.push(n);}return this.commands=a,this},a.encode=function(t){return encodeSVGPath$$1(t)},a.parse=function(t){var a=new SVGPathDataParser$$1,r=[];return a.parse(t,r),a.finish(r),r},a.CLOSE_PATH=1,a.MOVE_TO=2,a.HORIZ_LINE_TO=4,a.VERT_LINE_TO=8,a.LINE_TO=16,a.CURVE_TO=32,a.SMOOTH_CURVE_TO=64,a.QUAD_TO=128,a.SMOOTH_QUAD_TO=256,a.ARC=512,a.LINE_COMMANDS=a.LINE_TO|a.HORIZ_LINE_TO|a.VERT_LINE_TO,a.DRAWING_COMMANDS=a.HORIZ_LINE_TO|a.VERT_LINE_TO|a.LINE_TO|a.CURVE_TO|a.SMOOTH_CURVE_TO|a.QUAD_TO|a.SMOOTH_QUAD_TO|a.ARC,a}(TransformableSVG),COMMAND_ARG_COUNTS=((_a={})[SVGPathData.MOVE_TO]=2,_a[SVGPathData.LINE_TO]=2,_a[SVGPathData.HORIZ_LINE_TO]=1,_a[SVGPathData.VERT_LINE_TO]=1,_a[SVGPathData.CLOSE_PATH]=0,_a[SVGPathData.QUAD_TO]=4,_a[SVGPathData.SMOOTH_QUAD_TO]=2,_a[SVGPathData.CURVE_TO]=6,_a[SVGPathData.SMOOTH_CURVE_TO]=4,_a[SVGPathData.ARC]=7,_a),WSP=" ";function encodeSVGPath$$1(t){var a="";Array.isArray(t)||(t=[t]);for(var r=0;r<t.length;r++){var e=t[r];if(e.type===SVGPathData.CLOSE_PATH)a+="z";else if(e.type===SVGPathData.HORIZ_LINE_TO)a+=(e.relative?"h":"H")+e.x;else if(e.type===SVGPathData.VERT_LINE_TO)a+=(e.relative?"v":"V")+e.y;else if(e.type===SVGPathData.MOVE_TO)a+=(e.relative?"m":"M")+e.x+WSP+e.y;else if(e.type===SVGPathData.LINE_TO)a+=(e.relative?"l":"L")+e.x+WSP+e.y;else if(e.type===SVGPathData.CURVE_TO)a+=(e.relative?"c":"C")+e.x1+WSP+e.y1+WSP+e.x2+WSP+e.y2+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.SMOOTH_CURVE_TO)a+=(e.relative?"s":"S")+e.x2+WSP+e.y2+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.QUAD_TO)a+=(e.relative?"q":"Q")+e.x1+WSP+e.y1+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.SMOOTH_QUAD_TO)a+=(e.relative?"t":"T")+e.x+WSP+e.y;else{if(e.type!==SVGPathData.ARC)throw new Error('Unexpected command type "'+e.type+'" at index '+r+".");a+=(e.relative?"a":"A")+e.rX+WSP+e.rY+WSP+e.xRot+WSP+ +e.lArcFlag+WSP+ +e.sweepFlag+WSP+e.x+WSP+e.y;}}return a}var SVGPathData$1=function(t){function a(r){var e=t.call(this)||this;return e.commands="string"==typeof r?a.parse(r):r,e}return __extends(a,t),a.prototype.encode=function(){return a.encode(this.commands)},a.prototype.getBounds=function(){var t=SVGPathDataTransformer.CALCULATE_BOUNDS();return this.transform(t),t},a.prototype.transform=function(t){for(var a=[],r=0,e=this.commands;r<e.length;r++){var n=t(e[r]);Array.isArray(n)?a.push.apply(a,n):a.push(n);}return this.commands=a,this},a.encode=function(t){return encodeSVGPath$$1(t)},a.parse=function(t){var a=new SVGPathDataParser$$1,r=[];return a.parse(t,r),a.finish(r),r},a.CLOSE_PATH=1,a.MOVE_TO=2,a.HORIZ_LINE_TO=4,a.VERT_LINE_TO=8,a.LINE_TO=16,a.CURVE_TO=32,a.SMOOTH_CURVE_TO=64,a.QUAD_TO=128,a.SMOOTH_QUAD_TO=256,a.ARC=512,a.LINE_COMMANDS=a.LINE_TO|a.HORIZ_LINE_TO|a.VERT_LINE_TO,a.DRAWING_COMMANDS=a.HORIZ_LINE_TO|a.VERT_LINE_TO|a.LINE_TO|a.CURVE_TO|a.SMOOTH_CURVE_TO|a.QUAD_TO|a.SMOOTH_QUAD_TO|a.ARC,a}(TransformableSVG),COMMAND_ARG_COUNTS$1=((_a$1={})[SVGPathData$1.MOVE_TO]=2,_a$1[SVGPathData$1.LINE_TO]=2,_a$1[SVGPathData$1.HORIZ_LINE_TO]=1,_a$1[SVGPathData$1.VERT_LINE_TO]=1,_a$1[SVGPathData$1.CLOSE_PATH]=0,_a$1[SVGPathData$1.QUAD_TO]=4,_a$1[SVGPathData$1.SMOOTH_QUAD_TO]=2,_a$1[SVGPathData$1.CURVE_TO]=6,_a$1[SVGPathData$1.SMOOTH_CURVE_TO]=4,_a$1[SVGPathData$1.ARC]=7,_a$1);
 
   const svgImporter = {
@@ -4615,7 +4617,7 @@
       const diameter  = scale$2(node, LENGTHS_IN_PX.controlDiameter);
       const radius    = diameter / 2;
 
-      const vParts = node.toVDOMCurveNodes();
+      const vParts = node.toVDOMCurves();
       const splitter = h('circle', {
         'data-type': 'splitter',
         r:           radius,
@@ -4867,38 +4869,33 @@
 
   const exportToAST = (state) => {
     const root = freshNode();
-    parse(state.store.scene, root);
+    parse(state.store.scene, root, 0);
 
-    console.log(flatten(root));
-
-    // populate with length information
-    // populate with key info etc
+    console.log(render(root));
 
     return root;
   };
 
   // produce an xml syntax tree from scenegraph node
-  const parse = (node, astParent) => {
-    const astOpen  = node.toOpeningTag();
-    const astClose = node.toClosingTag();
-
-    astParent.children.push(astOpen);
-
-    let fresh;
+  const parse = (node, astParent, level) => {
+    const openingTag = node.toOpeningTag();
+    openingTag.level = level;
+    astParent.children.push(openingTag);
 
     if (node.graphicsChildren.length > 0) {
-      fresh = freshNode();
+      const fresh = freshNode();
       astParent.children.push(fresh);
+      for (let child of node.graphicsChildren) {
+        parse(child, fresh, level + 1);
+      }
     }
 
-    astParent.children.push(astClose);
-
-    for (let child of node.graphicsChildren) {
-      parse(child, fresh);
-    }
+    const closingTag = node.toClosingTag();
+    closingTag.level = level;
+    astParent.children.push(closingTag);
   };
 
-  // flatten tree to a list of markup strings
+  // flatten tree to a list
   const flatten = (astNode, list = []) => {
     if (astNode.markup) {
       list.push(astNode);
@@ -4910,6 +4907,29 @@
 
     return list;
   };
+
+  // render properly indented markup string
+  const render = (astNode) => {
+    const list = flatten(astNode);
+
+    for (let i = 0; i < list.length; i += 1) {
+      list[i] = indent(list[i].level) + list[i].markup;
+    }
+
+    return list.join('\n');
+  };
+
+  const indent = (level) => {
+    let pad = '  ';
+    let ind = '';
+
+    for (let i = 0; i < level; i += 1) {
+      ind = pad + ind;
+    }
+
+    return ind;
+  };
+
 
   const freshNode = (tagName) => {
     return {
@@ -6013,7 +6033,7 @@
   };
 
   const svgns  = 'http://www.w3.org/2000/svg';
-  const xmlns  = 'http://www.w3.org/2000/xmlns/';
+  const xmlns$1  = 'http://www.w3.org/2000/xmlns/';
 
   const canvas$1 = Object.assign(Object.create(UIModule), {
     init(state) {
@@ -6081,7 +6101,7 @@
 
       for (let [key, value] of Object.entries(vNode.props)) {
         if (key === 'xmlns') {
-          $node.setAttributeNS(xmlns, key, value);
+          $node.setAttributeNS(xmlns$1, key, value);
         } else {
           $node.setAttributeNS(null, key, value);
         }

@@ -23,6 +23,10 @@ import {
   Identifier
 } from './domain/nodes.js';
 
+import {
+  Class
+} from './domain/helpers.js';
+
 export {
   Vector,
   Matrix,
@@ -42,5 +46,6 @@ export {
   Markup,
   Message,
   Text,
-  Identifier
+  Identifier,
+  Class
 };

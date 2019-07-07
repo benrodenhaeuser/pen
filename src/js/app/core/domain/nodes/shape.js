@@ -15,7 +15,7 @@ Shape.toVDOMNode = function() {
   };
 };
 
-Shape.toVDOMCurveNodes = function() {
+Shape.toVDOMCurves = function() {
   const nodes   = [];
   const splines = this.children;
 
@@ -67,8 +67,8 @@ Shape.toSVGNode = function() {
 
 Shape.toOpeningTag = function() {
   return {
-    markup: '<path>',
-    key: this.key,
+    markup: `<path d="${this.pathString()}" transform="${this.transform.toString()}">`,
+    key:    this.key,
   };
 };
 

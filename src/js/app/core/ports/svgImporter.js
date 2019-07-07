@@ -1,10 +1,10 @@
-import { Scene, Shape, Group     } from '../domain/nodes.js';
-import { Spline, Segment, Anchor } from '../domain/nodes.js';
-import { HandleIn, HandleOut     } from '../domain/nodes.js';
-import { Matrix                  } from '../domain/geometry.js';
-import { Vector                  } from '../domain/geometry.js';
-import { Rectangle               } from '../domain/geometry.js';
-import { Class                   } from '../domain/helpers.js';
+import { Scene, Shape, Group     } from '../domain.js';
+import { Spline, Segment, Anchor } from '../domain.js';
+import { HandleIn, HandleOut     } from '../domain.js';
+import { Matrix                  } from '../domain.js';
+import { Vector                  } from '../domain.js';
+import { Rectangle               } from '../domain.js';
+import { Class                   } from '../domain.js';
 import { SVGPathData             } from 'svg-pathdata';
 import { SVGPathDataTransformer  } from 'svg-pathdata';
 

@@ -1,8 +1,9 @@
-import { Node      } from './node.js';
-import { Rectangle } from '../geometry.js';
+import { Node } from './node.js';
 
 const Scene = Object.create(Node);
 Scene.type  = 'scene';
+
+const xmlns = 'http://www.w3.org/2000/svg';
 
 Scene.toVDOMNode = function() {
   return {
@@ -23,14 +24,14 @@ Scene.toSVGNode = function() {
     children: [],
     props: {
       'viewBox': this.viewBox.toString(),
-      xmlns:     'http://www.w3.org/2000/svg',
+      xmlns:     xmlns,
     },
   };
 };
 
 Scene.toOpeningTag = function() {
   return {
-    markup: '<svg>',
+    markup: `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`,
     key: this.key,
   };
 };

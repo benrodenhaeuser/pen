@@ -26,7 +26,7 @@ const buildTree = (node, vParent = null) => {
     const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
     const radius    = diameter / 2;
 
-    const vParts = node.toVDOMCurveNodes();
+    const vParts = node.toVDOMCurves();
     const splitter = h('circle', {
       'data-type': 'splitter',
       r:           radius,
