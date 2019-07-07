@@ -1,9 +1,9 @@
-import { svgImporter   } from './ports/svgImporter.js';
-import { svgExporter   } from './ports/svgExporter.js';
-import { exportToVDOM  } from './ports/exportToVDOM.js';
-import { exportToAST   } from './ports/exportToAST.js';
-import { plainImporter } from './ports/plainImporter.js';
-import { plainExporter } from './ports/plainExporter.js';
+import { svgImporter   } from './ports/import.js';
+import { plainImporter } from './ports/import.js';
+import { svgExporter   } from './ports/export.js';
+import { exportToVDOM  } from './ports/export.js';
+import { exportToAST   } from './ports/export.js';
+import { plainExporter } from './ports/export.js';
 
 export {
   svgImporter,
