@@ -1,4 +1,5 @@
 import { Node } from './node.js';
+import { ASTNode } from '../../ports/export/ast.js';
 
 const Scene = Object.create(Node);
 Scene.type  = 'scene';
@@ -29,18 +30,33 @@ Scene.toSVGNode = function() {
   };
 };
 
-Scene.toOpeningTag = function() {
+Scene.toASTNodes = function() {
+  const open = ASTNode.create();
+  open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
+  open.key = this.key;
+
+  const close = ASTNode.create();
+  close.markup = '</svg>';
+  close.key = this.key;
+
   return {
-    markup: `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`,
-    key: this.key,
-  };
+    open: open,
+    close: close,
+  }
 };
 
-Scene.toClosingTag = function() {
-  return {
-    markup: '</svg>',
-    key: this.key,
-  };
-};
+// Scene.toOpeningTag = function() {
+//   const astNode = ASTNode.create();
+//   astNode.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
+//   astNode.key = this.key;
+//   return astNode;
+// };
+//
+// Scene.toClosingTag = function() {
+//   const astNode = ASTNode.create();
+//   astNode.markup = '</svg>';
+//   astNode.key = this.key;
+//   return astNode;
+// };
 
 export { Scene }

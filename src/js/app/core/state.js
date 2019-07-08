@@ -1,16 +1,16 @@
-import { svgImporter   } from '../ports.js';
-import { svgExporter   } from '../ports.js';
-import { exportToVDOM  } from '../ports.js';
-import { exportToAST   } from '../ports.js';
-import { plainImporter } from '../ports.js';
-import { plainExporter } from '../ports.js';
-import { Store         } from '../domain.js';
-import { Docs          } from '../domain.js';
-import { Doc           } from '../domain.js';
-import { Message       } from '../domain.js';
-import { Scene         } from '../domain.js';
-import { Markup        } from '../domain.js';
-import { Rectangle     } from '../domain.js';
+import { svgImporter   } from './ports.js';
+import { svgExporter   } from './ports.js';
+import { exportToVDOM  } from './ports.js';
+import { exportToAST   } from './ports.js';
+import { plainImporter } from './ports.js';
+import { plainExporter } from './ports.js';
+import { Store         } from './domain.js';
+import { Docs          } from './domain.js';
+import { Doc           } from './domain.js';
+import { Message       } from './domain.js';
+import { Scene         } from './domain.js';
+import { Markup        } from './domain.js';
+import { Rectangle     } from './domain.js';
 
 const State = {
   create() {
@@ -86,7 +86,7 @@ const State = {
       update: this.update,
       vDOM:   this.exportToVDOM(),
       plain:  this.exportToPlain(),
-      ast:    this.exportToAST(),
+      ast:    this.exportToAST(),  // TODO: experimental
     };
   },
 

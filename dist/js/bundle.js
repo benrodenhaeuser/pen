@@ -746,6 +746,90 @@
     },
   };
 
+  const ASTNode = {
+    create() {
+      return Object.create(ASTNode).init();
+    },
+
+    init() {
+      this.children = [];
+
+      return this;
+    },
+
+    // flatten tree to a list of leaf nodes
+    flatten(list = []) {
+      if (this.markup) {
+        list.push(this);
+      } else {
+        for (let child of this.children) {
+          child.flatten(list);
+        }
+      }
+
+      return list;
+    },
+
+    // find node whose start to end range includes given index
+    findNodeByIndex(index) {
+      if (this.markup) {
+        if (this.start < index && index < this.end) {
+          return this;
+        } else {
+          return null;
+        }
+      } else {
+        const child = this.children.find(child => child.start < index && index < child.end);
+
+        if (child) {
+          return child.findNodeByIndex(index);
+        } else {
+          return null;
+        }
+      }
+    },
+
+    // decorate tree with start and end indices
+    indexify(start = 0) {
+      this.start = start;
+
+      if (this.markup) {
+        this.end = this.start + this.markup.length - 1;
+        return this.end + 1;
+      } else {
+        for (let child of this.children) {
+          start = child.indexify(start);
+        }
+
+        this.end = start - 1;
+
+        return start;
+      }
+    },
+
+    // make prettified markup string
+    prettyMarkup() {
+      const list = this.flatten();
+
+      for (let i = 0; i < list.length; i += 1) {
+        list[i] = list[i].indent + list[i].markup;
+      }
+
+      return list.join('\n');
+    },
+
+    indent() {
+      let pad = '  ';
+      let ind = '';
+
+      for (let i = 0; i < this.level; i += 1) {
+        ind = pad + ind;
+      }
+
+      return ind;
+    },
+  };
+
   const Scene = Object.create(Node);
   Scene.type  = 'scene';
 
@@ -775,18 +859,19 @@
     };
   };
 
-  Scene.toOpeningTag = function() {
-    return {
-      markup: `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`,
-      key: this.key,
-    };
-  };
+  Scene.toASTNodes = function() {
+    const open = ASTNode.create();
+    open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
+    open.key = this.key;
 
-  Scene.toClosingTag = function() {
+    const close = ASTNode.create();
+    close.markup = '</svg>';
+    close.key = this.key;
+
     return {
-      markup: '</svg>',
-      key: this.key,
-    };
+      open: open,
+      close: close,
+    }
   };
 
   const Group = Object.create(Node);
@@ -817,17 +902,18 @@
     return svgNode;
   };
 
-  Group.toOpeningTag = function() {
-    return {
-      markup: '<g>',
-      key: this.key,
-    };
-  };
+  Group.toASTNodes = function() {
+    const open = ASTNode.create();
+    open.markup = '<g>'; // TODO: transform
+    open.key = this.key;
 
-  Group.toClosingTag = function() {
+    const close = ASTNode.create();
+    close.markup = '</g>';
+    close.key = this.key;
+
     return {
-      markup: '</g>',
-      key: this.key,
+      open: open,
+      close: close,
     };
   };
 
@@ -896,19 +982,34 @@
     return svgNode;
   };
 
-  Shape.toOpeningTag = function() {
+  Shape.toASTNodes = function() {
+    const open = ASTNode.create();
+    open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+    open.key = this.key;
+
+    const close = ASTNode.create();
+    close.markup = '</path';
+    close.key = this.key;
+
     return {
-      markup: `<path d="${this.pathString()}" transform="${this.transform.toString()}">`,
-      key:    this.key,
+      open: open,
+      close: close
     };
   };
 
-  Shape.toClosingTag = function() {
-    return {
-      markup: '</path>',
-      key: this.key,
-    };
-  };
+  // Shape.toOpeningTag = function() {
+  //   const astNode = ASTNode.create();
+  //   astNode.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+  //   astNode.key = this.key;
+  //   return astNode;
+  // };
+  //
+  // Shape.toClosingTag = function() {
+  //   const astNode = ASTNode.create();
+  //   astNode.markup = '</path';
+  //   astNode.key = this.key;
+  //   return astNode;
+  // };
 
   Shape.pathString = function() {
     let d = '';
@@ -4509,76 +4610,32 @@
     },
   };
 
-  // exploratory code
-
   const exportToAST = (state) => {
-    const root = freshNode();
-    parse(state.store.scene, root, 0);
-
-    console.log(render(root));
-
-    return root;
+    const astRoot = ASTNode.create();
+    parse(state.store.scene, astRoot, 0);
+    astRoot.indexify();
+    return astRoot;
   };
 
-  // produce an xml syntax tree from scenegraph node
-  const parse = (node, astParent, level) => {
-    const openingTag = node.toOpeningTag();
-    openingTag.level = level;
-    astParent.children.push(openingTag);
+  // produce ast from scenegraph
+  const parse = (sceneNode, astParent, level) => {
+    const astNodes = sceneNode.toASTNodes();
+    const open     = astNodes.open;
+    const close    = astNodes.close;
+    open.level     = level;
+    close.level    = level;
 
-    if (node.graphicsChildren.length > 0) {
-      const fresh = freshNode();
-      astParent.children.push(fresh);
-      for (let child of node.graphicsChildren) {
-        parse(child, fresh, level + 1);
+    astParent.children.push(open);
+
+    if (sceneNode.graphicsChildren.length > 0) {
+      const astNode = ASTNode.create();
+      astParent.children.push(astNode);
+      for (let sceneChild of sceneNode.graphicsChildren) {
+        parse(sceneChild, astNode, level + 1);
       }
     }
 
-    const closingTag = node.toClosingTag();
-    closingTag.level = level;
-    astParent.children.push(closingTag);
-  };
-
-  // flatten tree to a list
-  const flatten = (astNode, list = []) => {
-    if (astNode.markup) {
-      list.push(astNode);
-    } else {
-      for (let child of astNode.children) {
-        flatten(child, list);
-      }
-    }
-
-    return list;
-  };
-
-  // render properly indented markup string
-  const render = (astNode) => {
-    const list = flatten(astNode);
-
-    for (let i = 0; i < list.length; i += 1) {
-      list[i] = indent(list[i].level) + list[i].markup;
-    }
-
-    return list.join('\n');
-  };
-
-  const indent = (level) => {
-    let pad = '  ';
-    let ind = '';
-
-    for (let i = 0; i < level; i += 1) {
-      ind = pad + ind;
-    }
-
-    return ind;
-  };
-
-
-  const freshNode = (tagName) => {
-    return {
-      children: [],
-    };
+    astParent.children.push(close);
   };
 
   const h = (tag, props = {}, ...children) => {
@@ -5111,7 +5168,7 @@
         update: this.update,
         vDOM:   this.exportToVDOM(),
         plain:  this.exportToPlain(),
-        ast:    this.exportToAST(),
+        ast:    this.exportToAST(),  // TODO: experimental
       };
     },
 
@@ -16239,17 +16296,18 @@
     },
 
     react(state) {
+      console.log('editor received', state.ast);
+      console.log(state.ast.flatten());
+      console.log(state.ast.findNodeByIndex(100));
+
       if (['penMode', 'selectMode'].includes(state.label)) {
         const currentMarkup  = state.vDOM['editor'];
         const previousMarkup = this.previousMarkup;
 
-        // TODO: should we maybe more explicitly distinguish an "editorMode"
         if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
           this.editor.getDoc().setValue(currentMarkup);
           this.markChange(state);
         }
-
-        // console.dir(this.editor.getDoc());
 
         this.previousMarkup = state.vDOM['editor'];
       }

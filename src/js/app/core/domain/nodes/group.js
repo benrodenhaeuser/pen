@@ -1,4 +1,5 @@
 import { Node } from './node.js';
+import { ASTNode } from '../../ports/export/ast.js';
 
 const Group = Object.create(Node);
 Group.type  = 'group';
@@ -28,18 +29,33 @@ Group.toSVGNode = function() {
   return svgNode;
 };
 
-Group.toOpeningTag = function() {
+Group.toASTNodes = function() {
+  const open = ASTNode.create();
+  open.markup = '<g>'; // TODO: transform
+  open.key = this.key;
+
+  const close = ASTNode.create();
+  close.markup = '</g>';
+  close.key = this.key;
+
   return {
-    markup: '<g>',
-    key: this.key,
+    open: open,
+    close: close,
   };
 };
 
-Group.toClosingTag = function() {
-  return {
-    markup: '</g>',
-    key: this.key,
-  };
-};
+// Group.toOpeningTag = function() {
+//   const astNode = ASTNode.create();
+//   astNode.markup = '<g>'; // TODO: transform
+//   astNode.key = this.key;
+//   return astNode;
+// };
+//
+// Group.toClosingTag = function() {
+//   const astNode = ASTNode.create();
+//   astNode.markup = '</g>';
+//   astNode.key = this.key;
+//   return astNode;
+// };
 
 export { Group };

@@ -37,17 +37,18 @@ const editor = {
   },
 
   react(state) {
+    console.log('editor received', state.ast);
+    console.log(state.ast.flatten());
+    console.log(state.ast.findNodeByIndex(100));
+
     if (['penMode', 'selectMode'].includes(state.label)) {
       const currentMarkup  = state.vDOM['editor'];
       const previousMarkup = this.previousMarkup;
 
-      // TODO: should we maybe more explicitly distinguish an "editorMode"
       if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
         this.editor.getDoc().setValue(currentMarkup);
         this.markChange(state);
       }
-
-      // console.dir(this.editor.getDoc());
 
       this.previousMarkup = state.vDOM['editor'];
     }

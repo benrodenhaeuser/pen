@@ -1,11 +1,11 @@
-import { Scene, Shape, Group     } from '../domain.js';
-import { Spline, Segment, Anchor } from '../domain.js';
-import { HandleIn, HandleOut     } from '../domain.js';
-import { Identifier, Doc         } from '../domain.js';
-import { Vector                  } from '../domain.js';
-import { Matrix                  } from '../domain.js';
-import { Rectangle               } from '../domain.js';
-import { Curve                   } from '../domain.js';
+import { Scene, Shape, Group     } from './domain.js';
+import { Spline, Segment, Anchor } from './domain.js';
+import { HandleIn, HandleOut     } from './domain.js';
+import { Identifier, Doc         } from './domain.js';
+import { Vector                  } from './domain.js';
+import { Matrix                  } from './domain.js';
+import { Rectangle               } from './domain.js';
+import { Curve                   } from './domain.js';
 import { Bezier                  } from '/vendor/bezier/bezier.js';
 
 const updates = {

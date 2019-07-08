@@ -1,4 +1,5 @@
 import { Node } from './node.js';
+import { ASTNode } from '../../ports/export/ast.js';
 
 const Shape = Object.create(Node);
 Shape.type  = 'shape';
@@ -65,19 +66,34 @@ Shape.toSVGNode = function() {
   return svgNode;
 };
 
-Shape.toOpeningTag = function() {
+Shape.toASTNodes = function() {
+  const open = ASTNode.create();
+  open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+  open.key = this.key;
+
+  const close = ASTNode.create();
+  close.markup = '</path';
+  close.key = this.key;
+
   return {
-    markup: `<path d="${this.pathString()}" transform="${this.transform.toString()}">`,
-    key:    this.key,
+    open: open,
+    close: close
   };
 };
 
-Shape.toClosingTag = function() {
-  return {
-    markup: '</path>',
-    key: this.key,
-  };
-};
+// Shape.toOpeningTag = function() {
+//   const astNode = ASTNode.create();
+//   astNode.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+//   astNode.key = this.key;
+//   return astNode;
+// };
+//
+// Shape.toClosingTag = function() {
+//   const astNode = ASTNode.create();
+//   astNode.markup = '</path';
+//   astNode.key = this.key;
+//   return astNode;
+// };
 
 Shape.pathString = function() {
   let d = '';

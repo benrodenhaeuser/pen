@@ -1,6 +1,6 @@
-import { State        } from './core/application.js';
-import { updates      } from './core/application.js';
-import { transitions  } from './core/application.js';
+import { State        } from './core/state.js';
+import { updates      } from './core/updates.js';
+import { transitions  } from './core/transitions.js';
 
 const core = {
   init() {
