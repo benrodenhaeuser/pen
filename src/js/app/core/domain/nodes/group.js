@@ -44,18 +44,4 @@ Group.toASTNodes = function() {
   };
 };
 
-// Group.toOpeningTag = function() {
-//   const astNode = ASTNode.create();
-//   astNode.markup = '<g>'; // TODO: transform
-//   astNode.key = this.key;
-//   return astNode;
-// };
-//
-// Group.toClosingTag = function() {
-//   const astNode = ASTNode.create();
-//   astNode.markup = '</g>';
-//   astNode.key = this.key;
-//   return astNode;
-// };
-
 export { Group };

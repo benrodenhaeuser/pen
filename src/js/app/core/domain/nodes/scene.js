@@ -45,18 +45,4 @@ Scene.toASTNodes = function() {
   }
 };
 
-// Scene.toOpeningTag = function() {
-//   const astNode = ASTNode.create();
-//   astNode.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
-//   astNode.key = this.key;
-//   return astNode;
-// };
-//
-// Scene.toClosingTag = function() {
-//   const astNode = ASTNode.create();
-//   astNode.markup = '</svg>';
-//   astNode.key = this.key;
-//   return astNode;
-// };
-
 export { Scene }

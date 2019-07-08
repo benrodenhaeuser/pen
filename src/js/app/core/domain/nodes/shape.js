@@ -81,20 +81,6 @@ Shape.toASTNodes = function() {
   };
 };
 
-// Shape.toOpeningTag = function() {
-//   const astNode = ASTNode.create();
-//   astNode.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
-//   astNode.key = this.key;
-//   return astNode;
-// };
-//
-// Shape.toClosingTag = function() {
-//   const astNode = ASTNode.create();
-//   astNode.markup = '</path';
-//   astNode.key = this.key;
-//   return astNode;
-// };
-
 Shape.pathString = function() {
   let d = '';
 
