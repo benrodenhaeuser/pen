@@ -72,7 +72,7 @@ Shape.toASTNodes = function() {
   open.key = this.key;
 
   const close = ASTNode.create();
-  close.markup = '</path';
+  close.markup = '</path>';
   close.key = this.key;
 
   return {

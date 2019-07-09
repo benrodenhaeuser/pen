@@ -336,6 +336,8 @@ const updates = {
     this.cleanup(state, input);
   },
 
+  // EDITOR
+
   changeMarkup(state, input) {
     state.store.markup.payload.text = input.value;
 
@@ -349,6 +351,12 @@ const updates = {
     }
   },
 
+  selectFromEditor(state, input) {
+    // console.log('selectFromEditor update called');
+    const target = state.scene.findDescendantByKey(input.key);
+    state.scene.deselectAll();
+    target.select();
+  },
 };
 
 export { updates };

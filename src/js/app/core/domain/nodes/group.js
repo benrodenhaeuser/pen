@@ -31,7 +31,7 @@ Group.toSVGNode = function() {
 
 Group.toASTNodes = function() {
   const open = ASTNode.create();
-  open.markup = '<g>'; // TODO: transform
+  open.markup = `<g transform="${this.transform.toString()}">`;
   open.key = this.key;
 
   const close = ASTNode.create();

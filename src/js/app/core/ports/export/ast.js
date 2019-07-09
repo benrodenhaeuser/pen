@@ -23,18 +23,18 @@ const ASTNode = {
   },
 
   // find node whose start to end range includes given index
-  findNodeByIndex(index) {
+  findNodeByIndex(idx) {
     if (this.markup) {
-      if (this.start < index && index < this.end) {
+      if (this.start <= idx && idx <= this.end) {
         return this;
       } else {
         return null;
       }
     } else {
-      const child = this.children.find(child => child.start < index && index < child.end);
+      const child = this.children.find(child => child.start <= idx && idx <= child.end);
 
       if (child) {
-        return child.findNodeByIndex(index);
+        return child.findNodeByIndex(idx);
       } else {
         return null;
       }
@@ -70,6 +70,14 @@ const ASTNode = {
     return list.join('\n');
   },
 
+  // print indices
+  printIndices() {
+    const list = this.flatten();
+    const pairs = list.map(node => [node.markup, node.start, node.end]);
+    console.log(pairs);
+  },
+
+  // return indent of this node
   indent() {
     let pad = '  ';
     let ind = '';

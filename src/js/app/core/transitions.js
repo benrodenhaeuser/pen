@@ -236,6 +236,19 @@ const transitions = [
     to: 'editingSegment'
   },
 
+  // EDITOR
+
+  // process editor input (=> from editor module)
+  {
+    type: 'input',
+    do: 'changeMarkup'
+  },
+
+  {
+    type: 'cursorSelect',
+    do: 'selectFromEditor',
+  },
+
   // MISCELLANEOUS
 
   // set message to "Saved" (=> to message module)
@@ -260,12 +273,6 @@ const transitions = [
   {
     type: 'switchDocument',
     do: 'switchDocument',
-  },
-
-  // process editor input (=> from editor module)
-  {
-    type: 'input',
-    do: 'changeMarkup'
   },
 ];
 

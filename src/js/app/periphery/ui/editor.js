@@ -9,10 +9,10 @@ const editor = {
       lineWrapping: true,
       // mode:         null,
       mode:         'xml',
-      value:        state.vDOM['editor'],
+      value:        state.vDOM['editor'], // TODO: use ast (do we have an ast?)
     });
 
-    this.previousMarkup = state.vDOM['editor'];
+    this.previousMarkup = state.vDOM['editor']; // TODO: use ast (do we have an ast?)
 
     return this;
   },
@@ -34,15 +34,42 @@ const editor = {
       } else {
       }
     });
+
+    this.editor.on('cursorActivity', () => {
+      const cursorPosition = this.editor.getDoc().getCursor();
+      const index = this.editor.getDoc().indexFromPos(cursorPosition);
+      const cleanIndex = this.cleanIndex(index);
+
+      // console.log(index, cleanIndex);
+
+      // console.log(this.ast.printIndices());
+      const astNode = this.ast.findNodeByIndex(cleanIndex);
+      // console.log(astNode);
+
+      // problem: still off
+      // this could be because (a) this.cleanIndex() is not working
+      // or (b) the computation of indices in the ast is not working
+
+      const token = this.editor.getTokenAt(cursorPosition);
+      // console.log(token.string);
+
+
+      func({
+        source: this.name,
+        type: 'cursorSelect',
+        key: astNode.key,
+      });
+    });
   },
 
   react(state) {
-    console.log('editor received', state.ast);
-    console.log(state.ast.flatten());
-    console.log(state.ast.findNodeByIndex(100));
+    this.ast = state.ast;
+    // console.log('editor received', state.ast);
+    // console.log(state.ast.flatten());
+    // console.log(state.ast.findNodeByIndex(100));
 
     if (['penMode', 'selectMode'].includes(state.label)) {
-      const currentMarkup  = state.vDOM['editor'];
+      const currentMarkup  = state.vDOM['editor']; // TODO: use ast
       const previousMarkup = this.previousMarkup;
 
       if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
@@ -110,6 +137,21 @@ const editor = {
     const to   = this.editor.doc.posFromIndex(indices[1] + 2);
 
     return [from, to];
+  },
+
+  cleanIndex(index) {
+    const value = this.editor.getDoc().getValue();
+    const left = value.slice(0, index); // everything *before*
+    let cleanLeft = left.replace(/\n/g, '');      // eliminate new lines
+    cleanLeft = cleanLeft.replace(/>[^<>]+</g, '><'); // eliminate whitespace between tags
+
+    // ^ greedy!
+
+    // console.log(left);
+    // console.log(cleanLeft);
+
+    const removedCount = left.length - cleanLeft.length; // how much did we remove?
+    return index - removedCount;
   },
 };
 

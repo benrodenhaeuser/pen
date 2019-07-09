@@ -771,18 +771,18 @@
     },
 
     // find node whose start to end range includes given index
-    findNodeByIndex(index) {
+    findNodeByIndex(idx) {
       if (this.markup) {
-        if (this.start < index && index < this.end) {
+        if (this.start <= idx && idx <= this.end) {
           return this;
         } else {
           return null;
         }
       } else {
-        const child = this.children.find(child => child.start < index && index < child.end);
+        const child = this.children.find(child => child.start <= idx && idx <= child.end);
 
         if (child) {
-          return child.findNodeByIndex(index);
+          return child.findNodeByIndex(idx);
         } else {
           return null;
         }
@@ -818,6 +818,14 @@
       return list.join('\n');
     },
 
+    // print indices
+    printIndices() {
+      const list = this.flatten();
+      const pairs = list.map(node => [node.markup, node.start, node.end]);
+      console.log(pairs);
+    },
+
+    // return indent of this node
     indent() {
       let pad = '  ';
       let ind = '';
@@ -904,7 +912,7 @@
 
   Group.toASTNodes = function() {
     const open = ASTNode.create();
-    open.markup = '<g>'; // TODO: transform
+    open.markup = `<g transform="${this.transform.toString()}">`;
     open.key = this.key;
 
     const close = ASTNode.create();
@@ -988,7 +996,7 @@
     open.key = this.key;
 
     const close = ASTNode.create();
-    close.markup = '</path';
+    close.markup = '</path>';
     close.key = this.key;
 
     return {
@@ -4419,7 +4427,7 @@
         const scene = Scene.create();
         this.buildTree($svg, scene);
         scene.setFrontier();
-        console.log('done importing svg markup');
+        console.log('importing from svg markup succeeded');
         return scene;
       }
 
@@ -5515,6 +5523,8 @@
       this.cleanup(state, input);
     },
 
+    // EDITOR
+
     changeMarkup(state, input) {
       state.store.markup.payload.text = input.value;
 
@@ -5528,6 +5538,12 @@
       }
     },
 
+    selectFromEditor(state, input) {
+      // console.log('selectFromEditor update called');
+      const target = state.scene.findDescendantByKey(input.key);
+      state.scene.deselectAll();
+      target.select();
+    },
   };
 
   // NOTE: 'type' is mandatory. 'from', 'target', 'to' and `do` are optional
@@ -5768,6 +5784,19 @@
       to: 'editingSegment'
     },
 
+    // EDITOR
+
+    // process editor input (=> from editor module)
+    {
+      type: 'input',
+      do: 'changeMarkup'
+    },
+
+    {
+      type: 'cursorSelect',
+      do: 'selectFromEditor',
+    },
+
     // MISCELLANEOUS
 
     // set message to "Saved" (=> to message module)
@@ -5792,12 +5821,6 @@
     {
       type: 'switchDocument',
       do: 'switchDocument',
-    },
-
-    // process editor input (=> from editor module)
-    {
-      type: 'input',
-      do: 'changeMarkup'
     },
   ];
 
@@ -16255,10 +16278,10 @@
         lineWrapping: true,
         // mode:         null,
         mode:         'xml',
-        value:        state.vDOM['editor'],
+        value:        state.vDOM['editor'], // TODO: use ast (do we have an ast?)
       });
 
-      this.previousMarkup = state.vDOM['editor'];
+      this.previousMarkup = state.vDOM['editor']; // TODO: use ast (do we have an ast?)
 
       return this;
     },
@@ -16279,15 +16302,42 @@
           });
         }
       });
+
+      this.editor.on('cursorActivity', () => {
+        const cursorPosition = this.editor.getDoc().getCursor();
+        const index = this.editor.getDoc().indexFromPos(cursorPosition);
+        const cleanIndex = this.cleanIndex(index);
+
+        // console.log(index, cleanIndex);
+
+        // console.log(this.ast.printIndices());
+        const astNode = this.ast.findNodeByIndex(cleanIndex);
+        // console.log(astNode);
+
+        // problem: still off
+        // this could be because (a) this.cleanIndex() is not working
+        // or (b) the computation of indices in the ast is not working
+
+        const token = this.editor.getTokenAt(cursorPosition);
+        // console.log(token.string);
+
+
+        func({
+          source: this.name,
+          type: 'cursorSelect',
+          key: astNode.key,
+        });
+      });
     },
 
     react(state) {
-      console.log('editor received', state.ast);
-      console.log(state.ast.flatten());
-      console.log(state.ast.findNodeByIndex(100));
+      this.ast = state.ast;
+      // console.log('editor received', state.ast);
+      // console.log(state.ast.flatten());
+      // console.log(state.ast.findNodeByIndex(100));
 
       if (['penMode', 'selectMode'].includes(state.label)) {
-        const currentMarkup  = state.vDOM['editor'];
+        const currentMarkup  = state.vDOM['editor']; // TODO: use ast
         const previousMarkup = this.previousMarkup;
 
         if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
@@ -16355,6 +16405,21 @@
       const to   = this.editor.doc.posFromIndex(indices[1] + 2);
 
       return [from, to];
+    },
+
+    cleanIndex(index) {
+      const value = this.editor.getDoc().getValue();
+      const left = value.slice(0, index); // everything *before*
+      let cleanLeft = left.replace(/\n/g, '');      // eliminate new lines
+      cleanLeft = cleanLeft.replace(/>[^<>]+</g, '><'); // eliminate whitespace between tags
+
+      // ^ greedy!
+
+      // console.log(left);
+      // console.log(cleanLeft);
+
+      const removedCount = left.length - cleanLeft.length; // how much did we remove?
+      return index - removedCount;
     },
   };
 
