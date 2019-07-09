@@ -40,7 +40,7 @@ const buildTree = (node, vParent = null) => {
       class:       node.class.toString(),
       'data-key':  node.key,
     }, node.toVDOMNode(), ...vParts, splitter);
-    // ^ the whole path followed by its curves
+    // ^ the whole path followed by its curves, and the splitter
   } else {
     vNode = node.toVDOMNode();
   }

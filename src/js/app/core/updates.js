@@ -70,6 +70,7 @@ const updates = {
 
       if (toSelect) {
         toSelect.select();
+        console.log('about to call setFrontier from deep select'); // NO
         state.scene.setFrontier();
         state.scene.unfocusAll();
       }
@@ -352,8 +353,9 @@ const updates = {
   },
 
   selectFromEditor(state, input) {
-    // console.log('selectFromEditor update called');
+    console.log('selectFromEditor update called');
     const target = state.scene.findDescendantByKey(input.key);
+
     state.scene.deselectAll();
     target.select();
   },

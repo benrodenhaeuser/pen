@@ -39,26 +39,20 @@ const editor = {
       const cursorPosition = this.editor.getDoc().getCursor();
       const index = this.editor.getDoc().indexFromPos(cursorPosition);
       const cleanIndex = this.cleanIndex(index);
-
       // console.log(index, cleanIndex);
-
       // console.log(this.ast.printIndices());
       const astNode = this.ast.findNodeByIndex(cleanIndex);
       // console.log(astNode);
-
-      // problem: still off
-      // this could be because (a) this.cleanIndex() is not working
-      // or (b) the computation of indices in the ast is not working
-
       const token = this.editor.getTokenAt(cursorPosition);
       // console.log(token.string);
 
-
-      func({
-        source: this.name,
-        type: 'cursorSelect',
-        key: astNode.key,
-      });
+      if (index > 0) {
+        func({
+          source: this.name,
+          type: 'cursorSelect',
+          key: astNode.key,
+        });
+      }
     });
   },
 

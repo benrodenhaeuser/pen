@@ -3,7 +3,7 @@ import { Vector    } from '../geometry.js';
 import { Rectangle } from '../geometry.js';
 import { Curve     } from '../geometry.js';
 import { Doc       } from '../nodes.js';
-import { Class     } from '../helpers.js';   
+import { Class     } from '../helpers.js';
 import { createID  } from '../helpers.js';
 
 
@@ -337,6 +337,9 @@ const Node = {
    // hit testing: is a point within the bounding box of this shape?
 
   contains(globalPoint) {
+    console.log(this.type, this);
+    console.log(this.bounds);
+
     return globalPoint
       .transform(this.globalTransform().invert())
       .isWithin(this.bounds);
@@ -345,10 +348,18 @@ const Node = {
   // classes
 
   setFrontier() {
+    console.log('setFrontier called');
+
     this.removeFrontier();
 
+    console.log('back setting frontier');
+
     if (this.selected) {
+      console.log('first case applies');
+
       this.selected.class = this.selected.class.add('frontier');
+
+      console.log(this.class); // includes frontier
 
       let node = this.selected;
 
@@ -359,6 +370,8 @@ const Node = {
         node = node.parent;
       } while (node.parent !== null);
     } else {
+      console.log('second case applies');
+
       for (let child of this.scene.children) {
         child.class = child.class.add('frontier');
       }
@@ -366,6 +379,8 @@ const Node = {
   },
 
   removeFrontier() {
+    console.log('removeFrontier called');
+
     const frontier = this.scene.findDescendants((node) => {
       return node.class.includes('frontier');
     });

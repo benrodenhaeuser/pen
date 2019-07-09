@@ -68,7 +68,6 @@ line {
   pointer-events: none;
 }
 
-
 [data-type="curve"], [data-type="curve-stroke"] {
   pointer-events: none;
 }

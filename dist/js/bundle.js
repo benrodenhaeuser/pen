@@ -620,6 +620,9 @@
      // hit testing: is a point within the bounding box of this shape?
 
     contains(globalPoint) {
+      console.log(this.type, this);
+      console.log(this.bounds);
+
       return globalPoint
         .transform(this.globalTransform().invert())
         .isWithin(this.bounds);
@@ -628,10 +631,18 @@
     // classes
 
     setFrontier() {
+      console.log('setFrontier called');
+
       this.removeFrontier();
 
+      console.log('back setting frontier');
+
       if (this.selected) {
+        console.log('first case applies');
+
         this.selected.class = this.selected.class.add('frontier');
+
+        console.log(this.class); // includes frontier
 
         let node = this.selected;
 
@@ -642,6 +653,8 @@
           node = node.parent;
         } while (node.parent !== null);
       } else {
+        console.log('second case applies');
+
         for (let child of this.scene.children) {
           child.class = child.class.add('frontier');
         }
@@ -649,6 +662,8 @@
     },
 
     removeFrontier() {
+      console.log('removeFrontier called');
+
       const frontier = this.scene.findDescendants((node) => {
         return node.class.includes('frontier');
       });
@@ -4791,7 +4806,7 @@
         class:       node.class.toString(),
         'data-key':  node.key,
       }, node.toVDOMNode(), ...vParts, splitter);
-      // ^ the whole path followed by its curves
+      // ^ the whole path followed by its curves, and the splitter
     } else {
       vNode = node.toVDOMNode();
     }
@@ -5285,6 +5300,7 @@
 
         if (toSelect) {
           toSelect.select();
+          console.log('about to call setFrontier from deep select'); // NO
           state.scene.setFrontier();
           state.scene.unfocusAll();
         }
@@ -5567,8 +5583,9 @@
     },
 
     selectFromEditor(state, input) {
-      // console.log('selectFromEditor update called');
+      console.log('selectFromEditor update called');
       const target = state.scene.findDescendantByKey(input.key);
+
       state.scene.deselectAll();
       target.select();
     },
@@ -16337,26 +16354,20 @@
         const cursorPosition = this.editor.getDoc().getCursor();
         const index = this.editor.getDoc().indexFromPos(cursorPosition);
         const cleanIndex = this.cleanIndex(index);
-
         // console.log(index, cleanIndex);
-
         // console.log(this.ast.printIndices());
         const astNode = this.ast.findNodeByIndex(cleanIndex);
         // console.log(astNode);
-
-        // problem: still off
-        // this could be because (a) this.cleanIndex() is not working
-        // or (b) the computation of indices in the ast is not working
-
         const token = this.editor.getTokenAt(cursorPosition);
         // console.log(token.string);
 
-
-        func({
-          source: this.name,
-          type: 'cursorSelect',
-          key: astNode.key,
-        });
+        if (index > 0) {
+          func({
+            source: this.name,
+            type: 'cursorSelect',
+            key: astNode.key,
+          });
+        }
       });
     },
 
