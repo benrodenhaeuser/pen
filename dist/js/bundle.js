@@ -899,7 +899,7 @@
   Group.type  = 'group';
 
   Group.toVDOMNode = function() {
-    const vDOMNode = {
+    return {
       tag:      'g',
       children: [],
       props: {
@@ -6071,9 +6071,6 @@
       return $node;
     },
 
-    // it should be guaranteed that we have a $node when we call this
-    // ... but it isn't. why?
-
     reconcile(oldVNode, newVNode, $node) {
       if (typeof newVNode === 'string') {
         if (newVNode !== oldVNode) {
@@ -6089,7 +6086,7 @@
     },
 
     reconcileProps(oldVNode, newVNode, $node) {
-      console.log(oldVNode, newVNode, $node);
+      // console.log(oldVNode, newVNode, $node);
 
       for (let [key, value] of Object.entries(newVNode.props)) {
         if (oldVNode.props[key] !== newVNode.props[key]) {

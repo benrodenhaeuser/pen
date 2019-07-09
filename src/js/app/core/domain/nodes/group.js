@@ -6,7 +6,7 @@ const Group = Object.create(Node);
 Group.type  = 'group';
 
 Group.toVDOMNode = function() {
-  const vDOMNode = {
+  return {
     tag:      'g',
     children: [],
     props: {
