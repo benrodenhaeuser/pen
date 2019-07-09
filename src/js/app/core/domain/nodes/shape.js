@@ -1,4 +1,5 @@
-import { Node } from './node.js';
+import { Node    } from './node.js';
+import { Matrix  } from '../geometry.js';
 import { ASTNode } from '../../ports/export/ast.js';
 
 const Shape = Object.create(Node);
@@ -60,15 +61,22 @@ Shape.toSVGNode = function() {
     props:    { d: this.pathString() },
   };
 
-  // TODO: don't want to set a transform if it's a trivial transform
-  svgNode.props.transform = this.transform.toString();
+  if (!this.transform.equals(Matrix.identity())) {
+    svgNode.props.transform = this.transform.toString();
+  }
 
   return svgNode;
 };
 
 Shape.toASTNodes = function() {
   const open = ASTNode.create();
-  open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+
+  if (!this.transform.equals(Matrix.identity())) {
+    open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+  } else {
+    open.markup = `<path d="${this.pathString()}">`;
+  }
+
   open.key = this.key;
 
   const close = ASTNode.create();

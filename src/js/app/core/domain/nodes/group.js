@@ -1,11 +1,12 @@
-import { Node } from './node.js';
+import { Node    } from './node.js';
+import { Matrix  } from '../geometry.js';
 import { ASTNode } from '../../ports/export/ast.js';
 
 const Group = Object.create(Node);
 Group.type  = 'group';
 
 Group.toVDOMNode = function() {
-  return {
+  const vDOMNode = {
     tag:      'g',
     children: [],
     props: {
@@ -24,14 +25,22 @@ Group.toSVGNode = function() {
     props:    {},
   };
 
-  svgNode.props.transform = this.transform.toString();
+  if (!this.transform.equals(Matrix.identity())) {
+    svgNode.props.transform = this.transform.toString();
+  }
 
   return svgNode;
 };
 
 Group.toASTNodes = function() {
   const open = ASTNode.create();
-  open.markup = `<g transform="${this.transform.toString()}">`;
+
+  if (!this.transform.equals(Matrix.identity())) {
+    open.markup = `<g transform="${this.transform.toString()}">`;
+  } else {
+    open.markup = '<g>';
+  }
+
   open.key = this.key;
 
   const close = ASTNode.create();

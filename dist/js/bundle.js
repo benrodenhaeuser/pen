@@ -131,6 +131,19 @@
       return Matrix.create(m);
     },
 
+    equals(other) {
+      for (let i = 0; i <= 2; i += 1) {
+        for (let j = 0; j <= 2; j += 1) {
+          if (this.m[i][j] !== other.m[i][j]) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    },
+
+
     toJSON() {
       return this.m;
     },
@@ -886,7 +899,7 @@
   Group.type  = 'group';
 
   Group.toVDOMNode = function() {
-    return {
+    const vDOMNode = {
       tag:      'g',
       children: [],
       props: {
@@ -905,14 +918,22 @@
       props:    {},
     };
 
-    svgNode.props.transform = this.transform.toString();
+    if (!this.transform.equals(Matrix.identity())) {
+      svgNode.props.transform = this.transform.toString();
+    }
 
     return svgNode;
   };
 
   Group.toASTNodes = function() {
     const open = ASTNode.create();
-    open.markup = `<g transform="${this.transform.toString()}">`;
+
+    if (!this.transform.equals(Matrix.identity())) {
+      open.markup = `<g transform="${this.transform.toString()}">`;
+    } else {
+      open.markup = '<g>';
+    }
+
     open.key = this.key;
 
     const close = ASTNode.create();
@@ -984,15 +1005,22 @@
       props:    { d: this.pathString() },
     };
 
-    // TODO: don't want to set a transform if it's a trivial transform
-    svgNode.props.transform = this.transform.toString();
+    if (!this.transform.equals(Matrix.identity())) {
+      svgNode.props.transform = this.transform.toString();
+    }
 
     return svgNode;
   };
 
   Shape.toASTNodes = function() {
     const open = ASTNode.create();
-    open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+
+    if (!this.transform.equals(Matrix.identity())) {
+      open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+    } else {
+      open.markup = `<path d="${this.pathString()}">`;
+    }
+
     open.key = this.key;
 
     const close = ASTNode.create();
@@ -6043,6 +6071,9 @@
       return $node;
     },
 
+    // it should be guaranteed that we have a $node when we call this
+    // ... but it isn't. why?
+
     reconcile(oldVNode, newVNode, $node) {
       if (typeof newVNode === 'string') {
         if (newVNode !== oldVNode) {
@@ -6058,6 +6089,8 @@
     },
 
     reconcileProps(oldVNode, newVNode, $node) {
+      console.log(oldVNode, newVNode, $node);
+
       for (let [key, value] of Object.entries(newVNode.props)) {
         if (oldVNode.props[key] !== newVNode.props[key]) {
           $node.setAttributeNS(null, key, value);

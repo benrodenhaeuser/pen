@@ -21,6 +21,19 @@ const Matrix = {
     return Matrix.create(m);
   },
 
+  equals(other) {
+    for (let i = 0; i <= 2; i += 1) {
+      for (let j = 0; j <= 2; j += 1) {
+        if (this.m[i][j] !== other.m[i][j]) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  },
+
+
   toJSON() {
     return this.m;
   },
