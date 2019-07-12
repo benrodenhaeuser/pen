@@ -6,7 +6,6 @@ const HandleOut = Object.create(Node);
 const Doc        = Object.create(Node);
 const Docs       = Object.create(Node); // TODO: get rid of this?
 const Store      = Object.create(Node); // TODO: get rid of this?
-const Markup     = Object.create(Node); // TODO: get rid of this?
 const Message    = Object.create(Node); // TODO: get rid of this?
 const Text       = Object.create(Node); // TODO: get rid of this?
 const Identifier = Object.create(Node); // TODO: get rid of this?
@@ -17,7 +16,6 @@ HandleOut.type  = 'handleOut';
 Doc.type        = 'doc';
 Store.type      = 'store';
 Docs.type       = 'docs';
-Markup.type     = 'markup';
 Message.type    = 'message';
 Text.type       = 'text';
 Identifier.type = 'identifier';
@@ -29,7 +27,6 @@ export {
   Doc,
   Store,
   Docs,
-  Markup,
   Message,
   Text,
   Identifier

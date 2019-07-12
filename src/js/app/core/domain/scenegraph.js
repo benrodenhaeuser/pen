@@ -11,7 +11,6 @@ import {
   Store,
   Doc,
   Docs,
-  Markup,
   Message,
   Text,
   Identifier
@@ -29,7 +28,6 @@ export {
   Store,
   Doc,
   Docs,
-  Markup,
   Message,
   Text,
   Identifier

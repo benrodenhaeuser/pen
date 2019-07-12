@@ -17,7 +17,6 @@ import {
   Store,
   Doc,
   Docs,
-  Markup,
   Message,
   Text,
   Identifier
@@ -26,6 +25,10 @@ import {
 import {
   Class
 } from './domain/helpers.js';
+
+import {
+  ParseTree
+} from './domain/parsetree.js';
 
 export {
   Vector,
@@ -43,9 +46,9 @@ export {
   Store,
   Doc,
   Docs,
-  Markup,
   Message,
   Text,
   Identifier,
-  Class
+  Class,
+  ParseTree
 };

@@ -1,7 +1,7 @@
-import { ASTNode } from '../../domain/ast.js';
+import { ParseTree } from '../../domain/parsetree.js';
 
 const exportToAST = (state) => {
-  const astRoot = ASTNode.create();
+  const astRoot = ParseTree.create();
   parse(state.store.scene, astRoot, 0);
   astRoot.indexify();
   // console.log(astRoot.prettyMarkup());
@@ -19,7 +19,7 @@ const parse = (sceneNode, astParent, level) => {
   astParent.children.push(open);
 
   if (sceneNode.graphicsChildren.length > 0) {
-    const astNode = ASTNode.create();
+    const astNode = ParseTree.create();
     astParent.children.push(astNode);
     for (let sceneChild of sceneNode.graphicsChildren) {
       parse(sceneChild, astNode, level + 1);

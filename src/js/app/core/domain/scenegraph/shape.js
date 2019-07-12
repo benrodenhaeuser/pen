@@ -1,6 +1,6 @@
-import { Node    } from './node.js';
-import { Matrix  } from '../geometry.js';
-import { ASTNode } from '../ast.js';
+import { Node      } from './node.js';
+import { Matrix    } from '../geometry.js';
+import { ParseTree } from '../parsetree.js';
 
 const Shape = Object.create(Node);
 Shape.type  = 'shape';
@@ -71,7 +71,7 @@ Shape.toSVGNode = function() {
 };
 
 Shape.toASTNodes = function() {
-  const open = ASTNode.create();
+  const open = ParseTree.create();
 
   if (!this.transform.equals(Matrix.identity())) {
     open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
@@ -81,7 +81,7 @@ Shape.toASTNodes = function() {
 
   open.key = this.key;
 
-  const close = ASTNode.create();
+  const close = ParseTree.create();
   close.markup = '</path>';
   close.key = this.key;
 

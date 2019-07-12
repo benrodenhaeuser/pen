@@ -1,6 +1,6 @@
-const ASTNode = {
+const ParseTree = {
   create() {
-    return Object.create(ASTNode).init();
+    return Object.create(ParseTree).init();
   },
 
   init() {
@@ -90,4 +90,4 @@ const ASTNode = {
   },
 };
 
-export { ASTNode };
+export { ParseTree };

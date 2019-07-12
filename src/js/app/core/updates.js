@@ -349,10 +349,9 @@ const updates = {
   // EDITOR
 
   changeMarkup(state, input) {
-    state.store.markup.payload.text = input.value; // TODO: parse into AST
+    // state.parseTree = 
 
 
-    // TODO: this should happen in "after" method:
     const newScene = state.markupToScene(input.value);
 
     if (newScene !== null) {

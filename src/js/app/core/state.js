@@ -9,8 +9,8 @@ import { Docs            } from './domain.js';
 import { Doc             } from './domain.js';
 import { Message         } from './domain.js';
 import { Scene           } from './domain.js';
-import { Markup          } from './domain.js';
 import { Rectangle       } from './domain.js';
+import { ParseTree       } from './domain.js';
 
 const State = {
   create() {
@@ -18,10 +18,11 @@ const State = {
   },
 
   init() {
-    this.label  = 'start';
-    this.input  = {};
-    this.update = '';
-    this.store  = this.buildStore();
+    this.label     = 'start';
+    this.input     = {};
+    this.update    = '';
+    this.store     = this.buildStore();
+    this.parseTree = ParseTree.create();
 
     return this;
   },
@@ -46,19 +47,12 @@ const State = {
   },
 
   buildDoc() {
-    const doc    = Doc.create();
-    const scene  = Scene.create();
-    const markup = Markup.create();
+    const doc        = Doc.create();
+    const sceneGraph = Scene.create();
 
-    const width = this.width || 0;
-    const height = this.height || 0;
+    sceneGraph.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
 
-    scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-
-    markup.payload.text = '';
-
-    doc.append(scene);
-    doc.append(markup);
+    doc.append(sceneGraph);
 
     return doc;
   },
@@ -81,12 +75,12 @@ const State = {
 
   export() {
     return {
-      label:  this.label,
-      input:  this.input,
-      update: this.update,
-      vDOM:   this.exportToVDOM(),
-      plain:  this.exportToPlain(),
-      ast:    this.exportToAST(),
+      label: this.label,
+      input: this.input,
+      update:this.update,
+      vDOM:  this.exportToVDOM(),
+      plain: this.exportToPlain(),
+      ast:   this.parseTree,
     };
   },
 

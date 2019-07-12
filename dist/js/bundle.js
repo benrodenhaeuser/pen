@@ -765,9 +765,9 @@
     },
   };
 
-  const ASTNode = {
+  const ParseTree = {
     create() {
-      return Object.create(ASTNode).init();
+      return Object.create(ParseTree).init();
     },
 
     init() {
@@ -888,11 +888,11 @@
   };
 
   Scene.toASTNodes = function() {
-    const open = ASTNode.create();
+    const open = ParseTree.create();
     open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
     open.key = this.key;
 
-    const close = ASTNode.create();
+    const close = ParseTree.create();
     close.markup = '</svg>';
     close.key = this.key;
 
@@ -933,7 +933,7 @@
   };
 
   Group.toASTNodes = function() {
-    const open = ASTNode.create();
+    const open = ParseTree.create();
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<g transform="${this.transform.toString()}">`;
@@ -943,7 +943,7 @@
 
     open.key = this.key;
 
-    const close = ASTNode.create();
+    const close = ParseTree.create();
     close.markup = '</g>';
     close.key = this.key;
 
@@ -1022,7 +1022,7 @@
   };
 
   Shape.toASTNodes = function() {
-    const open = ASTNode.create();
+    const open = ParseTree.create();
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
@@ -1032,7 +1032,7 @@
 
     open.key = this.key;
 
-    const close = ASTNode.create();
+    const close = ParseTree.create();
     close.markup = '</path>';
     close.key = this.key;
 
@@ -1082,7 +1082,6 @@
   const Doc        = Object.create(Node);
   const Docs       = Object.create(Node); // TODO: get rid of this?
   const Store      = Object.create(Node); // TODO: get rid of this?
-  const Markup     = Object.create(Node); // TODO: get rid of this?
   const Message    = Object.create(Node); // TODO: get rid of this?
   const Text       = Object.create(Node); // TODO: get rid of this?
   const Identifier$1 = Object.create(Node); // TODO: get rid of this?
@@ -1093,7 +1092,6 @@
   Doc.type        = 'doc';
   Store.type      = 'store';
   Docs.type       = 'docs';
-  Markup.type     = 'markup';
   Message.type    = 'message';
   Text.type       = 'text';
   Identifier$1.type = 'identifier';
@@ -4381,9 +4379,6 @@
       case 'message':
         node = Message.create();
         break;
-      case 'markup':
-        node = Markup.create();
-        break;
       case 'scene':
         node = Scene.create();
         break;
@@ -4628,7 +4623,7 @@
   };
 
   const exportToAST = (state) => {
-    const astRoot = ASTNode.create();
+    const astRoot = ParseTree.create();
     parse(state.store.scene, astRoot, 0);
     astRoot.indexify();
     // console.log(astRoot.prettyMarkup());
@@ -4646,7 +4641,7 @@
     astParent.children.push(open);
 
     if (sceneNode.graphicsChildren.length > 0) {
-      const astNode = ASTNode.create();
+      const astNode = ParseTree.create();
       astParent.children.push(astNode);
       for (let sceneChild of sceneNode.graphicsChildren) {
         parse(sceneChild, astNode, level + 1);
@@ -5115,10 +5110,11 @@
     },
 
     init() {
-      this.label  = 'start';
-      this.input  = {};
-      this.update = '';
-      this.store  = this.buildStore();
+      this.label     = 'start';
+      this.input     = {};
+      this.update    = '';
+      this.store     = this.buildStore();
+      this.parseTree = ParseTree.create();
 
       return this;
     },
@@ -5143,19 +5139,12 @@
     },
 
     buildDoc() {
-      const doc    = Doc.create();
-      const scene  = Scene.create();
-      const markup = Markup.create();
+      const doc        = Doc.create();
+      const sceneGraph = Scene.create();
 
-      const width = this.width || 0;
-      const height = this.height || 0;
+      sceneGraph.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
 
-      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-
-      markup.payload.text = '';
-
-      doc.append(scene);
-      doc.append(markup);
+      doc.append(sceneGraph);
 
       return doc;
     },
@@ -5178,12 +5167,12 @@
 
     export() {
       return {
-        label:  this.label,
-        input:  this.input,
-        update: this.update,
-        vDOM:   this.exportToVDOM(),
-        plain:  this.exportToPlain(),
-        ast:    this.exportToAST(),
+        label: this.label,
+        input: this.input,
+        update:this.update,
+        vDOM:  this.exportToVDOM(),
+        plain: this.exportToPlain(),
+        ast:   this.parseTree,
       };
     },
 
@@ -5565,10 +5554,9 @@
     // EDITOR
 
     changeMarkup(state, input) {
-      state.store.markup.payload.text = input.value; // TODO: parse into AST
+      // state.parseTree = 
 
 
-      // TODO: this should happen in "after" method:
       const newScene = state.markupToScene(input.value);
 
       if (newScene !== null) {
