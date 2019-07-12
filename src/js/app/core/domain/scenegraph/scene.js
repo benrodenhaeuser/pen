@@ -1,5 +1,5 @@
 import { Node } from './node.js';
-import { ASTNode } from '../../ports/export/ast.js';
+import { ASTNode } from '../ast.js';
 
 const Scene = Object.create(Node);
 Scene.type  = 'scene';
@@ -15,6 +15,7 @@ Scene.toVDOMNode = function() {
       'data-type': 'content',
       'viewBox':    this.viewBox.toString(),
       xmlns:       'http://www.w3.org/2000/svg',
+      class:       this.class.toString(),
     },
   };
 };

@@ -1,5 +1,5 @@
 import { Matrix } from './matrix.js';
-import { Shape  } from '../nodes.js';
+import { Shape  } from '../scenegraph';
 import * as vec2  from '/vendor/glmatrix/vec2.js';
 
 const Vector = {

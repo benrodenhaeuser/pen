@@ -20,30 +20,7 @@ const renderScene = (store) => {
 };
 
 const buildTree = (node, vParent = null) => {
-  let vNode;
-
-  if (node.type === 'shape') {
-    const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
-    const radius    = diameter / 2;
-
-    const vParts = node.toVDOMCurves();
-    const splitter = h('circle', {
-      'data-type': 'splitter',
-      r:           radius,
-      cx: node.splitter.x,
-      cy: node.splitter.y,
-      transform:   node.transform.toString(),
-    });
-
-    vNode = h('g', {
-      'data-type': 'content',
-      class:       node.class.toString(),
-      'data-key':  node.key,
-    }, node.toVDOMNode(), ...vParts, splitter);
-    // ^ the whole path followed by its curves, and the splitter
-  } else {
-    vNode = node.toVDOMNode();
-  }
+  const vNode = node.toVDOMNode();
 
   if (vParent) {
     const vWrapper = wrap(vNode, node);
@@ -57,6 +34,7 @@ const buildTree = (node, vParent = null) => {
   return vNode;
 };
 
+// push curves here
 const wrap = (vNode, node) => {
   const vWrapper = h('g', {
     'data-type': `${node.type}-wrapper`,
@@ -65,10 +43,33 @@ const wrap = (vNode, node) => {
 
   vWrapper.children.push(vNode);
 
-  if (node.type === 'shape') { vWrapper.children.push(innerUI(node)); }
+  if (node.type === 'shape') {
+    vWrapper.children.push(curves(node));
+    vWrapper.children.push(innerUI(node));
+  }
+
   vWrapper.children.push(outerUI(node));
 
   return vWrapper;
+};
+
+const curves = (node) => {
+  const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
+  const radius    = diameter / 2;
+
+  const vParts = node.toVDOMCurves();
+  const splitter = h('circle', {
+    'data-type': 'splitter',
+    r:           radius,
+    cx: node.splitter.x,
+    cy: node.splitter.y,
+    transform:   node.transform.toString(),
+  });
+
+  return h('g', {
+    'data-type': 'curves',
+    'data-key':  node.key,
+  }, ...vParts, splitter);
 };
 
 const outerUI = (node) => {

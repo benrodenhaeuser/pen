@@ -1,6 +1,6 @@
 import { Node    } from './node.js';
 import { Matrix  } from '../geometry.js';
-import { ASTNode } from '../../ports/export/ast.js';
+import { ASTNode } from '../ast.js';
 
 const Shape = Object.create(Node);
 Shape.type  = 'shape';
@@ -10,9 +10,11 @@ Shape.toVDOMNode = function() {
     tag:      'path',
     children: [],
     props: {
-      'data-type': 'poly-curve',
+      'data-type': 'content',
+      'data-key':   this.key,
       d:           this.pathString(),
       transform:   this.transform.toString(),
+      class:       this.class.toString(),
     },
   };
 };
@@ -26,7 +28,7 @@ Shape.toVDOMCurves = function() {
     const curves   = spline.curves();
 
     for (let i = 0; i < curves.length; i += 1) {
-      // this node will be the hit target for the curve:
+      // this node will be the "hit target" for the curve:
       nodes.push({
         tag:      'path',
         children: [],

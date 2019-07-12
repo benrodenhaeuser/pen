@@ -1,5 +1,7 @@
 /* SVG */
 
+/* APPEARANCE */
+
 path, line, circle, rect {
   vector-effect: non-scaling-stroke;
 }
@@ -22,6 +24,7 @@ line {
   stroke: #d3d3d3;
 }
 
+/* corners of selection */
 [data-type="corner"] {
   stroke: #d3d3d3;
   stroke-width: 1px;
@@ -29,31 +32,90 @@ line {
   -webkit-filter: drop-shadow(0 1px 1.5px #000);
 }
 
+/* click targets for rotation */
 [data-type="dot"] {
-
   fill: none;
-  pointer-events: visible;
 }
 
+/* bezier curve controls (anchors and handles) */
 [data-type="control"] {
   stroke: #5DADE2;
   fill: #FFFFFF;
 }
 
+/* 'curve' is the pointer target for bezier curves  */
+[data-type="curve"] {
+  stroke: transparent;
+  stroke-width: 40px;
+}
+
+/* curve hover in editing mode */
+.editing ~ [data-type="curves"] > [data-type="curve"]:hover + [data-type="curve-stroke"] {
+  stroke: red;
+}
+
+/* frame visually represents the bounding box of group/shape */
 [data-type="frame"] {
   stroke: #d3d3d3;
   fill: none;
-  pointer-events: none;
+}
+
+/* frame when shape/group in focus */
+.focus ~ [data-type="outerUI"] > [data-type="frame"] {
+  stroke: #5DADE2;
+  stroke-width: 3px;
+}
+
+/* frame when shape/group selected */
+.selected ~ [data-type="outerUI"] > [data-type="frame"] {
+  stroke: #d3d3d3;
+  stroke-width: 1px;
+}
+
+/* visual cue for curve splitting */
+[data-type="splitter"] {
+  fill: white;
+  stroke: #5DADE2;
+}
+
+/* VISIBILITY */
+
+[data-type="outerUI"] {
+  visibility: hidden;
+}
+
+.selected ~ [data-type="outerUI"] {
+  visibility: visible;
+}
+
+[data-type="innerUI"] {
+  visibility: hidden;
+}
+
+.editing ~ [data-type="innerUI"] {
+  visibility: visible;
+}
+
+.focus ~ g > [data-type="frame"] {
+  visibility: visible;
+}
+
+/* POINTER-EVENTS */
+
+[data-type="dot"] {
+  pointer-events: visible;
 }
 
 [data-type="outerUI"] {
   pointer-events: visiblePainted;
-  visibility: hidden;
 }
 
 [data-type="innerUI"] {
   pointer-events: visible;
-  visibility: hidden;
+}
+
+[data-type="frame"] {
+  pointer-events: none;
 }
 
 [data-type="shape-wrapper"], [data-type="group-wrapper"] {
@@ -68,52 +130,16 @@ line {
   pointer-events: none;
 }
 
+/* curve is the pointer target for curve splitting */
+.editing ~ [data-type="curves"] > [data-type="curve"] {
+  pointer-events: stroke;
+}
+
+/* curve stroke displays actual bezier curve */
 [data-type="curve"], [data-type="curve-stroke"] {
   pointer-events: none;
 }
 
-[data-type="curve"] {
-  stroke: transparent;
-  stroke-width: 40px;
-}
-
-.editing > [data-type="curve"] {
-  pointer-events: stroke;
-}
-
-.editing > [data-type="curve"]:hover + [data-type="curve-stroke"] {
-  stroke: red;
-}
-
-[data-type="poly-curve"] {
-  pointer-events: none;
-  stroke: transparent;
-}
-
-.focus ~ [data-type="outerUI"] > [data-type="frame"] {
-  stroke: #5DADE2;
-  stroke-width: 3px;
-}
-
-.selected ~ [data-type="outerUI"] > [data-type="frame"] {
-  stroke: #d3d3d3;
-  stroke-width: 1px;
-}
-
-.selected ~ [data-type="outerUI"] {
-  visibility: visible;
-}
-
-.editing ~ [data-type="innerUI"] {
-  visibility: visible;
-}
-
-.focus ~ g > [data-type="frame"] {
-  visibility: visible;
-}
-
 [data-type="splitter"] {
-  fill: white;
-  stroke: #5DADE2;
   pointer-events: none;
 }

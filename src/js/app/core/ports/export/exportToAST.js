@@ -1,9 +1,10 @@
-import { ASTNode } from './ast.js';
+import { ASTNode } from '../../domain/ast.js';
 
 const exportToAST = (state) => {
   const astRoot = ASTNode.create();
   parse(state.store.scene, astRoot, 0);
   astRoot.indexify();
+  // console.log(astRoot.prettyMarkup());
   return astRoot;
 };
 

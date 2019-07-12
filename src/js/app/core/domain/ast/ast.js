@@ -64,13 +64,13 @@ const ASTNode = {
     const list = this.flatten();
 
     for (let i = 0; i < list.length; i += 1) {
-      list[i] = list[i].indent + list[i].markup;
+      list[i] = list[i].indent() + list[i].markup;
     }
 
     return list.join('\n');
   },
 
-  // print indices
+  // print indices (for verification purposes)
   printIndices() {
     const list = this.flatten();
     const pairs = list.map(node => [node.markup, node.start, node.end]);

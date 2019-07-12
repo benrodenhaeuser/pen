@@ -1,7 +1,7 @@
-import { plainImporter } from './import/plainImporter.js';
-import { svgImporter } from './import/svgImporter.js';
+import { objectToDoc     } from './import/objectToDoc.js';
+import { markupToScene   } from './import/markupToScene.js';
 
 export {
-  plainImporter,
-  svgImporter
+  objectToDoc,
+  markupToScene,
 };

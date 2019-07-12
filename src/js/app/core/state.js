@@ -1,16 +1,16 @@
-import { svgImporter   } from './ports.js';
-import { svgExporter   } from './ports.js';
-import { exportToVDOM  } from './ports.js';
-import { exportToAST   } from './ports.js';
-import { plainImporter } from './ports.js';
-import { plainExporter } from './ports.js';
-import { Store         } from './domain.js';
-import { Docs          } from './domain.js';
-import { Doc           } from './domain.js';
-import { Message       } from './domain.js';
-import { Scene         } from './domain.js';
-import { Markup        } from './domain.js';
-import { Rectangle     } from './domain.js';
+import { exportToSVG     } from './ports.js';
+import { exportToVDOM    } from './ports.js';
+import { exportToAST     } from './ports.js';
+import { exportToPlain   } from './ports.js';
+import { markupToScene   } from './ports.js';
+import { objectToDoc     } from './ports.js';
+import { Store           } from './domain.js';
+import { Docs            } from './domain.js';
+import { Doc             } from './domain.js';
+import { Message         } from './domain.js';
+import { Scene           } from './domain.js';
+import { Markup          } from './domain.js';
+import { Rectangle       } from './domain.js';
 
 const State = {
   create() {
@@ -86,22 +86,30 @@ const State = {
       update: this.update,
       vDOM:   this.exportToVDOM(),
       plain:  this.exportToPlain(),
-      ast:    this.exportToAST(),  // TODO: experimental
+      ast:    this.exportToAST(),
     };
   },
 
+  // TODO: better naming, like:
+  // objectToScene
+  // markupToScene
+  // sceneToMarkup
+  // sceneToVDOM
+  // sceneToAST
+  // sceneToObject
+
   // returns a node (node type may vary depending on object)
-  importFromPlain(object) {
-    return plainImporter.build(object);
+  objectToDoc(object) {
+    return objectToDoc(object);
   },
 
   // returns a Scene node
-  importFromSVG(markup) {
-    return svgImporter.build(markup);
+  markupToScene(markup) {
+    return markupToScene(markup);
   },
 
   exportToSVG() {
-    return svgExporter.build(this.store);
+    return exportToSVG(this.store);
   },
 
   // returns a Doc node and a list of ids (for docs)
@@ -115,7 +123,7 @@ const State = {
 
   // returns a plain representation of Doc node and a list of ids (for docs)
   exportToPlain() {
-    return plainExporter.build(this.store);
+    return exportToPlain(this.store);
   },
 };
 

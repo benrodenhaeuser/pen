@@ -9,6 +9,14 @@ import { Curve                   } from './domain.js';
 import { Bezier                  } from '/vendor/bezier/bezier.js';
 
 const updates = {
+  before(state, input) {
+    // TODO
+  },
+
+  after(state, input) {
+    // TODO
+  },
+
   init() {
     this.aux = {};
   },
@@ -22,10 +30,6 @@ const updates = {
     } else if (state.label === 'selectMode') {
       this.cleanup(state, input);
     }
-  },
-
-  after(state, input) {
-    // TODO
   },
 
   select(state, input) {
@@ -70,7 +74,7 @@ const updates = {
 
       if (toSelect) {
         toSelect.select();
-        console.log('about to call setFrontier from deep select'); // NO
+        // console.log('about to call setFrontier from deep select'); // NO
         state.scene.setFrontier();
         state.scene.unfocusAll();
       }
@@ -78,9 +82,14 @@ const updates = {
   },
 
   focus(state, input) {
+    // console.log('calling focus update');
+
     state.scene.unfocusAll();
 
     const target = state.scene.findDescendantByKey(input.key);
+
+    // console.log(target);
+
     const hit    = Vector.create(input.x, input.y);
 
     if (target) {
@@ -333,31 +342,41 @@ const updates = {
   },
 
   switchDocument(state, input) {
-    state.store.scene.replaceWith(state.importFromPlain(input.data.doc));
+    state.store.scene.replaceWith(state.objectToDoc(input.data.doc));
     this.cleanup(state, input);
   },
 
   // EDITOR
 
   changeMarkup(state, input) {
-    state.store.markup.payload.text = input.value;
+    state.store.markup.payload.text = input.value; // TODO: parse into AST
 
-    const newScene = state.importFromSVG(input.value);
+
+    // TODO: this should happen in "after" method:
+    const newScene = state.markupToScene(input.value);
 
     if (newScene !== null) {
       state.store.scene.replaceWith(newScene);
     } else {
-      state.store.message.payload.text = 'Invalid markup';
-      // TODO: this is never shown, because it's overwritten
+      console.log('erasing canvas');
+      const scene = Scene.create();
+      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+      state.store.scene.replaceWith(scene);
     }
   },
 
   selectFromEditor(state, input) {
-    console.log('selectFromEditor update called');
     const target = state.scene.findDescendantByKey(input.key);
 
-    state.scene.deselectAll();
-    target.select();
+    this.cleanup(state, input);
+
+    if (target) {
+      // problem: if the target is the scene node, then the frontier will not be set correctly!
+
+      target.select();
+    }
+
+    state.label = 'selectMode';
   },
 };
 

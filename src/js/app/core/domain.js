@@ -21,7 +21,7 @@ import {
   Message,
   Text,
   Identifier
-} from './domain/nodes.js';
+} from './domain/scenegraph.js';
 
 import {
   Class

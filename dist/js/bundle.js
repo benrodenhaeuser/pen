@@ -620,8 +620,8 @@
      // hit testing: is a point within the bounding box of this shape?
 
     contains(globalPoint) {
-      console.log(this.type, this);
-      console.log(this.bounds);
+      // console.log(this.type, this);
+      // console.log(this.bounds);
 
       return globalPoint
         .transform(this.globalTransform().invert())
@@ -631,18 +631,10 @@
     // classes
 
     setFrontier() {
-      console.log('setFrontier called');
-
       this.removeFrontier();
 
-      console.log('back setting frontier');
-
-      if (this.selected) {
-        console.log('first case applies');
-
+      if (this.selected && this.selected.type !== 'scene') {
         this.selected.class = this.selected.class.add('frontier');
-
-        console.log(this.class); // includes frontier
 
         let node = this.selected;
 
@@ -653,16 +645,15 @@
           node = node.parent;
         } while (node.parent !== null);
       } else {
-        console.log('second case applies');
-
         for (let child of this.scene.children) {
+          // console.log('setting frontier on child', child);
           child.class = child.class.add('frontier');
         }
       }
     },
 
     removeFrontier() {
-      console.log('removeFrontier called');
+      // console.log('removeFrontier called');
 
       const frontier = this.scene.findDescendants((node) => {
         return node.class.includes('frontier');
@@ -840,13 +831,13 @@
       const list = this.flatten();
 
       for (let i = 0; i < list.length; i += 1) {
-        list[i] = list[i].indent + list[i].markup;
+        list[i] = list[i].indent() + list[i].markup;
       }
 
       return list.join('\n');
     },
 
-    // print indices
+    // print indices (for verification purposes)
     printIndices() {
       const list = this.flatten();
       const pairs = list.map(node => [node.markup, node.start, node.end]);
@@ -880,6 +871,7 @@
         'data-type': 'content',
         'viewBox':    this.viewBox.toString(),
         xmlns:       'http://www.w3.org/2000/svg',
+        class:       this.class.toString(),
       },
     };
   };
@@ -969,9 +961,11 @@
       tag:      'path',
       children: [],
       props: {
-        'data-type': 'poly-curve',
+        'data-type': 'content',
+        'data-key':   this.key,
         d:           this.pathString(),
         transform:   this.transform.toString(),
+        class:       this.class.toString(),
       },
     };
   };
@@ -985,7 +979,7 @@
       const curves   = spline.curves();
 
       for (let i = 0; i < curves.length; i += 1) {
-        // this node will be the hit target for the curve:
+        // this node will be the "hit target" for the curve:
         nodes.push({
           tag:      'path',
           children: [],
@@ -4368,289 +4362,276 @@
     },
   };
 
-  const plainImporter = {
-    build(object) {
-      let node;
+  const objectToDoc = (object) => {
+    let node;
 
-      switch (object.type) {
-        case 'store':
-          node = Store.create();
+    switch (object.type) {
+      case 'store':
+        node = Store.create();
+        break;
+      case 'doc':
+        node = Doc.create();
+        break;
+      case 'docs':
+        node = Docs.create();
+        break;
+      case 'identifier':
+        node = Identifier.create();
+        break;
+      case 'message':
+        node = Message.create();
+        break;
+      case 'markup':
+        node = Markup.create();
+        break;
+      case 'scene':
+        node = Scene.create();
+        break;
+      case 'group':
+        node = Group.create();
+        break;
+      case 'shape':
+        node = Shape.create();
+        break;
+      case 'spline':
+        node = Spline.create();
+        break;
+      case 'segment':
+        node = Segment.create();
+        break;
+      case 'anchor':
+        node = Anchor.create();
+        node.type = 'anchor';
+        break;
+      case 'handleIn':
+        node = HandleIn.create();
+        break;
+      case 'handleOut':
+        node = HandleOut.create();
+        break;
+    }
+
+    node.type = object.type;
+    node.key  = object.key;
+    node._id  = object._id;
+
+    setPayload(node, object);
+
+    for (let child of object.children) {
+      node.append(objectToDoc(child));
+    }
+
+    return node;
+  };
+
+  const setPayload = (node, object) => {
+    for (let [key, value] of Object.entries(object.payload)) {
+      switch (key) {
+        case 'viewBox':
+          node.viewBox = Rectangle.createFromObject(value);
           break;
-        case 'doc':
-          node = Doc.create();
+        case 'transform':
+          node.transform = Matrix.create(value);
           break;
-        case 'docs':
-          node = Docs.create();
+        case 'class':
+          node.class = Class.create(value);
           break;
-        case 'identifier':
-          node = Identifier.create();
+        case 'text':
+          node.payload.text = value;
           break;
-        case 'message':
-          node = Message.create();
+        case 'bounds':
+          if (value) {
+            node.bounds = Rectangle.createFromObject(value);
+          }
           break;
-        case 'markup':
-          node = Markup.create();
-          break;
-        case 'scene':
-          node = Scene.create();
-          break;
-        case 'group':
-          node = Group.create();
-          break;
-        case 'shape':
-          node = Shape.create();
-          break;
-        case 'spline':
-          node = Spline.create();
-          break;
-        case 'segment':
-          node = Segment.create();
-          break;
-        case 'anchor':
-          node = Anchor.create();
-          node.type = 'anchor';
-          break;
-        case 'handleIn':
-          node = HandleIn.create();
-          break;
-        case 'handleOut':
-          node = HandleOut.create();
+        case 'vector':
+          node.vector = Vector.createFromObject(value);
           break;
       }
-
-      node.type = object.type;
-      node.key  = object.key;
-      node._id  = object._id;
-      this.setPayload(node, object);
-
-      for (let child of object.children) {
-        node.append(this.build(child));
-      }
-
-      return node;
-    },
-
-    setPayload(node, object) {
-      for (let [key, value] of Object.entries(object.payload)) {
-        switch (key) {
-          case 'viewBox':
-            node.viewBox = Rectangle.createFromObject(value);
-            break;
-          case 'transform':
-            node.transform = Matrix.create(value);
-            break;
-          case 'class':
-            node.class = Class.create(value);
-            break;
-          case 'text':
-            node.payload.text = value;
-            break;
-          case 'bounds':
-            if (value) {
-              node.bounds = Rectangle.createFromObject(value);
-            }
-            break;
-          case 'vector':
-            node.vector = Vector.createFromObject(value);
-            break;
-        }
-      }
-    },
+    }
   };
 
   var extendStatics=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(t,a){t.__proto__=a;}||function(t,a){for(var r in a)a.hasOwnProperty(r)&&(t[r]=a[r]);};function __extends(t,a){function r(){this.constructor=t;}extendStatics(t,a),t.prototype=null===a?Object.create(a):(r.prototype=a.prototype,new r);}function rotate$2(t,a){var r=t[0],e=t[1];return [r*Math.cos(a)-e*Math.sin(a),r*Math.sin(a)+e*Math.cos(a)]}function assertNumbers(){for(var t=[],a=0;a<arguments.length;a++)t[a]=arguments[a];for(var r=0;r<t.length;r++)if("number"!=typeof t[r])throw new Error("assertNumbers arguments["+r+"] is not a number. "+typeof t[r]+" == typeof "+t[r]);return !0}var PI=Math.PI;function annotateArcCommand(t,a,r){t.lArcFlag=0===t.lArcFlag?0:1,t.sweepFlag=0===t.sweepFlag?0:1;var e=t.rX,n=t.rY,i=t.x,o=t.y;e=Math.abs(t.rX),n=Math.abs(t.rY);var s=rotate$2([(a-i)/2,(r-o)/2],-t.xRot/180*PI),h=s[0],u=s[1],c=Math.pow(h,2)/Math.pow(e,2)+Math.pow(u,2)/Math.pow(n,2);1<c&&(e*=Math.sqrt(c),n*=Math.sqrt(c)),t.rX=e,t.rY=n;var m=Math.pow(e,2)*Math.pow(u,2)+Math.pow(n,2)*Math.pow(h,2),_=(t.lArcFlag!==t.sweepFlag?1:-1)*Math.sqrt(Math.max(0,(Math.pow(e,2)*Math.pow(n,2)-m)/m)),T=e*u/n*_,O=-n*h/e*_,p=rotate$2([T,O],t.xRot/180*PI);t.cX=p[0]+(a+i)/2,t.cY=p[1]+(r+o)/2,t.phi1=Math.atan2((u-O)/n,(h-T)/e),t.phi2=Math.atan2((-u-O)/n,(-h-T)/e),0===t.sweepFlag&&t.phi2>t.phi1&&(t.phi2-=2*PI),1===t.sweepFlag&&t.phi2<t.phi1&&(t.phi2+=2*PI),t.phi1*=180/PI,t.phi2*=180/PI;}function intersectionUnitCircleLine(t,a,r){assertNumbers(t,a,r);var e=t*t+a*a-r*r;if(0>e)return [];if(0===e)return [[t*r/(t*t+a*a),a*r/(t*t+a*a)]];var n=Math.sqrt(e);return [[(t*r+a*n)/(t*t+a*a),(a*r-t*n)/(t*t+a*a)],[(t*r-a*n)/(t*t+a*a),(a*r+t*n)/(t*t+a*a)]]}var SVGPathDataTransformer,DEG=Math.PI/180;function lerp$1(t,a,r){return (1-r)*t+r*a}function arcAt(t,a,r,e){return t+Math.cos(e/180*PI)*a+Math.sin(e/180*PI)*r}function bezierRoot(t,a,r,e){var n=a-t,i=r-a,o=3*n+3*(e-r)-6*i,s=6*(i-n),h=3*n;return Math.abs(o)<1e-6?[-h/s]:pqFormula(s/o,h/o,1e-6)}function bezierAt(t,a,r,e,n){var i=1-n;return t*(i*i*i)+a*(3*i*i*n)+r*(3*i*n*n)+e*(n*n*n)}function pqFormula(t,a,r){void 0===r&&(r=1e-6);var e=t*t/4-a;if(e<-r)return [];if(e<=r)return [-t/2];var n=Math.sqrt(e);return [-t/2-n,-t/2+n]}function a2c(t,a,r){var e,n,i,o;t.cX||annotateArcCommand(t,a,r);for(var s=Math.min(t.phi1,t.phi2),h=Math.max(t.phi1,t.phi2)-s,u=Math.ceil(h/90),c=new Array(u),m=a,_=r,T=0;T<u;T++){var O=lerp$1(t.phi1,t.phi2,T/u),p=lerp$1(t.phi1,t.phi2,(T+1)/u),y=p-O,S=4/3*Math.tan(y*DEG/4),f=[Math.cos(O*DEG)-S*Math.sin(O*DEG),Math.sin(O*DEG)+S*Math.cos(O*DEG)],V=f[0],N=f[1],D=[Math.cos(p*DEG),Math.sin(p*DEG)],P=D[0],l=D[1],v=[P+S*Math.sin(p*DEG),l-S*Math.cos(p*DEG)],E=v[0],A=v[1];c[T]={relative:t.relative,type:SVGPathData.CURVE_TO};var d=function(a,r){var e=rotate$2([a*t.rX,r*t.rY],t.xRot),n=e[0],i=e[1];return [t.cX+n,t.cY+i]};e=d(V,N),c[T].x1=e[0],c[T].y1=e[1],n=d(E,A),c[T].x2=n[0],c[T].y2=n[1],i=d(P,l),c[T].x=i[0],c[T].y=i[1],t.relative&&(c[T].x1-=m,c[T].y1-=_,c[T].x2-=m,c[T].y2-=_,c[T].x-=m,c[T].y-=_),m=(o=[c[T].x,c[T].y])[0],_=o[1];}return c}!function(t){function a(){return n(function(t,a,r){return t.relative&&(void 0!==t.x1&&(t.x1+=a),void 0!==t.y1&&(t.y1+=r),void 0!==t.x2&&(t.x2+=a),void 0!==t.y2&&(t.y2+=r),void 0!==t.x&&(t.x+=a),void 0!==t.y&&(t.y+=r),t.relative=!1),t})}function r(){var t=NaN,a=NaN,r=NaN,e=NaN;return n(function(n,i,o){return n.type&SVGPathData.SMOOTH_CURVE_TO&&(n.type=SVGPathData.CURVE_TO,t=isNaN(t)?i:t,a=isNaN(a)?o:a,n.x1=n.relative?i-t:2*i-t,n.y1=n.relative?o-a:2*o-a),n.type&SVGPathData.CURVE_TO?(t=n.relative?i+n.x2:n.x2,a=n.relative?o+n.y2:n.y2):(t=NaN,a=NaN),n.type&SVGPathData.SMOOTH_QUAD_TO&&(n.type=SVGPathData.QUAD_TO,r=isNaN(r)?i:r,e=isNaN(e)?o:e,n.x1=n.relative?i-r:2*i-r,n.y1=n.relative?o-e:2*o-e),n.type&SVGPathData.QUAD_TO?(r=n.relative?i+n.x1:n.x1,e=n.relative?o+n.y1:n.y1):(r=NaN,e=NaN),n})}function e(){var t=NaN,a=NaN;return n(function(r,e,n){if(r.type&SVGPathData.SMOOTH_QUAD_TO&&(r.type=SVGPathData.QUAD_TO,t=isNaN(t)?e:t,a=isNaN(a)?n:a,r.x1=r.relative?e-t:2*e-t,r.y1=r.relative?n-a:2*n-a),r.type&SVGPathData.QUAD_TO){t=r.relative?e+r.x1:r.x1,a=r.relative?n+r.y1:r.y1;var i=r.x1,o=r.y1;r.type=SVGPathData.CURVE_TO,r.x1=((r.relative?0:e)+2*i)/3,r.y1=((r.relative?0:n)+2*o)/3,r.x2=(r.x+2*i)/3,r.y2=(r.y+2*o)/3;}else t=NaN,a=NaN;return r})}function n(t){var a=0,r=0,e=NaN,n=NaN;return function(i){if(isNaN(e)&&!(i.type&SVGPathData.MOVE_TO))throw new Error("path must start with moveto");var o=t(i,a,r,e,n);return i.type&SVGPathData.CLOSE_PATH&&(a=e,r=n),void 0!==i.x&&(a=i.relative?a+i.x:i.x),void 0!==i.y&&(r=i.relative?r+i.y:i.y),i.type&SVGPathData.MOVE_TO&&(e=a,n=r),o}}function i(t,a,r,e,i,o){return assertNumbers(t,a,r,e,i,o),n(function(n,s,h,u){var c=n.x1,m=n.x2,_=n.relative&&!isNaN(u),T=void 0!==n.x?n.x:_?0:s,O=void 0!==n.y?n.y:_?0:h;function p(t){return t*t}n.type&SVGPathData.HORIZ_LINE_TO&&0!==a&&(n.type=SVGPathData.LINE_TO,n.y=n.relative?0:h),n.type&SVGPathData.VERT_LINE_TO&&0!==r&&(n.type=SVGPathData.LINE_TO,n.x=n.relative?0:s),void 0!==n.x&&(n.x=n.x*t+O*r+(_?0:i)),void 0!==n.y&&(n.y=T*a+n.y*e+(_?0:o)),void 0!==n.x1&&(n.x1=n.x1*t+n.y1*r+(_?0:i)),void 0!==n.y1&&(n.y1=c*a+n.y1*e+(_?0:o)),void 0!==n.x2&&(n.x2=n.x2*t+n.y2*r+(_?0:i)),void 0!==n.y2&&(n.y2=m*a+n.y2*e+(_?0:o));var y=t*e-a*r;if(void 0!==n.xRot&&(1!==t||0!==a||0!==r||1!==e))if(0===y)delete n.rX,delete n.rY,delete n.xRot,delete n.lArcFlag,delete n.sweepFlag,n.type=SVGPathData.LINE_TO;else{var S=n.xRot*Math.PI/180,f=Math.sin(S),V=Math.cos(S),N=1/p(n.rX),D=1/p(n.rY),P=p(V)*N+p(f)*D,l=2*f*V*(N-D),v=p(f)*N+p(V)*D,E=P*e*e-l*a*e+v*a*a,A=l*(t*e+a*r)-2*(P*r*e+v*t*a),d=P*r*r-l*t*r+v*t*t,G=(Math.atan2(A,E-d)+Math.PI)%Math.PI/2,C=Math.sin(G),x=Math.cos(G);n.rX=Math.abs(y)/Math.sqrt(E*p(x)+A*C*x+d*p(C)),n.rY=Math.abs(y)/Math.sqrt(E*p(C)-A*C*x+d*p(x)),n.xRot=180*G/Math.PI;}return void 0!==n.sweepFlag&&0>y&&(n.sweepFlag=+!n.sweepFlag),n})}function o(){return function(t){var a={};for(var r in t)a[r]=t[r];return a}}t.ROUND=function(t){function a(a){return Math.round(a*t)/t}return void 0===t&&(t=1e13),assertNumbers(t),function(t){return void 0!==t.x1&&(t.x1=a(t.x1)),void 0!==t.y1&&(t.y1=a(t.y1)),void 0!==t.x2&&(t.x2=a(t.x2)),void 0!==t.y2&&(t.y2=a(t.y2)),void 0!==t.x&&(t.x=a(t.x)),void 0!==t.y&&(t.y=a(t.y)),t}},t.TO_ABS=a,t.TO_REL=function(){return n(function(t,a,r){return t.relative||(void 0!==t.x1&&(t.x1-=a),void 0!==t.y1&&(t.y1-=r),void 0!==t.x2&&(t.x2-=a),void 0!==t.y2&&(t.y2-=r),void 0!==t.x&&(t.x-=a),void 0!==t.y&&(t.y-=r),t.relative=!0),t})},t.NORMALIZE_HVZ=function(t,a,r){return void 0===t&&(t=!0),void 0===a&&(a=!0),void 0===r&&(r=!0),n(function(e,n,i,o,s){if(isNaN(o)&&!(e.type&SVGPathData.MOVE_TO))throw new Error("path must start with moveto");return a&&e.type&SVGPathData.HORIZ_LINE_TO&&(e.type=SVGPathData.LINE_TO,e.y=e.relative?0:i),r&&e.type&SVGPathData.VERT_LINE_TO&&(e.type=SVGPathData.LINE_TO,e.x=e.relative?0:n),t&&e.type&SVGPathData.CLOSE_PATH&&(e.type=SVGPathData.LINE_TO,e.x=e.relative?o-n:o,e.y=e.relative?s-i:s),e.type&SVGPathData.ARC&&(0===e.rX||0===e.rY)&&(e.type=SVGPathData.LINE_TO,delete e.rX,delete e.rY,delete e.xRot,delete e.lArcFlag,delete e.sweepFlag),e})},t.NORMALIZE_ST=r,t.QT_TO_C=e,t.INFO=n,t.SANITIZE=function(t){void 0===t&&(t=0),assertNumbers(t);var a=NaN,r=NaN,e=NaN,i=NaN;return n(function(n,o,s,h,u){var c=Math.abs,m=!1,_=0,T=0;if(n.type&SVGPathData.SMOOTH_CURVE_TO&&(_=isNaN(a)?0:o-a,T=isNaN(r)?0:s-r),n.type&(SVGPathData.CURVE_TO|SVGPathData.SMOOTH_CURVE_TO)?(a=n.relative?o+n.x2:n.x2,r=n.relative?s+n.y2:n.y2):(a=NaN,r=NaN),n.type&SVGPathData.SMOOTH_QUAD_TO?(e=isNaN(e)?o:2*o-e,i=isNaN(i)?s:2*s-i):n.type&SVGPathData.QUAD_TO?(e=n.relative?o+n.x1:n.x1,i=n.relative?s+n.y1:n.y2):(e=NaN,i=NaN),n.type&SVGPathData.LINE_COMMANDS||n.type&SVGPathData.ARC&&(0===n.rX||0===n.rY||!n.lArcFlag)||n.type&SVGPathData.CURVE_TO||n.type&SVGPathData.SMOOTH_CURVE_TO||n.type&SVGPathData.QUAD_TO||n.type&SVGPathData.SMOOTH_QUAD_TO){var O=void 0===n.x?0:n.relative?n.x:n.x-o,p=void 0===n.y?0:n.relative?n.y:n.y-s;_=isNaN(e)?void 0===n.x1?_:n.relative?n.x:n.x1-o:e-o,T=isNaN(i)?void 0===n.y1?T:n.relative?n.y:n.y1-s:i-s;var y=void 0===n.x2?0:n.relative?n.x:n.x2-o,S=void 0===n.y2?0:n.relative?n.y:n.y2-s;c(O)<=t&&c(p)<=t&&c(_)<=t&&c(T)<=t&&c(y)<=t&&c(S)<=t&&(m=!0);}return n.type&SVGPathData.CLOSE_PATH&&c(o-h)<=t&&c(s-u)<=t&&(m=!0),m?[]:n})},t.MATRIX=i,t.ROTATE=function(t,a,r){void 0===a&&(a=0),void 0===r&&(r=0),assertNumbers(t,a,r);var e=Math.sin(t),n=Math.cos(t);return i(n,e,-e,n,a-a*n+r*e,r-a*e-r*n)},t.TRANSLATE=function(t,a){return void 0===a&&(a=0),assertNumbers(t,a),i(1,0,0,1,t,a)},t.SCALE=function(t,a){return void 0===a&&(a=t),assertNumbers(t,a),i(t,0,0,a,0,0)},t.SKEW_X=function(t){return assertNumbers(t),i(1,0,Math.atan(t),1,0,0)},t.SKEW_Y=function(t){return assertNumbers(t),i(1,Math.atan(t),0,1,0,0)},t.X_AXIS_SYMMETRY=function(t){return void 0===t&&(t=0),assertNumbers(t),i(-1,0,0,1,t,0)},t.Y_AXIS_SYMMETRY=function(t){return void 0===t&&(t=0),assertNumbers(t),i(1,0,0,-1,0,t)},t.A_TO_C=function(){return n(function(t,a,r){return SVGPathData.ARC===t.type?a2c(t,t.relative?0:a,t.relative?0:r):t})},t.ANNOTATE_ARCS=function(){return n(function(t,a,r){return t.relative&&(a=0,r=0),SVGPathData.ARC===t.type&&annotateArcCommand(t,a,r),t})},t.CLONE=o,t.CALCULATE_BOUNDS=function(){var t=function(t){var a={};for(var r in t)a[r]=t[r];return a},i=a(),o=e(),s=r(),h=n(function(a,r,e){var n=s(o(i(t(a))));function u(t){t>h.maxX&&(h.maxX=t),t<h.minX&&(h.minX=t);}function c(t){t>h.maxY&&(h.maxY=t),t<h.minY&&(h.minY=t);}if(n.type&SVGPathData.DRAWING_COMMANDS&&(u(r),c(e)),n.type&SVGPathData.HORIZ_LINE_TO&&u(n.x),n.type&SVGPathData.VERT_LINE_TO&&c(n.y),n.type&SVGPathData.LINE_TO&&(u(n.x),c(n.y)),n.type&SVGPathData.CURVE_TO){u(n.x),c(n.y);for(var m=0,_=bezierRoot(r,n.x1,n.x2,n.x);m<_.length;m++)0<(G=_[m])&&1>G&&u(bezierAt(r,n.x1,n.x2,n.x,G));for(var T=0,O=bezierRoot(e,n.y1,n.y2,n.y);T<O.length;T++)0<(G=O[T])&&1>G&&c(bezierAt(e,n.y1,n.y2,n.y,G));}if(n.type&SVGPathData.ARC){u(n.x),c(n.y),annotateArcCommand(n,r,e);for(var p=n.xRot/180*Math.PI,y=Math.cos(p)*n.rX,S=Math.sin(p)*n.rX,f=-Math.sin(p)*n.rY,V=Math.cos(p)*n.rY,N=n.phi1<n.phi2?[n.phi1,n.phi2]:-180>n.phi2?[n.phi2+360,n.phi1+360]:[n.phi2,n.phi1],D=N[0],P=N[1],l=function(t){var a=t[0],r=t[1],e=180*Math.atan2(r,a)/Math.PI;return e<D?e+360:e},v=0,E=intersectionUnitCircleLine(f,-y,0).map(l);v<E.length;v++)(G=E[v])>D&&G<P&&u(arcAt(n.cX,y,f,G));for(var A=0,d=intersectionUnitCircleLine(V,-S,0).map(l);A<d.length;A++){var G;(G=d[A])>D&&G<P&&c(arcAt(n.cY,S,V,G));}}return a});return h.minX=1/0,h.maxX=-1/0,h.minY=1/0,h.maxY=-1/0,h};}(SVGPathDataTransformer||(SVGPathDataTransformer={}));var _a,_a$1,TransformableSVG=function(){function t(){}return t.prototype.round=function(t){return this.transform(SVGPathDataTransformer.ROUND(t))},t.prototype.toAbs=function(){return this.transform(SVGPathDataTransformer.TO_ABS())},t.prototype.toRel=function(){return this.transform(SVGPathDataTransformer.TO_REL())},t.prototype.normalizeHVZ=function(t,a,r){return this.transform(SVGPathDataTransformer.NORMALIZE_HVZ(t,a,r))},t.prototype.normalizeST=function(){return this.transform(SVGPathDataTransformer.NORMALIZE_ST())},t.prototype.qtToC=function(){return this.transform(SVGPathDataTransformer.QT_TO_C())},t.prototype.aToC=function(){return this.transform(SVGPathDataTransformer.A_TO_C())},t.prototype.sanitize=function(t){return this.transform(SVGPathDataTransformer.SANITIZE(t))},t.prototype.translate=function(t,a){return this.transform(SVGPathDataTransformer.TRANSLATE(t,a))},t.prototype.scale=function(t,a){return this.transform(SVGPathDataTransformer.SCALE(t,a))},t.prototype.rotate=function(t,a,r){return this.transform(SVGPathDataTransformer.ROTATE(t,a,r))},t.prototype.matrix=function(t,a,r,e,n,i){return this.transform(SVGPathDataTransformer.MATRIX(t,a,r,e,n,i))},t.prototype.skewX=function(t){return this.transform(SVGPathDataTransformer.SKEW_X(t))},t.prototype.skewY=function(t){return this.transform(SVGPathDataTransformer.SKEW_Y(t))},t.prototype.xSymmetry=function(t){return this.transform(SVGPathDataTransformer.X_AXIS_SYMMETRY(t))},t.prototype.ySymmetry=function(t){return this.transform(SVGPathDataTransformer.Y_AXIS_SYMMETRY(t))},t.prototype.annotateArcs=function(){return this.transform(SVGPathDataTransformer.ANNOTATE_ARCS())},t}(),isWhiteSpace=function(t){return " "===t||"\t"===t||"\r"===t||"\n"===t},isDigit=function(t){return "0".charCodeAt(0)<=t.charCodeAt(0)&&t.charCodeAt(0)<="9".charCodeAt(0)},SVGPathDataParser$$1=function(t){function a(){var a=t.call(this)||this;return a.curNumber="",a.curCommandType=-1,a.curCommandRelative=!1,a.canParseCommandOrComma=!0,a.curNumberHasExp=!1,a.curNumberHasExpDigits=!1,a.curNumberHasDecimal=!1,a.curArgs=[],a}return __extends(a,t),a.prototype.finish=function(t){if(void 0===t&&(t=[]),this.parse(" ",t),0!==this.curArgs.length||!this.canParseCommandOrComma)throw new SyntaxError("Unterminated command at the path end.");return t},a.prototype.parse=function(t,a){var r=this;void 0===a&&(a=[]);for(var e=function(t){a.push(t),r.curArgs.length=0,r.canParseCommandOrComma=!0;},n=0;n<t.length;n++){var i=t[n];if(isDigit(i))this.curNumber+=i,this.curNumberHasExpDigits=this.curNumberHasExp;else if("e"!==i&&"E"!==i)if("-"!==i&&"+"!==i||!this.curNumberHasExp||this.curNumberHasExpDigits)if("."!==i||this.curNumberHasExp||this.curNumberHasDecimal){if(this.curNumber&&-1!==this.curCommandType){var o=Number(this.curNumber);if(isNaN(o))throw new SyntaxError("Invalid number ending at "+n);if(this.curCommandType===SVGPathData.ARC)if(0===this.curArgs.length||1===this.curArgs.length){if(0>o)throw new SyntaxError('Expected positive number, got "'+o+'" at index "'+n+'"')}else if((3===this.curArgs.length||4===this.curArgs.length)&&"0"!==this.curNumber&&"1"!==this.curNumber)throw new SyntaxError('Expected a flag, got "'+this.curNumber+'" at index "'+n+'"');this.curArgs.push(o),this.curArgs.length===COMMAND_ARG_COUNTS[this.curCommandType]&&(SVGPathData.HORIZ_LINE_TO===this.curCommandType?e({type:SVGPathData.HORIZ_LINE_TO,relative:this.curCommandRelative,x:o}):SVGPathData.VERT_LINE_TO===this.curCommandType?e({type:SVGPathData.VERT_LINE_TO,relative:this.curCommandRelative,y:o}):this.curCommandType===SVGPathData.MOVE_TO||this.curCommandType===SVGPathData.LINE_TO||this.curCommandType===SVGPathData.SMOOTH_QUAD_TO?(e({type:this.curCommandType,relative:this.curCommandRelative,x:this.curArgs[0],y:this.curArgs[1]}),SVGPathData.MOVE_TO===this.curCommandType&&(this.curCommandType=SVGPathData.LINE_TO)):this.curCommandType===SVGPathData.CURVE_TO?e({type:SVGPathData.CURVE_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x2:this.curArgs[2],y2:this.curArgs[3],x:this.curArgs[4],y:this.curArgs[5]}):this.curCommandType===SVGPathData.SMOOTH_CURVE_TO?e({type:SVGPathData.SMOOTH_CURVE_TO,relative:this.curCommandRelative,x2:this.curArgs[0],y2:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===SVGPathData.QUAD_TO?e({type:SVGPathData.QUAD_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===SVGPathData.ARC&&e({type:SVGPathData.ARC,relative:this.curCommandRelative,rX:this.curArgs[0],rY:this.curArgs[1],xRot:this.curArgs[2],lArcFlag:this.curArgs[3],sweepFlag:this.curArgs[4],x:this.curArgs[5],y:this.curArgs[6]})),this.curNumber="",this.curNumberHasExpDigits=!1,this.curNumberHasExp=!1,this.curNumberHasDecimal=!1,this.canParseCommandOrComma=!0;}if(!isWhiteSpace(i))if(","===i&&this.canParseCommandOrComma)this.canParseCommandOrComma=!1;else if("+"!==i&&"-"!==i&&"."!==i){if(0!==this.curArgs.length)throw new SyntaxError("Unterminated command at index "+n+".");if(!this.canParseCommandOrComma)throw new SyntaxError('Unexpected character "'+i+'" at index '+n+". Command cannot follow comma");if(this.canParseCommandOrComma=!1,"z"!==i&&"Z"!==i)if("h"===i||"H"===i)this.curCommandType=SVGPathData.HORIZ_LINE_TO,this.curCommandRelative="h"===i;else if("v"===i||"V"===i)this.curCommandType=SVGPathData.VERT_LINE_TO,this.curCommandRelative="v"===i;else if("m"===i||"M"===i)this.curCommandType=SVGPathData.MOVE_TO,this.curCommandRelative="m"===i;else if("l"===i||"L"===i)this.curCommandType=SVGPathData.LINE_TO,this.curCommandRelative="l"===i;else if("c"===i||"C"===i)this.curCommandType=SVGPathData.CURVE_TO,this.curCommandRelative="c"===i;else if("s"===i||"S"===i)this.curCommandType=SVGPathData.SMOOTH_CURVE_TO,this.curCommandRelative="s"===i;else if("q"===i||"Q"===i)this.curCommandType=SVGPathData.QUAD_TO,this.curCommandRelative="q"===i;else if("t"===i||"T"===i)this.curCommandType=SVGPathData.SMOOTH_QUAD_TO,this.curCommandRelative="t"===i;else{if("a"!==i&&"A"!==i)throw new SyntaxError('Unexpected character "'+i+'" at index '+n+".");this.curCommandType=SVGPathData.ARC,this.curCommandRelative="a"===i;}else a.push({type:SVGPathData.CLOSE_PATH}),this.canParseCommandOrComma=!0,this.curCommandType=-1;}else this.curNumber=i,this.curNumberHasDecimal="."===i;}else this.curNumber+=i,this.curNumberHasDecimal=!0;else this.curNumber+=i;else this.curNumber+=i,this.curNumberHasExp=!0;}return a},a.prototype.transform=function(t){return Object.create(this,{parse:{value:function(a,r){void 0===r&&(r=[]);for(var e=0,n=Object.getPrototypeOf(this).parse.call(this,a);e<n.length;e++){var i=n[e],o=t(i);Array.isArray(o)?r.push.apply(r,o):r.push(o);}return r}}})},a}(TransformableSVG),SVGPathData=function(t){function a(r){var e=t.call(this)||this;return e.commands="string"==typeof r?a.parse(r):r,e}return __extends(a,t),a.prototype.encode=function(){return a.encode(this.commands)},a.prototype.getBounds=function(){var t=SVGPathDataTransformer.CALCULATE_BOUNDS();return this.transform(t),t},a.prototype.transform=function(t){for(var a=[],r=0,e=this.commands;r<e.length;r++){var n=t(e[r]);Array.isArray(n)?a.push.apply(a,n):a.push(n);}return this.commands=a,this},a.encode=function(t){return encodeSVGPath$$1(t)},a.parse=function(t){var a=new SVGPathDataParser$$1,r=[];return a.parse(t,r),a.finish(r),r},a.CLOSE_PATH=1,a.MOVE_TO=2,a.HORIZ_LINE_TO=4,a.VERT_LINE_TO=8,a.LINE_TO=16,a.CURVE_TO=32,a.SMOOTH_CURVE_TO=64,a.QUAD_TO=128,a.SMOOTH_QUAD_TO=256,a.ARC=512,a.LINE_COMMANDS=a.LINE_TO|a.HORIZ_LINE_TO|a.VERT_LINE_TO,a.DRAWING_COMMANDS=a.HORIZ_LINE_TO|a.VERT_LINE_TO|a.LINE_TO|a.CURVE_TO|a.SMOOTH_CURVE_TO|a.QUAD_TO|a.SMOOTH_QUAD_TO|a.ARC,a}(TransformableSVG),COMMAND_ARG_COUNTS=((_a={})[SVGPathData.MOVE_TO]=2,_a[SVGPathData.LINE_TO]=2,_a[SVGPathData.HORIZ_LINE_TO]=1,_a[SVGPathData.VERT_LINE_TO]=1,_a[SVGPathData.CLOSE_PATH]=0,_a[SVGPathData.QUAD_TO]=4,_a[SVGPathData.SMOOTH_QUAD_TO]=2,_a[SVGPathData.CURVE_TO]=6,_a[SVGPathData.SMOOTH_CURVE_TO]=4,_a[SVGPathData.ARC]=7,_a),WSP=" ";function encodeSVGPath$$1(t){var a="";Array.isArray(t)||(t=[t]);for(var r=0;r<t.length;r++){var e=t[r];if(e.type===SVGPathData.CLOSE_PATH)a+="z";else if(e.type===SVGPathData.HORIZ_LINE_TO)a+=(e.relative?"h":"H")+e.x;else if(e.type===SVGPathData.VERT_LINE_TO)a+=(e.relative?"v":"V")+e.y;else if(e.type===SVGPathData.MOVE_TO)a+=(e.relative?"m":"M")+e.x+WSP+e.y;else if(e.type===SVGPathData.LINE_TO)a+=(e.relative?"l":"L")+e.x+WSP+e.y;else if(e.type===SVGPathData.CURVE_TO)a+=(e.relative?"c":"C")+e.x1+WSP+e.y1+WSP+e.x2+WSP+e.y2+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.SMOOTH_CURVE_TO)a+=(e.relative?"s":"S")+e.x2+WSP+e.y2+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.QUAD_TO)a+=(e.relative?"q":"Q")+e.x1+WSP+e.y1+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.SMOOTH_QUAD_TO)a+=(e.relative?"t":"T")+e.x+WSP+e.y;else{if(e.type!==SVGPathData.ARC)throw new Error('Unexpected command type "'+e.type+'" at index '+r+".");a+=(e.relative?"a":"A")+e.rX+WSP+e.rY+WSP+e.xRot+WSP+ +e.lArcFlag+WSP+ +e.sweepFlag+WSP+e.x+WSP+e.y;}}return a}var SVGPathData$1=function(t){function a(r){var e=t.call(this)||this;return e.commands="string"==typeof r?a.parse(r):r,e}return __extends(a,t),a.prototype.encode=function(){return a.encode(this.commands)},a.prototype.getBounds=function(){var t=SVGPathDataTransformer.CALCULATE_BOUNDS();return this.transform(t),t},a.prototype.transform=function(t){for(var a=[],r=0,e=this.commands;r<e.length;r++){var n=t(e[r]);Array.isArray(n)?a.push.apply(a,n):a.push(n);}return this.commands=a,this},a.encode=function(t){return encodeSVGPath$$1(t)},a.parse=function(t){var a=new SVGPathDataParser$$1,r=[];return a.parse(t,r),a.finish(r),r},a.CLOSE_PATH=1,a.MOVE_TO=2,a.HORIZ_LINE_TO=4,a.VERT_LINE_TO=8,a.LINE_TO=16,a.CURVE_TO=32,a.SMOOTH_CURVE_TO=64,a.QUAD_TO=128,a.SMOOTH_QUAD_TO=256,a.ARC=512,a.LINE_COMMANDS=a.LINE_TO|a.HORIZ_LINE_TO|a.VERT_LINE_TO,a.DRAWING_COMMANDS=a.HORIZ_LINE_TO|a.VERT_LINE_TO|a.LINE_TO|a.CURVE_TO|a.SMOOTH_CURVE_TO|a.QUAD_TO|a.SMOOTH_QUAD_TO|a.ARC,a}(TransformableSVG),COMMAND_ARG_COUNTS$1=((_a$1={})[SVGPathData$1.MOVE_TO]=2,_a$1[SVGPathData$1.LINE_TO]=2,_a$1[SVGPathData$1.HORIZ_LINE_TO]=1,_a$1[SVGPathData$1.VERT_LINE_TO]=1,_a$1[SVGPathData$1.CLOSE_PATH]=0,_a$1[SVGPathData$1.QUAD_TO]=4,_a$1[SVGPathData$1.SMOOTH_QUAD_TO]=2,_a$1[SVGPathData$1.CURVE_TO]=6,_a$1[SVGPathData$1.SMOOTH_CURVE_TO]=4,_a$1[SVGPathData$1.ARC]=7,_a$1);
 
-  const svgImporter = {
-    build(markup) {
-      const $svg = new DOMParser()
-        .parseFromString(markup, "image/svg+xml")
-        .documentElement;
+  const markupToScene = (markup) => {
+    const $svg = new DOMParser()
+      .parseFromString(markup, "image/svg+xml")
+      .documentElement;
 
-      if ($svg instanceof SVGElement) {
-        const scene = Scene.create();
-        this.buildTree($svg, scene);
-        scene.setFrontier();
-        console.log('importing from svg markup succeeded');
-        return scene;
-      }
-
-      console.log('import from svg markup did not succeed');
-
+    if ($svg instanceof SVGElement) {
+      const scene = Scene.create();
+      buildTree($svg, scene);
+      scene.setFrontier();
+      return scene;
+    } else {
       return null;
-    },
+    }
+  };
 
-    copyStyles($node, node) {
-      node.styles = Array.from($node.querySelectorAll('style'));
-    },
+  const buildTree = ($node, node) => {
+    processAttributes($node, node);
 
-    copyDefs($node, node) {
-      node.defs = Array.from($node.querySelectorAll('style'));
-    },
+    const $graphicsChildren = Array.from($node.children).filter(($child) => {
+      return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+    });
 
-    buildTree($node, node) {
-      this.processAttributes($node, node);
+    for (let $child of $graphicsChildren) {
+      let child;
 
-      const $graphicsChildren = Array.from($node.children).filter(($child) => {
-        return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
-      });
-
-      for (let $child of $graphicsChildren) {
-        let child;
-
-        if ($child instanceof SVGGElement) {
-          child = Group.create();
-          node.append(child);
-          this.buildTree($child, child);
-        } else {
-          child = this.buildShapeTree($child);
-          node.append(child);
-        }
+      if ($child instanceof SVGGElement) {
+        child = Group.create();
+        node.append(child);
+        buildTree($child, child);
+      } else {
+        child = buildShapeTree($child);
+        node.append(child);
       }
-    },
+    }
+  };
 
-    processAttributes($node, node) {
-      // viewBox
-      if ($node.tagName === 'svg') {
-        const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
-        const origin = Vector.create(viewBox[0], viewBox[1]);
-        const size = Vector.create(viewBox[2], viewBox[3]);
-        node.viewBox = Rectangle.create(origin, size);
-      }
+  const processAttributes = ($node, node) => {
+    // viewBox
+    if ($node.tagName === 'svg') {
+      const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
+      const origin = Vector.create(viewBox[0], viewBox[1]);
+      const size = Vector.create(viewBox[2], viewBox[3]);
+      node.viewBox = Rectangle.create(origin, size);
+    }
 
-      // transform
-      if (
-        $node.transform &&
-        $node.transform.baseVal &&
-        $node.transform.baseVal.consolidate()
-      ) {
-        const $matrix = $node.transform.baseVal.consolidate().matrix;
-        node.transform = Matrix.createFromDOMMatrix($matrix);
-      }
+    // transform
+    if (
+      $node.transform &&
+      $node.transform.baseVal &&
+      $node.transform.baseVal.consolidate()
+    ) {
+      const $matrix = $node.transform.baseVal.consolidate().matrix;
+      node.transform = Matrix.createFromDOMMatrix($matrix);
+    }
 
-      // classes
-      node.class = Class.create(
-        Array.from($node.classList)
-      );
-    },
+    // classes
+    node.class = Class.create(
+      Array.from($node.classList)
+    );
+  };
 
-    buildShapeTree($geometryNode) {
-      const shape = Shape.create();
+  const buildShapeTree = ($geometryNode) => {
+    const shape = Shape.create();
 
-      this.processAttributes($geometryNode, shape);
-      // ^ TODO: we are also calling processAttributes further above, duplication!
+    processAttributes($geometryNode, shape);
+    // ^ TODO: we are also calling processAttributes further above, duplication!
 
-      let pathCommands;
+    let pathCommands;
 
-      switch ($geometryNode.tagName) {
-        case 'rect':
-          const x      = Number($geometryNode.getAttributeNS(null, 'x'));
-          const y      = Number($geometryNode.getAttributeNS(null, 'y'));
-          const width  = Number($geometryNode.getAttributeNS(null, 'width'));
-          const height = Number($geometryNode.getAttributeNS(null, 'height'));
+    switch ($geometryNode.tagName) {
+      case 'rect':
+        const x      = Number($geometryNode.getAttributeNS(null, 'x'));
+        const y      = Number($geometryNode.getAttributeNS(null, 'y'));
+        const width  = Number($geometryNode.getAttributeNS(null, 'width'));
+        const height = Number($geometryNode.getAttributeNS(null, 'height'));
 
-          pathCommands = this.commands(`
-          M ${x} ${y}
-          H ${x + width}
-          V ${y + height}
-          H ${x}
-          Z
-        `);
-          break;
-        case 'path':
-          pathCommands = this.commands($geometryNode.getAttributeNS(null, 'd'));
-          break;
-      }
+        pathCommands = commands(`
+        M ${x} ${y}
+        H ${x + width}
+        V ${y + height}
+        H ${x}
+        Z
+      `);
+        break;
+      case 'path':
+        pathCommands = commands($geometryNode.getAttributeNS(null, 'd'));
+        break;
+    }
 
-      const pathSequences = this.sequences(pathCommands);
+    const pathSequences = sequences(pathCommands);
 
-      for (let sequence of pathSequences) {
-        shape.append(this.buildSplineTree(sequence));
-      }
+    for (let sequence of pathSequences) {
+      shape.append(buildSplineTree(sequence));
+    }
 
-      return shape;
-    },
+    return shape;
+  };
 
-    buildSplineTree(sequence) {
-      const spline = Spline.create();
-      for (let segment of this.buildSegmentList(sequence)) {
-        spline.append(segment);
-      }
+  const buildSplineTree = (sequence) => {
+    const spline = Spline.create();
+    for (let segment of buildSegmentList(sequence)) {
+      spline.append(segment);
+    }
 
-      return spline;
-    },
+    return spline;
+  };
 
-    // helpers
+  // helpers
 
-    // we want a segment to have children 'handleIn', 'anchor' etc
+  // we want a segment to have children 'handleIn', 'anchor' etc
 
-    buildSegmentList(commands) {
-      const segments = [];
+  const buildSegmentList = (commands) => {
+    const segments = [];
 
-      // the first command is ALWAYS an `M` command (no handles)
-      segments[0] = Segment.create();
-      const child = Anchor.create();
-      child.payload.vector = Vector.create(commands[0].x, commands[0].y);
-      segments[0].append(child);
+    // the first command is ALWAYS an `M` command (no handles)
+    segments[0] = Segment.create();
+    const child = Anchor.create();
+    child.payload.vector = Vector.create(commands[0].x, commands[0].y);
+    segments[0].append(child);
 
-      for (let i = 1; i < commands.length; i += 1) {
-        const command  = commands[i];
-        const prevSeg  = segments[i - 1];
-        const currSeg  = Segment.create();
+    for (let i = 1; i < commands.length; i += 1) {
+      const command  = commands[i];
+      const prevSeg  = segments[i - 1];
+      const currSeg  = Segment.create();
 
-        const anchor = Anchor.create();
-        anchor.payload.vector = Vector.create(command.x, command.y);
-        currSeg.append(anchor);
+      const anchor = Anchor.create();
+      anchor.payload.vector = Vector.create(command.x, command.y);
+      currSeg.append(anchor);
 
-        if (command.x1 && command.x2) {
-          const handleOut = HandleOut.create();
-          handleOut.payload.vector = Vector.create(command.x1, command.y1);
-          prevSeg.append(handleOut);
+      if (command.x1 && command.x2) {
+        const handleOut = HandleOut.create();
+        handleOut.payload.vector = Vector.create(command.x1, command.y1);
+        prevSeg.append(handleOut);
 
-          const handleIn = HandleIn.create();
-          handleIn.payload.vector = Vector.create(command.x2, command.y2);
-          currSeg.append(handleIn);
+        const handleIn = HandleIn.create();
+        handleIn.payload.vector = Vector.create(command.x2, command.y2);
+        currSeg.append(handleIn);
 
-        } else if (command.x1) {
-          const handleIn = HandleIn.create();
-          handleIn.payload.vector = Vector.create(command.x1, command.y1);
-          currSeg.append(handleIn);
-        }
-
-        segments[i] = currSeg;
+      } else if (command.x1) {
+        const handleIn = HandleIn.create();
+        handleIn.payload.vector = Vector.create(command.x1, command.y1);
+        currSeg.append(handleIn);
       }
 
-      return segments;
-    },
+      segments[i] = currSeg;
+    }
 
-    sequences(svgCommands) {
-      const MOVE = 2; // NOTE: this constant is introduced by svg-pathdata module
-      const theSequences = [];
+    return segments;
+  };
 
-      for (let command of svgCommands) {
-        if (command.type === MOVE) {
-          theSequences.push([command]);
-        } else {
-          theSequences[theSequences.length - 1].push(command);
-        }
+  const sequences = (svgCommands) => {
+    const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
+    const theSequences = [];
+
+    for (let command of svgCommands) {
+      if (command.type === MOVE) {
+        theSequences.push([command]);
+      } else {
+        theSequences[theSequences.length - 1].push(command);
       }
+    }
 
-      return theSequences;
-    },
+    return theSequences;
+  };
 
-    commands(svgPath) {
-      return new SVGPathData$1(svgPath)
-        .transform(SVGPathDataTransformer.NORMALIZE_HVZ()) // no H, V or Z shortcuts
-        .transform(SVGPathDataTransformer.NORMALIZE_ST())  // no S (smooth multi-Bezier)
-        .transform(SVGPathDataTransformer.A_TO_C())        // no A (arcs)
-        .toAbs()                                           // no relative commands
-        .commands;
-    },
+  const commands = (svgPath) => {
+    return new SVGPathData$1(svgPath)
+      .transform(SVGPathDataTransformer.NORMALIZE_HVZ()) // no H, V or Z shortcuts
+      .transform(SVGPathDataTransformer.NORMALIZE_ST())  // no S (smooth multi-Bezier)
+      .transform(SVGPathDataTransformer.A_TO_C())        // no A (arcs)
+      .toAbs()                                           // no relative commands
+      .commands;
   };
 
   const exportToAST = (state) => {
     const astRoot = ASTNode.create();
     parse(state.store.scene, astRoot, 0);
     astRoot.indexify();
+    // console.log(astRoot.prettyMarkup());
     return astRoot;
   };
 
@@ -4782,34 +4763,11 @@
       return '';
     }
 
-    return buildTree(store.scene);
+    return buildTree$1(store.scene);
   };
 
-  const buildTree = (node, vParent = null) => {
-    let vNode;
-
-    if (node.type === 'shape') {
-      const diameter  = scale$2(node, LENGTHS_IN_PX.controlDiameter);
-      const radius    = diameter / 2;
-
-      const vParts = node.toVDOMCurves();
-      const splitter = h('circle', {
-        'data-type': 'splitter',
-        r:           radius,
-        cx: node.splitter.x,
-        cy: node.splitter.y,
-        transform:   node.transform.toString(),
-      });
-
-      vNode = h('g', {
-        'data-type': 'content',
-        class:       node.class.toString(),
-        'data-key':  node.key,
-      }, node.toVDOMNode(), ...vParts, splitter);
-      // ^ the whole path followed by its curves, and the splitter
-    } else {
-      vNode = node.toVDOMNode();
-    }
+  const buildTree$1 = (node, vParent = null) => {
+    const vNode = node.toVDOMNode();
 
     if (vParent) {
       const vWrapper = wrap(vNode, node);
@@ -4817,12 +4775,13 @@
     }
 
     for (let child of node.graphicsChildren) {
-      buildTree(child, vNode);
+      buildTree$1(child, vNode);
     }
 
     return vNode;
   };
 
+  // push curves here
   const wrap = (vNode, node) => {
     const vWrapper = h('g', {
       'data-type': `${node.type}-wrapper`,
@@ -4831,10 +4790,33 @@
 
     vWrapper.children.push(vNode);
 
-    if (node.type === 'shape') { vWrapper.children.push(innerUI(node)); }
+    if (node.type === 'shape') {
+      vWrapper.children.push(curves(node));
+      vWrapper.children.push(innerUI(node));
+    }
+
     vWrapper.children.push(outerUI(node));
 
     return vWrapper;
+  };
+
+  const curves = (node) => {
+    const diameter  = scale$2(node, LENGTHS_IN_PX.controlDiameter);
+    const radius    = diameter / 2;
+
+    const vParts = node.toVDOMCurves();
+    const splitter = h('circle', {
+      'data-type': 'splitter',
+      r:           radius,
+      cx: node.splitter.x,
+      cy: node.splitter.y,
+      transform:   node.transform.toString(),
+    });
+
+    return h('g', {
+      'data-type': 'curves',
+      'data-key':  node.key,
+    }, ...vParts, splitter);
   };
 
   const outerUI = (node) => {
@@ -5040,95 +5022,91 @@
     };
   };
 
-  const plainExporter = {
-    build(store) {
-      return {
-        doc:  JSON.parse(JSON.stringify(store.doc)),
-        docs: store.docs.children.map(child => child.payload.id),
-        // ^ TODO: I think we don't need `docs`
-      };
-    },
+  const exportToPlain = (store) => {
+    return {
+      doc:  JSON.parse(JSON.stringify(store.doc)),
+      docs: store.docs.children.map(child => child.payload.id),
+      // ^ TODO: I think we don't need `docs`
+    };
   };
 
-  const svgExporter = {
-    build(store) {
-      const markup = [];
-      const vNode = this.buildSceneNode(store.scene);
+  const exportToSVG = (store) => {
+    const markup = [];
+    const vNode = buildSceneNode(store.scene);
 
-      return this.convertToMarkup(markup, vNode, 0);
-    },
+    return convertToMarkup(markup, vNode, 0);
+  };
 
-    buildSceneNode(node, svgParent = null) {
-      const svgNode = node.toSVGNode();
+  const buildSceneNode = (node, svgParent = null) => {
+    const svgNode = node.toSVGNode();
 
-      if (svgParent) {
-        svgParent.children.push(svgNode);
-      }
+    if (svgParent) {
+      svgParent.children.push(svgNode);
+    }
 
-      for (let child of node.graphicsChildren) {
-        this.buildSceneNode(child, svgNode);
-      }
+    for (let child of node.graphicsChildren) {
+      buildSceneNode(child, svgNode);
+    }
 
-      return svgNode;
-    },
+    return svgNode;
+  };
 
-    convertToMarkup(markup, svgNode, level) {
-      this.appendOpenTag(markup, svgNode, level);
-      for (let child of svgNode.children) {
-        this.convertToMarkup(markup, child, level + 1);
-      }
-      this.appendCloseTag(markup, svgNode, level);
+  const convertToMarkup = (markup, svgNode, level) => {
+    appendOpenTag(markup, svgNode, level);
+    for (let child of svgNode.children) {
+      convertToMarkup(markup, child, level + 1);
+    }
+    appendCloseTag(markup, svgNode, level);
 
-      return markup.join('');
-    },
+    return markup.join('');
+  };
 
-    appendOpenTag(markup, svgNode, level) {
-      const tag = [];
+  const appendOpenTag = (markup, svgNode, level) => {
+    const tag = [];
 
+    for (let i = 0; i < level; i += 1) {
+      tag.push('  ');
+    }
+
+    tag.push('<');
+    tag.push(svgNode.tag);
+
+    const propsList = [];
+
+    for (let [key, value] of Object.entries(svgNode.props)) {
+      propsList.push(`${key}="${value}"`);
+    }
+
+    if (propsList.length > 0) {
+      tag.push(' ');
+    }
+
+    tag.push(propsList.join(' '));
+
+    tag.push('>');
+
+    // if (svgNode.tag !== 'path') {
+      tag.push('\n');
+    // }
+
+    markup.push(tag.join(''));
+  };
+
+  const appendCloseTag = (markup, svgNode, level) => {
+    const tag = [];
+
+    // if (svgNode.tag !== 'path') {
       for (let i = 0; i < level; i += 1) {
         tag.push('  ');
       }
+    // }
 
-      tag.push('<');
-      tag.push(svgNode.tag);
+    tag.push('</');
+    tag.push(svgNode.tag);
+    tag.push('>');
+    tag.push('\n');
 
-      const propsList = [];
-
-      for (let [key, value] of Object.entries(svgNode.props)) {    
-        propsList.push(`${key}="${value}"`);
-      }
-
-      if (propsList.length > 0) {
-        tag.push(' ');
-      }
-
-      tag.push(propsList.join(' '));
-
-      tag.push('>');
-
-      // if (svgNode.tag !== 'path') {
-        tag.push('\n');
-      // }
-
-      markup.push(tag.join(''));
-    },
-
-    appendCloseTag(markup, svgNode, level) {
-      const tag = [];
-
-      // if (svgNode.tag !== 'path') {
-        for (let i = 0; i < level; i += 1) {
-          tag.push('  ');
-        }
-      // }
-
-      tag.push('</');
-      tag.push(svgNode.tag);
-      tag.push('>');
-      tag.push('\n');
-
-      markup.push(tag.join(''));
-    },
+    markup.push(tag.join(''));
   };
 
   const State = {
@@ -5205,22 +5183,30 @@
         update: this.update,
         vDOM:   this.exportToVDOM(),
         plain:  this.exportToPlain(),
-        ast:    this.exportToAST(),  // TODO: experimental
+        ast:    this.exportToAST(),
       };
     },
 
+    // TODO: better naming, like:
+    // objectToScene
+    // markupToScene
+    // sceneToMarkup
+    // sceneToVDOM
+    // sceneToAST
+    // sceneToObject
+
     // returns a node (node type may vary depending on object)
-    importFromPlain(object) {
-      return plainImporter.build(object);
+    objectToDoc(object) {
+      return objectToDoc(object);
     },
 
     // returns a Scene node
-    importFromSVG(markup) {
-      return svgImporter.build(markup);
+    markupToScene(markup) {
+      return markupToScene(markup);
     },
 
     exportToSVG() {
-      return svgExporter.build(this.store);
+      return exportToSVG(this.store);
     },
 
     // returns a Doc node and a list of ids (for docs)
@@ -5234,11 +5220,19 @@
 
     // returns a plain representation of Doc node and a list of ids (for docs)
     exportToPlain() {
-      return plainExporter.build(this.store);
+      return exportToPlain(this.store);
     },
   };
 
   const updates = {
+    before(state, input) {
+      // TODO
+    },
+
+    after(state, input) {
+      // TODO
+    },
+
     init() {
       this.aux = {};
     },
@@ -5252,10 +5246,6 @@
       } else if (state.label === 'selectMode') {
         this.cleanup(state, input);
       }
-    },
-
-    after(state, input) {
-      // TODO
     },
 
     select(state, input) {
@@ -5300,7 +5290,7 @@
 
         if (toSelect) {
           toSelect.select();
-          console.log('about to call setFrontier from deep select'); // NO
+          // console.log('about to call setFrontier from deep select'); // NO
           state.scene.setFrontier();
           state.scene.unfocusAll();
         }
@@ -5308,9 +5298,14 @@
     },
 
     focus(state, input) {
+      // console.log('calling focus update');
+
       state.scene.unfocusAll();
 
       const target = state.scene.findDescendantByKey(input.key);
+
+      // console.log(target);
+
       const hit    = Vector.create(input.x, input.y);
 
       if (target) {
@@ -5563,31 +5558,41 @@
     },
 
     switchDocument(state, input) {
-      state.store.scene.replaceWith(state.importFromPlain(input.data.doc));
+      state.store.scene.replaceWith(state.objectToDoc(input.data.doc));
       this.cleanup(state, input);
     },
 
     // EDITOR
 
     changeMarkup(state, input) {
-      state.store.markup.payload.text = input.value;
+      state.store.markup.payload.text = input.value; // TODO: parse into AST
 
-      const newScene = state.importFromSVG(input.value);
+
+      // TODO: this should happen in "after" method:
+      const newScene = state.markupToScene(input.value);
 
       if (newScene !== null) {
         state.store.scene.replaceWith(newScene);
       } else {
-        state.store.message.payload.text = 'Invalid markup';
-        // TODO: this is never shown, because it's overwritten
+        console.log('erasing canvas');
+        const scene = Scene.create();
+        scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+        state.store.scene.replaceWith(scene);
       }
     },
 
     selectFromEditor(state, input) {
-      console.log('selectFromEditor update called');
       const target = state.scene.findDescendantByKey(input.key);
 
-      state.scene.deselectAll();
-      target.select();
+      this.cleanup(state, input);
+
+      if (target) {
+        // problem: if the target is the scene node, then the frontier will not be set correctly!
+
+        target.select();
+      }
+
+      state.label = 'selectMode';
     },
   };
 
@@ -5908,6 +5913,7 @@
 
     compute(input) {
       this.state.input = input;
+      // console.log(input.target);
 
       const transition = transitions.get(this.state, input);
 
@@ -13127,7 +13133,7 @@
 
   // Commands are parameter-less actions that can be performed on an
   // editor, mostly used for keybindings.
-  let commands = {
+  let commands$1 = {
     selectAll: selectAll,
     singleSelection: cm => cm.setSelection(cm.getCursor("anchor"), cm.getCursor("head"), sel_dontScroll),
     killLine: cm => deleteNearSelection(cm, range => {
@@ -13295,7 +13301,7 @@
   // Run a handler that was bound to a key.
   function doHandleBinding(cm, bound, dropShift) {
     if (typeof bound == "string") {
-      bound = commands[bound];
+      bound = commands$1[bound];
       if (!bound) return false
     }
     // Ensure previous input has been read, so that the handler sees a
@@ -13521,7 +13527,7 @@
     name = (button == 1 ? "Left" : button == 2 ? "Middle" : "Right") + name;
 
     return dispatchKey(cm,  addModifierNames(name, event), event, bound => {
-      if (typeof bound == "string") bound = commands[bound];
+      if (typeof bound == "string") bound = commands$1[bound];
       if (!bound) return false
       let done = false;
       try {
@@ -14621,8 +14627,8 @@
       triggerOnMouseDown: methodOp(onMouseDown),
 
       execCommand: function(cmd) {
-        if (commands.hasOwnProperty(cmd))
-          return commands[cmd].call(null, this)
+        if (commands$1.hasOwnProperty(cmd))
+          return commands$1[cmd].call(null, this)
       },
 
       triggerElectric: methodOp(function(text) { triggerElectric(this, text); }),
@@ -15851,7 +15857,7 @@
     CodeMirror.copyState = copyState;
     CodeMirror.startState = startState;
     CodeMirror.innerMode = innerMode;
-    CodeMirror.commands = commands;
+    CodeMirror.commands = commands$1;
     CodeMirror.keyMap = keyMap;
     CodeMirror.keyName = keyName;
     CodeMirror.isModifierKey = isModifierKey;
@@ -16323,12 +16329,12 @@
       this.editor     = CodeMirror(this.mountPoint, {
         lineNumbers:  true,
         lineWrapping: true,
-        // mode:         null,
+        tabSize:      2,
         mode:         'xml',
-        value:        state.vDOM['editor'], // TODO: use ast (do we have an ast?)
+        value:        state.ast.prettyMarkup(),
       });
 
-      this.previousMarkup = state.vDOM['editor']; // TODO: use ast (do we have an ast?)
+      this.previousMarkup = state.ast.prettyMarkup();
 
       return this;
     },
@@ -16353,15 +16359,19 @@
       this.editor.on('cursorActivity', () => {
         const cursorPosition = this.editor.getDoc().getCursor();
         const index = this.editor.getDoc().indexFromPos(cursorPosition);
-        const cleanIndex = this.cleanIndex(index);
-        // console.log(index, cleanIndex);
-        // console.log(this.ast.printIndices());
-        const astNode = this.ast.findNodeByIndex(cleanIndex);
-        // console.log(astNode);
-        const token = this.editor.getTokenAt(cursorPosition);
-        // console.log(token.string);
 
-        if (index > 0) {
+        // an index of 0 is an indication that the event was fired by programmatic insertion
+        if (index === 0) {
+          return;
+        }
+
+        const cleanIndex = this.cleanIndex(index);
+        const astNode = this.ast.findNodeByIndex(cleanIndex);
+        const token = this.editor.getTokenAt(cursorPosition);
+
+        // if the canvas is empty due to irregular markup, we will not find an ast node
+        // so let's make sure we have one before generating an input ...
+        if (astNode) {
           func({
             source: this.name,
             type: 'cursorSelect',
@@ -16373,30 +16383,34 @@
 
     react(state) {
       this.ast = state.ast;
-      // console.log('editor received', state.ast);
-      // console.log(state.ast.flatten());
-      // console.log(state.ast.findNodeByIndex(100));
 
       if (['penMode', 'selectMode'].includes(state.label)) {
-        const currentMarkup  = state.vDOM['editor']; // TODO: use ast
+        const currentMarkup  = state.ast.prettyMarkup();
         const previousMarkup = this.previousMarkup;
 
+        // we don't touch the editor if it has focus
         if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
+          // replace by proper diffing
           this.editor.getDoc().setValue(currentMarkup);
           this.markChange(state);
         }
 
-        this.previousMarkup = state.vDOM['editor'];
+        this.previousMarkup = state.ast.prettyMarkup();
+      }
+    },
+
+    reconcile(oldANode, newANode, value) {
+      if (newANode.markup) {
+        if (oldANode.markup !== newANode.markup) ;
       }
     },
 
     markChange(state) {
-      this.currentMarkup = state.vDOM['editor'];
+      this.currentMarkup = state.ast.prettyMarkup();
       const indices      = this.diffMarkup(state);
 
       if (indices !== undefined) {
-        const stripped  = this.stripWhitespace(indices);
-        const range     = this.convertToRange(stripped);
+        const range     = this.convertToRange(indices);
         this.textMarker = this.editor.doc.markText(...range, { className: 'mark' });
       }
     },
@@ -16434,13 +16448,6 @@
       return [start, end];
     },
 
-    stripWhitespace(indices) {
-      // TODO: zoom in on the subinterval of [start, end] such that neither start nor end
-      // are whitespace characters
-
-      return indices;
-    },
-
     convertToRange(indices) {
       const from = this.editor.doc.posFromIndex(indices[0]);
       const to   = this.editor.doc.posFromIndex(indices[1] + 2);
@@ -16452,12 +16459,7 @@
       const value = this.editor.getDoc().getValue();
       const left = value.slice(0, index); // everything *before*
       let cleanLeft = left.replace(/\n/g, '');      // eliminate new lines
-      cleanLeft = cleanLeft.replace(/>[^<>]+</g, '><'); // eliminate whitespace between tags
-
-      // ^ greedy!
-
-      // console.log(left);
-      // console.log(cleanLeft);
+      cleanLeft = cleanLeft.replace(/>[^<>]+</g, '><'); // eliminate anything not in tags
 
       const removedCount = left.length - cleanLeft.length; // how much did we remove?
       return index - removedCount;

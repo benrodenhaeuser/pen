@@ -1,6 +1,6 @@
 import { Node    } from './node.js';
 import { Matrix  } from '../geometry.js';
-import { ASTNode } from '../../ports/export/ast.js';
+import { ASTNode } from '../ast.js';
 
 const Group = Object.create(Node);
 Group.type  = 'group';
