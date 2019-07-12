@@ -13,8 +13,23 @@ const updates = {
     // TODO
   },
 
+  // TODO: preliminary logic
   after(state, input) {
-    // TODO
+    console.log('calling after');
+
+    if (input.type === 'change') {
+      if (this.aux.$svg) {
+        const $svg = this.aux.$svg;
+        state.store.scene.replaceWith(state.domToScene($svg));
+      } else {
+        console.log('erasing canvas');
+        const scene = Scene.create();
+        scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+        state.store.scene.replaceWith(scene);
+      }
+    } else {
+      state.parseTree = state.sceneToParseTree();
+    }
   },
 
   init() {
@@ -348,33 +363,28 @@ const updates = {
 
   // EDITOR
 
+  // "editor to scenegraph"
   changeMarkup(state, input) {
-    // state.parseTree = 
+    const $svg = state.markupToDOM(input.value);
 
+    if ($svg) {
+      const parseTree = state.domToParseTree($svg);
+      parseTree.indexify();
 
-    const newScene = state.markupToScene(input.value);
-
-    if (newScene !== null) {
-      state.store.scene.replaceWith(newScene);
-    } else {
-      console.log('erasing canvas');
-      const scene = Scene.create();
-      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-      state.store.scene.replaceWith(scene);
+      state.parseTree = parseTree;
     }
+
+    this.aux.$svg = $svg;
+
+    // console.log(parseTree);
+    // console.log(parseTree.flatten());
+    // console.log(parseTree.toMarkup());
   },
 
   selectFromEditor(state, input) {
     const target = state.scene.findDescendantByKey(input.key);
-
     this.cleanup(state, input);
-
-    if (target) {
-      // problem: if the target is the scene node, then the frontier will not be set correctly!
-
-      target.select();
-    }
-
+    if (target) { target.select(); }
     state.label = 'selectMode';
   },
 };

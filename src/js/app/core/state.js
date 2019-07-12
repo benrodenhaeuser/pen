@@ -1,16 +1,19 @@
-import { exportToSVG     } from './ports.js';
-import { exportToVDOM    } from './ports.js';
-import { exportToAST     } from './ports.js';
-import { exportToPlain   } from './ports.js';
-import { markupToScene   } from './ports.js';
-import { objectToDoc     } from './ports.js';
-import { Store           } from './domain.js';
-import { Docs            } from './domain.js';
-import { Doc             } from './domain.js';
-import { Message         } from './domain.js';
-import { Scene           } from './domain.js';
-import { Rectangle       } from './domain.js';
-import { ParseTree       } from './domain.js';
+import { exportToSVG      } from './ports.js';
+import { exportToVDOM     } from './ports.js';
+import { exportToPlain    } from './ports.js';
+import { markupToScene    } from './ports.js';
+import { objectToDoc      } from './ports.js';
+import { markupToDOM      } from './ports.js';
+import { domToScene       } from './ports.js';
+import { domToParseTree   } from './ports.js';
+import { sceneToParseTree } from './ports.js';
+import { Store            } from './domain.js';
+import { Docs             } from './domain.js';
+import { Doc              } from './domain.js';
+import { Message          } from './domain.js';
+import { Scene            } from './domain.js';
+import { Rectangle        } from './domain.js';
+import { ParseTree        } from './domain.js';
 
 const State = {
   create() {
@@ -48,9 +51,9 @@ const State = {
 
   buildDoc() {
     const doc        = Doc.create();
-    const sceneGraph = Scene.create();
-
-    sceneGraph.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+    const sceneGraph = Scene.create({
+      viewBox: Rectangle.createFromDimensions(0, 0, 600, 395),
+    });
 
     doc.append(sceneGraph);
 
@@ -75,12 +78,12 @@ const State = {
 
   export() {
     return {
-      label: this.label,
-      input: this.input,
-      update:this.update,
-      vDOM:  this.exportToVDOM(),
-      plain: this.exportToPlain(),
-      ast:   this.parseTree,
+      label:     this.label,
+      input:     this.input,
+      update:    this.update,
+      vDOM:      this.exportToVDOM(),
+      plain:     this.exportToPlain(),
+      parseTree: this.parseTree,
     };
   },
 
@@ -95,6 +98,22 @@ const State = {
   // returns a node (node type may vary depending on object)
   objectToDoc(object) {
     return objectToDoc(object);
+  },
+
+  markupToDOM(markup) {
+    return markupToDOM(markup);
+  },
+
+  domToScene($svg) {
+    return domToScene($svg);
+  },
+
+  domToParseTree($svg) {
+    return domToParseTree($svg);
+  },
+
+  sceneToParseTree() {
+    return sceneToParseTree(this.store.scene);
   },
 
   // returns a Scene node

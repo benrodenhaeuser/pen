@@ -240,7 +240,7 @@ const transitions = [
 
   // process editor input (=> from editor module)
   {
-    type: 'input',
+    type: 'change',
     do: 'changeMarkup'
   },
 

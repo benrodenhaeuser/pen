@@ -765,6 +765,8 @@
     },
   };
 
+  // Do these features account for the presence of text nodes?
+
   const ParseTree = {
     create() {
       return Object.create(ParseTree).init();
@@ -826,34 +828,8 @@
       }
     },
 
-    // make prettified markup string
-    prettyMarkup() {
-      const list = this.flatten();
-
-      for (let i = 0; i < list.length; i += 1) {
-        list[i] = list[i].indent() + list[i].markup;
-      }
-
-      return list.join('\n');
-    },
-
-    // print indices (for verification purposes)
-    printIndices() {
-      const list = this.flatten();
-      const pairs = list.map(node => [node.markup, node.start, node.end]);
-      console.log(pairs);
-    },
-
-    // return indent of this node
-    indent() {
-      let pad = '  ';
-      let ind = '';
-
-      for (let i = 0; i < this.level; i += 1) {
-        ind = pad + ind;
-      }
-
-      return ind;
+    toMarkup() {
+      return this.flatten().map(node => node.markup).join('');
     },
   };
 
@@ -4622,15 +4598,268 @@
       .commands;
   };
 
-  const exportToAST = (state) => {
+  const markupToDOM = (markup) => {
+    const $svg = new DOMParser()
+      .parseFromString(markup, "image/svg+xml")
+      .documentElement;
+
+    if ($svg instanceof SVGElement) {
+      addKeys($svg);
+      return $svg;
+    } else {
+      return null;
+    }
+  };
+
+  const addKeys = ($node) => {
+    $node.key = createID();
+
+    for (let $child of $node.children) {
+      addKeys($child);
+    }
+  };
+
+  const domToScene = ($svg) => {
+    if ($svg instanceof SVGElement) {
+      const scene = Scene.create({ key: $svg.key });
+      buildTree$1($svg, scene);
+      scene.setFrontier();
+      return scene;
+    } else {
+      return null;
+    }
+  };
+
+  const buildTree$1 = ($node, node) => {
+    processAttributes$1($node, node);
+
+    const $graphicsChildren = Array.from($node.children).filter(($child) => {
+      return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+    });
+
+    for (let $child of $graphicsChildren) {
+      let child;
+
+      if ($child instanceof SVGGElement) {
+        child = Group.create({ key: $child.key });
+        node.append(child);
+        buildTree$1($child, child);
+      } else {
+        child = buildShapeTree$1($child);
+        node.append(child);
+      }
+    }
+  };
+
+  const processAttributes$1 = ($node, node) => {
+    // viewBox
+    if ($node.tagName === 'svg') {
+      const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
+      const origin = Vector.create(viewBox[0], viewBox[1]);
+      const size = Vector.create(viewBox[2], viewBox[3]);
+      node.viewBox = Rectangle.create(origin, size);
+    }
+
+    // transform
+    if (
+      $node.transform &&
+      $node.transform.baseVal &&
+      $node.transform.baseVal.consolidate()
+    ) {
+      const $matrix = $node.transform.baseVal.consolidate().matrix;
+      node.transform = Matrix.createFromDOMMatrix($matrix);
+    }
+
+    // classes
+    node.class = Class.create(
+      Array.from($node.classList)
+    );
+  };
+
+  const buildShapeTree$1 = ($geometryNode) => {
+    const shape = Shape.create({ key: $geometryNode.key });
+
+    processAttributes$1($geometryNode, shape);
+    // ^ TODO: we are also calling processAttributes further above, duplication!
+
+    let pathCommands;
+
+    switch ($geometryNode.tagName) {
+      case 'rect':
+        const x      = Number($geometryNode.getAttributeNS(null, 'x'));
+        const y      = Number($geometryNode.getAttributeNS(null, 'y'));
+        const width  = Number($geometryNode.getAttributeNS(null, 'width'));
+        const height = Number($geometryNode.getAttributeNS(null, 'height'));
+
+        pathCommands = commands$1(`
+        M ${x} ${y}
+        H ${x + width}
+        V ${y + height}
+        H ${x}
+        Z
+      `);
+        break;
+      case 'path':
+        pathCommands = commands$1($geometryNode.getAttributeNS(null, 'd'));
+        break;
+    }
+
+    const pathSequences = sequences$1(pathCommands);
+
+    for (let sequence of pathSequences) {
+      shape.append(buildSplineTree$1(sequence));
+    }
+
+    return shape;
+  };
+
+  const buildSplineTree$1 = (sequence) => {
+    const spline = Spline.create();
+    for (let segment of buildSegmentList$1(sequence)) {
+      spline.append(segment);
+    }
+
+    return spline;
+  };
+
+  // helpers
+
+  // we want a segment to have children 'handleIn', 'anchor' etc
+
+  const buildSegmentList$1 = (commands) => {
+    const segments = [];
+
+    // the first command is ALWAYS an `M` command (no handles)
+    segments[0] = Segment.create();
+    const child = Anchor.create();
+    child.payload.vector = Vector.create(commands[0].x, commands[0].y);
+    segments[0].append(child);
+
+    for (let i = 1; i < commands.length; i += 1) {
+      const command  = commands[i];
+      const prevSeg  = segments[i - 1];
+      const currSeg  = Segment.create();
+
+      const anchor = Anchor.create();
+      anchor.payload.vector = Vector.create(command.x, command.y);
+      currSeg.append(anchor);
+
+      if (command.x1 && command.x2) {
+        const handleOut = HandleOut.create();
+        handleOut.payload.vector = Vector.create(command.x1, command.y1);
+        prevSeg.append(handleOut);
+
+        const handleIn = HandleIn.create();
+        handleIn.payload.vector = Vector.create(command.x2, command.y2);
+        currSeg.append(handleIn);
+
+      } else if (command.x1) {
+        const handleIn = HandleIn.create();
+        handleIn.payload.vector = Vector.create(command.x1, command.y1);
+        currSeg.append(handleIn);
+      }
+
+      segments[i] = currSeg;
+    }
+
+    return segments;
+  };
+
+  const sequences$1 = (svgCommands) => {
+    const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
+    const theSequences = [];
+
+    for (let command of svgCommands) {
+      if (command.type === MOVE) {
+        theSequences.push([command]);
+      } else {
+        theSequences[theSequences.length - 1].push(command);
+      }
+    }
+
+    return theSequences;
+  };
+
+  const commands$1 = (svgPath) => {
+    return new SVGPathData$1(svgPath)
+      .transform(SVGPathDataTransformer.NORMALIZE_HVZ()) // no H, V or Z shortcuts
+      .transform(SVGPathDataTransformer.NORMALIZE_ST())  // no S (smooth multi-Bezier)
+      .transform(SVGPathDataTransformer.A_TO_C())        // no A (arcs)
+      .toAbs()                                           // no relative commands
+      .commands;
+  };
+
+  const domToParseTree = ($svg) => {
+    if ($svg instanceof SVGElement) {
+      const pNode = ParseTree.create();
+      return buildTree$2($svg, pNode);
+    } else {
+      return null;
+    }
+  };
+
+  const buildTree$2 = ($node, pNode) => {
+    if ($node.nodeName === '#text') {
+      const tNode = ParseTree.create();
+      tNode.markup = $node.nodeValue;
+      pNode.children.push(tNode);
+    } else {
+      let openTag;
+
+      openTag = `<${$node.nodeName}`;
+      const attrs = [];
+      for (let attr of $node.attributes) {
+        attrs.push(`${attr.name}="${attr.value}"`);
+      }
+      openTag = [openTag, ...attrs].join(' ');
+      openTag += '>';
+
+      const closeTag = `</${$node.nodeName}>`;
+
+      const openNode  = ParseTree.create();
+      const closeNode = ParseTree.create();
+
+      openNode.markup  = openTag;
+      openNode.tag     = $node.nodeName;
+      closeNode.markup = closeTag;
+      closeNode.tag    = $node.nodeName;
+
+      openNode.key = $node.key;
+      closeNode.key = $node.key;
+
+      pNode.children.push(openNode);
+
+      if ($node.childNodes.length > 0) {
+        const innerNode = ParseTree.create();
+
+        for (let $child of $node.childNodes) {
+          buildTree$2($child, innerNode);
+        }
+
+        pNode.children.push(innerNode);
+      }
+
+      pNode.children.push(closeNode);
+
+      return pNode;
+    }
+
+    for (let $child of $node.childNodes) {
+      pNode.children.push(buildTree$2($child));
+    }
+
+    return pNode;
+  };
+
+  const sceneToParseTree = (scene) => {
     const astRoot = ParseTree.create();
-    parse(state.store.scene, astRoot, 0);
+    parse(scene, astRoot, 0);
     astRoot.indexify();
-    // console.log(astRoot.prettyMarkup());
     return astRoot;
   };
 
   // produce ast from scenegraph
+  // TODO: this ignores text nodes (and thus whitespace)
   const parse = (sceneNode, astParent, level) => {
     const astNodes = sceneNode.toASTNodes();
     const open     = astNodes.open;
@@ -4758,10 +4987,10 @@
       return '';
     }
 
-    return buildTree$1(store.scene);
+    return buildTree$3(store.scene);
   };
 
-  const buildTree$1 = (node, vParent = null) => {
+  const buildTree$3 = (node, vParent = null) => {
     const vNode = node.toVDOMNode();
 
     if (vParent) {
@@ -4770,7 +4999,7 @@
     }
 
     for (let child of node.graphicsChildren) {
-      buildTree$1(child, vNode);
+      buildTree$3(child, vNode);
     }
 
     return vNode;
@@ -5140,9 +5369,9 @@
 
     buildDoc() {
       const doc        = Doc.create();
-      const sceneGraph = Scene.create();
-
-      sceneGraph.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+      const sceneGraph = Scene.create({
+        viewBox: Rectangle.createFromDimensions(0, 0, 600, 395),
+      });
 
       doc.append(sceneGraph);
 
@@ -5167,12 +5396,12 @@
 
     export() {
       return {
-        label: this.label,
-        input: this.input,
-        update:this.update,
-        vDOM:  this.exportToVDOM(),
-        plain: this.exportToPlain(),
-        ast:   this.parseTree,
+        label:     this.label,
+        input:     this.input,
+        update:    this.update,
+        vDOM:      this.exportToVDOM(),
+        plain:     this.exportToPlain(),
+        parseTree: this.parseTree,
       };
     },
 
@@ -5187,6 +5416,22 @@
     // returns a node (node type may vary depending on object)
     objectToDoc(object) {
       return objectToDoc(object);
+    },
+
+    markupToDOM(markup) {
+      return markupToDOM(markup);
+    },
+
+    domToScene($svg) {
+      return domToScene($svg);
+    },
+
+    domToParseTree($svg) {
+      return domToParseTree($svg);
+    },
+
+    sceneToParseTree() {
+      return sceneToParseTree(this.store.scene);
     },
 
     // returns a Scene node
@@ -5218,8 +5463,23 @@
       // TODO
     },
 
+    // TODO: preliminary logic
     after(state, input) {
-      // TODO
+      console.log('calling after');
+
+      if (input.type === 'change') {
+        if (this.aux.$svg) {
+          const $svg = this.aux.$svg;
+          state.store.scene.replaceWith(state.domToScene($svg));
+        } else {
+          console.log('erasing canvas');
+          const scene = Scene.create();
+          scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+          state.store.scene.replaceWith(scene);
+        }
+      } else {
+        state.parseTree = state.sceneToParseTree();
+      }
     },
 
     init() {
@@ -5553,33 +5813,28 @@
 
     // EDITOR
 
+    // "editor to scenegraph"
     changeMarkup(state, input) {
-      // state.parseTree = 
+      const $svg = state.markupToDOM(input.value);
 
+      if ($svg) {
+        const parseTree = state.domToParseTree($svg);
+        parseTree.indexify();
 
-      const newScene = state.markupToScene(input.value);
-
-      if (newScene !== null) {
-        state.store.scene.replaceWith(newScene);
-      } else {
-        console.log('erasing canvas');
-        const scene = Scene.create();
-        scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-        state.store.scene.replaceWith(scene);
+        state.parseTree = parseTree;
       }
+
+      this.aux.$svg = $svg;
+
+      // console.log(parseTree);
+      // console.log(parseTree.flatten());
+      // console.log(parseTree.toMarkup());
     },
 
     selectFromEditor(state, input) {
       const target = state.scene.findDescendantByKey(input.key);
-
       this.cleanup(state, input);
-
-      if (target) {
-        // problem: if the target is the scene node, then the frontier will not be set correctly!
-
-        target.select();
-      }
-
+      if (target) { target.select(); }
       state.label = 'selectMode';
     },
   };
@@ -5826,7 +6081,7 @@
 
     // process editor input (=> from editor module)
     {
-      type: 'input',
+      type: 'change',
       do: 'changeMarkup'
     },
 
@@ -5901,7 +6156,6 @@
 
     compute(input) {
       this.state.input = input;
-      // console.log(input.target);
 
       const transition = transitions.get(this.state, input);
 
@@ -5916,6 +6170,7 @@
           updates.after(this.state, input);
         }
 
+        console.log(this.state.parseTree);
 
         this.publish();
       }
@@ -13121,7 +13376,7 @@
 
   // Commands are parameter-less actions that can be performed on an
   // editor, mostly used for keybindings.
-  let commands$1 = {
+  let commands$2 = {
     selectAll: selectAll,
     singleSelection: cm => cm.setSelection(cm.getCursor("anchor"), cm.getCursor("head"), sel_dontScroll),
     killLine: cm => deleteNearSelection(cm, range => {
@@ -13289,7 +13544,7 @@
   // Run a handler that was bound to a key.
   function doHandleBinding(cm, bound, dropShift) {
     if (typeof bound == "string") {
-      bound = commands$1[bound];
+      bound = commands$2[bound];
       if (!bound) return false
     }
     // Ensure previous input has been read, so that the handler sees a
@@ -13515,7 +13770,7 @@
     name = (button == 1 ? "Left" : button == 2 ? "Middle" : "Right") + name;
 
     return dispatchKey(cm,  addModifierNames(name, event), event, bound => {
-      if (typeof bound == "string") bound = commands$1[bound];
+      if (typeof bound == "string") bound = commands$2[bound];
       if (!bound) return false
       let done = false;
       try {
@@ -14615,8 +14870,8 @@
       triggerOnMouseDown: methodOp(onMouseDown),
 
       execCommand: function(cmd) {
-        if (commands$1.hasOwnProperty(cmd))
-          return commands$1[cmd].call(null, this)
+        if (commands$2.hasOwnProperty(cmd))
+          return commands$2[cmd].call(null, this)
       },
 
       triggerElectric: methodOp(function(text) { triggerElectric(this, text); }),
@@ -15845,7 +16100,7 @@
     CodeMirror.copyState = copyState;
     CodeMirror.startState = startState;
     CodeMirror.innerMode = innerMode;
-    CodeMirror.commands = commands$1;
+    CodeMirror.commands = commands$2;
     CodeMirror.keyMap = keyMap;
     CodeMirror.keyName = keyName;
     CodeMirror.isModifierKey = isModifierKey;
@@ -16317,73 +16572,81 @@
       this.editor     = CodeMirror(this.mountPoint, {
         lineNumbers:  true,
         lineWrapping: true,
-        tabSize:      2,
         mode:         'xml',
-        value:        state.ast.prettyMarkup(),
+        value:        state.parseTree.toMarkup(),
       });
 
-      this.previousMarkup = state.ast.prettyMarkup();
+      this.previousParseTree = state.parseTree;
 
       return this;
     },
 
     bindEvents(func) {
       this.editor.on('focus', () => {
-        if (this.textMarker) {
-          this.textMarker.clear();
-        }
+        // if (this.textMarker) {
+        //   this.textMarker.clear();
+        // }
       });
 
+      // FINE
       this.editor.on('change', () => {
         if (this.editor.hasFocus()) {
           func({
             source: this.name,
-            type:   'input',
+            type:   'change',
             value:  this.editor.getValue(),
           });
         }
       });
 
       this.editor.on('cursorActivity', () => {
-        const cursorPosition = this.editor.getDoc().getCursor();
-        const index = this.editor.getDoc().indexFromPos(cursorPosition);
-
-        // an index of 0 is an indication that the event was fired by programmatic insertion
-        if (index === 0) {
-          return;
-        }
-
-        const cleanIndex = this.cleanIndex(index);
-        const astNode = this.ast.findNodeByIndex(cleanIndex);
-        const token = this.editor.getTokenAt(cursorPosition);
-
-        // if the canvas is empty due to irregular markup, we will not find an ast node
-        // so let's make sure we have one before generating an input ...
-        if (astNode) {
-          func({
-            source: this.name,
-            type: 'cursorSelect',
-            key: astNode.key,
-          });
-        }
+        // const cursorPosition = this.editor.getDoc().getCursor();
+        // const index = this.editor.getDoc().indexFromPos(cursorPosition);
+        //
+        // // an index of 0 is an indication that the event was fired by programmatic insertion
+        // if (index === 0) {
+        //   return;
+        // }
+        //
+        // const cleanIndex = this.cleanIndex(index);
+        // const astNode = this.ast.findNodeByIndex(cleanIndex);
+        // const token = this.editor.getTokenAt(cursorPosition);
+        //
+        // // if the canvas is empty due to irregular markup, we will not find an ast node
+        // // so let's make sure we have one before generating an input ...
+        // if (astNode) {
+        //   func({
+        //     source: this.name,
+        //     type: 'cursorSelect',
+        //     key: astNode.key,
+        //   });
+        // }
       });
     },
 
     react(state) {
-      this.ast = state.ast;
+      const currentParseTree = state.parseTree;
+      const previousParseTree = this.previousParseTree;
 
       if (['penMode', 'selectMode'].includes(state.label)) {
-        const currentMarkup  = state.ast.prettyMarkup();
-        const previousMarkup = this.previousMarkup;
-
-        // we don't touch the editor if it has focus
-        if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
-          // replace by proper diffing
-          this.editor.getDoc().setValue(currentMarkup);
-          this.markChange(state);
+        if (!this.editor.hasFocus() && currentParseTree !== previousParseTree) {
+          this.editor.getDoc().setValue(state.parseTree.toMarkup());
+          // this.markChange(state);
         }
 
-        this.previousMarkup = state.ast.prettyMarkup();
+        this.previousParseTree = state.parseTree;
+
+        // const currentMarkup  = state.ast.prettyMarkup();
+        // const previousMarkup = this.previousMarkup;
+        //
+        // // we don't touch the editor if it has focus
+        // if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
+        //   // replace by proper diffing
+        //   this.editor.getDoc().setValue(currentMarkup);
+        //   this.markChange(state);
+        // }
+        //
+        // this.previousMarkup = state.ast.prettyMarkup();
       }
     },
 
@@ -16393,65 +16656,65 @@
       }
     },
 
-    markChange(state) {
-      this.currentMarkup = state.ast.prettyMarkup();
-      const indices      = this.diffMarkup(state);
-
-      if (indices !== undefined) {
-        const range     = this.convertToRange(indices);
-        this.textMarker = this.editor.doc.markText(...range, { className: 'mark' });
-      }
-    },
-
-    diffMarkup(state) {
-      const currentLength  = this.currentMarkup.length;
-      const previousLength = this.previousMarkup.length;
-
-      // idea: if markup has been removed, there will be no text to be marked
-      if (previousLength > currentLength) {
-        return undefined;
-      }
-
-      let start;  // beginning of inserted slice of text
-      let end;    // end of inserted slice of text
-
-      for (let i = 0; i < currentLength; i += 1) {
-        if (this.currentMarkup[i] !== this.previousMarkup[i]) {
-          start = i;
-          break;
-        }
-      }
-
-      let k = previousLength - 1;
-
-      for (let j = currentLength - 1; j >= 0; j -= 1) {
-        if (this.currentMarkup[j] !== this.previousMarkup[k]) {
-          end = j;
-          break;
-        }
-
-        k -= 1;
-      }
-
-      return [start, end];
-    },
-
-    convertToRange(indices) {
-      const from = this.editor.doc.posFromIndex(indices[0]);
-      const to   = this.editor.doc.posFromIndex(indices[1] + 2);
-
-      return [from, to];
-    },
-
-    cleanIndex(index) {
-      const value = this.editor.getDoc().getValue();
-      const left = value.slice(0, index); // everything *before*
-      let cleanLeft = left.replace(/\n/g, '');      // eliminate new lines
-      cleanLeft = cleanLeft.replace(/>[^<>]+</g, '><'); // eliminate anything not in tags
-
-      const removedCount = left.length - cleanLeft.length; // how much did we remove?
-      return index - removedCount;
-    },
+    // markChange(state) {
+    //   this.currentMarkup = state.ast.prettyMarkup();
+    //   const indices      = this.diffMarkup(state);
+    //
+    //   if (indices !== undefined) {
+    //     const range     = this.convertToRange(indices);
+    //     this.textMarker = this.editor.doc.markText(...range, { className: 'mark' });
+    //   }
+    // },
+    //
+    // diffMarkup(state) {
+    //   const currentLength  = this.currentMarkup.length;
+    //   const previousLength = this.previousMarkup.length;
+    //
+    //   // idea: if markup has been removed, there will be no text to be marked
+    //   if (previousLength > currentLength) {
+    //     return undefined;
+    //   }
+    //
+    //   let start;  // beginning of inserted slice of text
+    //   let end;    // end of inserted slice of text
+    //
+    //   for (let i = 0; i < currentLength; i += 1) {
+    //     if (this.currentMarkup[i] !== this.previousMarkup[i]) {
+    //       start = i;
+    //       break;
+    //     }
+    //   }
+    //
+    //   let k = previousLength - 1;
+    //
+    //   for (let j = currentLength - 1; j >= 0; j -= 1) {
+    //     if (this.currentMarkup[j] !== this.previousMarkup[k]) {
+    //       end = j;
+    //       break;
+    //     }
+    //
+    //     k -= 1;
+    //   }
+    //
+    //   return [start, end];
+    // },
+    //
+    // convertToRange(indices) {
+    //   const from = this.editor.doc.posFromIndex(indices[0]);
+    //   const to   = this.editor.doc.posFromIndex(indices[1] + 2);
+    //
+    //   return [from, to];
+    // },
+    //
+    // cleanIndex(index) {
+    //   const value = this.editor.getDoc().getValue();
+    //   const left = value.slice(0, index); // everything *before*
+    //   let cleanLeft = left.replace(/\n/g, '');      // eliminate new lines
+    //   cleanLeft = cleanLeft.replace(/>[^<>]+</g, '><'); // eliminate anything not in tags
+    //
+    //   const removedCount = left.length - cleanLeft.length; // how much did we remove?
+    //   return index - removedCount;
+    // },
   };
 
   const tools$1 = Object.assign(Object.create(UIModule), {

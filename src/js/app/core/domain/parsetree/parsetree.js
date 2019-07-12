@@ -1,3 +1,5 @@
+// Do these features account for the presence of text nodes?
+
 const ParseTree = {
   create() {
     return Object.create(ParseTree).init();
@@ -59,34 +61,8 @@ const ParseTree = {
     }
   },
 
-  // make prettified markup string
-  prettyMarkup() {
-    const list = this.flatten();
-
-    for (let i = 0; i < list.length; i += 1) {
-      list[i] = list[i].indent() + list[i].markup;
-    }
-
-    return list.join('\n');
-  },
-
-  // print indices (for verification purposes)
-  printIndices() {
-    const list = this.flatten();
-    const pairs = list.map(node => [node.markup, node.start, node.end]);
-    console.log(pairs);
-  },
-
-  // return indent of this node
-  indent() {
-    let pad = '  ';
-    let ind = '';
-
-    for (let i = 0; i < this.level; i += 1) {
-      ind = pad + ind;
-    }
-
-    return ind;
+  toMarkup() {
+    return this.flatten().map(node => node.markup).join('');
   },
 };
 

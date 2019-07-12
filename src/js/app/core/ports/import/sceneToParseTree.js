@@ -1,14 +1,14 @@
 import { ParseTree } from '../../domain/parsetree.js';
 
-const exportToAST = (state) => {
+const sceneToParseTree = (scene) => {
   const astRoot = ParseTree.create();
-  parse(state.store.scene, astRoot, 0);
+  parse(scene, astRoot, 0);
   astRoot.indexify();
-  // console.log(astRoot.prettyMarkup());
   return astRoot;
 };
 
 // produce ast from scenegraph
+// TODO: this ignores text nodes (and thus whitespace)
 const parse = (sceneNode, astParent, level) => {
   const astNodes = sceneNode.toASTNodes();
   const open     = astNodes.open;
@@ -29,4 +29,4 @@ const parse = (sceneNode, astParent, level) => {
   astParent.children.push(close);
 };
 
-export { exportToAST };
+export { sceneToParseTree };

@@ -13,7 +13,7 @@ const markupToDOM = (markup) => {
   }
 };
 
-const addKeys($node) {
+const addKeys = ($node) => {
   $node.key = createID();
 
   for (let $child of $node.children) {

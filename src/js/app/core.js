@@ -18,7 +18,6 @@ const core = {
 
   compute(input) {
     this.state.input = input;
-    // console.log(input.target);
 
     const transition = transitions.get(this.state, input);
 
@@ -33,6 +32,7 @@ const core = {
         updates.after(this.state, input);
       }
 
+      console.log(this.state.parseTree);
 
       this.publish();
     }
