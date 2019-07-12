@@ -4858,8 +4858,6 @@
     return astRoot;
   };
 
-  // produce ast from scenegraph
-  // TODO: this ignores text nodes (and thus whitespace)
   const parse = (sceneNode, astParent, level) => {
     const astNodes = sceneNode.toASTNodes();
     const open     = astNodes.open;
@@ -4867,17 +4865,47 @@
     open.level     = level;
     close.level    = level;
 
+    // indent
+    const pad = indent(level);
+    const indentNode = ParseTree.create();
+    indentNode.markup = pad;
+    astParent.children.push(indentNode);
+
+    // open tag
     astParent.children.push(open);
+
+    // linebreak
+    const tNode = ParseTree.create();
+    tNode.markup = '\n';
+    astParent.children.push(tNode);
 
     if (sceneNode.graphicsChildren.length > 0) {
       const astNode = ParseTree.create();
       astParent.children.push(astNode);
+
       for (let sceneChild of sceneNode.graphicsChildren) {
         parse(sceneChild, astNode, level + 1);
       }
     }
 
+    // indent
+    astParent.children.push(indentNode);
+
+    // close tag
     astParent.children.push(close);
+
+    // linebreak
+    astParent.children.push(tNode);
+  };
+
+  const indent = (level) => {
+    let pad = '';
+
+    for (let i = 0; i < level; i += 1) {
+      pad += '  ';
+    }
+
+    return pad;
   };
 
   const h = (tag, props = {}, ...children) => {
@@ -5459,14 +5487,8 @@
   };
 
   const updates = {
-    before(state, input) {
-      // TODO
-    },
-
     // TODO: preliminary logic
     after(state, input) {
-      console.log('calling after');
-
       if (input.type === 'change') {
         if (this.aux.$svg) {
           const $svg = this.aux.$svg;

@@ -9,14 +9,8 @@ import { Curve                   } from './domain.js';
 import { Bezier                  } from '/vendor/bezier/bezier.js';
 
 const updates = {
-  before(state, input) {
-    // TODO
-  },
-
   // TODO: preliminary logic
   after(state, input) {
-    console.log('calling after');
-
     if (input.type === 'change') {
       if (this.aux.$svg) {
         const $svg = this.aux.$svg;
