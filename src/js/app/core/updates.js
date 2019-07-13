@@ -12,16 +12,17 @@ const updates = {
   // TODO: preliminary logic
   after(state, input) {
     if (input.type === 'change') {
+      // => from editor to canvas: derive scenegraph from parsetree
       if (this.aux.$svg) {
         const $svg = this.aux.$svg;
         state.store.scene.replaceWith(state.domToScene($svg));
       } else {
-        console.log('erasing canvas');
         const scene = Scene.create();
         scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
         state.store.scene.replaceWith(scene);
       }
     } else {
+      // => from canvas to editor: derive parsetree from scene
       state.parseTree = state.sceneToParseTree();
     }
   },
@@ -83,7 +84,6 @@ const updates = {
 
       if (toSelect) {
         toSelect.select();
-        // console.log('about to call setFrontier from deep select'); // NO
         state.scene.setFrontier();
         state.scene.unfocusAll();
       }
@@ -91,13 +91,9 @@ const updates = {
   },
 
   focus(state, input) {
-    // console.log('calling focus update');
-
     state.scene.unfocusAll();
 
     const target = state.scene.findDescendantByKey(input.key);
-
-    // console.log(target);
 
     const hit    = Vector.create(input.x, input.y);
 
@@ -369,10 +365,6 @@ const updates = {
     }
 
     this.aux.$svg = $svg;
-
-    // console.log(parseTree);
-    // console.log(parseTree.flatten());
-    // console.log(parseTree.toMarkup());
   },
 
   selectFromEditor(state, input) {

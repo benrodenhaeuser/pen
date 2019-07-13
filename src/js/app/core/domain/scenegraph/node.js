@@ -337,9 +337,6 @@ const Node = {
    // hit testing: is a point within the bounding box of this shape?
 
   contains(globalPoint) {
-    // console.log(this.type, this);
-    // console.log(this.bounds);
-
     return globalPoint
       .transform(this.globalTransform().invert())
       .isWithin(this.bounds);
@@ -363,15 +360,12 @@ const Node = {
       } while (node.parent !== null);
     } else {
       for (let child of this.scene.children) {
-        // console.log('setting frontier on child', child);
         child.class = child.class.add('frontier');
       }
     }
   },
 
   removeFrontier() {
-    // console.log('removeFrontier called');
-
     const frontier = this.scene.findDescendants((node) => {
       return node.class.includes('frontier');
     });

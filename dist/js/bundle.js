@@ -620,9 +620,6 @@
      // hit testing: is a point within the bounding box of this shape?
 
     contains(globalPoint) {
-      // console.log(this.type, this);
-      // console.log(this.bounds);
-
       return globalPoint
         .transform(this.globalTransform().invert())
         .isWithin(this.bounds);
@@ -646,15 +643,12 @@
         } while (node.parent !== null);
       } else {
         for (let child of this.scene.children) {
-          // console.log('setting frontier on child', child);
           child.class = child.class.add('frontier');
         }
       }
     },
 
     removeFrontier() {
-      // console.log('removeFrontier called');
-
       const frontier = this.scene.findDescendants((node) => {
         return node.class.includes('frontier');
       });
@@ -5490,16 +5484,17 @@
     // TODO: preliminary logic
     after(state, input) {
       if (input.type === 'change') {
+        // => from editor to canvas: derive scenegraph from parsetree
         if (this.aux.$svg) {
           const $svg = this.aux.$svg;
           state.store.scene.replaceWith(state.domToScene($svg));
         } else {
-          console.log('erasing canvas');
           const scene = Scene.create();
           scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
           state.store.scene.replaceWith(scene);
         }
       } else {
+        // => from canvas to editor: derive parsetree from scene
         state.parseTree = state.sceneToParseTree();
       }
     },
@@ -5561,7 +5556,6 @@
 
         if (toSelect) {
           toSelect.select();
-          // console.log('about to call setFrontier from deep select'); // NO
           state.scene.setFrontier();
           state.scene.unfocusAll();
         }
@@ -5569,13 +5563,9 @@
     },
 
     focus(state, input) {
-      // console.log('calling focus update');
-
       state.scene.unfocusAll();
 
       const target = state.scene.findDescendantByKey(input.key);
-
-      // console.log(target);
 
       const hit    = Vector.create(input.x, input.y);
 
@@ -5847,10 +5837,6 @@
       }
 
       this.aux.$svg = $svg;
-
-      // console.log(parseTree);
-      // console.log(parseTree.flatten());
-      // console.log(parseTree.toMarkup());
     },
 
     selectFromEditor(state, input) {
@@ -6192,8 +6178,6 @@
           updates.after(this.state, input);
         }
 
-        console.log(this.state.parseTree);
-
         this.publish();
       }
     },
@@ -6374,8 +6358,6 @@
     },
 
     reconcileProps(oldVNode, newVNode, $node) {
-      // console.log(oldVNode, newVNode, $node);
-
       for (let [key, value] of Object.entries(newVNode.props)) {
         if (oldVNode.props[key] !== newVNode.props[key]) {
           $node.setAttributeNS(null, key, value);
@@ -6441,10 +6423,6 @@
           if (this.clickLike(event) && event.detail > 1) {
             return;
           }
-
-          // if (event.type === 'mouseout') {
-          //   console.log('mouseout event!');
-          // }
 
           // TODO: ugly
           if (event.type === 'mousedown') {
@@ -16605,12 +16583,11 @@
 
     bindEvents(func) {
       this.editor.on('focus', () => {
-        // if (this.textMarker) {
-        //   this.textMarker.clear();
-        // }
+        if (this.textMarker) {
+          this.textMarker.clear();
+        }
       });
 
-      // FINE
       this.editor.on('change', () => {
         if (this.editor.hasFocus()) {
           func({
@@ -16622,6 +16599,20 @@
       });
 
       this.editor.on('cursorActivity', () => {
+        // TODO:
+        // - match cursor index with parseTree index
+        // - identify node key in parseTree
+        // - find node on canvas, and highlight it
+
+        // what we would like to do here is this:
+
+        //   func({
+        //     source: this.name,
+        //     type: 'cursorSelect',
+        //     key: node.key,
+        //   });
+
+        // OLD CODE:
         // const cursorPosition = this.editor.getDoc().getCursor();
         // const index = this.editor.getDoc().indexFromPos(cursorPosition);
         //
@@ -16653,30 +16644,20 @@
       if (['penMode', 'selectMode'].includes(state.label)) {
         if (!this.editor.hasFocus() && currentParseTree !== previousParseTree) {
           this.editor.getDoc().setValue(state.parseTree.toMarkup());
+          // ^ TODO: replace with reconciliation
           // this.markChange(state);
         }
 
         this.previousParseTree = state.parseTree;
-
-        // const currentMarkup  = state.ast.prettyMarkup();
-        // const previousMarkup = this.previousMarkup;
-        //
-        // // we don't touch the editor if it has focus
-        // if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
-        //   // replace by proper diffing
-        //   this.editor.getDoc().setValue(currentMarkup);
-        //   this.markChange(state);
-        // }
-        //
-        // this.previousMarkup = state.ast.prettyMarkup();
       }
     },
 
+    // TODO
     reconcile(oldANode, newANode, value) {
-      if (newANode.markup) {
-        if (oldANode.markup !== newANode.markup) ;
-      }
+
     },
+
+    // OLD CODE
 
     // markChange(state) {
     //   this.currentMarkup = state.ast.prettyMarkup();

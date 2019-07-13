@@ -32,8 +32,6 @@ const core = {
         updates.after(this.state, input);
       }
 
-      console.log(this.state.parseTree);
-
       this.publish();
     }
   },

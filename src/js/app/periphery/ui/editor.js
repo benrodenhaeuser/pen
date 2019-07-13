@@ -18,12 +18,11 @@ const editor = {
 
   bindEvents(func) {
     this.editor.on('focus', () => {
-      // if (this.textMarker) {
-      //   this.textMarker.clear();
-      // }
+      if (this.textMarker) {
+        this.textMarker.clear();
+      }
     });
 
-    // FINE
     this.editor.on('change', () => {
       if (this.editor.hasFocus()) {
         func({
@@ -36,6 +35,20 @@ const editor = {
     });
 
     this.editor.on('cursorActivity', () => {
+      // TODO:
+      // - match cursor index with parseTree index
+      // - identify node key in parseTree
+      // - find node on canvas, and highlight it
+
+      // what we would like to do here is this:
+
+      //   func({
+      //     source: this.name,
+      //     type: 'cursorSelect',
+      //     key: node.key,
+      //   });
+
+      // OLD CODE:
       // const cursorPosition = this.editor.getDoc().getCursor();
       // const index = this.editor.getDoc().indexFromPos(cursorPosition);
       //
@@ -67,34 +80,20 @@ const editor = {
     if (['penMode', 'selectMode'].includes(state.label)) {
       if (!this.editor.hasFocus() && currentParseTree !== previousParseTree) {
         this.editor.getDoc().setValue(state.parseTree.toMarkup());
+        // ^ TODO: replace with reconciliation
         // this.markChange(state);
       }
 
       this.previousParseTree = state.parseTree;
-
-      // const currentMarkup  = state.ast.prettyMarkup();
-      // const previousMarkup = this.previousMarkup;
-      //
-      // // we don't touch the editor if it has focus
-      // if (!this.editor.hasFocus() && currentMarkup !== previousMarkup) {
-      //   // replace by proper diffing
-      //   this.editor.getDoc().setValue(currentMarkup);
-      //   this.markChange(state);
-      // }
-      //
-      // this.previousMarkup = state.ast.prettyMarkup();
     }
   },
 
+  // TODO
   reconcile(oldANode, newANode, value) {
-    if (newANode.markup) {
-      if (oldANode.markup !== newANode.markup) {
-        // we need the in-editor range to be able to replace
-        //
-      } else {
-      }
-    }
+
   },
+
+  // OLD CODE
 
   // markChange(state) {
   //   this.currentMarkup = state.ast.prettyMarkup();

@@ -50,8 +50,6 @@ const UIModule = {
   },
 
   reconcileProps(oldVNode, newVNode, $node) {
-    // console.log(oldVNode, newVNode, $node);
-
     for (let [key, value] of Object.entries(newVNode.props)) {
       if (oldVNode.props[key] !== newVNode.props[key]) {
         $node.setAttributeNS(null, key, value);

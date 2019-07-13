@@ -26,10 +26,6 @@ const canvas = Object.assign(Object.create(UIModule), {
           return;
         }
 
-        // if (event.type === 'mouseout') {
-        //   console.log('mouseout event!');
-        // }
-
         // TODO: ugly
         if (event.type === 'mousedown') {
           const textarea = document.querySelector('textarea')
