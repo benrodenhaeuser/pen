@@ -4985,10 +4985,6 @@
     return container;
   };
 
-  const editor = (state) => {
-    return state.exportToSVG();
-  };
-
   const message = (store) => {
     return store.message.payload.text;
   };
@@ -5262,7 +5258,7 @@
   const exportToVDOM = (state) => {
     return {
       tools:    tools(state.store),
-      editor:   editor(state),
+      // editor:   editor(state),     // not needed atm
       message:  message(state.store),
       canvas:   canvas(state.store),
     };
@@ -5427,15 +5423,6 @@
       };
     },
 
-    // TODO: better naming, like:
-    // objectToScene
-    // markupToScene
-    // sceneToMarkup
-    // sceneToVDOM
-    // sceneToAST
-    // sceneToObject
-
-    // returns a node (node type may vary depending on object)
     objectToDoc(object) {
       return objectToDoc(object);
     },
@@ -5481,19 +5468,8 @@
   };
 
   const updates = {
-    // TODO: preliminary logic
     after(state, input) {
-      if (input.type === 'change') {
-        // => from editor to canvas: derive scenegraph from parsetree
-        if (this.aux.$svg) {
-          const $svg = this.aux.$svg;
-          state.store.scene.replaceWith(state.domToScene($svg));
-        } else {
-          const scene = Scene.create();
-          scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-          state.store.scene.replaceWith(scene);
-        }
-      } else {
+      if (input.type !== 'markupChange') {
         // => from canvas to editor: derive parsetree from scene
         state.parseTree = state.sceneToParseTree();
       }
@@ -5834,15 +5810,31 @@
         parseTree.indexify();
 
         state.parseTree = parseTree;
+        state.store.scene.replaceWith(state.domToScene($svg));
+      } else {
+        const scene = Scene.create();
+        scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+        state.store.scene.replaceWith(scene);
+        // TODO: at this point, editor and scene are potentially out of sync.
       }
-
-      this.aux.$svg = $svg;
     },
 
     selectFromEditor(state, input) {
-      const target = state.scene.findDescendantByKey(input.key);
       this.cleanup(state, input);
-      if (target) { target.select(); }
+
+      let parseTreeNode;
+      let sceneNode;
+
+      parseTreeNode = state.parseTree.findNodeByIndex(input.index);
+
+      if (parseTreeNode) {
+        sceneNode = state.store.scene.findDescendantByKey(parseTreeNode.key);
+      }
+
+      if (sceneNode) {
+        sceneNode.select();
+      }
+
       state.label = 'selectMode';
     },
   };
@@ -6089,7 +6081,7 @@
 
     // process editor input (=> from editor module)
     {
-      type: 'change',
+      type: 'markupChange',
       do: 'changeMarkup'
     },
 
@@ -16583,57 +16575,36 @@
 
     bindEvents(func) {
       this.editor.on('focus', () => {
-        if (this.textMarker) {
-          this.textMarker.clear();
-        }
+        // if (this.textMarker) {
+        //   this.textMarker.clear();
+        // }
       });
 
       this.editor.on('change', () => {
         if (this.editor.hasFocus()) {
           func({
             source: this.name,
-            type:   'change',
+            type:   'markupChange',
             value:  this.editor.getValue(),
           });
         }
       });
 
       this.editor.on('cursorActivity', () => {
-        // TODO:
-        // - match cursor index with parseTree index
-        // - identify node key in parseTree
-        // - find node on canvas, and highlight it
+        const cursorPosition = this.editor.getDoc().getCursor();
+        const index = this.editor.getDoc().indexFromPos(cursorPosition);
 
-        // what we would like to do here is this:
+        // an index of 0 is an indication that the event
+        // was fired by programmatic text insertion
+        if (index === 0) {
+          return;
+        }
 
-        //   func({
-        //     source: this.name,
-        //     type: 'cursorSelect',
-        //     key: node.key,
-        //   });
-
-        // OLD CODE:
-        // const cursorPosition = this.editor.getDoc().getCursor();
-        // const index = this.editor.getDoc().indexFromPos(cursorPosition);
-        //
-        // // an index of 0 is an indication that the event was fired by programmatic insertion
-        // if (index === 0) {
-        //   return;
-        // }
-        //
-        // const cleanIndex = this.cleanIndex(index);
-        // const astNode = this.ast.findNodeByIndex(cleanIndex);
-        // const token = this.editor.getTokenAt(cursorPosition);
-        //
-        // // if the canvas is empty due to irregular markup, we will not find an ast node
-        // // so let's make sure we have one before generating an input ...
-        // if (astNode) {
-        //   func({
-        //     source: this.name,
-        //     type: 'cursorSelect',
-        //     key: astNode.key,
-        //   });
-        // }
+        func({
+          source: this.name,
+          type: 'cursorSelect',
+          index: index,
+        });
       });
     },
 
@@ -16644,8 +16615,8 @@
       if (['penMode', 'selectMode'].includes(state.label)) {
         if (!this.editor.hasFocus() && currentParseTree !== previousParseTree) {
           this.editor.getDoc().setValue(state.parseTree.toMarkup());
-          // ^ TODO: replace with reconciliation
-          // this.markChange(state);
+          // ^ TODO: replace with reconciliation mechanism
+          // highlight markup corresponding to selected nodes
         }
 
         this.previousParseTree = state.parseTree;
@@ -16656,68 +16627,6 @@
     reconcile(oldANode, newANode, value) {
 
     },
-
-    // OLD CODE
-
-    // markChange(state) {
-    //   this.currentMarkup = state.ast.prettyMarkup();
-    //   const indices      = this.diffMarkup(state);
-    //
-    //   if (indices !== undefined) {
-    //     const range     = this.convertToRange(indices);
-    //     this.textMarker = this.editor.doc.markText(...range, { className: 'mark' });
-    //   }
-    // },
-    //
-    // diffMarkup(state) {
-    //   const currentLength  = this.currentMarkup.length;
-    //   const previousLength = this.previousMarkup.length;
-    //
-    //   // idea: if markup has been removed, there will be no text to be marked
-    //   if (previousLength > currentLength) {
-    //     return undefined;
-    //   }
-    //
-    //   let start;  // beginning of inserted slice of text
-    //   let end;    // end of inserted slice of text
-    //
-    //   for (let i = 0; i < currentLength; i += 1) {
-    //     if (this.currentMarkup[i] !== this.previousMarkup[i]) {
-    //       start = i;
-    //       break;
-    //     }
-    //   }
-    //
-    //   let k = previousLength - 1;
-    //
-    //   for (let j = currentLength - 1; j >= 0; j -= 1) {
-    //     if (this.currentMarkup[j] !== this.previousMarkup[k]) {
-    //       end = j;
-    //       break;
-    //     }
-    //
-    //     k -= 1;
-    //   }
-    //
-    //   return [start, end];
-    // },
-    //
-    // convertToRange(indices) {
-    //   const from = this.editor.doc.posFromIndex(indices[0]);
-    //   const to   = this.editor.doc.posFromIndex(indices[1] + 2);
-    //
-    //   return [from, to];
-    // },
-    //
-    // cleanIndex(index) {
-    //   const value = this.editor.getDoc().getValue();
-    //   const left = value.slice(0, index); // everything *before*
-    //   let cleanLeft = left.replace(/\n/g, '');      // eliminate new lines
-    //   cleanLeft = cleanLeft.replace(/>[^<>]+</g, '><'); // eliminate anything not in tags
-    //
-    //   const removedCount = left.length - cleanLeft.length; // how much did we remove?
-    //   return index - removedCount;
-    // },
   };
 
   const tools$1 = Object.assign(Object.create(UIModule), {

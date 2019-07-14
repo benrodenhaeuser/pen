@@ -9,19 +9,8 @@ import { Curve                   } from './domain.js';
 import { Bezier                  } from '/vendor/bezier/bezier.js';
 
 const updates = {
-  // TODO: preliminary logic
   after(state, input) {
-    if (input.type === 'change') {
-      // => from editor to canvas: derive scenegraph from parsetree
-      if (this.aux.$svg) {
-        const $svg = this.aux.$svg;
-        state.store.scene.replaceWith(state.domToScene($svg));
-      } else {
-        const scene = Scene.create();
-        scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-        state.store.scene.replaceWith(scene);
-      }
-    } else {
+    if (input.type !== 'markupChange') {
       // => from canvas to editor: derive parsetree from scene
       state.parseTree = state.sceneToParseTree();
     }
@@ -362,15 +351,31 @@ const updates = {
       parseTree.indexify();
 
       state.parseTree = parseTree;
+      state.store.scene.replaceWith(state.domToScene($svg));
+    } else {
+      const scene = Scene.create();
+      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+      state.store.scene.replaceWith(scene);
+      // TODO: at this point, editor and scene are potentially out of sync.
     }
-
-    this.aux.$svg = $svg;
   },
 
   selectFromEditor(state, input) {
-    const target = state.scene.findDescendantByKey(input.key);
     this.cleanup(state, input);
-    if (target) { target.select(); }
+
+    let parseTreeNode;
+    let sceneNode;
+
+    parseTreeNode = state.parseTree.findNodeByIndex(input.index);
+
+    if (parseTreeNode) {
+      sceneNode = state.store.scene.findDescendantByKey(parseTreeNode.key);
+    }
+
+    if (sceneNode) {
+      sceneNode.select();
+    }
+
     state.label = 'selectMode';
   },
 };

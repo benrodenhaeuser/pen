@@ -87,15 +87,6 @@ const State = {
     };
   },
 
-  // TODO: better naming, like:
-  // objectToScene
-  // markupToScene
-  // sceneToMarkup
-  // sceneToVDOM
-  // sceneToAST
-  // sceneToObject
-
-  // returns a node (node type may vary depending on object)
   objectToDoc(object) {
     return objectToDoc(object);
   },
