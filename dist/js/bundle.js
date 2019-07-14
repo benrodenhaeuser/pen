@@ -4783,7 +4783,7 @@
       .commands;
   };
 
-  const domToParseTree = ($svg) => {
+  const domToSyntaxTree = ($svg) => {
     if ($svg instanceof SVGElement) {
       const pNode = SyntaxTree.create();
       return buildTree$2($svg, pNode);
@@ -4845,7 +4845,7 @@
     return pNode;
   };
 
-  const sceneToParseTree = (scene) => {
+  const sceneToSyntaxTree = (scene) => {
     const astRoot = SyntaxTree.create();
     parse(scene, astRoot, 0);
     astRoot.indexify();
@@ -5435,12 +5435,12 @@
       return domToScene($svg);
     },
 
-    domToParseTree($svg) {
-      return domToParseTree($svg);
+    domToSyntaxTree($svg) {
+      return domToSyntaxTree($svg);
     },
 
-    sceneToParseTree() {
-      return sceneToParseTree(this.store.scene);
+    sceneToSyntaxTree() {
+      return sceneToSyntaxTree(this.store.scene);
     },
 
     // returns a Scene node
@@ -5471,7 +5471,7 @@
     after(state, input) {
       if (input.type !== 'markupChange') {
         // => from canvas to editor: derive syntax tree from scene
-        state.syntaxTree = state.sceneToParseTree();
+        state.syntaxTree = state.sceneToSyntaxTree();
       }
     },
 
@@ -5806,7 +5806,7 @@
       const $svg = state.markupToDOM(input.value);
 
       if ($svg) {
-        const syntaxTree = state.domToParseTree($svg);
+        const syntaxTree = state.domToSyntaxTree($svg);
         syntaxTree.indexify();
 
         state.syntaxTree = syntaxTree;

@@ -1,6 +1,6 @@
 import { SyntaxTree } from '../../domain.js';
 
-const domToParseTree = ($svg) => {
+const domToSyntaxTree = ($svg) => {
   if ($svg instanceof SVGElement) {
     const pNode = SyntaxTree.create();
     return buildTree($svg, pNode);
@@ -62,4 +62,4 @@ const buildTree = ($node, pNode) => {
   return pNode;
 };
 
-export { domToParseTree };
+export { domToSyntaxTree };

@@ -1,6 +1,6 @@
 import { SyntaxTree } from '../../domain/syntaxtree.js';
 
-const sceneToParseTree = (scene) => {
+const sceneToSyntaxTree = (scene) => {
   const astRoot = SyntaxTree.create();
   parse(scene, astRoot, 0);
   astRoot.indexify();
@@ -57,4 +57,4 @@ const indent = (level) => {
   return pad;
 }
 
-export { sceneToParseTree };
+export { sceneToSyntaxTree };

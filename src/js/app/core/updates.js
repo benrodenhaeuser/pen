@@ -12,7 +12,7 @@ const updates = {
   after(state, input) {
     if (input.type !== 'markupChange') {
       // => from canvas to editor: derive syntax tree from scene
-      state.syntaxTree = state.sceneToParseTree();
+      state.syntaxTree = state.sceneToSyntaxTree();
     }
   },
 
@@ -347,7 +347,7 @@ const updates = {
     const $svg = state.markupToDOM(input.value);
 
     if ($svg) {
-      const syntaxTree = state.domToParseTree($svg);
+      const syntaxTree = state.domToSyntaxTree($svg);
       syntaxTree.indexify();
 
       state.syntaxTree = syntaxTree;

@@ -5,8 +5,8 @@ import { markupToScene    } from './ports.js';
 import { objectToDoc      } from './ports.js';
 import { markupToDOM      } from './ports.js';
 import { domToScene       } from './ports.js';
-import { domToParseTree   } from './ports.js';
-import { sceneToParseTree } from './ports.js';
+import { domToSyntaxTree   } from './ports.js';
+import { sceneToSyntaxTree } from './ports.js';
 import { Store            } from './domain.js';
 import { Docs             } from './domain.js';
 import { Doc              } from './domain.js';
@@ -99,12 +99,12 @@ const State = {
     return domToScene($svg);
   },
 
-  domToParseTree($svg) {
-    return domToParseTree($svg);
+  domToSyntaxTree($svg) {
+    return domToSyntaxTree($svg);
   },
 
-  sceneToParseTree() {
-    return sceneToParseTree(this.store.scene);
+  sceneToSyntaxTree() {
+    return sceneToSyntaxTree(this.store.scene);
   },
 
   // returns a Scene node
