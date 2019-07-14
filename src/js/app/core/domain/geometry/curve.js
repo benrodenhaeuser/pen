@@ -1,7 +1,6 @@
-import { Bezier    } from '/vendor/bezier/bezier.js';
+import { Bezier } from '/vendor/bezier/bezier.js';
 import { Rectangle } from './rectangle.js';
-import { Vector    } from './vector.js';
-
+import { Vector } from './vector.js';
 
 const Curve = {
   // the params are Vector instances
@@ -16,7 +15,7 @@ const Curve = {
       Vector.create(coords[0]),
       Vector.create(coords[1]),
       Vector.create(coords[2]),
-      Vector.create(coords[3]),
+      Vector.create(coords[3])
     );
   },
 
@@ -43,10 +42,11 @@ const Curve = {
   // by the Bezier constructor of the Pomax Bezier library!
   // It is also the order in which points occur in a path string.
   points() {
-    const pts = [this.anchor1, this.handle1, this.handle2, this.anchor2]
-      .filter((point) => {
-        return (point !== undefined && point !== null);
-      });
+    const pts = [this.anchor1, this.handle1, this.handle2, this.anchor2].filter(
+      point => {
+        return point !== undefined && point !== null;
+      }
+    );
 
     return pts;
   },
@@ -134,8 +134,8 @@ const Curve = {
       const maxX = Math.max(this.anchor1.x, this.anchor2.x);
       const maxY = Math.max(this.anchor1.y, this.anchor2.y);
 
-      min  = Vector.create(minX, minY);
-      max  = Vector.create(maxX, maxY);
+      min = Vector.create(minX, minY);
+      max = Vector.create(maxX, maxY);
     } else {
       const bbox = new Bezier(...this.coords()).bbox();
 

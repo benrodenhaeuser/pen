@@ -1,12 +1,12 @@
-import { Scene, Shape, Group     } from './domain.js';
+import { Scene, Shape, Group } from './domain.js';
 import { Spline, Segment, Anchor } from './domain.js';
-import { HandleIn, HandleOut     } from './domain.js';
-import { Identifier, Doc         } from './domain.js';
-import { Vector                  } from './domain.js';
-import { Matrix                  } from './domain.js';
-import { Rectangle               } from './domain.js';
-import { Curve                   } from './domain.js';
-import { Bezier                  } from '/vendor/bezier/bezier.js';
+import { HandleIn, HandleOut } from './domain.js'; 
+import { Identifier, Doc } from './domain.js';
+import { Vector } from './domain.js';
+import { Matrix } from './domain.js';
+import { Rectangle } from './domain.js';
+import { Curve } from './domain.js';
+import { Bezier } from '/vendor/bezier/bezier.js';
 
 const updates = {
   after(state, input) {
@@ -67,7 +67,7 @@ const updates = {
       state.scene.unfocusAll();
       state.label = 'penMode';
     } else {
-      const toSelect = target.findAncestor((node) => {
+      const toSelect = target.findAncestor(node => {
         return node.parent && node.parent.class.includes('frontier');
       });
 
@@ -84,7 +84,7 @@ const updates = {
 
     const target = state.scene.findDescendantByKey(input.key);
 
-    const hit    = Vector.create(input.x, input.y);
+    const hit = Vector.create(input.x, input.y);
 
     if (target) {
       const toFocus = target.findAncestorByClass('frontier');
@@ -118,7 +118,7 @@ const updates = {
 
   initTransform(state, input) {
     const node = state.scene.selected;
-    this.aux.from   = Vector.create(input.x, input.y);
+    this.aux.from = Vector.create(input.x, input.y);
     this.aux.center = node.bounds.center.transform(node.globalTransform());
   },
 
@@ -129,8 +129,8 @@ const updates = {
       return;
     }
 
-    const to     = Vector.create(input.x, input.y);
-    const from   = this.aux.from;
+    const to = Vector.create(input.x, input.y);
+    const from = this.aux.from;
     const offset = to.minus(from);
 
     node.translate(offset);
@@ -145,10 +145,10 @@ const updates = {
       return;
     }
 
-    const to     = Vector.create(input.x, input.y);
-    const from   = this.aux.from;
+    const to = Vector.create(input.x, input.y);
+    const from = this.aux.from;
     const center = this.aux.center;
-    const angle  = center.angle(from, to);
+    const angle = center.angle(from, to);
 
     node.rotate(angle, center);
 
@@ -162,8 +162,8 @@ const updates = {
       return;
     }
 
-    const to     = Vector.create(input.x, input.y);
-    const from   = this.aux.from;
+    const to = Vector.create(input.x, input.y);
+    const from = this.aux.from;
     const center = this.aux.center;
     const factor = to.minus(center).length() / from.minus(center).length();
 
@@ -177,10 +177,10 @@ const updates = {
     let spline;
 
     if (state.scene.editing) {
-      shape  = state.scene.editing;
+      shape = state.scene.editing;
       spline = shape.lastChild;
     } else {
-      shape  = Shape.create();
+      shape = Shape.create();
       state.scene.append(shape);
 
       spline = Spline.create();
@@ -192,42 +192,44 @@ const updates = {
     const segment = Segment.create();
     spline.append(segment);
 
-    const anchor  = Anchor.create();
+    const anchor = Anchor.create();
     segment.append(anchor);
 
-    anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(shape);
+    anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(
+      shape
+    );
 
-    this.aux.shape   = shape;
+    this.aux.shape = shape;
     this.aux.segment = segment;
   },
 
   setHandles(state, input) {
-    const shape       = this.aux.shape;
-    const segment     = this.aux.segment;
+    const shape = this.aux.shape;
+    const segment = this.aux.segment;
 
-    const anchor      = segment.anchor;
-    const handleIn    = Vector.create(input.x, input.y).transformToLocal(shape);
-    const handleOut   = handleIn.rotate(Math.PI, anchor);
-    segment.handleIn  = handleIn;
+    const anchor = segment.anchor;
+    const handleIn = Vector.create(input.x, input.y).transformToLocal(shape);
+    const handleOut = handleIn.rotate(Math.PI, anchor);
+    segment.handleIn = handleIn;
     segment.handleOut = handleOut;
   },
 
   initEditSegment(state, input) {
-    const control   = state.scene.findDescendantByKey(input.key);
-    const shape     = control.parent.parent.parent;
-    const from      = Vector.create(input.x, input.y).transformToLocal(shape);
+    const control = state.scene.findDescendantByKey(input.key);
+    const shape = control.parent.parent.parent;
+    const from = Vector.create(input.x, input.y).transformToLocal(shape);
 
-    this.aux.from    = from;
+    this.aux.from = from;
     this.aux.control = control;
   },
 
   editSegment(state, input) {
-    const control          = this.aux.control;
-    const from             = this.aux.from;
-    const segment          = control.parent;
-    const shape            = segment.parent.parent;
-    const to               = Vector.create(input.x, input.y).transformToLocal(shape);
-    const change           = to.minus(from);
+    const control = this.aux.control;
+    const from = this.aux.from;
+    const segment = control.parent;
+    const shape = segment.parent.parent;
+    const to = Vector.create(input.x, input.y).transformToLocal(shape);
+    const change = to.minus(from);
     control.payload.vector = control.payload.vector.add(change);
 
     switch (control.type) {
@@ -251,50 +253,52 @@ const updates = {
   },
 
   projectInput(state, input) {
-    const startSegment      = state.scene.findDescendantByKey(input.key);
-    const spline            = startSegment.parent;
-    const shape             = spline.parent;
-    const startIndex        = spline.children.indexOf(startSegment);
-    const endSegment        = spline.children[startIndex + 1];
-    const curve             = Curve.createFromSegments(startSegment, endSegment);
-    const bCurve            = new Bezier(...curve.coords());
+    const startSegment = state.scene.findDescendantByKey(input.key);
+    const spline = startSegment.parent;
+    const shape = spline.parent;
+    const startIndex = spline.children.indexOf(startSegment);
+    const endSegment = spline.children[startIndex + 1];
+    const curve = Curve.createFromSegments(startSegment, endSegment);
+    const bCurve = new Bezier(...curve.coords());
 
-    const from              = Vector.create(input.x, input.y).transformToLocal(shape);
-    const pointOnCurve      = bCurve.project({ x: from.x, y: from.y });
-    shape.splitter          = Vector.createFromObject(pointOnCurve);
+    const from = Vector.create(input.x, input.y).transformToLocal(shape);
+    const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
+    shape.splitter = Vector.createFromObject(pointOnCurve);
 
-    this.aux.spline         = spline;
-    this.aux.splitter       = shape.splitter;
-    this.aux.startSegment   = startSegment;
-    this.aux.endSegment     = endSegment;
+    this.aux.spline = spline;
+    this.aux.splitter = shape.splitter;
+    this.aux.startSegment = startSegment;
+    this.aux.endSegment = endSegment;
     this.aux.insertionIndex = startIndex + 1;
-    this.aux.bCurve         = bCurve;
-    this.aux.curveTime      = pointOnCurve.t;
-    this.aux.from           = from;
+    this.aux.bCurve = bCurve;
+    this.aux.curveTime = pointOnCurve.t;
+    this.aux.from = from;
   },
 
   splitCurve(state, input) {
-    const spline           = this.aux.spline;
-    const newAnchor        = this.aux.splitter; // careful: a vector, not a node!
-    const startSegment     = this.aux.startSegment;
-    const endSegment       = this.aux.endSegment;
-    const insertionIndex   = this.aux.insertionIndex;
-    const bCurve           = this.aux.bCurve;
-    const curveTime        = this.aux.curveTime;
+    const spline = this.aux.spline;
+    const newAnchor = this.aux.splitter; // careful: a vector, not a node!
+    const startSegment = this.aux.startSegment;
+    const endSegment = this.aux.endSegment;
+    const insertionIndex = this.aux.insertionIndex;
+    const bCurve = this.aux.bCurve;
+    const curveTime = this.aux.curveTime;
 
-    const splitCurves      = bCurve.split(curveTime);
-    const left             = splitCurves.left;
-    const right            = splitCurves.right;
-    const newSegment       = Segment.create();
-    newSegment.anchor      = newAnchor;
-    newSegment.handleIn    = Vector.createFromObject(left.points[2]);
-    newSegment.handleOut   = Vector.createFromObject(right.points[1]);
+    const splitCurves = bCurve.split(curveTime);
+    const left = splitCurves.left;
+    const right = splitCurves.right;
+    const newSegment = Segment.create();
+    newSegment.anchor = newAnchor;
+    newSegment.handleIn = Vector.createFromObject(left.points[2]);
+    newSegment.handleOut = Vector.createFromObject(right.points[1]);
     startSegment.handleOut = Vector.createFromObject(left.points[1]);
-    endSegment.handleIn    = Vector.createFromObject(right.points[2]);
+    endSegment.handleIn = Vector.createFromObject(right.points[2]);
 
     spline.insertChild(newSegment, insertionIndex);
 
-    this.aux.control = newSegment.findDescendant((node) => node.type === 'anchor');
+    this.aux.control = newSegment.findDescendant(
+      node => node.type === 'anchor'
+    );
     this.hideSplitter(state, input);
     this.editSegment(state, input);
   },
@@ -369,7 +373,9 @@ const updates = {
     syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
     if (syntaxTreeNode) {
-      sceneGraphNode = state.store.scene.findDescendantByKey(syntaxTreeNode.key);
+      sceneGraphNode = state.store.scene.findDescendantByKey(
+        syntaxTreeNode.key
+      );
     }
 
     if (sceneGraphNode) {

@@ -1,6 +1,6 @@
 import { Matrix } from './matrix.js';
-import { Shape  } from '../scenegraph';
-import * as vec2  from '/vendor/glmatrix/vec2.js';
+import { Shape } from '../scenegraph';
+import * as vec2 from '/vendor/glmatrix/vec2.js';
 
 const Vector = {
   create(x = 0, y = 0) {
@@ -23,7 +23,14 @@ const Vector = {
 
   // return value: new Vector instance
   transform(matrix) {
-    const m = [matrix.m[0][0], matrix.m[1][0], matrix.m[0][1], matrix.m[1][1], matrix.m[0][2], matrix.m[1][2]];
+    const m = [
+      matrix.m[0][0],
+      matrix.m[1][0],
+      matrix.m[0][1],
+      matrix.m[1][1],
+      matrix.m[0][2],
+      matrix.m[1][2],
+    ];
     const out = vec2.create();
     vec2.transformMat2d(out, this.toArray(), m);
     return Vector.create(...out);
@@ -55,10 +62,12 @@ const Vector = {
 
   // return value: boolean
   isWithin(rectangle) {
-    return this.x >= rectangle.x &&
-           this.x <= rectangle.x + rectangle.width &&
-           this.y >= rectangle.y &&
-           this.y <= rectangle.y + rectangle.height;
+    return (
+      this.x >= rectangle.x &&
+      this.x <= rectangle.x + rectangle.width &&
+      this.y >= rectangle.y &&
+      this.y <= rectangle.y + rectangle.height
+    );
   },
 
   // return value: number
@@ -81,7 +90,7 @@ const Vector = {
 
   toString() {
     return `${this.x} ${this.y}`;
-  }
+  },
 };
 
 export { Vector };

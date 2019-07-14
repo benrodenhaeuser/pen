@@ -6,7 +6,7 @@ const transitions = [
     from: 'start',
     type: 'go',
     do: 'go',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // TOOLS
@@ -16,7 +16,7 @@ const transitions = [
     type: 'click',
     target: 'newDocButton',
     do: 'createDoc',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // request stored document
@@ -31,7 +31,7 @@ const transitions = [
     type: 'click',
     target: 'selectButton',
     do: 'cleanup',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // switch to pen mode
@@ -39,7 +39,7 @@ const transitions = [
     type: 'click',
     target: 'penButton',
     do: 'cleanup',
-    to: 'penMode'
+    to: 'penMode',
   },
 
   // trigger undo
@@ -47,7 +47,7 @@ const transitions = [
     type: 'click',
     target: 'getPrevious',
     do: 'getPrevious',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // trigger redo
@@ -55,7 +55,7 @@ const transitions = [
     type: 'click',
     target: 'getNext',
     do: 'getNext',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // INPUT MODES
@@ -72,7 +72,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'mousemove',
-    do: 'focus'
+    do: 'focus',
   },
 
   // open a group
@@ -80,7 +80,7 @@ const transitions = [
     from: 'selectMode',
     type: 'dblclick',
     target: 'content',
-    do: 'deepSelect'
+    do: 'deepSelect',
   },
 
   // initiate shift transformation
@@ -89,7 +89,7 @@ const transitions = [
     type: 'mousedown',
     target: 'content',
     do: 'select',
-    to: 'shifting'
+    to: 'shifting',
   },
 
   // initate rotate transformation
@@ -98,7 +98,7 @@ const transitions = [
     type: 'mousedown',
     target: 'dot',
     do: 'initTransform',
-    to: 'rotating'
+    to: 'rotating',
   },
 
   // initiate scale transformation
@@ -107,14 +107,14 @@ const transitions = [
     type: 'mousedown',
     target: 'corner',
     do: 'initTransform',
-    to: 'scaling'
+    to: 'scaling',
   },
 
   // shift the shape
   {
     from: 'shifting',
     type: 'mousemove',
-    do: 'shift'
+    do: 'shift',
   },
 
   // finalize shift translation
@@ -122,14 +122,14 @@ const transitions = [
     from: 'shifting',
     type: 'mouseup',
     do: 'release',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // rotate the shape
   {
     from: 'rotating',
     type: 'mousemove',
-    do: 'rotate'
+    do: 'rotate',
   },
 
   // finalize rotate transformation
@@ -137,14 +137,14 @@ const transitions = [
     from: 'rotating',
     type: 'mouseup',
     do: 'release',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // scale the shape
   {
     from: 'scaling',
     type: 'mousemove',
-    do: 'scale'
+    do: 'scale',
   },
 
   // finalize scale transformation
@@ -152,7 +152,7 @@ const transitions = [
     from: 'scaling',
     type: 'mouseup',
     do: 'release',
-    to: 'selectMode'
+    to: 'selectMode',
   },
 
   // PEN MODE
@@ -163,7 +163,7 @@ const transitions = [
     type: 'mousedown',
     target: 'content',
     do: 'addSegment',
-    to: 'settingHandles'
+    to: 'settingHandles',
   },
 
   // set handles for current segment
@@ -171,7 +171,7 @@ const transitions = [
     from: 'settingHandles',
     type: 'mousemove',
     do: 'setHandles',
-    to: 'settingHandles'
+    to: 'settingHandles',
   },
 
   // finish up setting handles
@@ -179,7 +179,7 @@ const transitions = [
     from: 'settingHandles',
     type: 'mouseup',
     do: 'releasePen',
-    to: 'penMode'
+    to: 'penMode',
   },
 
   // initiate editing of segment
@@ -188,7 +188,7 @@ const transitions = [
     type: 'mousedown',
     target: 'control',
     do: 'initEditSegment',
-    to: 'editingSegment'
+    to: 'editingSegment',
   },
 
   // edit segment
@@ -196,7 +196,7 @@ const transitions = [
     from: 'editingSegment',
     type: 'mousemove',
     do: 'editSegment',
-    to: 'editingSegment'
+    to: 'editingSegment',
   },
 
   // finish up editing segment
@@ -204,7 +204,7 @@ const transitions = [
     from: 'editingSegment',
     type: 'mouseup',
     do: 'releasePen',
-    to: 'penMode'
+    to: 'penMode',
   },
 
   // place split point
@@ -213,7 +213,7 @@ const transitions = [
     type: 'mousemove',
     target: 'curve',
     do: 'projectInput',
-    to: 'penMode'
+    to: 'penMode',
   },
 
   // hide split point
@@ -223,7 +223,7 @@ const transitions = [
     type: 'mouseout',
     target: 'curve',
     do: 'hideSplitter',
-    to: 'penMode'
+    to: 'penMode',
   },
 
   // split curve
@@ -233,7 +233,7 @@ const transitions = [
     type: 'mousedown',
     target: 'curve',
     do: 'splitCurve',
-    to: 'editingSegment'
+    to: 'editingSegment',
   },
 
   // EDITOR
@@ -241,7 +241,7 @@ const transitions = [
   // process editor input (=> from editor module)
   {
     type: 'markupChange',
-    do: 'changeMarkup'
+    do: 'changeMarkup',
   },
 
   {
@@ -254,19 +254,19 @@ const transitions = [
   // set message to "Saved" (=> to message module)
   {
     type: 'docSaved',
-    do: 'setSavedMessage'
+    do: 'setSavedMessage',
   },
 
   // wipe current message (=> to message module)
   {
     type: 'wipeMessage',
-    do: 'wipeMessage'
+    do: 'wipeMessage',
   },
 
   // update document list (=> to tools module)
   {
     type: 'updateDocList',
-    do: 'updateDocList'
+    do: 'updateDocList',
   },
 
   // switch to document provided (=> from db module or hist module)
@@ -277,13 +277,13 @@ const transitions = [
 ];
 
 transitions.get = function(state, input) {
-  const isMatch = (row) => {
-    const from   = row.from;
-    const type   = row.type;
+  const isMatch = row => {
+    const from = row.from;
+    const type = row.type;
     const target = row.target;
 
-    const stateMatch  = from === state.label || from === undefined;
-    const typeMatch   = type === input.type;
+    const stateMatch = from === state.label || from === undefined;
+    const typeMatch = type === input.type;
     const targetMatch = target === input.target || target === undefined;
 
     return stateMatch && typeMatch && targetMatch;

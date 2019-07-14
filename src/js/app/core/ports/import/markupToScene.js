@@ -1,16 +1,15 @@
-import { Scene, Shape, Group     } from '../../domain.js';
+import { Scene, Shape, Group } from '../../domain.js';
 import { Spline, Segment, Anchor } from '../../domain.js';
-import { HandleIn, HandleOut     } from '../../domain.js';
-import { Matrix                  } from '../../domain.js';
-import { Vector                  } from '../../domain.js';
-import { Rectangle               } from '../../domain.js';
-import { Class                   } from '../../domain.js';
-import { SVGPathData             } from 'svg-pathdata';
-import { SVGPathDataTransformer  } from 'svg-pathdata';
+import { HandleIn, HandleOut } from '../../domain.js';
+import { Matrix } from '../../domain.js';
+import { Vector } from '../../domain.js';
+import { Rectangle } from '../../domain.js';
+import { Class } from '../../domain.js';
+import { SVGPathData } from 'svg-pathdata';
+import { SVGPathDataTransformer } from 'svg-pathdata';
 
-const markupToScene = (markup) => {
-  const $svg = new DOMParser()
-    .parseFromString(markup, "image/svg+xml")
+const markupToScene = markup => {
+  const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
     .documentElement;
 
   if ($svg instanceof SVGElement) {
@@ -34,8 +33,10 @@ const copyDefs = ($node, node) => {
 const buildTree = ($node, node) => {
   processAttributes($node, node);
 
-  const $graphicsChildren = Array.from($node.children).filter(($child) => {
-    return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+  const $graphicsChildren = Array.from($node.children).filter($child => {
+    return (
+      $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+    );
   });
 
   for (let $child of $graphicsChildren) {
@@ -72,12 +73,10 @@ const processAttributes = ($node, node) => {
   }
 
   // classes
-  node.class = Class.create(
-    Array.from($node.classList)
-  );
+  node.class = Class.create(Array.from($node.classList));
 };
 
-const buildShapeTree = ($geometryNode) => {
+const buildShapeTree = $geometryNode => {
   const shape = Shape.create();
 
   processAttributes($geometryNode, shape);
@@ -87,9 +86,9 @@ const buildShapeTree = ($geometryNode) => {
 
   switch ($geometryNode.tagName) {
     case 'rect':
-      const x      = Number($geometryNode.getAttributeNS(null, 'x'));
-      const y      = Number($geometryNode.getAttributeNS(null, 'y'));
-      const width  = Number($geometryNode.getAttributeNS(null, 'width'));
+      const x = Number($geometryNode.getAttributeNS(null, 'x'));
+      const y = Number($geometryNode.getAttributeNS(null, 'y'));
+      const width = Number($geometryNode.getAttributeNS(null, 'width'));
       const height = Number($geometryNode.getAttributeNS(null, 'height'));
 
       pathCommands = commands(`
@@ -114,7 +113,7 @@ const buildShapeTree = ($geometryNode) => {
   return shape;
 };
 
-const buildSplineTree = (sequence) => {
+const buildSplineTree = sequence => {
   const spline = Spline.create();
   for (let segment of buildSegmentList(sequence)) {
     spline.append(segment);
@@ -127,7 +126,7 @@ const buildSplineTree = (sequence) => {
 
 // we want a segment to have children 'handleIn', 'anchor' etc
 
-const buildSegmentList = (commands) => {
+const buildSegmentList = commands => {
   const segments = [];
 
   // the first command is ALWAYS an `M` command (no handles)
@@ -137,9 +136,9 @@ const buildSegmentList = (commands) => {
   segments[0].append(child);
 
   for (let i = 1; i < commands.length; i += 1) {
-    const command  = commands[i];
-    const prevSeg  = segments[i - 1];
-    const currSeg  = Segment.create();
+    const command = commands[i];
+    const prevSeg = segments[i - 1];
+    const currSeg = Segment.create();
 
     const anchor = Anchor.create();
     anchor.payload.vector = Vector.create(command.x, command.y);
@@ -153,7 +152,6 @@ const buildSegmentList = (commands) => {
       const handleIn = HandleIn.create();
       handleIn.payload.vector = Vector.create(command.x2, command.y2);
       currSeg.append(handleIn);
-
     } else if (command.x1) {
       const handleIn = HandleIn.create();
       handleIn.payload.vector = Vector.create(command.x1, command.y1);
@@ -166,7 +164,7 @@ const buildSegmentList = (commands) => {
   return segments;
 };
 
-const sequences = (svgCommands) => {
+const sequences = svgCommands => {
   const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
   const theSequences = [];
 
@@ -181,13 +179,12 @@ const sequences = (svgCommands) => {
   return theSequences;
 };
 
-const commands = (svgPath) => {
+const commands = svgPath => {
   return new SVGPathData(svgPath)
     .transform(SVGPathDataTransformer.NORMALIZE_HVZ()) // no H, V or Z shortcuts
-    .transform(SVGPathDataTransformer.NORMALIZE_ST())  // no S (smooth multi-Bezier)
-    .transform(SVGPathDataTransformer.A_TO_C())        // no A (arcs)
-    .toAbs()                                           // no relative commands
-    .commands;
+    .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
+    .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
+    .toAbs().commands; // no relative commands
 };
 
 export { markupToScene };

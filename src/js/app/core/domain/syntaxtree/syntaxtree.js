@@ -33,7 +33,9 @@ const SyntaxTree = {
         return null;
       }
     } else {
-      const child = this.children.find(child => child.start <= idx && idx <= child.end);
+      const child = this.children.find(
+        child => child.start <= idx && idx <= child.end
+      );
 
       if (child) {
         return child.findNodeByIndex(idx);
@@ -62,7 +64,9 @@ const SyntaxTree = {
   },
 
   toMarkup() {
-    return this.flatten().map(node => node.markup).join('');
+    return this.flatten()
+      .map(node => node.markup)
+      .join('');
   },
 };
 

@@ -8,10 +8,10 @@ const message = Object.assign(Object.create(UIModule), {
   },
 
   bindEvents(func) {
-    window.addEventListener('wipeMessage', (event) => {
+    window.addEventListener('wipeMessage', event => {
       func({
         source: this.name,
-        type:   'wipeMessage',
+        type: 'wipeMessage',
       });
     });
   },

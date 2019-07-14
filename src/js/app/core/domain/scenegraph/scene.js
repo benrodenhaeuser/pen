@@ -1,32 +1,32 @@
-import { Node      } from './node.js';
+import { Node } from './node.js';
 import { SyntaxTree } from '../syntaxtree.js';
 
 const Scene = Object.create(Node);
-Scene.type  = 'scene';
+Scene.type = 'scene';
 
 const xmlns = 'http://www.w3.org/2000/svg';
 
 Scene.toVDOMNode = function() {
   return {
-    tag:      'svg',
+    tag: 'svg',
     children: [],
     props: {
-      'data-key':   this.key,
+      'data-key': this.key,
       'data-type': 'content',
-      'viewBox':    this.viewBox.toString(),
-      xmlns:       'http://www.w3.org/2000/svg',
-      class:       this.class.toString(),
+      viewBox: this.viewBox.toString(),
+      xmlns: 'http://www.w3.org/2000/svg',
+      class: this.class.toString(),
     },
   };
 };
 
 Scene.toSVGNode = function() {
   return {
-    tag:      'svg',
+    tag: 'svg',
     children: [],
     props: {
-      'viewBox': this.viewBox.toString(),
-      xmlns:     xmlns,
+      viewBox: this.viewBox.toString(),
+      xmlns: xmlns,
     },
   };
 };
@@ -43,7 +43,7 @@ Scene.toASTNodes = function() {
   return {
     open: open,
     close: close,
-  }
+  };
 };
 
-export { Scene }
+export { Scene };

@@ -1,6 +1,6 @@
 import { h } from './h.js';
 
-const editor = (state) => {
+const editor = state => {
   return state.exportToSVG();
 };
 

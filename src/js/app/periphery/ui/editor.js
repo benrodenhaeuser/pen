@@ -2,13 +2,13 @@ import { CodeMirror } from '/vendor/codemirror/codemirror.js';
 
 const editor = {
   init(state) {
-    this.name       = 'editor';
+    this.name = 'editor';
     this.mountPoint = document.querySelector(`#editor`);
-    this.editor     = CodeMirror(this.mountPoint, {
-      lineNumbers:  true,
+    this.editor = CodeMirror(this.mountPoint, {
+      lineNumbers: true,
       lineWrapping: true,
-      mode:         'xml',
-      value:        state.syntaxTree.toMarkup(),
+      mode: 'xml',
+      value: state.syntaxTree.toMarkup(),
     });
 
     this.previousSyntaxTree = state.syntaxTree;
@@ -27,8 +27,8 @@ const editor = {
       if (this.editor.hasFocus()) {
         func({
           source: this.name,
-          type:   'markupChange',
-          value:  this.editor.getValue(),
+          type: 'markupChange',
+          value: this.editor.getValue(),
         });
       } else {
       }
@@ -68,9 +68,7 @@ const editor = {
   },
 
   // TODO
-  reconcile(oldANode, newANode, value) {
-
-  },
+  reconcile(oldANode, newANode, value) {},
 };
 
 export { editor };

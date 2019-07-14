@@ -15,7 +15,7 @@ const Matrix = {
     const m = [
       [$matrix.a, $matrix.c, $matrix.e],
       [$matrix.b, $matrix.d, $matrix.f],
-      [0,         0,         1        ]
+      [0, 0, 1],
     ];
 
     return Matrix.create(m);
@@ -33,7 +33,6 @@ const Matrix = {
     return true;
   },
 
-
   toJSON() {
     return this.m;
   },
@@ -41,7 +40,12 @@ const Matrix = {
   // return value: string
   toString() {
     const sixValueMatrix = [
-      this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]
+      this.m[0][0],
+      this.m[1][0],
+      this.m[0][1],
+      this.m[1][1],
+      this.m[0][2],
+      this.m[1][2],
     ];
 
     return `matrix(${sixValueMatrix.join(', ')})`;
@@ -54,8 +58,22 @@ const Matrix = {
 
   // return value: new Matrix instance
   multiply(other) {
-    const m1 = [this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]];
-    const m2 = [other.m[0][0], other.m[1][0], other.m[0][1], other.m[1][1], other.m[0][2], other.m[1][2]];
+    const m1 = [
+      this.m[0][0],
+      this.m[1][0],
+      this.m[0][1],
+      this.m[1][1],
+      this.m[0][2],
+      this.m[1][2],
+    ];
+    const m2 = [
+      other.m[0][0],
+      other.m[1][0],
+      other.m[0][1],
+      other.m[1][1],
+      other.m[0][2],
+      other.m[1][2],
+    ];
 
     const out = mat2d.create();
 
@@ -64,13 +82,20 @@ const Matrix = {
     return Matrix.create([
       [out[0], out[2], out[4]],
       [out[1], out[3], out[5]],
-      [0, 0, 1]
+      [0, 0, 1],
     ]);
   },
 
   // return value: new Matrix instance
   invert() {
-    const inp = [this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]];
+    const inp = [
+      this.m[0][0],
+      this.m[1][0],
+      this.m[0][1],
+      this.m[1][1],
+      this.m[0][2],
+      this.m[1][2],
+    ];
 
     const out = mat2d.create();
 
@@ -79,17 +104,13 @@ const Matrix = {
     return Matrix.create([
       [out[0], out[2], out[4]],
       [out[1], out[3], out[5]],
-      [0, 0, 1]
+      [0, 0, 1],
     ]);
   },
 
   // return value: new Matrix instance
   identity() {
-    const m = [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1]
-      ];
+    const m = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 
     return Matrix.create(m);
   },
@@ -101,8 +122,8 @@ const Matrix = {
 
     const m = [
       [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
-      [sin,  cos, -origin.x * sin - origin.y * cos + origin.y],
-      [0,    0,    1                                         ]
+      [sin, cos, -origin.x * sin - origin.y * cos + origin.y],
+      [0, 0, 1],
     ];
 
     return Matrix.create(m);
@@ -110,11 +131,7 @@ const Matrix = {
 
   // return value: new Matrix instance
   translation(vector) {
-    const m = [
-      [1, 0, vector.x],
-      [0, 1, vector.y],
-      [0, 0, 1       ]
-    ];
+    const m = [[1, 0, vector.x], [0, 1, vector.y], [0, 0, 1]];
 
     return Matrix.create(m);
   },
@@ -122,9 +139,9 @@ const Matrix = {
   // return value: new Matrix instance
   scale(factor, origin = Vector.create(0, 0)) {
     const m = [
-      [factor, 0,      origin.x - factor * origin.x],
-      [0,      factor, origin.y - factor * origin.y],
-      [0,      0,      1                           ]
+      [factor, 0, origin.x - factor * origin.x],
+      [0, factor, origin.y - factor * origin.y],
+      [0, 0, 1],
     ];
 
     return Matrix.create(m);

@@ -1,4 +1,4 @@
-const message = (store) => {
+const message = store => {
   return store.message.payload.text;
 };
 

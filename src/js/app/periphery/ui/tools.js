@@ -8,17 +8,19 @@ const tools = Object.assign(Object.create(UIModule), {
   },
 
   bindEvents(func) {
-    this.mountPoint.addEventListener('click', (event) => {
+    this.mountPoint.addEventListener('click', event => {
       event.preventDefault();
 
-      const textarea = document.querySelector('textarea')
-      if (textarea) { textarea.blur(); }
+      const textarea = document.querySelector('textarea');
+      if (textarea) {
+        textarea.blur();
+      }
 
       func({
         source: this.name,
-        type:   event.type,
+        type: event.type,
         target: event.target.dataset.type,
-        key:    event.target.dataset.key,
+        key: event.target.dataset.key,
       });
     });
   },

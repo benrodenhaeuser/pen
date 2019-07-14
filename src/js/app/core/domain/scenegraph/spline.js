@@ -1,10 +1,10 @@
-import { Node      } from './node.js';
-import { Segment   } from './segment.js';
+import { Node } from './node.js';
+import { Segment } from './segment.js';
 import { Rectangle } from '../geometry.js';
-import { Curve     } from '../geometry.js';
+import { Curve } from '../geometry.js';
 
 const Spline = Object.create(Node);
-Spline.type  = 'spline';
+Spline.type = 'spline';
 
 // generate array of curves given by a spline
 // (used to compute bounding boxes)
@@ -17,7 +17,7 @@ Spline.curves = function() {
   // TODO: this could be a problem!
   if (this.children.length === 1) {
     const start = this.children[0];
-    const end   = Segment.create();
+    const end = Segment.create();
 
     theCurves.push(Curve.createFromSegments(start, end));
   }

@@ -1,12 +1,12 @@
-import { State        } from './core/state.js';
-import { updates      } from './core/updates.js';
-import { transitions  } from './core/transitions.js';
+import { State } from './core/state.js';
+import { updates } from './core/updates.js';
+import { transitions } from './core/transitions.js';
 
 const core = {
   init() {
     updates.init();
 
-    this.state   = State.create();
+    this.state = State.create();
     this.modules = [];
 
     return this;
@@ -23,7 +23,7 @@ const core = {
 
     if (transition) {
       this.state.update = transition.do;
-      this.state.label  = transition.to;
+      this.state.label = transition.to;
 
       const update = updates[transition.do];
 

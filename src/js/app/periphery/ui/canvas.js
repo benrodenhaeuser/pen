@@ -1,7 +1,7 @@
 import { UIModule } from './uiModule.js';
 
-const svgns  = 'http://www.w3.org/2000/svg';
-const xmlns  = 'http://www.w3.org/2000/xmlns/';
+const svgns = 'http://www.w3.org/2000/svg';
+const xmlns = 'http://www.w3.org/2000/xmlns/';
 
 const canvas = Object.assign(Object.create(UIModule), {
   init(state) {
@@ -17,39 +17,41 @@ const canvas = Object.assign(Object.create(UIModule), {
       'mouseup',
       'mouseout',
       'click',
-      'dblclick'
+      'dblclick',
     ];
 
     for (let eventType of mouseEvents) {
-      this.mountPoint.addEventListener(eventType, (event) => {
+      this.mountPoint.addEventListener(eventType, event => {
         if (this.clickLike(event) && event.detail > 1) {
           return;
         }
 
         // TODO: ugly
         if (event.type === 'mousedown') {
-          const textarea = document.querySelector('textarea')
-          if (textarea) { textarea.blur(); }
+          const textarea = document.querySelector('textarea');
+          if (textarea) {
+            textarea.blur();
+          }
         }
 
         event.preventDefault();
 
         func({
           source: this.name,
-          type:   event.type,
+          type: event.type,
           target: event.target.dataset.type,
-          key:    event.target.dataset.key,
-          x:      this.coordinates(event).x,
-          y:      this.coordinates(event).y,
+          key: event.target.dataset.key,
+          x: this.coordinates(event).x,
+          y: this.coordinates(event).y,
         });
       });
     }
 
-    window.addEventListener("keydown", event => {
+    window.addEventListener('keydown', event => {
       if (event.keyCode === 27) {
         func({
           source: this.name,
-          type:   event.type,
+          type: event.type,
           target: 'esc',
         });
       }
@@ -79,9 +81,11 @@ const canvas = Object.assign(Object.create(UIModule), {
   },
 
   clickLike(event) {
-    return event.type === 'click' ||
-           event.type === 'mousedown' ||
-           event.type === 'mouseup';
+    return (
+      event.type === 'click' ||
+      event.type === 'mousedown' ||
+      event.type === 'mouseup'
+    );
   },
 
   coordinates(event) {
@@ -90,12 +94,12 @@ const canvas = Object.assign(Object.create(UIModule), {
     const svg = document.querySelector('svg');
 
     if (svg) {
-      let point   = svg.createSVGPoint();
-      point.x     = event.clientX;
-      point.y     = event.clientY;
-      point       = point.matrixTransform(svg.getScreenCTM().inverse());
-      coords.x    = point.x;
-      coords.y    = point.y;
+      let point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      point = point.matrixTransform(svg.getScreenCTM().inverse());
+      coords.x = point.x;
+      coords.y = point.y;
     }
 
     return coords;

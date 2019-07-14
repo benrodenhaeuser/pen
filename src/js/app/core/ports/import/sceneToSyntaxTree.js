@@ -1,6 +1,6 @@
 import { SyntaxTree } from '../../domain/syntaxtree.js';
 
-const sceneToSyntaxTree = (scene) => {
+const sceneToSyntaxTree = scene => {
   const astRoot = SyntaxTree.create();
   parse(scene, astRoot, 0);
   astRoot.indexify();
@@ -9,10 +9,10 @@ const sceneToSyntaxTree = (scene) => {
 
 const parse = (sceneNode, astParent, level) => {
   const astNodes = sceneNode.toASTNodes();
-  const open     = astNodes.open;
-  const close    = astNodes.close;
-  open.level     = level;
-  close.level    = level;
+  const open = astNodes.open;
+  const close = astNodes.close;
+  open.level = level;
+  close.level = level;
 
   // indent
   const pad = indent(level);
@@ -47,7 +47,7 @@ const parse = (sceneNode, astParent, level) => {
   astParent.children.push(tNode);
 };
 
-const indent = (level) => {
+const indent = level => {
   let pad = '';
 
   for (let i = 0; i < level; i += 1) {
@@ -55,6 +55,6 @@ const indent = (level) => {
   }
 
   return pad;
-}
+};
 
 export { sceneToSyntaxTree };

@@ -1,19 +1,12 @@
-import { core    } from './app/core.js';
-import { db      } from './app/periphery.js';
-import { hist    } from './app/periphery.js';
-import { canvas  } from './app/periphery.js';
-import { editor  } from './app/periphery.js';
-import { tools   } from './app/periphery.js';
+import { core } from './app/core.js';
+import { db } from './app/periphery.js';
+import { hist } from './app/periphery.js';
+import { canvas } from './app/periphery.js';
+import { editor } from './app/periphery.js';
+import { tools } from './app/periphery.js';
 import { message } from './app/periphery.js';
 
-const modules = [ 
-  canvas,
-  editor,
-  tools,
-  message,
-  hist,
-  db
-];
+const modules = [canvas, editor, tools, message, hist, db];
 
 const app = {
   init() {

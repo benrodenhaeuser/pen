@@ -125,7 +125,7 @@
       const m = [
         [$matrix.a, $matrix.c, $matrix.e],
         [$matrix.b, $matrix.d, $matrix.f],
-        [0,         0,         1        ]
+        [0, 0, 1],
       ];
 
       return Matrix.create(m);
@@ -143,7 +143,6 @@
       return true;
     },
 
-
     toJSON() {
       return this.m;
     },
@@ -151,7 +150,12 @@
     // return value: string
     toString() {
       const sixValueMatrix = [
-        this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]
+        this.m[0][0],
+        this.m[1][0],
+        this.m[0][1],
+        this.m[1][1],
+        this.m[0][2],
+        this.m[1][2],
       ];
 
       return `matrix(${sixValueMatrix.join(', ')})`;
@@ -164,8 +168,22 @@
 
     // return value: new Matrix instance
     multiply(other) {
-      const m1 = [this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]];
-      const m2 = [other.m[0][0], other.m[1][0], other.m[0][1], other.m[1][1], other.m[0][2], other.m[1][2]];
+      const m1 = [
+        this.m[0][0],
+        this.m[1][0],
+        this.m[0][1],
+        this.m[1][1],
+        this.m[0][2],
+        this.m[1][2],
+      ];
+      const m2 = [
+        other.m[0][0],
+        other.m[1][0],
+        other.m[0][1],
+        other.m[1][1],
+        other.m[0][2],
+        other.m[1][2],
+      ];
 
       const out = create();
 
@@ -174,13 +192,20 @@
       return Matrix.create([
         [out[0], out[2], out[4]],
         [out[1], out[3], out[5]],
-        [0, 0, 1]
+        [0, 0, 1],
       ]);
     },
 
     // return value: new Matrix instance
     invert() {
-      const inp = [this.m[0][0], this.m[1][0], this.m[0][1], this.m[1][1], this.m[0][2], this.m[1][2]];
+      const inp = [
+        this.m[0][0],
+        this.m[1][0],
+        this.m[0][1],
+        this.m[1][1],
+        this.m[0][2],
+        this.m[1][2],
+      ];
 
       const out = create();
 
@@ -189,17 +214,13 @@
       return Matrix.create([
         [out[0], out[2], out[4]],
         [out[1], out[3], out[5]],
-        [0, 0, 1]
+        [0, 0, 1],
       ]);
     },
 
     // return value: new Matrix instance
     identity() {
-      const m = [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ];
+      const m = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 
       return Matrix.create(m);
     },
@@ -211,8 +232,8 @@
 
       const m = [
         [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
-        [sin,  cos, -origin.x * sin - origin.y * cos + origin.y],
-        [0,    0,    1                                         ]
+        [sin, cos, -origin.x * sin - origin.y * cos + origin.y],
+        [0, 0, 1],
       ];
 
       return Matrix.create(m);
@@ -220,11 +241,7 @@
 
     // return value: new Matrix instance
     translation(vector) {
-      const m = [
-        [1, 0, vector.x],
-        [0, 1, vector.y],
-        [0, 0, 1       ]
-      ];
+      const m = [[1, 0, vector.x], [0, 1, vector.y], [0, 0, 1]];
 
       return Matrix.create(m);
     },
@@ -232,9 +249,9 @@
     // return value: new Matrix instance
     scale(factor, origin = Vector.create(0, 0)) {
       const m = [
-        [factor, 0,      origin.x - factor * origin.x],
-        [0,      factor, origin.y - factor * origin.y],
-        [0,      0,      1                           ]
+        [factor, 0, origin.x - factor * origin.x],
+        [0, factor, origin.y - factor * origin.y],
+        [0, 0, 1],
       ];
 
       return Matrix.create(m);
@@ -285,8 +302,10 @@
   };
 
   const createID = () => {
-    const randomString = Math.random().toString(36).substring(2);
-    const timestamp    = (new Date()).getTime().toString(36);
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2);
+    const timestamp = new Date().getTime().toString(36);
     return randomString + timestamp;
   };
 
@@ -310,13 +329,13 @@
 
     defaults() {
       return {
-        key:      createID(), // all nodes have a key
+        key: createID(), // all nodes have a key
         children: [],
-        parent:   null,
+        parent: null,
         payload: {
           transform: Matrix.identity(),
-          class:     Class.create(),
-          bounds:    null,
+          class: Class.create(),
+          bounds: null,
         },
         splitter: Vector.create(-1000, -1000), // off-canvas, far away
       };
@@ -344,97 +363,71 @@
 
     // hierarchy (getters)
     get root() {
-      return this.findAncestor(
-        node => node.parent === null
-      );
+      return this.findAncestor(node => node.parent === null);
     },
 
     get store() {
-      return this.findAncestor(
-        node => node.type === 'store'
-      );
+      return this.findAncestor(node => node.type === 'store');
     },
 
     get message() {
-      return this.root.findDescendant(
-        node => node.type === 'message'
-      );
+      return this.root.findDescendant(node => node.type === 'message');
     },
 
     get scene() {
-      return this.root.findDescendant(
-        node => node.type === 'scene'
-      );
+      return this.root.findDescendant(node => node.type === 'scene');
     },
 
     get docs() {
-      return this.root.findDescendant(
-        node => node.type === 'docs'
-      );
+      return this.root.findDescendant(node => node.type === 'docs');
     },
 
     get doc() {
-      return this.root.findDescendant(
-        node => node.type === 'doc'
-      );
+      return this.root.findDescendant(node => node.type === 'doc');
     },
 
     get markup() {
-      return this.root.findDescendant(
-        node => node.type === 'markup'
-      );
+      return this.root.findDescendant(node => node.type === 'markup');
     },
 
     get leaves() {
-      return this.findDescendants(
-        node => node.children.length === 0
-      );
+      return this.findDescendants(node => node.children.length === 0);
     },
 
     get ancestors() {
-      return this.findAncestors(
-        node => true
-      );
+      return this.findAncestors(node => true);
     },
 
     get properAncestors() {
-      return this.parent.findAncestors(
-        node => true
-      );
+      return this.parent.findAncestors(node => true);
     },
 
     get descendants() {
-      return this.findDescendants(
-        node => true
-      );
+      return this.findDescendants(node => true);
     },
 
     get siblings() {
-      return this.parent.children.filter(
-        node => node !== this
-      );
+      return this.parent.children.filter(node => node !== this);
     },
 
     get graphicsChildren() {
-      return this.children.filter(
-        node => ['group', 'shape'].includes(node.type)
-      );
+      return this.children.filter(node => ['group', 'shape'].includes(node.type));
     },
 
     get selected() {
-      return this.scene.findDescendant((node) => {
+      return this.scene.findDescendant(node => {
         return node.class.includes('selected');
       });
     },
 
     get editing() {
-      return this.scene.findDescendant((node) => {
+      return this.scene.findDescendant(node => {
         return node.class.includes('editing');
       });
     },
 
     get frontier() {
-      return this.scene.findDescendants((node) => {
+      return this.scene.findDescendants(node => {
         return node.class.includes('frontier');
       });
     },
@@ -462,8 +455,7 @@
     },
 
     get bounds() {
-      if ([
-        'segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
+      if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
         return null;
       }
 
@@ -482,10 +474,12 @@
         'segment',
         'anchor',
         'handleIn',
-        'handleOut'
+        'handleOut',
       ];
 
-      if (ignoredTypes.includes(this.type)) { return; }
+      if (ignoredTypes.includes(this.type)) {
+        return;
+      }
 
       const corners = [];
       for (let child of this.children) {
@@ -494,9 +488,9 @@
         }
       }
 
-      const xValue  = vector => vector.x;
+      const xValue = vector => vector.x;
       const xValues = corners.map(xValue);
-      const yValue  = vector => vector.y;
+      const yValue = vector => vector.y;
       const yValues = corners.map(yValue);
 
       const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
@@ -561,7 +555,9 @@
       } else {
         for (let child of this.children) {
           let val = child.findDescendant(predicate);
-          if (val) { return val; }
+          if (val) {
+            return val;
+          }
         }
       }
 
@@ -582,21 +578,21 @@
     },
 
     findDescendantByKey(key) {
-      return this.findDescendant((node) => {
+      return this.findDescendant(node => {
         return node.key === key;
       });
     },
 
     findDescendantByClass(className) {
-      return this.findDescendant((node) => {
+      return this.findDescendant(node => {
         return node.class.includes(className);
       });
     },
 
     findAncestorByClass(className) {
-      return this.findAncestor((node) => {
+      return this.findAncestor(node => {
         return node.class.includes(className);
-      })
+      });
     },
 
     // tree manipulation
@@ -617,7 +613,7 @@
       this.children.splice(index, 0, node);
     },
 
-     // hit testing: is a point within the bounding box of this shape?
+    // hit testing: is a point within the bounding box of this shape?
 
     contains(globalPoint) {
       return globalPoint
@@ -649,7 +645,7 @@
     },
 
     removeFrontier() {
-      const frontier = this.scene.findDescendants((node) => {
+      const frontier = this.scene.findDescendants(node => {
         return node.class.includes('frontier');
       });
 
@@ -663,7 +659,7 @@
     },
 
     unfocusAll() {
-      const focussed = this.scene.findDescendants((node) => {
+      const focussed = this.scene.findDescendants(node => {
         return node.class.includes('focus');
       });
 
@@ -726,16 +722,16 @@
     },
 
     translate(offset) {
-      this.transform = this
-        .ancestorTransform().invert()
+      this.transform = this.ancestorTransform()
+        .invert()
         .multiply(Matrix.translation(offset))
         .multiply(this.globalTransform());
     },
 
     globalScaleFactor() {
-      const total  = this.globalTransform();
-      const a      = total.m[0][0];
-      const b      = total.m[1][0];
+      const total = this.globalTransform();
+      const a = total.m[0][0];
+      const b = total.m[1][0];
 
       return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
     },
@@ -794,7 +790,9 @@
           return null;
         }
       } else {
-        const child = this.children.find(child => child.start <= idx && idx <= child.end);
+        const child = this.children.find(
+          child => child.start <= idx && idx <= child.end
+        );
 
         if (child) {
           return child.findNodeByIndex(idx);
@@ -823,36 +821,38 @@
     },
 
     toMarkup() {
-      return this.flatten().map(node => node.markup).join('');
+      return this.flatten()
+        .map(node => node.markup)
+        .join('');
     },
   };
 
   const Scene = Object.create(Node);
-  Scene.type  = 'scene';
+  Scene.type = 'scene';
 
   const xmlns = 'http://www.w3.org/2000/svg';
 
   Scene.toVDOMNode = function() {
     return {
-      tag:      'svg',
+      tag: 'svg',
       children: [],
       props: {
-        'data-key':   this.key,
+        'data-key': this.key,
         'data-type': 'content',
-        'viewBox':    this.viewBox.toString(),
-        xmlns:       'http://www.w3.org/2000/svg',
-        class:       this.class.toString(),
+        viewBox: this.viewBox.toString(),
+        xmlns: 'http://www.w3.org/2000/svg',
+        class: this.class.toString(),
       },
     };
   };
 
   Scene.toSVGNode = function() {
     return {
-      tag:      'svg',
+      tag: 'svg',
       children: [],
       props: {
-        'viewBox': this.viewBox.toString(),
-        xmlns:     xmlns,
+        viewBox: this.viewBox.toString(),
+        xmlns: xmlns,
       },
     };
   };
@@ -869,30 +869,30 @@
     return {
       open: open,
       close: close,
-    }
+    };
   };
 
   const Group = Object.create(Node);
-  Group.type  = 'group';
+  Group.type = 'group';
 
   Group.toVDOMNode = function() {
     return {
-      tag:      'g',
+      tag: 'g',
       children: [],
       props: {
-        'data-key':   this.key,
+        'data-key': this.key,
         'data-type': 'content',
-        transform:   this.transform.toString(),
-        class:       this.class.toString(),
+        transform: this.transform.toString(),
+        class: this.class.toString(),
       },
     };
   };
 
   Group.toSVGNode = function() {
     const svgNode = {
-      tag:      'g',
+      tag: 'g',
       children: [],
-      props:    {},
+      props: {},
     };
 
     if (!this.transform.equals(Matrix.identity())) {
@@ -924,51 +924,51 @@
   };
 
   const Shape = Object.create(Node);
-  Shape.type  = 'shape';
+  Shape.type = 'shape';
 
   Shape.toVDOMNode = function() {
     return {
-      tag:      'path',
+      tag: 'path',
       children: [],
       props: {
         'data-type': 'content',
-        'data-key':   this.key,
-        d:           this.pathString(),
-        transform:   this.transform.toString(),
-        class:       this.class.toString(),
+        'data-key': this.key,
+        d: this.pathString(),
+        transform: this.transform.toString(),
+        class: this.class.toString(),
       },
     };
   };
 
   Shape.toVDOMCurves = function() {
-    const nodes   = [];
+    const nodes = [];
     const splines = this.children;
 
     for (let spline of splines) {
       const segments = spline.children;
-      const curves   = spline.curves();
+      const curves = spline.curves();
 
       for (let i = 0; i < curves.length; i += 1) {
         // this node will be the "hit target" for the curve:
         nodes.push({
-          tag:      'path',
+          tag: 'path',
           children: [],
           props: {
             'data-type': 'curve',
-            'data-key':   segments[i].key,
-            d:           curves[i].toPathString(),
-            transform:   this.transform.toString(),
+            'data-key': segments[i].key,
+            d: curves[i].toPathString(),
+            transform: this.transform.toString(),
           },
         });
 
         // this node will display the curve stroke:
         nodes.push({
-          tag:      'path',
+          tag: 'path',
           children: [],
           props: {
             'data-type': 'curve-stroke',
-            d:           curves[i].toPathString(),
-            transform:   this.transform.toString(),
+            d: curves[i].toPathString(),
+            transform: this.transform.toString(),
           },
         });
       }
@@ -979,9 +979,9 @@
 
   Shape.toSVGNode = function() {
     const svgNode = {
-      tag:      'path',
+      tag: 'path',
       children: [],
-      props:    { d: this.pathString() },
+      props: { d: this.pathString() },
     };
 
     if (!this.transform.equals(Matrix.identity())) {
@@ -1008,7 +1008,7 @@
 
     return {
       open: open,
-      close: close
+      close: close,
     };
   };
 
@@ -1046,28 +1046,28 @@
     return d;
   };
 
-  const Anchor    = Object.create(Node);
-  const HandleIn  = Object.create(Node);
+  const Anchor = Object.create(Node);
+  const HandleIn = Object.create(Node);
   const HandleOut = Object.create(Node);
-  const Doc        = Object.create(Node);
-  const Docs       = Object.create(Node); // TODO: get rid of this?
-  const Store      = Object.create(Node); // TODO: get rid of this?
-  const Message    = Object.create(Node); // TODO: get rid of this?
-  const Text       = Object.create(Node); // TODO: get rid of this?
+  const Doc = Object.create(Node);
+  const Docs = Object.create(Node); // TODO: get rid of this?
+  const Store = Object.create(Node); // TODO: get rid of this?
+  const Message = Object.create(Node); // TODO: get rid of this?
+  const Text = Object.create(Node); // TODO: get rid of this?
   const Identifier$1 = Object.create(Node); // TODO: get rid of this?
 
-  Anchor.type     = 'anchor';
-  HandleIn.type   = 'handleIn';
-  HandleOut.type  = 'handleOut';
-  Doc.type        = 'doc';
-  Store.type      = 'store';
-  Docs.type       = 'docs';
-  Message.type    = 'message';
-  Text.type       = 'text';
+  Anchor.type = 'anchor';
+  HandleIn.type = 'handleIn';
+  HandleOut.type = 'handleOut';
+  Doc.type = 'doc';
+  Store.type = 'store';
+  Docs.type = 'docs';
+  Message.type = 'message';
+  Text.type = 'text';
   Identifier$1.type = 'identifier';
 
   const Segment = Object.create(Node);
-  Segment.type  = 'segment';
+  Segment.type = 'segment';
 
   // convenience API for getting/setting anchor and handle values of a segment
 
@@ -1140,12 +1140,11 @@
       }
 
       handleNode.vector = value;
-
     },
   });
 
   const Spline = Object.create(Node);
-  Spline.type  = 'spline';
+  Spline.type = 'spline';
 
   // generate array of curves given by a spline
   // (used to compute bounding boxes)
@@ -1158,7 +1157,7 @@
     // TODO: this could be a problem!
     if (this.children.length === 1) {
       const start = this.children[0];
-      const end   = Segment.create();
+      const end = Segment.create();
 
       theCurves.push(Curve.createFromSegments(start, end));
     }
@@ -1305,7 +1304,14 @@
 
     // return value: new Vector instance
     transform(matrix) {
-      const m = [matrix.m[0][0], matrix.m[1][0], matrix.m[0][1], matrix.m[1][1], matrix.m[0][2], matrix.m[1][2]];
+      const m = [
+        matrix.m[0][0],
+        matrix.m[1][0],
+        matrix.m[0][1],
+        matrix.m[1][1],
+        matrix.m[0][2],
+        matrix.m[1][2],
+      ];
       const out = create$1();
       transformMat2d(out, this.toArray(), m);
       return Vector.create(...out);
@@ -1337,10 +1343,12 @@
 
     // return value: boolean
     isWithin(rectangle) {
-      return this.x >= rectangle.x &&
-             this.x <= rectangle.x + rectangle.width &&
-             this.y >= rectangle.y &&
-             this.y <= rectangle.y + rectangle.height;
+      return (
+        this.x >= rectangle.x &&
+        this.x <= rectangle.x + rectangle.width &&
+        this.y >= rectangle.y &&
+        this.y <= rectangle.y + rectangle.height
+      );
     },
 
     // return value: number
@@ -1363,7 +1371,7 @@
 
     toString() {
       return `${this.x} ${this.y}`;
-    }
+    },
   };
 
   const Rectangle = {
@@ -1382,7 +1390,7 @@
     // => 4 integers
     createFromDimensions(x, y, width, height) {
       const origin = Vector.create(x, y);
-      const size   = Vector.create(width, height);
+      const size = Vector.create(width, height);
 
       return Rectangle.create(origin, size);
     },
@@ -1390,7 +1398,7 @@
     // => { x: ..., y: ..., width: ..., height: ...}
     createFromObject(object) {
       const origin = Vector.create(object.x, object.y);
-      const size   = Vector.create(object.width, object.height);
+      const size = Vector.create(object.width, object.height);
 
       return Rectangle.create(origin, size);
     },
@@ -1398,7 +1406,7 @@
     // => two vectors (from and to, or equivalently, min and max)
     createFromMinMax(min, max) {
       const origin = Vector.create(min.x, min.y);
-      const size   = Vector.create(max.x - min.x, max.y - min.y);
+      const size = Vector.create(max.x - min.x, max.y - min.y);
 
       return Rectangle.create(origin, size);
     },
@@ -1408,7 +1416,10 @@
     },
 
     get max() {
-      return Vector.create(this.origin.x + this.size.x, this.origin.y + this.size.y);
+      return Vector.create(
+        this.origin.x + this.size.x,
+        this.origin.y + this.size.y
+      );
     },
 
     get x() {
@@ -1437,10 +1448,10 @@
 
     get corners() {
       return [
-        this.min,                                                  // nw
+        this.min, // nw
         Vector.create(this.origin.x + this.size.x, this.origin.y), // ne
         Vector.create(this.origin.x, this.origin.y + this.size.y), // sw
-        this.max                                                   // se
+        this.max, // se
       ];
     },
 
@@ -1469,12 +1480,7 @@
     },
 
     toString() {
-      return [
-        this.origin.x,
-        this.origin.y,
-        this.size.x,
-        this.size.y,
-      ].join(' ');
+      return [this.origin.x, this.origin.y, this.size.x, this.size.y].join(' ');
     },
 
     toJSON() {
@@ -4199,7 +4205,7 @@
         Vector.create(coords[0]),
         Vector.create(coords[1]),
         Vector.create(coords[2]),
-        Vector.create(coords[3]),
+        Vector.create(coords[3])
       );
     },
 
@@ -4226,10 +4232,11 @@
     // by the Bezier constructor of the Pomax Bezier library!
     // It is also the order in which points occur in a path string.
     points() {
-      const pts = [this.anchor1, this.handle1, this.handle2, this.anchor2]
-        .filter((point) => {
-          return (point !== undefined && point !== null);
-        });
+      const pts = [this.anchor1, this.handle1, this.handle2, this.anchor2].filter(
+        point => {
+          return point !== undefined && point !== null;
+        }
+      );
 
       return pts;
     },
@@ -4317,8 +4324,8 @@
         const maxX = Math.max(this.anchor1.x, this.anchor2.x);
         const maxY = Math.max(this.anchor1.y, this.anchor2.y);
 
-        min  = Vector.create(minX, minY);
-        max  = Vector.create(maxX, maxY);
+        min = Vector.create(minX, minY);
+        max = Vector.create(maxX, maxY);
       } else {
         const bbox = new Bezier$1(...this.coords()).bbox();
 
@@ -4330,7 +4337,7 @@
     },
   };
 
-  const objectToDoc = (object) => {
+  const objectToDoc = object => {
     let node;
 
     switch (object.type) {
@@ -4377,8 +4384,8 @@
     }
 
     node.type = object.type;
-    node.key  = object.key;
-    node._id  = object._id;
+    node.key = object.key;
+    node._id = object._id;
 
     setPayload(node, object);
 
@@ -4418,9 +4425,8 @@
 
   var extendStatics=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(t,a){t.__proto__=a;}||function(t,a){for(var r in a)a.hasOwnProperty(r)&&(t[r]=a[r]);};function __extends(t,a){function r(){this.constructor=t;}extendStatics(t,a),t.prototype=null===a?Object.create(a):(r.prototype=a.prototype,new r);}function rotate$2(t,a){var r=t[0],e=t[1];return [r*Math.cos(a)-e*Math.sin(a),r*Math.sin(a)+e*Math.cos(a)]}function assertNumbers(){for(var t=[],a=0;a<arguments.length;a++)t[a]=arguments[a];for(var r=0;r<t.length;r++)if("number"!=typeof t[r])throw new Error("assertNumbers arguments["+r+"] is not a number. "+typeof t[r]+" == typeof "+t[r]);return !0}var PI=Math.PI;function annotateArcCommand(t,a,r){t.lArcFlag=0===t.lArcFlag?0:1,t.sweepFlag=0===t.sweepFlag?0:1;var e=t.rX,n=t.rY,i=t.x,o=t.y;e=Math.abs(t.rX),n=Math.abs(t.rY);var s=rotate$2([(a-i)/2,(r-o)/2],-t.xRot/180*PI),h=s[0],u=s[1],c=Math.pow(h,2)/Math.pow(e,2)+Math.pow(u,2)/Math.pow(n,2);1<c&&(e*=Math.sqrt(c),n*=Math.sqrt(c)),t.rX=e,t.rY=n;var m=Math.pow(e,2)*Math.pow(u,2)+Math.pow(n,2)*Math.pow(h,2),_=(t.lArcFlag!==t.sweepFlag?1:-1)*Math.sqrt(Math.max(0,(Math.pow(e,2)*Math.pow(n,2)-m)/m)),T=e*u/n*_,O=-n*h/e*_,p=rotate$2([T,O],t.xRot/180*PI);t.cX=p[0]+(a+i)/2,t.cY=p[1]+(r+o)/2,t.phi1=Math.atan2((u-O)/n,(h-T)/e),t.phi2=Math.atan2((-u-O)/n,(-h-T)/e),0===t.sweepFlag&&t.phi2>t.phi1&&(t.phi2-=2*PI),1===t.sweepFlag&&t.phi2<t.phi1&&(t.phi2+=2*PI),t.phi1*=180/PI,t.phi2*=180/PI;}function intersectionUnitCircleLine(t,a,r){assertNumbers(t,a,r);var e=t*t+a*a-r*r;if(0>e)return [];if(0===e)return [[t*r/(t*t+a*a),a*r/(t*t+a*a)]];var n=Math.sqrt(e);return [[(t*r+a*n)/(t*t+a*a),(a*r-t*n)/(t*t+a*a)],[(t*r-a*n)/(t*t+a*a),(a*r+t*n)/(t*t+a*a)]]}var SVGPathDataTransformer,DEG=Math.PI/180;function lerp$1(t,a,r){return (1-r)*t+r*a}function arcAt(t,a,r,e){return t+Math.cos(e/180*PI)*a+Math.sin(e/180*PI)*r}function bezierRoot(t,a,r,e){var n=a-t,i=r-a,o=3*n+3*(e-r)-6*i,s=6*(i-n),h=3*n;return Math.abs(o)<1e-6?[-h/s]:pqFormula(s/o,h/o,1e-6)}function bezierAt(t,a,r,e,n){var i=1-n;return t*(i*i*i)+a*(3*i*i*n)+r*(3*i*n*n)+e*(n*n*n)}function pqFormula(t,a,r){void 0===r&&(r=1e-6);var e=t*t/4-a;if(e<-r)return [];if(e<=r)return [-t/2];var n=Math.sqrt(e);return [-t/2-n,-t/2+n]}function a2c(t,a,r){var e,n,i,o;t.cX||annotateArcCommand(t,a,r);for(var s=Math.min(t.phi1,t.phi2),h=Math.max(t.phi1,t.phi2)-s,u=Math.ceil(h/90),c=new Array(u),m=a,_=r,T=0;T<u;T++){var O=lerp$1(t.phi1,t.phi2,T/u),p=lerp$1(t.phi1,t.phi2,(T+1)/u),y=p-O,S=4/3*Math.tan(y*DEG/4),f=[Math.cos(O*DEG)-S*Math.sin(O*DEG),Math.sin(O*DEG)+S*Math.cos(O*DEG)],V=f[0],N=f[1],D=[Math.cos(p*DEG),Math.sin(p*DEG)],P=D[0],l=D[1],v=[P+S*Math.sin(p*DEG),l-S*Math.cos(p*DEG)],E=v[0],A=v[1];c[T]={relative:t.relative,type:SVGPathData.CURVE_TO};var d=function(a,r){var e=rotate$2([a*t.rX,r*t.rY],t.xRot),n=e[0],i=e[1];return [t.cX+n,t.cY+i]};e=d(V,N),c[T].x1=e[0],c[T].y1=e[1],n=d(E,A),c[T].x2=n[0],c[T].y2=n[1],i=d(P,l),c[T].x=i[0],c[T].y=i[1],t.relative&&(c[T].x1-=m,c[T].y1-=_,c[T].x2-=m,c[T].y2-=_,c[T].x-=m,c[T].y-=_),m=(o=[c[T].x,c[T].y])[0],_=o[1];}return c}!function(t){function a(){return n(function(t,a,r){return t.relative&&(void 0!==t.x1&&(t.x1+=a),void 0!==t.y1&&(t.y1+=r),void 0!==t.x2&&(t.x2+=a),void 0!==t.y2&&(t.y2+=r),void 0!==t.x&&(t.x+=a),void 0!==t.y&&(t.y+=r),t.relative=!1),t})}function r(){var t=NaN,a=NaN,r=NaN,e=NaN;return n(function(n,i,o){return n.type&SVGPathData.SMOOTH_CURVE_TO&&(n.type=SVGPathData.CURVE_TO,t=isNaN(t)?i:t,a=isNaN(a)?o:a,n.x1=n.relative?i-t:2*i-t,n.y1=n.relative?o-a:2*o-a),n.type&SVGPathData.CURVE_TO?(t=n.relative?i+n.x2:n.x2,a=n.relative?o+n.y2:n.y2):(t=NaN,a=NaN),n.type&SVGPathData.SMOOTH_QUAD_TO&&(n.type=SVGPathData.QUAD_TO,r=isNaN(r)?i:r,e=isNaN(e)?o:e,n.x1=n.relative?i-r:2*i-r,n.y1=n.relative?o-e:2*o-e),n.type&SVGPathData.QUAD_TO?(r=n.relative?i+n.x1:n.x1,e=n.relative?o+n.y1:n.y1):(r=NaN,e=NaN),n})}function e(){var t=NaN,a=NaN;return n(function(r,e,n){if(r.type&SVGPathData.SMOOTH_QUAD_TO&&(r.type=SVGPathData.QUAD_TO,t=isNaN(t)?e:t,a=isNaN(a)?n:a,r.x1=r.relative?e-t:2*e-t,r.y1=r.relative?n-a:2*n-a),r.type&SVGPathData.QUAD_TO){t=r.relative?e+r.x1:r.x1,a=r.relative?n+r.y1:r.y1;var i=r.x1,o=r.y1;r.type=SVGPathData.CURVE_TO,r.x1=((r.relative?0:e)+2*i)/3,r.y1=((r.relative?0:n)+2*o)/3,r.x2=(r.x+2*i)/3,r.y2=(r.y+2*o)/3;}else t=NaN,a=NaN;return r})}function n(t){var a=0,r=0,e=NaN,n=NaN;return function(i){if(isNaN(e)&&!(i.type&SVGPathData.MOVE_TO))throw new Error("path must start with moveto");var o=t(i,a,r,e,n);return i.type&SVGPathData.CLOSE_PATH&&(a=e,r=n),void 0!==i.x&&(a=i.relative?a+i.x:i.x),void 0!==i.y&&(r=i.relative?r+i.y:i.y),i.type&SVGPathData.MOVE_TO&&(e=a,n=r),o}}function i(t,a,r,e,i,o){return assertNumbers(t,a,r,e,i,o),n(function(n,s,h,u){var c=n.x1,m=n.x2,_=n.relative&&!isNaN(u),T=void 0!==n.x?n.x:_?0:s,O=void 0!==n.y?n.y:_?0:h;function p(t){return t*t}n.type&SVGPathData.HORIZ_LINE_TO&&0!==a&&(n.type=SVGPathData.LINE_TO,n.y=n.relative?0:h),n.type&SVGPathData.VERT_LINE_TO&&0!==r&&(n.type=SVGPathData.LINE_TO,n.x=n.relative?0:s),void 0!==n.x&&(n.x=n.x*t+O*r+(_?0:i)),void 0!==n.y&&(n.y=T*a+n.y*e+(_?0:o)),void 0!==n.x1&&(n.x1=n.x1*t+n.y1*r+(_?0:i)),void 0!==n.y1&&(n.y1=c*a+n.y1*e+(_?0:o)),void 0!==n.x2&&(n.x2=n.x2*t+n.y2*r+(_?0:i)),void 0!==n.y2&&(n.y2=m*a+n.y2*e+(_?0:o));var y=t*e-a*r;if(void 0!==n.xRot&&(1!==t||0!==a||0!==r||1!==e))if(0===y)delete n.rX,delete n.rY,delete n.xRot,delete n.lArcFlag,delete n.sweepFlag,n.type=SVGPathData.LINE_TO;else{var S=n.xRot*Math.PI/180,f=Math.sin(S),V=Math.cos(S),N=1/p(n.rX),D=1/p(n.rY),P=p(V)*N+p(f)*D,l=2*f*V*(N-D),v=p(f)*N+p(V)*D,E=P*e*e-l*a*e+v*a*a,A=l*(t*e+a*r)-2*(P*r*e+v*t*a),d=P*r*r-l*t*r+v*t*t,G=(Math.atan2(A,E-d)+Math.PI)%Math.PI/2,C=Math.sin(G),x=Math.cos(G);n.rX=Math.abs(y)/Math.sqrt(E*p(x)+A*C*x+d*p(C)),n.rY=Math.abs(y)/Math.sqrt(E*p(C)-A*C*x+d*p(x)),n.xRot=180*G/Math.PI;}return void 0!==n.sweepFlag&&0>y&&(n.sweepFlag=+!n.sweepFlag),n})}function o(){return function(t){var a={};for(var r in t)a[r]=t[r];return a}}t.ROUND=function(t){function a(a){return Math.round(a*t)/t}return void 0===t&&(t=1e13),assertNumbers(t),function(t){return void 0!==t.x1&&(t.x1=a(t.x1)),void 0!==t.y1&&(t.y1=a(t.y1)),void 0!==t.x2&&(t.x2=a(t.x2)),void 0!==t.y2&&(t.y2=a(t.y2)),void 0!==t.x&&(t.x=a(t.x)),void 0!==t.y&&(t.y=a(t.y)),t}},t.TO_ABS=a,t.TO_REL=function(){return n(function(t,a,r){return t.relative||(void 0!==t.x1&&(t.x1-=a),void 0!==t.y1&&(t.y1-=r),void 0!==t.x2&&(t.x2-=a),void 0!==t.y2&&(t.y2-=r),void 0!==t.x&&(t.x-=a),void 0!==t.y&&(t.y-=r),t.relative=!0),t})},t.NORMALIZE_HVZ=function(t,a,r){return void 0===t&&(t=!0),void 0===a&&(a=!0),void 0===r&&(r=!0),n(function(e,n,i,o,s){if(isNaN(o)&&!(e.type&SVGPathData.MOVE_TO))throw new Error("path must start with moveto");return a&&e.type&SVGPathData.HORIZ_LINE_TO&&(e.type=SVGPathData.LINE_TO,e.y=e.relative?0:i),r&&e.type&SVGPathData.VERT_LINE_TO&&(e.type=SVGPathData.LINE_TO,e.x=e.relative?0:n),t&&e.type&SVGPathData.CLOSE_PATH&&(e.type=SVGPathData.LINE_TO,e.x=e.relative?o-n:o,e.y=e.relative?s-i:s),e.type&SVGPathData.ARC&&(0===e.rX||0===e.rY)&&(e.type=SVGPathData.LINE_TO,delete e.rX,delete e.rY,delete e.xRot,delete e.lArcFlag,delete e.sweepFlag),e})},t.NORMALIZE_ST=r,t.QT_TO_C=e,t.INFO=n,t.SANITIZE=function(t){void 0===t&&(t=0),assertNumbers(t);var a=NaN,r=NaN,e=NaN,i=NaN;return n(function(n,o,s,h,u){var c=Math.abs,m=!1,_=0,T=0;if(n.type&SVGPathData.SMOOTH_CURVE_TO&&(_=isNaN(a)?0:o-a,T=isNaN(r)?0:s-r),n.type&(SVGPathData.CURVE_TO|SVGPathData.SMOOTH_CURVE_TO)?(a=n.relative?o+n.x2:n.x2,r=n.relative?s+n.y2:n.y2):(a=NaN,r=NaN),n.type&SVGPathData.SMOOTH_QUAD_TO?(e=isNaN(e)?o:2*o-e,i=isNaN(i)?s:2*s-i):n.type&SVGPathData.QUAD_TO?(e=n.relative?o+n.x1:n.x1,i=n.relative?s+n.y1:n.y2):(e=NaN,i=NaN),n.type&SVGPathData.LINE_COMMANDS||n.type&SVGPathData.ARC&&(0===n.rX||0===n.rY||!n.lArcFlag)||n.type&SVGPathData.CURVE_TO||n.type&SVGPathData.SMOOTH_CURVE_TO||n.type&SVGPathData.QUAD_TO||n.type&SVGPathData.SMOOTH_QUAD_TO){var O=void 0===n.x?0:n.relative?n.x:n.x-o,p=void 0===n.y?0:n.relative?n.y:n.y-s;_=isNaN(e)?void 0===n.x1?_:n.relative?n.x:n.x1-o:e-o,T=isNaN(i)?void 0===n.y1?T:n.relative?n.y:n.y1-s:i-s;var y=void 0===n.x2?0:n.relative?n.x:n.x2-o,S=void 0===n.y2?0:n.relative?n.y:n.y2-s;c(O)<=t&&c(p)<=t&&c(_)<=t&&c(T)<=t&&c(y)<=t&&c(S)<=t&&(m=!0);}return n.type&SVGPathData.CLOSE_PATH&&c(o-h)<=t&&c(s-u)<=t&&(m=!0),m?[]:n})},t.MATRIX=i,t.ROTATE=function(t,a,r){void 0===a&&(a=0),void 0===r&&(r=0),assertNumbers(t,a,r);var e=Math.sin(t),n=Math.cos(t);return i(n,e,-e,n,a-a*n+r*e,r-a*e-r*n)},t.TRANSLATE=function(t,a){return void 0===a&&(a=0),assertNumbers(t,a),i(1,0,0,1,t,a)},t.SCALE=function(t,a){return void 0===a&&(a=t),assertNumbers(t,a),i(t,0,0,a,0,0)},t.SKEW_X=function(t){return assertNumbers(t),i(1,0,Math.atan(t),1,0,0)},t.SKEW_Y=function(t){return assertNumbers(t),i(1,Math.atan(t),0,1,0,0)},t.X_AXIS_SYMMETRY=function(t){return void 0===t&&(t=0),assertNumbers(t),i(-1,0,0,1,t,0)},t.Y_AXIS_SYMMETRY=function(t){return void 0===t&&(t=0),assertNumbers(t),i(1,0,0,-1,0,t)},t.A_TO_C=function(){return n(function(t,a,r){return SVGPathData.ARC===t.type?a2c(t,t.relative?0:a,t.relative?0:r):t})},t.ANNOTATE_ARCS=function(){return n(function(t,a,r){return t.relative&&(a=0,r=0),SVGPathData.ARC===t.type&&annotateArcCommand(t,a,r),t})},t.CLONE=o,t.CALCULATE_BOUNDS=function(){var t=function(t){var a={};for(var r in t)a[r]=t[r];return a},i=a(),o=e(),s=r(),h=n(function(a,r,e){var n=s(o(i(t(a))));function u(t){t>h.maxX&&(h.maxX=t),t<h.minX&&(h.minX=t);}function c(t){t>h.maxY&&(h.maxY=t),t<h.minY&&(h.minY=t);}if(n.type&SVGPathData.DRAWING_COMMANDS&&(u(r),c(e)),n.type&SVGPathData.HORIZ_LINE_TO&&u(n.x),n.type&SVGPathData.VERT_LINE_TO&&c(n.y),n.type&SVGPathData.LINE_TO&&(u(n.x),c(n.y)),n.type&SVGPathData.CURVE_TO){u(n.x),c(n.y);for(var m=0,_=bezierRoot(r,n.x1,n.x2,n.x);m<_.length;m++)0<(G=_[m])&&1>G&&u(bezierAt(r,n.x1,n.x2,n.x,G));for(var T=0,O=bezierRoot(e,n.y1,n.y2,n.y);T<O.length;T++)0<(G=O[T])&&1>G&&c(bezierAt(e,n.y1,n.y2,n.y,G));}if(n.type&SVGPathData.ARC){u(n.x),c(n.y),annotateArcCommand(n,r,e);for(var p=n.xRot/180*Math.PI,y=Math.cos(p)*n.rX,S=Math.sin(p)*n.rX,f=-Math.sin(p)*n.rY,V=Math.cos(p)*n.rY,N=n.phi1<n.phi2?[n.phi1,n.phi2]:-180>n.phi2?[n.phi2+360,n.phi1+360]:[n.phi2,n.phi1],D=N[0],P=N[1],l=function(t){var a=t[0],r=t[1],e=180*Math.atan2(r,a)/Math.PI;return e<D?e+360:e},v=0,E=intersectionUnitCircleLine(f,-y,0).map(l);v<E.length;v++)(G=E[v])>D&&G<P&&u(arcAt(n.cX,y,f,G));for(var A=0,d=intersectionUnitCircleLine(V,-S,0).map(l);A<d.length;A++){var G;(G=d[A])>D&&G<P&&c(arcAt(n.cY,S,V,G));}}return a});return h.minX=1/0,h.maxX=-1/0,h.minY=1/0,h.maxY=-1/0,h};}(SVGPathDataTransformer||(SVGPathDataTransformer={}));var _a,_a$1,TransformableSVG=function(){function t(){}return t.prototype.round=function(t){return this.transform(SVGPathDataTransformer.ROUND(t))},t.prototype.toAbs=function(){return this.transform(SVGPathDataTransformer.TO_ABS())},t.prototype.toRel=function(){return this.transform(SVGPathDataTransformer.TO_REL())},t.prototype.normalizeHVZ=function(t,a,r){return this.transform(SVGPathDataTransformer.NORMALIZE_HVZ(t,a,r))},t.prototype.normalizeST=function(){return this.transform(SVGPathDataTransformer.NORMALIZE_ST())},t.prototype.qtToC=function(){return this.transform(SVGPathDataTransformer.QT_TO_C())},t.prototype.aToC=function(){return this.transform(SVGPathDataTransformer.A_TO_C())},t.prototype.sanitize=function(t){return this.transform(SVGPathDataTransformer.SANITIZE(t))},t.prototype.translate=function(t,a){return this.transform(SVGPathDataTransformer.TRANSLATE(t,a))},t.prototype.scale=function(t,a){return this.transform(SVGPathDataTransformer.SCALE(t,a))},t.prototype.rotate=function(t,a,r){return this.transform(SVGPathDataTransformer.ROTATE(t,a,r))},t.prototype.matrix=function(t,a,r,e,n,i){return this.transform(SVGPathDataTransformer.MATRIX(t,a,r,e,n,i))},t.prototype.skewX=function(t){return this.transform(SVGPathDataTransformer.SKEW_X(t))},t.prototype.skewY=function(t){return this.transform(SVGPathDataTransformer.SKEW_Y(t))},t.prototype.xSymmetry=function(t){return this.transform(SVGPathDataTransformer.X_AXIS_SYMMETRY(t))},t.prototype.ySymmetry=function(t){return this.transform(SVGPathDataTransformer.Y_AXIS_SYMMETRY(t))},t.prototype.annotateArcs=function(){return this.transform(SVGPathDataTransformer.ANNOTATE_ARCS())},t}(),isWhiteSpace=function(t){return " "===t||"\t"===t||"\r"===t||"\n"===t},isDigit=function(t){return "0".charCodeAt(0)<=t.charCodeAt(0)&&t.charCodeAt(0)<="9".charCodeAt(0)},SVGPathDataParser$$1=function(t){function a(){var a=t.call(this)||this;return a.curNumber="",a.curCommandType=-1,a.curCommandRelative=!1,a.canParseCommandOrComma=!0,a.curNumberHasExp=!1,a.curNumberHasExpDigits=!1,a.curNumberHasDecimal=!1,a.curArgs=[],a}return __extends(a,t),a.prototype.finish=function(t){if(void 0===t&&(t=[]),this.parse(" ",t),0!==this.curArgs.length||!this.canParseCommandOrComma)throw new SyntaxError("Unterminated command at the path end.");return t},a.prototype.parse=function(t,a){var r=this;void 0===a&&(a=[]);for(var e=function(t){a.push(t),r.curArgs.length=0,r.canParseCommandOrComma=!0;},n=0;n<t.length;n++){var i=t[n];if(isDigit(i))this.curNumber+=i,this.curNumberHasExpDigits=this.curNumberHasExp;else if("e"!==i&&"E"!==i)if("-"!==i&&"+"!==i||!this.curNumberHasExp||this.curNumberHasExpDigits)if("."!==i||this.curNumberHasExp||this.curNumberHasDecimal){if(this.curNumber&&-1!==this.curCommandType){var o=Number(this.curNumber);if(isNaN(o))throw new SyntaxError("Invalid number ending at "+n);if(this.curCommandType===SVGPathData.ARC)if(0===this.curArgs.length||1===this.curArgs.length){if(0>o)throw new SyntaxError('Expected positive number, got "'+o+'" at index "'+n+'"')}else if((3===this.curArgs.length||4===this.curArgs.length)&&"0"!==this.curNumber&&"1"!==this.curNumber)throw new SyntaxError('Expected a flag, got "'+this.curNumber+'" at index "'+n+'"');this.curArgs.push(o),this.curArgs.length===COMMAND_ARG_COUNTS[this.curCommandType]&&(SVGPathData.HORIZ_LINE_TO===this.curCommandType?e({type:SVGPathData.HORIZ_LINE_TO,relative:this.curCommandRelative,x:o}):SVGPathData.VERT_LINE_TO===this.curCommandType?e({type:SVGPathData.VERT_LINE_TO,relative:this.curCommandRelative,y:o}):this.curCommandType===SVGPathData.MOVE_TO||this.curCommandType===SVGPathData.LINE_TO||this.curCommandType===SVGPathData.SMOOTH_QUAD_TO?(e({type:this.curCommandType,relative:this.curCommandRelative,x:this.curArgs[0],y:this.curArgs[1]}),SVGPathData.MOVE_TO===this.curCommandType&&(this.curCommandType=SVGPathData.LINE_TO)):this.curCommandType===SVGPathData.CURVE_TO?e({type:SVGPathData.CURVE_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x2:this.curArgs[2],y2:this.curArgs[3],x:this.curArgs[4],y:this.curArgs[5]}):this.curCommandType===SVGPathData.SMOOTH_CURVE_TO?e({type:SVGPathData.SMOOTH_CURVE_TO,relative:this.curCommandRelative,x2:this.curArgs[0],y2:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===SVGPathData.QUAD_TO?e({type:SVGPathData.QUAD_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===SVGPathData.ARC&&e({type:SVGPathData.ARC,relative:this.curCommandRelative,rX:this.curArgs[0],rY:this.curArgs[1],xRot:this.curArgs[2],lArcFlag:this.curArgs[3],sweepFlag:this.curArgs[4],x:this.curArgs[5],y:this.curArgs[6]})),this.curNumber="",this.curNumberHasExpDigits=!1,this.curNumberHasExp=!1,this.curNumberHasDecimal=!1,this.canParseCommandOrComma=!0;}if(!isWhiteSpace(i))if(","===i&&this.canParseCommandOrComma)this.canParseCommandOrComma=!1;else if("+"!==i&&"-"!==i&&"."!==i){if(0!==this.curArgs.length)throw new SyntaxError("Unterminated command at index "+n+".");if(!this.canParseCommandOrComma)throw new SyntaxError('Unexpected character "'+i+'" at index '+n+". Command cannot follow comma");if(this.canParseCommandOrComma=!1,"z"!==i&&"Z"!==i)if("h"===i||"H"===i)this.curCommandType=SVGPathData.HORIZ_LINE_TO,this.curCommandRelative="h"===i;else if("v"===i||"V"===i)this.curCommandType=SVGPathData.VERT_LINE_TO,this.curCommandRelative="v"===i;else if("m"===i||"M"===i)this.curCommandType=SVGPathData.MOVE_TO,this.curCommandRelative="m"===i;else if("l"===i||"L"===i)this.curCommandType=SVGPathData.LINE_TO,this.curCommandRelative="l"===i;else if("c"===i||"C"===i)this.curCommandType=SVGPathData.CURVE_TO,this.curCommandRelative="c"===i;else if("s"===i||"S"===i)this.curCommandType=SVGPathData.SMOOTH_CURVE_TO,this.curCommandRelative="s"===i;else if("q"===i||"Q"===i)this.curCommandType=SVGPathData.QUAD_TO,this.curCommandRelative="q"===i;else if("t"===i||"T"===i)this.curCommandType=SVGPathData.SMOOTH_QUAD_TO,this.curCommandRelative="t"===i;else{if("a"!==i&&"A"!==i)throw new SyntaxError('Unexpected character "'+i+'" at index '+n+".");this.curCommandType=SVGPathData.ARC,this.curCommandRelative="a"===i;}else a.push({type:SVGPathData.CLOSE_PATH}),this.canParseCommandOrComma=!0,this.curCommandType=-1;}else this.curNumber=i,this.curNumberHasDecimal="."===i;}else this.curNumber+=i,this.curNumberHasDecimal=!0;else this.curNumber+=i;else this.curNumber+=i,this.curNumberHasExp=!0;}return a},a.prototype.transform=function(t){return Object.create(this,{parse:{value:function(a,r){void 0===r&&(r=[]);for(var e=0,n=Object.getPrototypeOf(this).parse.call(this,a);e<n.length;e++){var i=n[e],o=t(i);Array.isArray(o)?r.push.apply(r,o):r.push(o);}return r}}})},a}(TransformableSVG),SVGPathData=function(t){function a(r){var e=t.call(this)||this;return e.commands="string"==typeof r?a.parse(r):r,e}return __extends(a,t),a.prototype.encode=function(){return a.encode(this.commands)},a.prototype.getBounds=function(){var t=SVGPathDataTransformer.CALCULATE_BOUNDS();return this.transform(t),t},a.prototype.transform=function(t){for(var a=[],r=0,e=this.commands;r<e.length;r++){var n=t(e[r]);Array.isArray(n)?a.push.apply(a,n):a.push(n);}return this.commands=a,this},a.encode=function(t){return encodeSVGPath$$1(t)},a.parse=function(t){var a=new SVGPathDataParser$$1,r=[];return a.parse(t,r),a.finish(r),r},a.CLOSE_PATH=1,a.MOVE_TO=2,a.HORIZ_LINE_TO=4,a.VERT_LINE_TO=8,a.LINE_TO=16,a.CURVE_TO=32,a.SMOOTH_CURVE_TO=64,a.QUAD_TO=128,a.SMOOTH_QUAD_TO=256,a.ARC=512,a.LINE_COMMANDS=a.LINE_TO|a.HORIZ_LINE_TO|a.VERT_LINE_TO,a.DRAWING_COMMANDS=a.HORIZ_LINE_TO|a.VERT_LINE_TO|a.LINE_TO|a.CURVE_TO|a.SMOOTH_CURVE_TO|a.QUAD_TO|a.SMOOTH_QUAD_TO|a.ARC,a}(TransformableSVG),COMMAND_ARG_COUNTS=((_a={})[SVGPathData.MOVE_TO]=2,_a[SVGPathData.LINE_TO]=2,_a[SVGPathData.HORIZ_LINE_TO]=1,_a[SVGPathData.VERT_LINE_TO]=1,_a[SVGPathData.CLOSE_PATH]=0,_a[SVGPathData.QUAD_TO]=4,_a[SVGPathData.SMOOTH_QUAD_TO]=2,_a[SVGPathData.CURVE_TO]=6,_a[SVGPathData.SMOOTH_CURVE_TO]=4,_a[SVGPathData.ARC]=7,_a),WSP=" ";function encodeSVGPath$$1(t){var a="";Array.isArray(t)||(t=[t]);for(var r=0;r<t.length;r++){var e=t[r];if(e.type===SVGPathData.CLOSE_PATH)a+="z";else if(e.type===SVGPathData.HORIZ_LINE_TO)a+=(e.relative?"h":"H")+e.x;else if(e.type===SVGPathData.VERT_LINE_TO)a+=(e.relative?"v":"V")+e.y;else if(e.type===SVGPathData.MOVE_TO)a+=(e.relative?"m":"M")+e.x+WSP+e.y;else if(e.type===SVGPathData.LINE_TO)a+=(e.relative?"l":"L")+e.x+WSP+e.y;else if(e.type===SVGPathData.CURVE_TO)a+=(e.relative?"c":"C")+e.x1+WSP+e.y1+WSP+e.x2+WSP+e.y2+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.SMOOTH_CURVE_TO)a+=(e.relative?"s":"S")+e.x2+WSP+e.y2+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.QUAD_TO)a+=(e.relative?"q":"Q")+e.x1+WSP+e.y1+WSP+e.x+WSP+e.y;else if(e.type===SVGPathData.SMOOTH_QUAD_TO)a+=(e.relative?"t":"T")+e.x+WSP+e.y;else{if(e.type!==SVGPathData.ARC)throw new Error('Unexpected command type "'+e.type+'" at index '+r+".");a+=(e.relative?"a":"A")+e.rX+WSP+e.rY+WSP+e.xRot+WSP+ +e.lArcFlag+WSP+ +e.sweepFlag+WSP+e.x+WSP+e.y;}}return a}var SVGPathData$1=function(t){function a(r){var e=t.call(this)||this;return e.commands="string"==typeof r?a.parse(r):r,e}return __extends(a,t),a.prototype.encode=function(){return a.encode(this.commands)},a.prototype.getBounds=function(){var t=SVGPathDataTransformer.CALCULATE_BOUNDS();return this.transform(t),t},a.prototype.transform=function(t){for(var a=[],r=0,e=this.commands;r<e.length;r++){var n=t(e[r]);Array.isArray(n)?a.push.apply(a,n):a.push(n);}return this.commands=a,this},a.encode=function(t){return encodeSVGPath$$1(t)},a.parse=function(t){var a=new SVGPathDataParser$$1,r=[];return a.parse(t,r),a.finish(r),r},a.CLOSE_PATH=1,a.MOVE_TO=2,a.HORIZ_LINE_TO=4,a.VERT_LINE_TO=8,a.LINE_TO=16,a.CURVE_TO=32,a.SMOOTH_CURVE_TO=64,a.QUAD_TO=128,a.SMOOTH_QUAD_TO=256,a.ARC=512,a.LINE_COMMANDS=a.LINE_TO|a.HORIZ_LINE_TO|a.VERT_LINE_TO,a.DRAWING_COMMANDS=a.HORIZ_LINE_TO|a.VERT_LINE_TO|a.LINE_TO|a.CURVE_TO|a.SMOOTH_CURVE_TO|a.QUAD_TO|a.SMOOTH_QUAD_TO|a.ARC,a}(TransformableSVG),COMMAND_ARG_COUNTS$1=((_a$1={})[SVGPathData$1.MOVE_TO]=2,_a$1[SVGPathData$1.LINE_TO]=2,_a$1[SVGPathData$1.HORIZ_LINE_TO]=1,_a$1[SVGPathData$1.VERT_LINE_TO]=1,_a$1[SVGPathData$1.CLOSE_PATH]=0,_a$1[SVGPathData$1.QUAD_TO]=4,_a$1[SVGPathData$1.SMOOTH_QUAD_TO]=2,_a$1[SVGPathData$1.CURVE_TO]=6,_a$1[SVGPathData$1.SMOOTH_CURVE_TO]=4,_a$1[SVGPathData$1.ARC]=7,_a$1);
 
-  const markupToScene = (markup) => {
-    const $svg = new DOMParser()
-      .parseFromString(markup, "image/svg+xml")
+  const markupToScene = markup => {
+    const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
       .documentElement;
 
     if ($svg instanceof SVGElement) {
@@ -4436,8 +4442,10 @@
   const buildTree = ($node, node) => {
     processAttributes($node, node);
 
-    const $graphicsChildren = Array.from($node.children).filter(($child) => {
-      return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+    const $graphicsChildren = Array.from($node.children).filter($child => {
+      return (
+        $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+      );
     });
 
     for (let $child of $graphicsChildren) {
@@ -4474,12 +4482,10 @@
     }
 
     // classes
-    node.class = Class.create(
-      Array.from($node.classList)
-    );
+    node.class = Class.create(Array.from($node.classList));
   };
 
-  const buildShapeTree = ($geometryNode) => {
+  const buildShapeTree = $geometryNode => {
     const shape = Shape.create();
 
     processAttributes($geometryNode, shape);
@@ -4489,9 +4495,9 @@
 
     switch ($geometryNode.tagName) {
       case 'rect':
-        const x      = Number($geometryNode.getAttributeNS(null, 'x'));
-        const y      = Number($geometryNode.getAttributeNS(null, 'y'));
-        const width  = Number($geometryNode.getAttributeNS(null, 'width'));
+        const x = Number($geometryNode.getAttributeNS(null, 'x'));
+        const y = Number($geometryNode.getAttributeNS(null, 'y'));
+        const width = Number($geometryNode.getAttributeNS(null, 'width'));
         const height = Number($geometryNode.getAttributeNS(null, 'height'));
 
         pathCommands = commands(`
@@ -4516,7 +4522,7 @@
     return shape;
   };
 
-  const buildSplineTree = (sequence) => {
+  const buildSplineTree = sequence => {
     const spline = Spline.create();
     for (let segment of buildSegmentList(sequence)) {
       spline.append(segment);
@@ -4529,7 +4535,7 @@
 
   // we want a segment to have children 'handleIn', 'anchor' etc
 
-  const buildSegmentList = (commands) => {
+  const buildSegmentList = commands => {
     const segments = [];
 
     // the first command is ALWAYS an `M` command (no handles)
@@ -4539,9 +4545,9 @@
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
-      const command  = commands[i];
-      const prevSeg  = segments[i - 1];
-      const currSeg  = Segment.create();
+      const command = commands[i];
+      const prevSeg = segments[i - 1];
+      const currSeg = Segment.create();
 
       const anchor = Anchor.create();
       anchor.payload.vector = Vector.create(command.x, command.y);
@@ -4555,7 +4561,6 @@
         const handleIn = HandleIn.create();
         handleIn.payload.vector = Vector.create(command.x2, command.y2);
         currSeg.append(handleIn);
-
       } else if (command.x1) {
         const handleIn = HandleIn.create();
         handleIn.payload.vector = Vector.create(command.x1, command.y1);
@@ -4568,7 +4573,7 @@
     return segments;
   };
 
-  const sequences = (svgCommands) => {
+  const sequences = svgCommands => {
     const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
     const theSequences = [];
 
@@ -4583,18 +4588,16 @@
     return theSequences;
   };
 
-  const commands = (svgPath) => {
+  const commands = svgPath => {
     return new SVGPathData$1(svgPath)
       .transform(SVGPathDataTransformer.NORMALIZE_HVZ()) // no H, V or Z shortcuts
-      .transform(SVGPathDataTransformer.NORMALIZE_ST())  // no S (smooth multi-Bezier)
-      .transform(SVGPathDataTransformer.A_TO_C())        // no A (arcs)
-      .toAbs()                                           // no relative commands
-      .commands;
+      .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
+      .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
+      .toAbs().commands; // no relative commands
   };
 
-  const markupToDOM = (markup) => {
-    const $svg = new DOMParser()
-      .parseFromString(markup, "image/svg+xml")
+  const markupToDOM = markup => {
+    const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
       .documentElement;
 
     if ($svg instanceof SVGElement) {
@@ -4605,7 +4608,7 @@
     }
   };
 
-  const addKeys = ($node) => {
+  const addKeys = $node => {
     $node.key = createID();
 
     for (let $child of $node.children) {
@@ -4613,7 +4616,7 @@
     }
   };
 
-  const domToScene = ($svg) => {
+  const domToScene = $svg => {
     if ($svg instanceof SVGElement) {
       const scene = Scene.create({ key: $svg.key });
       buildTree$1($svg, scene);
@@ -4627,8 +4630,10 @@
   const buildTree$1 = ($node, node) => {
     processAttributes$1($node, node);
 
-    const $graphicsChildren = Array.from($node.children).filter(($child) => {
-      return $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+    const $graphicsChildren = Array.from($node.children).filter($child => {
+      return (
+        $child instanceof SVGGElement || $child instanceof SVGGeometryElement
+      );
     });
 
     for (let $child of $graphicsChildren) {
@@ -4665,12 +4670,10 @@
     }
 
     // classes
-    node.class = Class.create(
-      Array.from($node.classList)
-    );
+    node.class = Class.create(Array.from($node.classList));
   };
 
-  const buildShapeTree$1 = ($geometryNode) => {
+  const buildShapeTree$1 = $geometryNode => {
     const shape = Shape.create({ key: $geometryNode.key });
 
     processAttributes$1($geometryNode, shape);
@@ -4680,9 +4683,9 @@
 
     switch ($geometryNode.tagName) {
       case 'rect':
-        const x      = Number($geometryNode.getAttributeNS(null, 'x'));
-        const y      = Number($geometryNode.getAttributeNS(null, 'y'));
-        const width  = Number($geometryNode.getAttributeNS(null, 'width'));
+        const x = Number($geometryNode.getAttributeNS(null, 'x'));
+        const y = Number($geometryNode.getAttributeNS(null, 'y'));
+        const width = Number($geometryNode.getAttributeNS(null, 'width'));
         const height = Number($geometryNode.getAttributeNS(null, 'height'));
 
         pathCommands = commands$1(`
@@ -4707,7 +4710,7 @@
     return shape;
   };
 
-  const buildSplineTree$1 = (sequence) => {
+  const buildSplineTree$1 = sequence => {
     const spline = Spline.create();
     for (let segment of buildSegmentList$1(sequence)) {
       spline.append(segment);
@@ -4720,7 +4723,7 @@
 
   // we want a segment to have children 'handleIn', 'anchor' etc
 
-  const buildSegmentList$1 = (commands) => {
+  const buildSegmentList$1 = commands => {
     const segments = [];
 
     // the first command is ALWAYS an `M` command (no handles)
@@ -4730,9 +4733,9 @@
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
-      const command  = commands[i];
-      const prevSeg  = segments[i - 1];
-      const currSeg  = Segment.create();
+      const command = commands[i];
+      const prevSeg = segments[i - 1];
+      const currSeg = Segment.create();
 
       const anchor = Anchor.create();
       anchor.payload.vector = Vector.create(command.x, command.y);
@@ -4746,7 +4749,6 @@
         const handleIn = HandleIn.create();
         handleIn.payload.vector = Vector.create(command.x2, command.y2);
         currSeg.append(handleIn);
-
       } else if (command.x1) {
         const handleIn = HandleIn.create();
         handleIn.payload.vector = Vector.create(command.x1, command.y1);
@@ -4759,7 +4761,7 @@
     return segments;
   };
 
-  const sequences$1 = (svgCommands) => {
+  const sequences$1 = svgCommands => {
     const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
     const theSequences = [];
 
@@ -4774,16 +4776,15 @@
     return theSequences;
   };
 
-  const commands$1 = (svgPath) => {
+  const commands$1 = svgPath => {
     return new SVGPathData$1(svgPath)
       .transform(SVGPathDataTransformer.NORMALIZE_HVZ()) // no H, V or Z shortcuts
-      .transform(SVGPathDataTransformer.NORMALIZE_ST())  // no S (smooth multi-Bezier)
-      .transform(SVGPathDataTransformer.A_TO_C())        // no A (arcs)
-      .toAbs()                                           // no relative commands
-      .commands;
+      .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
+      .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
+      .toAbs().commands; // no relative commands
   };
 
-  const domToSyntaxTree = ($svg) => {
+  const domToSyntaxTree = $svg => {
     if ($svg instanceof SVGElement) {
       const pNode = SyntaxTree.create();
       return buildTree$2($svg, pNode);
@@ -4810,13 +4811,13 @@
 
       const closeTag = `</${$node.nodeName}>`;
 
-      const openNode  = SyntaxTree.create();
+      const openNode = SyntaxTree.create();
       const closeNode = SyntaxTree.create();
 
-      openNode.markup  = openTag;
-      openNode.tag     = $node.nodeName;
+      openNode.markup = openTag;
+      openNode.tag = $node.nodeName;
       closeNode.markup = closeTag;
-      closeNode.tag    = $node.nodeName;
+      closeNode.tag = $node.nodeName;
 
       openNode.key = $node.key;
       closeNode.key = $node.key;
@@ -4845,7 +4846,7 @@
     return pNode;
   };
 
-  const sceneToSyntaxTree = (scene) => {
+  const sceneToSyntaxTree = scene => {
     const astRoot = SyntaxTree.create();
     parse(scene, astRoot, 0);
     astRoot.indexify();
@@ -4854,10 +4855,10 @@
 
   const parse = (sceneNode, astParent, level) => {
     const astNodes = sceneNode.toASTNodes();
-    const open     = astNodes.open;
-    const close    = astNodes.close;
-    open.level     = level;
-    close.level    = level;
+    const open = astNodes.open;
+    const close = astNodes.close;
+    open.level = level;
+    close.level = level;
 
     // indent
     const pad = indent(level);
@@ -4892,7 +4893,7 @@
     astParent.children.push(tNode);
   };
 
-  const indent = (level) => {
+  const indent = level => {
     let pad = '';
 
     for (let i = 0; i < level; i += 1) {
@@ -4910,48 +4911,80 @@
     };
   };
 
-  const tools = (store) => {
-    return h('ul', { id: 'buttons' },
-      h('li', {},
-        h('button', {
-          id: 'newDocButton',
-          class: 'pure-button',
-          'data-type': 'newDocButton',
-        }, 'New')
+  const tools = store => {
+    return h(
+      'ul',
+      { id: 'buttons' },
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'newDocButton',
+            class: 'pure-button',
+            'data-type': 'newDocButton',
+          },
+          'New'
+        )
       ),
       docs(store),
-      h('li', {},
-        h('button', {
-          id: 'getPrevious',
-          'data-type': 'getPrevious',
-          class: 'pure-button',
-        }, 'Undo')
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'getPrevious',
+            'data-type': 'getPrevious',
+            class: 'pure-button',
+          },
+          'Undo'
+        )
       ),
-      h('li', {},
-        h('button', {
-          id: 'getNext',
-          'data-type': 'getNext',
-          class: 'pure-button',
-        }, 'Redo')
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'getNext',
+            'data-type': 'getNext',
+            class: 'pure-button',
+          },
+          'Redo'
+        )
       ),
-      h('li', {},
-        h('button', {
-          id: 'selectButton',
-          'data-type': 'selectButton',
-          class: 'pure-button',
-        }, 'Select')
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'selectButton',
+            'data-type': 'selectButton',
+            class: 'pure-button',
+          },
+          'Select'
+        )
       ),
-      h('li', {},
-        h('button', {
-          id: 'penButton',
-          'data-type': 'penButton',
-          class: 'pure-button',
-        }, 'Pen')
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'penButton',
+            'data-type': 'penButton',
+            class: 'pure-button',
+          },
+          'Pen'
+        )
       )
     );
   };
 
-  const docs = (store) => {
+  const docs = store => {
     const vDocs = h('ul', {
       id: 'docs',
       class: 'pure-menu-children doc-list',
@@ -4961,21 +4994,36 @@
 
     for (let identifier of docs.children) {
       vDocs.children.push(
-        h('li', {
-          class: 'pure-menu-item',
-        },
-          h('a', {
-            class: 'pure-menu-link',
-            'data-key': identifier.payload._id,
-            'data-type': 'doc-identifier',
-          }, identifier.payload._id)
+        h(
+          'li',
+          {
+            class: 'pure-menu-item',
+          },
+          h(
+            'a',
+            {
+              class: 'pure-menu-link',
+              'data-key': identifier.payload._id,
+              'data-type': 'doc-identifier',
+            },
+            identifier.payload._id
+          )
           //  TODO: This is where we would need to put the *name* of the document.
-      ));
+        )
+      );
     }
 
-    const container = h('div', { class: 'pure-menu pure-menu-horizontal' },
-      h('ul', { class: 'pure-menu-list' },
-        h('li', { class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover'},
+    const container = h(
+      'div',
+      { class: 'pure-menu pure-menu-horizontal' },
+      h(
+        'ul',
+        { class: 'pure-menu-list' },
+        h(
+          'li',
+          {
+            class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
+          },
           h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
           vDocs
         )
@@ -4985,22 +5033,21 @@
     return container;
   };
 
-  const message = (store) => {
+  const message = store => {
     return store.message.payload.text;
   };
 
   const LENGTHS_IN_PX = {
     cornerSideLength: 8,
-    dotDiameter:      18,
-    controlDiameter:  6,
+    dotDiameter: 18,
+    controlDiameter: 6,
   };
 
-
-  const canvas = (store) => {
+  const canvas = store => {
     return renderScene(store);
   };
 
-  const renderScene = (store) => {
+  const renderScene = store => {
     if (store.scene === null) {
       return '';
     }
@@ -5027,7 +5074,7 @@
   const wrap = (vNode, node) => {
     const vWrapper = h('g', {
       'data-type': `${node.type}-wrapper`,
-      'data-key':   node.key,
+      'data-key': node.key,
     });
 
     vWrapper.children.push(vNode);
@@ -5042,33 +5089,38 @@
     return vWrapper;
   };
 
-  const curves = (node) => {
-    const diameter  = scale$2(node, LENGTHS_IN_PX.controlDiameter);
-    const radius    = diameter / 2;
+  const curves = node => {
+    const diameter = scale$2(node, LENGTHS_IN_PX.controlDiameter);
+    const radius = diameter / 2;
 
     const vParts = node.toVDOMCurves();
     const splitter = h('circle', {
       'data-type': 'splitter',
-      r:           radius,
+      r: radius,
       cx: node.splitter.x,
       cy: node.splitter.y,
-      transform:   node.transform.toString(),
+      transform: node.transform.toString(),
     });
 
-    return h('g', {
-      'data-type': 'curves',
-      'data-key':  node.key,
-    }, ...vParts, splitter);
+    return h(
+      'g',
+      {
+        'data-type': 'curves',
+        'data-key': node.key,
+      },
+      ...vParts,
+      splitter
+    );
   };
 
-  const outerUI = (node) => {
+  const outerUI = node => {
     const vOuterUI = h('g', {
       'data-type': 'outerUI',
-      'data-key':   node.key,
+      'data-key': node.key,
     });
 
-    const vFrame   = frame(node);
-    const vDots    = dots(node);    // for rotation UI
+    const vFrame = frame(node);
+    const vDots = dots(node); // for rotation UI
     const vCorners = corners(node); // for scaling UI
 
     vOuterUI.children.push(vFrame);
@@ -5084,21 +5136,21 @@
     return vOuterUI;
   };
 
-  const corners = (node) => {
+  const corners = node => {
     const vTopLCorner = h('rect');
     const vBotLCorner = h('rect');
     const vTopRCorner = h('rect');
     const vBotRCorner = h('rect');
-    const vCorners    = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
-    const length      = scale$2(node, LENGTHS_IN_PX.cornerSideLength);
+    const vCorners = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
+    const length = scale$2(node, LENGTHS_IN_PX.cornerSideLength);
 
     for (let vCorner of vCorners) {
       Object.assign(vCorner.props, {
         'data-type': 'corner',
-        'data-key':   node.key,
-        transform:   node.transform.toString(),
-        width:       length,
-        height:      length,
+        'data-key': node.key,
+        transform: node.transform.toString(),
+        width: length,
+        height: length,
       });
     }
 
@@ -5125,21 +5177,21 @@
     return vCorners;
   };
 
-  const dots = (node) => {
-    const vTopLDot  = h('circle');
-    const vBotLDot  = h('circle');
-    const vTopRDot  = h('circle');
-    const vBotRDot  = h('circle');
-    const vDots     = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
-    const diameter  = scale$2(node, LENGTHS_IN_PX.dotDiameter);
-    const radius    = diameter / 2;
+  const dots = node => {
+    const vTopLDot = h('circle');
+    const vBotLDot = h('circle');
+    const vTopRDot = h('circle');
+    const vBotRDot = h('circle');
+    const vDots = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
+    const diameter = scale$2(node, LENGTHS_IN_PX.dotDiameter);
+    const radius = diameter / 2;
 
     for (let vDot of vDots) {
       Object.assign(vDot.props, {
-        'data-type':      'dot',
-        'data-key':        node.key,
-        transform:        node.transform.toString(),
-        r:                radius,
+        'data-type': 'dot',
+        'data-key': node.key,
+        transform: node.transform.toString(),
+        r: radius,
       });
     }
 
@@ -5166,19 +5218,19 @@
     return vDots;
   };
 
-  const frame = (node) => {
+  const frame = node => {
     return h('rect', {
-      'data-type':  'frame',
-      x:            node.bounds.x,
-      y:            node.bounds.y,
-      width:        node.bounds.width,
-      height:       node.bounds.height,
-      transform:    node.transform.toString(),
-      'data-key':    node.key,
+      'data-type': 'frame',
+      x: node.bounds.x,
+      y: node.bounds.y,
+      width: node.bounds.width,
+      height: node.bounds.height,
+      transform: node.transform.toString(),
+      'data-key': node.key,
     });
   };
 
-  const innerUI = (node) => {
+  const innerUI = node => {
     const vInnerUI = h('g', {
       'data-type': 'innerUI',
       'data-key': node.key,
@@ -5199,7 +5251,7 @@
     return vInnerUI;
   };
 
-  const connections = (node) => {
+  const connections = node => {
     const vConnections = [];
 
     for (let spline of node.children) {
@@ -5217,17 +5269,17 @@
 
   const connection = (node, anchor, handle) => {
     return h('line', {
-      x1:        anchor.x,
-      y1:        anchor.y,
-      x2:        handle.x,
-      y2:        handle.y,
+      x1: anchor.x,
+      y1: anchor.y,
+      x2: handle.x,
+      y2: handle.y,
       transform: node.transform.toString(),
     });
   };
 
-  const controls = (pathNode) => {
+  const controls = pathNode => {
     const vControls = [];
-    const diameter  = scale$2(pathNode, LENGTHS_IN_PX.controlDiameter);
+    const diameter = scale$2(pathNode, LENGTHS_IN_PX.controlDiameter);
 
     for (let spline of pathNode.children) {
       for (let segment of spline.children) {
@@ -5243,11 +5295,11 @@
   const control = (pathNode, controlNode, diameter) => {
     return h('circle', {
       'data-type': 'control',
-      'data-key' : controlNode.key,
-      transform  : pathNode.transform.toString(),
-      r          : diameter / 2,
-      cx         : controlNode.vector.x,
-      cy         : controlNode.vector.y,
+      'data-key': controlNode.key,
+      transform: pathNode.transform.toString(),
+      r: diameter / 2,
+      cx: controlNode.vector.x,
+      cy: controlNode.vector.y,
     });
   };
 
@@ -5255,24 +5307,24 @@
     return length / node.globalScaleFactor();
   };
 
-  const exportToVDOM = (state) => {
+  const exportToVDOM = state => {
     return {
-      tools:    tools(state.store),
+      tools: tools(state.store),
       // editor:   editor(state),     // not needed atm
-      message:  message(state.store),
-      canvas:   canvas(state.store),
+      message: message(state.store),
+      canvas: canvas(state.store),
     };
   };
 
-  const exportToPlain = (store) => {
+  const exportToPlain = store => {
     return {
-      doc:  JSON.parse(JSON.stringify(store.doc)),
+      doc: JSON.parse(JSON.stringify(store.doc)),
       docs: store.docs.children.map(child => child.payload.id),
       // ^ TODO: I think we don't need `docs`
     };
   };
 
-  const exportToSVG = (store) => {
+  const exportToSVG = store => {
     const markup = [];
     const vNode = buildSceneNode(store.scene);
 
@@ -5328,7 +5380,7 @@
     tag.push('>');
 
     // if (svgNode.tag !== 'path') {
-      tag.push('\n');
+    tag.push('\n');
     // }
 
     markup.push(tag.join(''));
@@ -5338,9 +5390,9 @@
     const tag = [];
 
     // if (svgNode.tag !== 'path') {
-      for (let i = 0; i < level; i += 1) {
-        tag.push('  ');
-      }
+    for (let i = 0; i < level; i += 1) {
+      tag.push('  ');
+    }
     // }
 
     tag.push('</');
@@ -5357,20 +5409,20 @@
     },
 
     init() {
-      this.label     = 'start';
-      this.input     = {};
-      this.update    = '';
-      this.store     = this.buildStore();
+      this.label = 'start';
+      this.input = {};
+      this.update = '';
+      this.store = this.buildStore();
       this.syntaxTree = SyntaxTree.create();
 
       return this;
     },
 
     buildStore() {
-      const store   = Store.create();
-      const docs    = Docs.create();
+      const store = Store.create();
+      const docs = Docs.create();
       const message = this.buildMessage();
-      const doc     = this.buildDoc();
+      const doc = this.buildDoc();
 
       store.append(docs);
       store.append(doc);
@@ -5386,7 +5438,7 @@
     },
 
     buildDoc() {
-      const doc        = Doc.create();
+      const doc = Doc.create();
       const sceneGraph = Scene.create({
         viewBox: Rectangle.createFromDimensions(0, 0, 600, 395),
       });
@@ -5414,11 +5466,11 @@
 
     export() {
       return {
-        label:     this.label,
-        input:     this.input,
-        update:    this.update,
-        vDOM:      this.exportToVDOM(),
-        plain:     this.exportToPlain(),
+        label: this.label,
+        input: this.input,
+        update: this.update,
+        vDOM: this.exportToVDOM(),
+        plain: this.exportToPlain(),
         syntaxTree: this.syntaxTree,
       };
     },
@@ -5526,7 +5578,7 @@
         state.scene.unfocusAll();
         state.label = 'penMode';
       } else {
-        const toSelect = target.findAncestor((node) => {
+        const toSelect = target.findAncestor(node => {
           return node.parent && node.parent.class.includes('frontier');
         });
 
@@ -5543,7 +5595,7 @@
 
       const target = state.scene.findDescendantByKey(input.key);
 
-      const hit    = Vector.create(input.x, input.y);
+      const hit = Vector.create(input.x, input.y);
 
       if (target) {
         const toFocus = target.findAncestorByClass('frontier');
@@ -5577,7 +5629,7 @@
 
     initTransform(state, input) {
       const node = state.scene.selected;
-      this.aux.from   = Vector.create(input.x, input.y);
+      this.aux.from = Vector.create(input.x, input.y);
       this.aux.center = node.bounds.center.transform(node.globalTransform());
     },
 
@@ -5588,8 +5640,8 @@
         return;
       }
 
-      const to     = Vector.create(input.x, input.y);
-      const from   = this.aux.from;
+      const to = Vector.create(input.x, input.y);
+      const from = this.aux.from;
       const offset = to.minus(from);
 
       node.translate(offset);
@@ -5604,10 +5656,10 @@
         return;
       }
 
-      const to     = Vector.create(input.x, input.y);
-      const from   = this.aux.from;
+      const to = Vector.create(input.x, input.y);
+      const from = this.aux.from;
       const center = this.aux.center;
-      const angle  = center.angle(from, to);
+      const angle = center.angle(from, to);
 
       node.rotate(angle, center);
 
@@ -5621,8 +5673,8 @@
         return;
       }
 
-      const to     = Vector.create(input.x, input.y);
-      const from   = this.aux.from;
+      const to = Vector.create(input.x, input.y);
+      const from = this.aux.from;
       const center = this.aux.center;
       const factor = to.minus(center).length() / from.minus(center).length();
 
@@ -5636,10 +5688,10 @@
       let spline;
 
       if (state.scene.editing) {
-        shape  = state.scene.editing;
+        shape = state.scene.editing;
         spline = shape.lastChild;
       } else {
-        shape  = Shape.create();
+        shape = Shape.create();
         state.scene.append(shape);
 
         spline = Spline.create();
@@ -5651,42 +5703,44 @@
       const segment = Segment.create();
       spline.append(segment);
 
-      const anchor  = Anchor.create();
+      const anchor = Anchor.create();
       segment.append(anchor);
 
-      anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(shape);
+      anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(
+        shape
+      );
 
-      this.aux.shape   = shape;
+      this.aux.shape = shape;
       this.aux.segment = segment;
     },
 
     setHandles(state, input) {
-      const shape       = this.aux.shape;
-      const segment     = this.aux.segment;
+      const shape = this.aux.shape;
+      const segment = this.aux.segment;
 
-      const anchor      = segment.anchor;
-      const handleIn    = Vector.create(input.x, input.y).transformToLocal(shape);
-      const handleOut   = handleIn.rotate(Math.PI, anchor);
-      segment.handleIn  = handleIn;
+      const anchor = segment.anchor;
+      const handleIn = Vector.create(input.x, input.y).transformToLocal(shape);
+      const handleOut = handleIn.rotate(Math.PI, anchor);
+      segment.handleIn = handleIn;
       segment.handleOut = handleOut;
     },
 
     initEditSegment(state, input) {
-      const control   = state.scene.findDescendantByKey(input.key);
-      const shape     = control.parent.parent.parent;
-      const from      = Vector.create(input.x, input.y).transformToLocal(shape);
+      const control = state.scene.findDescendantByKey(input.key);
+      const shape = control.parent.parent.parent;
+      const from = Vector.create(input.x, input.y).transformToLocal(shape);
 
-      this.aux.from    = from;
+      this.aux.from = from;
       this.aux.control = control;
     },
 
     editSegment(state, input) {
-      const control          = this.aux.control;
-      const from             = this.aux.from;
-      const segment          = control.parent;
-      const shape            = segment.parent.parent;
-      const to               = Vector.create(input.x, input.y).transformToLocal(shape);
-      const change           = to.minus(from);
+      const control = this.aux.control;
+      const from = this.aux.from;
+      const segment = control.parent;
+      const shape = segment.parent.parent;
+      const to = Vector.create(input.x, input.y).transformToLocal(shape);
+      const change = to.minus(from);
       control.payload.vector = control.payload.vector.add(change);
 
       switch (control.type) {
@@ -5710,50 +5764,52 @@
     },
 
     projectInput(state, input) {
-      const startSegment      = state.scene.findDescendantByKey(input.key);
-      const spline            = startSegment.parent;
-      const shape             = spline.parent;
-      const startIndex        = spline.children.indexOf(startSegment);
-      const endSegment        = spline.children[startIndex + 1];
-      const curve             = Curve.createFromSegments(startSegment, endSegment);
-      const bCurve            = new Bezier$1(...curve.coords());
+      const startSegment = state.scene.findDescendantByKey(input.key);
+      const spline = startSegment.parent;
+      const shape = spline.parent;
+      const startIndex = spline.children.indexOf(startSegment);
+      const endSegment = spline.children[startIndex + 1];
+      const curve = Curve.createFromSegments(startSegment, endSegment);
+      const bCurve = new Bezier$1(...curve.coords());
 
-      const from              = Vector.create(input.x, input.y).transformToLocal(shape);
-      const pointOnCurve      = bCurve.project({ x: from.x, y: from.y });
-      shape.splitter          = Vector.createFromObject(pointOnCurve);
+      const from = Vector.create(input.x, input.y).transformToLocal(shape);
+      const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
+      shape.splitter = Vector.createFromObject(pointOnCurve);
 
-      this.aux.spline         = spline;
-      this.aux.splitter       = shape.splitter;
-      this.aux.startSegment   = startSegment;
-      this.aux.endSegment     = endSegment;
+      this.aux.spline = spline;
+      this.aux.splitter = shape.splitter;
+      this.aux.startSegment = startSegment;
+      this.aux.endSegment = endSegment;
       this.aux.insertionIndex = startIndex + 1;
-      this.aux.bCurve         = bCurve;
-      this.aux.curveTime      = pointOnCurve.t;
-      this.aux.from           = from;
+      this.aux.bCurve = bCurve;
+      this.aux.curveTime = pointOnCurve.t;
+      this.aux.from = from;
     },
 
     splitCurve(state, input) {
-      const spline           = this.aux.spline;
-      const newAnchor        = this.aux.splitter; // careful: a vector, not a node!
-      const startSegment     = this.aux.startSegment;
-      const endSegment       = this.aux.endSegment;
-      const insertionIndex   = this.aux.insertionIndex;
-      const bCurve           = this.aux.bCurve;
-      const curveTime        = this.aux.curveTime;
+      const spline = this.aux.spline;
+      const newAnchor = this.aux.splitter; // careful: a vector, not a node!
+      const startSegment = this.aux.startSegment;
+      const endSegment = this.aux.endSegment;
+      const insertionIndex = this.aux.insertionIndex;
+      const bCurve = this.aux.bCurve;
+      const curveTime = this.aux.curveTime;
 
-      const splitCurves      = bCurve.split(curveTime);
-      const left             = splitCurves.left;
-      const right            = splitCurves.right;
-      const newSegment       = Segment.create();
-      newSegment.anchor      = newAnchor;
-      newSegment.handleIn    = Vector.createFromObject(left.points[2]);
-      newSegment.handleOut   = Vector.createFromObject(right.points[1]);
+      const splitCurves = bCurve.split(curveTime);
+      const left = splitCurves.left;
+      const right = splitCurves.right;
+      const newSegment = Segment.create();
+      newSegment.anchor = newAnchor;
+      newSegment.handleIn = Vector.createFromObject(left.points[2]);
+      newSegment.handleOut = Vector.createFromObject(right.points[1]);
       startSegment.handleOut = Vector.createFromObject(left.points[1]);
-      endSegment.handleIn    = Vector.createFromObject(right.points[2]);
+      endSegment.handleIn = Vector.createFromObject(right.points[2]);
 
       spline.insertChild(newSegment, insertionIndex);
 
-      this.aux.control = newSegment.findDescendant((node) => node.type === 'anchor');
+      this.aux.control = newSegment.findDescendant(
+        node => node.type === 'anchor'
+      );
       this.hideSplitter(state, input);
       this.editSegment(state, input);
     },
@@ -5828,7 +5884,9 @@
       syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
       if (syntaxTreeNode) {
-        sceneGraphNode = state.store.scene.findDescendantByKey(syntaxTreeNode.key);
+        sceneGraphNode = state.store.scene.findDescendantByKey(
+          syntaxTreeNode.key
+        );
       }
 
       if (sceneGraphNode) {
@@ -5847,7 +5905,7 @@
       from: 'start',
       type: 'go',
       do: 'go',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // TOOLS
@@ -5857,7 +5915,7 @@
       type: 'click',
       target: 'newDocButton',
       do: 'createDoc',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // request stored document
@@ -5872,7 +5930,7 @@
       type: 'click',
       target: 'selectButton',
       do: 'cleanup',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // switch to pen mode
@@ -5880,7 +5938,7 @@
       type: 'click',
       target: 'penButton',
       do: 'cleanup',
-      to: 'penMode'
+      to: 'penMode',
     },
 
     // trigger undo
@@ -5888,7 +5946,7 @@
       type: 'click',
       target: 'getPrevious',
       do: 'getPrevious',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // trigger redo
@@ -5896,7 +5954,7 @@
       type: 'click',
       target: 'getNext',
       do: 'getNext',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // INPUT MODES
@@ -5913,7 +5971,7 @@
     {
       from: 'selectMode',
       type: 'mousemove',
-      do: 'focus'
+      do: 'focus',
     },
 
     // open a group
@@ -5921,7 +5979,7 @@
       from: 'selectMode',
       type: 'dblclick',
       target: 'content',
-      do: 'deepSelect'
+      do: 'deepSelect',
     },
 
     // initiate shift transformation
@@ -5930,7 +5988,7 @@
       type: 'mousedown',
       target: 'content',
       do: 'select',
-      to: 'shifting'
+      to: 'shifting',
     },
 
     // initate rotate transformation
@@ -5939,7 +5997,7 @@
       type: 'mousedown',
       target: 'dot',
       do: 'initTransform',
-      to: 'rotating'
+      to: 'rotating',
     },
 
     // initiate scale transformation
@@ -5948,14 +6006,14 @@
       type: 'mousedown',
       target: 'corner',
       do: 'initTransform',
-      to: 'scaling'
+      to: 'scaling',
     },
 
     // shift the shape
     {
       from: 'shifting',
       type: 'mousemove',
-      do: 'shift'
+      do: 'shift',
     },
 
     // finalize shift translation
@@ -5963,14 +6021,14 @@
       from: 'shifting',
       type: 'mouseup',
       do: 'release',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // rotate the shape
     {
       from: 'rotating',
       type: 'mousemove',
-      do: 'rotate'
+      do: 'rotate',
     },
 
     // finalize rotate transformation
@@ -5978,14 +6036,14 @@
       from: 'rotating',
       type: 'mouseup',
       do: 'release',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // scale the shape
     {
       from: 'scaling',
       type: 'mousemove',
-      do: 'scale'
+      do: 'scale',
     },
 
     // finalize scale transformation
@@ -5993,7 +6051,7 @@
       from: 'scaling',
       type: 'mouseup',
       do: 'release',
-      to: 'selectMode'
+      to: 'selectMode',
     },
 
     // PEN MODE
@@ -6004,7 +6062,7 @@
       type: 'mousedown',
       target: 'content',
       do: 'addSegment',
-      to: 'settingHandles'
+      to: 'settingHandles',
     },
 
     // set handles for current segment
@@ -6012,7 +6070,7 @@
       from: 'settingHandles',
       type: 'mousemove',
       do: 'setHandles',
-      to: 'settingHandles'
+      to: 'settingHandles',
     },
 
     // finish up setting handles
@@ -6020,7 +6078,7 @@
       from: 'settingHandles',
       type: 'mouseup',
       do: 'releasePen',
-      to: 'penMode'
+      to: 'penMode',
     },
 
     // initiate editing of segment
@@ -6029,7 +6087,7 @@
       type: 'mousedown',
       target: 'control',
       do: 'initEditSegment',
-      to: 'editingSegment'
+      to: 'editingSegment',
     },
 
     // edit segment
@@ -6037,7 +6095,7 @@
       from: 'editingSegment',
       type: 'mousemove',
       do: 'editSegment',
-      to: 'editingSegment'
+      to: 'editingSegment',
     },
 
     // finish up editing segment
@@ -6045,7 +6103,7 @@
       from: 'editingSegment',
       type: 'mouseup',
       do: 'releasePen',
-      to: 'penMode'
+      to: 'penMode',
     },
 
     // place split point
@@ -6054,7 +6112,7 @@
       type: 'mousemove',
       target: 'curve',
       do: 'projectInput',
-      to: 'penMode'
+      to: 'penMode',
     },
 
     // hide split point
@@ -6064,7 +6122,7 @@
       type: 'mouseout',
       target: 'curve',
       do: 'hideSplitter',
-      to: 'penMode'
+      to: 'penMode',
     },
 
     // split curve
@@ -6074,7 +6132,7 @@
       type: 'mousedown',
       target: 'curve',
       do: 'splitCurve',
-      to: 'editingSegment'
+      to: 'editingSegment',
     },
 
     // EDITOR
@@ -6082,7 +6140,7 @@
     // process editor input (=> from editor module)
     {
       type: 'markupChange',
-      do: 'changeMarkup'
+      do: 'changeMarkup',
     },
 
     {
@@ -6095,19 +6153,19 @@
     // set message to "Saved" (=> to message module)
     {
       type: 'docSaved',
-      do: 'setSavedMessage'
+      do: 'setSavedMessage',
     },
 
     // wipe current message (=> to message module)
     {
       type: 'wipeMessage',
-      do: 'wipeMessage'
+      do: 'wipeMessage',
     },
 
     // update document list (=> to tools module)
     {
       type: 'updateDocList',
-      do: 'updateDocList'
+      do: 'updateDocList',
     },
 
     // switch to document provided (=> from db module or hist module)
@@ -6118,13 +6176,13 @@
   ];
 
   transitions.get = function(state, input) {
-    const isMatch = (row) => {
-      const from   = row.from;
-      const type   = row.type;
+    const isMatch = row => {
+      const from = row.from;
+      const type = row.type;
       const target = row.target;
 
-      const stateMatch  = from === state.label || from === undefined;
-      const typeMatch   = type === input.type;
+      const stateMatch = from === state.label || from === undefined;
+      const typeMatch = type === input.type;
       const targetMatch = target === input.target || target === undefined;
 
       return stateMatch && typeMatch && targetMatch;
@@ -6144,7 +6202,7 @@
     init() {
       updates.init();
 
-      this.state   = State.create();
+      this.state = State.create();
       this.modules = [];
 
       return this;
@@ -6161,7 +6219,7 @@
 
       if (transition) {
         this.state.update = transition.do;
-        this.state.label  = transition.to;
+        this.state.label = transition.to;
 
         const update = updates[transition.do];
 
@@ -6192,53 +6250,53 @@
     },
 
     bindEvents(func) {
-      window.addEventListener('upsertDoc', (event) => {
-        const request = new XMLHttpRequest;
+      window.addEventListener('upsertDoc', event => {
+        const request = new XMLHttpRequest();
 
         request.addEventListener('load', () => {
           func({
             source: this.name,
-            type:   'docSaved',
-            data:   {},
+            type: 'docSaved',
+            data: {},
           });
         });
 
-        request.open('POST', "/docs/" + event.detail._id);
+        request.open('POST', '/docs/' + event.detail._id);
         request.send(JSON.stringify(event.detail));
       });
 
-      window.addEventListener('readDoc', (event) => {
-        const request = new XMLHttpRequest;
+      window.addEventListener('readDoc', event => {
+        const request = new XMLHttpRequest();
 
         request.addEventListener('load', () => {
           func({
             source: this.name,
-            type:   'switchDocument',
-            data:   {
-              doc: request.response
+            type: 'switchDocument',
+            data: {
+              doc: request.response,
             },
           });
         });
 
-        request.open('GET', "/docs/" + event.detail);
+        request.open('GET', '/docs/' + event.detail);
         request.responseType = 'json';
         request.send();
       });
 
-      window.addEventListener('loadDocIDs', (event) => {
-        const request = new XMLHttpRequest;
+      window.addEventListener('loadDocIDs', event => {
+        const request = new XMLHttpRequest();
 
         request.addEventListener('load', () => {
           func({
             source: this.name,
-            type:   'updateDocList',
-            data:   {
-              docIDs: request.response
+            type: 'updateDocList',
+            data: {
+              docIDs: request.response,
             },
           });
         });
 
-        request.open('GET', "/ids");
+        request.open('GET', '/ids');
         request.responseType = 'json';
         request.send();
       });
@@ -6246,14 +6304,14 @@
 
     react(state) {
       if (state.update === 'go') {
-        window.dispatchEvent(
-          new Event('loadDocIDs')
-        );
+        window.dispatchEvent(new Event('loadDocIDs'));
       } else if (state.update === 'requestDoc') {
         window.dispatchEvent(
           new CustomEvent('readDoc', { detail: state.input.key })
         );
-      } else if (['release', 'releasePen', 'changeMarkup'].includes(state.update)) {
+      } else if (
+        ['release', 'releasePen', 'changeMarkup'].includes(state.update)
+      ) {
         window.dispatchEvent(
           new CustomEvent('upsertDoc', { detail: state.plain.doc })
         );
@@ -6270,12 +6328,12 @@
     },
 
     bindEvents(func) {
-      window.addEventListener('popstate', (event) => {
+      window.addEventListener('popstate', event => {
         if (event.state) {
           func({
             source: this.name,
-            type:   'switchDocument',
-            data:   event.state,
+            type: 'switchDocument',
+            data: event.state,
           });
         }
       });
@@ -6288,11 +6346,10 @@
     },
 
     isRelevant(update) {
-      const release      = update === 'release' ;
-      const releasePen   = update === "releasePen";
-      const go           = update === 'go';
-      const changeMarkup = update === "changeMarkup";
-
+      const release = update === 'release';
+      const releasePen = update === 'releasePen';
+      const go = update === 'go';
+      const changeMarkup = update === 'changeMarkup';
 
       return release || releasePen || go || changeMarkup;
     },
@@ -6300,8 +6357,8 @@
 
   const UIModule = {
     init(state) {
-      this.mountPoint   = document.querySelector(`#${this.name}`);
-      this.dom          = this.createElement(state.vDOM[this.name]);
+      this.mountPoint = document.querySelector(`#${this.name}`);
+      this.dom = this.createElement(state.vDOM[this.name]);
       this.previousVDOM = state.vDOM[this.name];
 
       this.mount();
@@ -6342,8 +6399,7 @@
         }
       } else if (oldVNode.tag !== newVNode.tag) {
         $node.replaceWith(this.createElement(newVNode));
-      }
-       else {
+      } else {
         this.reconcileProps(oldVNode, newVNode, $node);
         this.reconcileChildren(oldVNode, newVNode, $node);
       }
@@ -6374,7 +6430,7 @@
       for (let vIndex = 0; vIndex < maxLength; vIndex += 1) {
         const oldVChild = oldVNode.children[vIndex];
         const newVChild = newVNode.children[vIndex];
-        const $child    = $node.childNodes[$index];
+        const $child = $node.childNodes[$index];
 
         if (newVChild === undefined) {
           $child && $child.remove();
@@ -6390,8 +6446,8 @@
     },
   };
 
-  const svgns  = 'http://www.w3.org/2000/svg';
-  const xmlns$1  = 'http://www.w3.org/2000/xmlns/';
+  const svgns = 'http://www.w3.org/2000/svg';
+  const xmlns$1 = 'http://www.w3.org/2000/xmlns/';
 
   const canvas$1 = Object.assign(Object.create(UIModule), {
     init(state) {
@@ -6407,11 +6463,11 @@
         'mouseup',
         'mouseout',
         'click',
-        'dblclick'
+        'dblclick',
       ];
 
       for (let eventType of mouseEvents) {
-        this.mountPoint.addEventListener(eventType, (event) => {
+        this.mountPoint.addEventListener(eventType, event => {
           if (this.clickLike(event) && event.detail > 1) {
             return;
           }
@@ -6419,27 +6475,29 @@
           // TODO: ugly
           if (event.type === 'mousedown') {
             const textarea = document.querySelector('textarea');
-            if (textarea) { textarea.blur(); }
+            if (textarea) {
+              textarea.blur();
+            }
           }
 
           event.preventDefault();
 
           func({
             source: this.name,
-            type:   event.type,
+            type: event.type,
             target: event.target.dataset.type,
-            key:    event.target.dataset.key,
-            x:      this.coordinates(event).x,
-            y:      this.coordinates(event).y,
+            key: event.target.dataset.key,
+            x: this.coordinates(event).x,
+            y: this.coordinates(event).y,
           });
         });
       }
 
-      window.addEventListener("keydown", event => {
+      window.addEventListener('keydown', event => {
         if (event.keyCode === 27) {
           func({
             source: this.name,
-            type:   event.type,
+            type: event.type,
             target: 'esc',
           });
         }
@@ -6469,9 +6527,11 @@
     },
 
     clickLike(event) {
-      return event.type === 'click' ||
-             event.type === 'mousedown' ||
-             event.type === 'mouseup';
+      return (
+        event.type === 'click' ||
+        event.type === 'mousedown' ||
+        event.type === 'mouseup'
+      );
     },
 
     coordinates(event) {
@@ -6480,12 +6540,12 @@
       const svg = document.querySelector('svg');
 
       if (svg) {
-        let point   = svg.createSVGPoint();
-        point.x     = event.clientX;
-        point.y     = event.clientY;
-        point       = point.matrixTransform(svg.getScreenCTM().inverse());
-        coords.x    = point.x;
-        coords.y    = point.y;
+        let point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        point = point.matrixTransform(svg.getScreenCTM().inverse());
+        coords.x = point.x;
+        coords.y = point.y;
       }
 
       return coords;
@@ -16559,13 +16619,13 @@
 
   const editor$1 = {
     init(state) {
-      this.name       = 'editor';
+      this.name = 'editor';
       this.mountPoint = document.querySelector(`#editor`);
-      this.editor     = CodeMirror(this.mountPoint, {
-        lineNumbers:  true,
+      this.editor = CodeMirror(this.mountPoint, {
+        lineNumbers: true,
         lineWrapping: true,
-        mode:         'xml',
-        value:        state.syntaxTree.toMarkup(),
+        mode: 'xml',
+        value: state.syntaxTree.toMarkup(),
       });
 
       this.previousSyntaxTree = state.syntaxTree;
@@ -16584,8 +16644,8 @@
         if (this.editor.hasFocus()) {
           func({
             source: this.name,
-            type:   'markupChange',
-            value:  this.editor.getValue(),
+            type: 'markupChange',
+            value: this.editor.getValue(),
           });
         }
       });
@@ -16624,9 +16684,7 @@
     },
 
     // TODO
-    reconcile(oldANode, newANode, value) {
-
-    },
+    reconcile(oldANode, newANode, value) {},
   };
 
   const tools$1 = Object.assign(Object.create(UIModule), {
@@ -16637,17 +16695,19 @@
     },
 
     bindEvents(func) {
-      this.mountPoint.addEventListener('click', (event) => {
+      this.mountPoint.addEventListener('click', event => {
         event.preventDefault();
 
         const textarea = document.querySelector('textarea');
-        if (textarea) { textarea.blur(); }
+        if (textarea) {
+          textarea.blur();
+        }
 
         func({
           source: this.name,
-          type:   event.type,
+          type: event.type,
           target: event.target.dataset.type,
-          key:    event.target.dataset.key,
+          key: event.target.dataset.key,
         });
       });
     },
@@ -16663,10 +16723,10 @@
     },
 
     bindEvents(func) {
-      window.addEventListener('wipeMessage', (event) => {
+      window.addEventListener('wipeMessage', event => {
         func({
           source: this.name,
-          type:   'wipeMessage',
+          type: 'wipeMessage',
         });
       });
     },
@@ -16693,14 +16753,7 @@
     },
   });
 
-  const modules = [ 
-    canvas$1,
-    editor$1,
-    tools$1,
-    message$1,
-    hist,
-    db
-  ];
+  const modules = [canvas$1, editor$1, tools$1, message$1, hist, db];
 
   const app = {
     init() {

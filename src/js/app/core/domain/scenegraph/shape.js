@@ -1,53 +1,53 @@
-import { Node      } from './node.js';
-import { Matrix    } from '../geometry.js';
+import { Node } from './node.js';
+import { Matrix } from '../geometry.js';
 import { SyntaxTree } from '../syntaxtree.js';
 
 const Shape = Object.create(Node);
-Shape.type  = 'shape';
+Shape.type = 'shape';
 
 Shape.toVDOMNode = function() {
   return {
-    tag:      'path',
+    tag: 'path',
     children: [],
     props: {
       'data-type': 'content',
-      'data-key':   this.key,
-      d:           this.pathString(),
-      transform:   this.transform.toString(),
-      class:       this.class.toString(),
+      'data-key': this.key,
+      d: this.pathString(),
+      transform: this.transform.toString(),
+      class: this.class.toString(),
     },
   };
 };
 
 Shape.toVDOMCurves = function() {
-  const nodes   = [];
+  const nodes = [];
   const splines = this.children;
 
   for (let spline of splines) {
     const segments = spline.children;
-    const curves   = spline.curves();
+    const curves = spline.curves();
 
     for (let i = 0; i < curves.length; i += 1) {
       // this node will be the "hit target" for the curve:
       nodes.push({
-        tag:      'path',
+        tag: 'path',
         children: [],
         props: {
           'data-type': 'curve',
-          'data-key':   segments[i].key,
-          d:           curves[i].toPathString(),
-          transform:   this.transform.toString(),
+          'data-key': segments[i].key,
+          d: curves[i].toPathString(),
+          transform: this.transform.toString(),
         },
       });
 
       // this node will display the curve stroke:
       nodes.push({
-        tag:      'path',
+        tag: 'path',
         children: [],
         props: {
           'data-type': 'curve-stroke',
-          d:           curves[i].toPathString(),
-          transform:   this.transform.toString(),
+          d: curves[i].toPathString(),
+          transform: this.transform.toString(),
         },
       });
     }
@@ -58,9 +58,9 @@ Shape.toVDOMCurves = function() {
 
 Shape.toSVGNode = function() {
   const svgNode = {
-    tag:      'path',
+    tag: 'path',
     children: [],
-    props:    { d: this.pathString() },
+    props: { d: this.pathString() },
   };
 
   if (!this.transform.equals(Matrix.identity())) {
@@ -87,7 +87,7 @@ Shape.toASTNodes = function() {
 
   return {
     open: open,
-    close: close
+    close: close,
   };
 };
 
@@ -125,4 +125,4 @@ Shape.pathString = function() {
   return d;
 };
 
-export { Shape }
+export { Shape };

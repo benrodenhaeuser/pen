@@ -1,10 +1,10 @@
-import { Node      } from './node.js';
-import { Anchor    } from './otherTypes.js';
-import { HandleIn  } from './otherTypes.js';
+import { Node } from './node.js';
+import { Anchor } from './otherTypes.js';
+import { HandleIn } from './otherTypes.js';
 import { HandleOut } from './otherTypes.js';
 
 const Segment = Object.create(Node);
-Segment.type  = 'segment';
+Segment.type = 'segment';
 
 // convenience API for getting/setting anchor and handle values of a segment
 
@@ -77,7 +77,6 @@ Object.defineProperty(Segment, 'handleOut', {
     }
 
     handleNode.vector = value;
-
   },
 });
 

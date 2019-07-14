@@ -16,7 +16,7 @@ const Rectangle = {
   // => 4 integers
   createFromDimensions(x, y, width, height) {
     const origin = Vector.create(x, y);
-    const size   = Vector.create(width, height);
+    const size = Vector.create(width, height);
 
     return Rectangle.create(origin, size);
   },
@@ -24,7 +24,7 @@ const Rectangle = {
   // => { x: ..., y: ..., width: ..., height: ...}
   createFromObject(object) {
     const origin = Vector.create(object.x, object.y);
-    const size   = Vector.create(object.width, object.height);
+    const size = Vector.create(object.width, object.height);
 
     return Rectangle.create(origin, size);
   },
@@ -32,7 +32,7 @@ const Rectangle = {
   // => two vectors (from and to, or equivalently, min and max)
   createFromMinMax(min, max) {
     const origin = Vector.create(min.x, min.y);
-    const size   = Vector.create(max.x - min.x, max.y - min.y);
+    const size = Vector.create(max.x - min.x, max.y - min.y);
 
     return Rectangle.create(origin, size);
   },
@@ -42,7 +42,10 @@ const Rectangle = {
   },
 
   get max() {
-    return Vector.create(this.origin.x + this.size.x, this.origin.y + this.size.y);
+    return Vector.create(
+      this.origin.x + this.size.x,
+      this.origin.y + this.size.y
+    );
   },
 
   get x() {
@@ -71,10 +74,10 @@ const Rectangle = {
 
   get corners() {
     return [
-      this.min,                                                  // nw
+      this.min, // nw
       Vector.create(this.origin.x + this.size.x, this.origin.y), // ne
       Vector.create(this.origin.x, this.origin.y + this.size.y), // sw
-      this.max                                                   // se
+      this.max, // se
     ];
   },
 
@@ -103,12 +106,7 @@ const Rectangle = {
   },
 
   toString() {
-    return [
-      this.origin.x,
-      this.origin.y,
-      this.size.x,
-      this.size.y,
-    ].join(' ');
+    return [this.origin.x, this.origin.y, this.size.x, this.size.y].join(' ');
   },
 
   toJSON() {

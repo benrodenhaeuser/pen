@@ -1,7 +1,7 @@
-import { Scene   } from './scenegraph/scene.js';
-import { Group   } from './scenegraph/group.js';
-import { Shape   } from './scenegraph/shape.js';
-import { Spline  } from './scenegraph/spline.js';
+import { Scene } from './scenegraph/scene.js';
+import { Group } from './scenegraph/group.js';
+import { Shape } from './scenegraph/shape.js';
+import { Spline } from './scenegraph/spline.js';
 import { Segment } from './scenegraph/segment.js';
 
 import {
@@ -13,7 +13,7 @@ import {
   Docs,
   Message,
   Text,
-  Identifier
+  Identifier,
 } from './scenegraph/otherTypes.js';
 
 export {
@@ -30,5 +30,5 @@ export {
   Docs,
   Message,
   Text,
-  Identifier
+  Identifier,
 };

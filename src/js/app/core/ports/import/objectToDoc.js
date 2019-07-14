@@ -1,13 +1,13 @@
 import { Store, Docs, Doc, Message } from '../../domain.js';
-import { Scene, Shape, Group       } from '../../domain.js';
-import { Spline, Segment, Anchor   } from '../../domain.js';
-import { HandleIn, HandleOut       } from '../../domain.js';
-import { Matrix                    } from '../../domain.js';
-import { Vector                    } from '../../domain.js';
-import { Rectangle                 } from '../../domain.js';
-import { Class                     } from '../../domain.js';
+import { Scene, Shape, Group } from '../../domain.js';
+import { Spline, Segment, Anchor } from '../../domain.js';
+import { HandleIn, HandleOut } from '../../domain.js';
+import { Matrix } from '../../domain.js';
+import { Vector } from '../../domain.js';
+import { Rectangle } from '../../domain.js';
+import { Class } from '../../domain.js';
 
-const objectToDoc = (object) => {
+const objectToDoc = object => {
   let node;
 
   switch (object.type) {
@@ -54,8 +54,8 @@ const objectToDoc = (object) => {
   }
 
   node.type = object.type;
-  node.key  = object.key;
-  node._id  = object._id;
+  node.key = object.key;
+  node._id = object._id;
 
   setPayload(node, object);
 

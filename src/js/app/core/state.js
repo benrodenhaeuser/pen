@@ -1,19 +1,19 @@
-import { exportToSVG      } from './ports.js';
-import { exportToVDOM     } from './ports.js';
-import { exportToPlain    } from './ports.js';
-import { markupToScene    } from './ports.js';
-import { objectToDoc      } from './ports.js';
-import { markupToDOM      } from './ports.js';
-import { domToScene       } from './ports.js';
-import { domToSyntaxTree   } from './ports.js';
+import { exportToSVG } from './ports.js';
+import { exportToVDOM } from './ports.js';
+import { exportToPlain } from './ports.js';
+import { markupToScene } from './ports.js';
+import { objectToDoc } from './ports.js';
+import { markupToDOM } from './ports.js';
+import { domToScene } from './ports.js';
+import { domToSyntaxTree } from './ports.js';
 import { sceneToSyntaxTree } from './ports.js';
-import { Store            } from './domain.js';
-import { Docs             } from './domain.js';
-import { Doc              } from './domain.js';
-import { Message          } from './domain.js';
-import { Scene            } from './domain.js';
-import { Rectangle        } from './domain.js';
-import { SyntaxTree        } from './domain.js';
+import { Store } from './domain.js';
+import { Docs } from './domain.js';
+import { Doc } from './domain.js';
+import { Message } from './domain.js';
+import { Scene } from './domain.js';
+import { Rectangle } from './domain.js';
+import { SyntaxTree } from './domain.js';
 
 const State = {
   create() {
@@ -21,20 +21,20 @@ const State = {
   },
 
   init() {
-    this.label     = 'start';
-    this.input     = {};
-    this.update    = '';
-    this.store     = this.buildStore();
+    this.label = 'start';
+    this.input = {};
+    this.update = '';
+    this.store = this.buildStore();
     this.syntaxTree = SyntaxTree.create();
 
     return this;
   },
 
   buildStore() {
-    const store   = Store.create();
-    const docs    = Docs.create();
+    const store = Store.create();
+    const docs = Docs.create();
     const message = this.buildMessage();
-    const doc     = this.buildDoc();
+    const doc = this.buildDoc();
 
     store.append(docs);
     store.append(doc);
@@ -50,7 +50,7 @@ const State = {
   },
 
   buildDoc() {
-    const doc        = Doc.create();
+    const doc = Doc.create();
     const sceneGraph = Scene.create({
       viewBox: Rectangle.createFromDimensions(0, 0, 600, 395),
     });
@@ -78,11 +78,11 @@ const State = {
 
   export() {
     return {
-      label:     this.label,
-      input:     this.input,
-      update:    this.update,
-      vDOM:      this.exportToVDOM(),
-      plain:     this.exportToPlain(),
+      label: this.label,
+      input: this.input,
+      update: this.update,
+      vDOM: this.exportToVDOM(),
+      plain: this.exportToPlain(),
       syntaxTree: this.syntaxTree,
     };
   },

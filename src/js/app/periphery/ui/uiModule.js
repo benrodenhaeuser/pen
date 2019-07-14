@@ -1,7 +1,7 @@
 const UIModule = {
   init(state) {
-    this.mountPoint   = document.querySelector(`#${this.name}`);
-    this.dom          = this.createElement(state.vDOM[this.name]);
+    this.mountPoint = document.querySelector(`#${this.name}`);
+    this.dom = this.createElement(state.vDOM[this.name]);
     this.previousVDOM = state.vDOM[this.name];
 
     this.mount();
@@ -42,8 +42,7 @@ const UIModule = {
       }
     } else if (oldVNode.tag !== newVNode.tag) {
       $node.replaceWith(this.createElement(newVNode));
-    }
-     else {
+    } else {
       this.reconcileProps(oldVNode, newVNode, $node);
       this.reconcileChildren(oldVNode, newVNode, $node);
     }
@@ -74,7 +73,7 @@ const UIModule = {
     for (let vIndex = 0; vIndex < maxLength; vIndex += 1) {
       const oldVChild = oldVNode.children[vIndex];
       const newVChild = newVNode.children[vIndex];
-      const $child    = $node.childNodes[$index];
+      const $child = $node.childNodes[$index];
 
       if (newVChild === undefined) {
         $child && $child.remove();

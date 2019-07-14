@@ -5,53 +5,53 @@ const db = {
   },
 
   bindEvents(func) {
-    window.addEventListener('upsertDoc', (event) => {
-      const request = new XMLHttpRequest;
+    window.addEventListener('upsertDoc', event => {
+      const request = new XMLHttpRequest();
 
       request.addEventListener('load', () => {
         func({
           source: this.name,
-          type:   'docSaved',
-          data:   {},
+          type: 'docSaved',
+          data: {},
         });
       });
 
-      request.open('POST', "/docs/" + event.detail._id);
+      request.open('POST', '/docs/' + event.detail._id);
       request.send(JSON.stringify(event.detail));
     });
 
-    window.addEventListener('readDoc', (event) => {
-      const request = new XMLHttpRequest;
+    window.addEventListener('readDoc', event => {
+      const request = new XMLHttpRequest();
 
       request.addEventListener('load', () => {
         func({
           source: this.name,
-          type:   'switchDocument',
-          data:   {
-            doc: request.response
+          type: 'switchDocument',
+          data: {
+            doc: request.response,
           },
         });
       });
 
-      request.open('GET', "/docs/" + event.detail);
+      request.open('GET', '/docs/' + event.detail);
       request.responseType = 'json';
       request.send();
     });
 
-    window.addEventListener('loadDocIDs', (event) => {
-      const request = new XMLHttpRequest;
+    window.addEventListener('loadDocIDs', event => {
+      const request = new XMLHttpRequest();
 
       request.addEventListener('load', () => {
         func({
           source: this.name,
-          type:   'updateDocList',
-          data:   {
-            docIDs: request.response
+          type: 'updateDocList',
+          data: {
+            docIDs: request.response,
           },
         });
       });
 
-      request.open('GET', "/ids");
+      request.open('GET', '/ids');
       request.responseType = 'json';
       request.send();
     });
@@ -59,14 +59,14 @@ const db = {
 
   react(state) {
     if (state.update === 'go') {
-      window.dispatchEvent(
-        new Event('loadDocIDs')
-      );
+      window.dispatchEvent(new Event('loadDocIDs'));
     } else if (state.update === 'requestDoc') {
       window.dispatchEvent(
         new CustomEvent('readDoc', { detail: state.input.key })
       );
-    } else if (['release', 'releasePen', 'changeMarkup'].includes(state.update)) {
+    } else if (
+      ['release', 'releasePen', 'changeMarkup'].includes(state.update)
+    ) {
       window.dispatchEvent(
         new CustomEvent('upsertDoc', { detail: state.plain.doc })
       );

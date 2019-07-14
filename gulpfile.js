@@ -1,5 +1,4 @@
 var gulp       = require('gulp');
-var prettier   = require('gulp-prettier');
 var rollup     = require('rollup');
 var resolve    = require('rollup-plugin-node-resolve');
 var commonjs   = require('rollup-plugin-commonjs');

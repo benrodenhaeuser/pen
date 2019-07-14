@@ -1,8 +1,7 @@
 import { createID } from '../../domain/helpers.js';
 
-const markupToDOM = (markup) => {
-  const $svg = new DOMParser()
-    .parseFromString(markup, "image/svg+xml")
+const markupToDOM = markup => {
+  const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
     .documentElement;
 
   if ($svg instanceof SVGElement) {
@@ -13,12 +12,12 @@ const markupToDOM = (markup) => {
   }
 };
 
-const addKeys = ($node) => {
+const addKeys = $node => {
   $node.key = createID();
 
   for (let $child of $node.children) {
     addKeys($child);
   }
-}
+};
 
 export { markupToDOM };

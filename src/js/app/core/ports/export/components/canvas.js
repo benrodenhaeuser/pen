@@ -2,16 +2,15 @@ import { h } from './h.js';
 
 const LENGTHS_IN_PX = {
   cornerSideLength: 8,
-  dotDiameter:      18,
-  controlDiameter:  6,
+  dotDiameter: 18,
+  controlDiameter: 6,
 };
 
-
-const canvas = (store) => {
+const canvas = store => {
   return renderScene(store);
 };
 
-const renderScene = (store) => {
+const renderScene = store => {
   if (store.scene === null) {
     return '';
   }
@@ -38,7 +37,7 @@ const buildTree = (node, vParent = null) => {
 const wrap = (vNode, node) => {
   const vWrapper = h('g', {
     'data-type': `${node.type}-wrapper`,
-    'data-key':   node.key,
+    'data-key': node.key,
   });
 
   vWrapper.children.push(vNode);
@@ -53,33 +52,38 @@ const wrap = (vNode, node) => {
   return vWrapper;
 };
 
-const curves = (node) => {
-  const diameter  = scale(node, LENGTHS_IN_PX.controlDiameter);
-  const radius    = diameter / 2;
+const curves = node => {
+  const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
+  const radius = diameter / 2;
 
   const vParts = node.toVDOMCurves();
   const splitter = h('circle', {
     'data-type': 'splitter',
-    r:           radius,
+    r: radius,
     cx: node.splitter.x,
     cy: node.splitter.y,
-    transform:   node.transform.toString(),
+    transform: node.transform.toString(),
   });
 
-  return h('g', {
-    'data-type': 'curves',
-    'data-key':  node.key,
-  }, ...vParts, splitter);
+  return h(
+    'g',
+    {
+      'data-type': 'curves',
+      'data-key': node.key,
+    },
+    ...vParts,
+    splitter
+  );
 };
 
-const outerUI = (node) => {
+const outerUI = node => {
   const vOuterUI = h('g', {
     'data-type': 'outerUI',
-    'data-key':   node.key,
+    'data-key': node.key,
   });
 
-  const vFrame   = frame(node);
-  const vDots    = dots(node);    // for rotation UI
+  const vFrame = frame(node);
+  const vDots = dots(node); // for rotation UI
   const vCorners = corners(node); // for scaling UI
 
   vOuterUI.children.push(vFrame);
@@ -95,21 +99,21 @@ const outerUI = (node) => {
   return vOuterUI;
 };
 
-const corners = (node) => {
+const corners = node => {
   const vTopLCorner = h('rect');
   const vBotLCorner = h('rect');
   const vTopRCorner = h('rect');
   const vBotRCorner = h('rect');
-  const vCorners    = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
-  const length      = scale(node, LENGTHS_IN_PX.cornerSideLength);
+  const vCorners = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
+  const length = scale(node, LENGTHS_IN_PX.cornerSideLength);
 
   for (let vCorner of vCorners) {
     Object.assign(vCorner.props, {
       'data-type': 'corner',
-      'data-key':   node.key,
-      transform:   node.transform.toString(),
-      width:       length,
-      height:      length,
+      'data-key': node.key,
+      transform: node.transform.toString(),
+      width: length,
+      height: length,
     });
   }
 
@@ -136,21 +140,21 @@ const corners = (node) => {
   return vCorners;
 };
 
-const dots = (node) => {
-  const vTopLDot  = h('circle');
-  const vBotLDot  = h('circle');
-  const vTopRDot  = h('circle');
-  const vBotRDot  = h('circle');
-  const vDots     = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
-  const diameter  = scale(node, LENGTHS_IN_PX.dotDiameter);
-  const radius    = diameter / 2;
+const dots = node => {
+  const vTopLDot = h('circle');
+  const vBotLDot = h('circle');
+  const vTopRDot = h('circle');
+  const vBotRDot = h('circle');
+  const vDots = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
+  const diameter = scale(node, LENGTHS_IN_PX.dotDiameter);
+  const radius = diameter / 2;
 
   for (let vDot of vDots) {
     Object.assign(vDot.props, {
-      'data-type':      'dot',
-      'data-key':        node.key,
-      transform:        node.transform.toString(),
-      r:                radius,
+      'data-type': 'dot',
+      'data-key': node.key,
+      transform: node.transform.toString(),
+      r: radius,
     });
   }
 
@@ -177,19 +181,19 @@ const dots = (node) => {
   return vDots;
 };
 
-const frame = (node) => {
+const frame = node => {
   return h('rect', {
-    'data-type':  'frame',
-    x:            node.bounds.x,
-    y:            node.bounds.y,
-    width:        node.bounds.width,
-    height:       node.bounds.height,
-    transform:    node.transform.toString(),
-    'data-key':    node.key,
+    'data-type': 'frame',
+    x: node.bounds.x,
+    y: node.bounds.y,
+    width: node.bounds.width,
+    height: node.bounds.height,
+    transform: node.transform.toString(),
+    'data-key': node.key,
   });
 };
 
-const innerUI = (node) => {
+const innerUI = node => {
   const vInnerUI = h('g', {
     'data-type': 'innerUI',
     'data-key': node.key,
@@ -210,7 +214,7 @@ const innerUI = (node) => {
   return vInnerUI;
 };
 
-const connections = (node) => {
+const connections = node => {
   const vConnections = [];
 
   for (let spline of node.children) {
@@ -228,17 +232,17 @@ const connections = (node) => {
 
 const connection = (node, anchor, handle) => {
   return h('line', {
-    x1:        anchor.x,
-    y1:        anchor.y,
-    x2:        handle.x,
-    y2:        handle.y,
+    x1: anchor.x,
+    y1: anchor.y,
+    x2: handle.x,
+    y2: handle.y,
     transform: node.transform.toString(),
   });
 };
 
-const controls = (pathNode) => {
+const controls = pathNode => {
   const vControls = [];
-  const diameter  = scale(pathNode, LENGTHS_IN_PX.controlDiameter);
+  const diameter = scale(pathNode, LENGTHS_IN_PX.controlDiameter);
 
   for (let spline of pathNode.children) {
     for (let segment of spline.children) {
@@ -254,11 +258,11 @@ const controls = (pathNode) => {
 const control = (pathNode, controlNode, diameter) => {
   return h('circle', {
     'data-type': 'control',
-    'data-key' : controlNode.key,
-    transform  : pathNode.transform.toString(),
-    r          : diameter / 2,
-    cx         : controlNode.vector.x,
-    cy         : controlNode.vector.y,
+    'data-key': controlNode.key,
+    transform: pathNode.transform.toString(),
+    r: diameter / 2,
+    cx: controlNode.vector.x,
+    cy: controlNode.vector.y,
   });
 };
 

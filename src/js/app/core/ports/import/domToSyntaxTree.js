@@ -1,6 +1,6 @@
 import { SyntaxTree } from '../../domain.js';
 
-const domToSyntaxTree = ($svg) => {
+const domToSyntaxTree = $svg => {
   if ($svg instanceof SVGElement) {
     const pNode = SyntaxTree.create();
     return buildTree($svg, pNode);
@@ -27,13 +27,13 @@ const buildTree = ($node, pNode) => {
 
     const closeTag = `</${$node.nodeName}>`;
 
-    const openNode  = SyntaxTree.create();
+    const openNode = SyntaxTree.create();
     const closeNode = SyntaxTree.create();
 
-    openNode.markup  = openTag;
-    openNode.tag     = $node.nodeName;
+    openNode.markup = openTag;
+    openNode.tag = $node.nodeName;
     closeNode.markup = closeTag;
-    closeNode.tag    = $node.nodeName;
+    closeNode.tag = $node.nodeName;
 
     openNode.key = $node.key;
     closeNode.key = $node.key;

@@ -1,11 +1,10 @@
-import { Matrix    } from '../geometry.js';
-import { Vector    } from '../geometry.js';
+import { Matrix } from '../geometry.js';
+import { Vector } from '../geometry.js';
 import { Rectangle } from '../geometry.js';
-import { Curve     } from '../geometry.js';
-import { Doc       } from '../scenegraph';
-import { Class     } from '../helpers.js';
-import { createID  } from '../helpers.js';
-
+import { Curve } from '../geometry.js';
+import { Doc } from '../scenegraph';
+import { Class } from '../helpers.js';
+import { createID } from '../helpers.js';
 
 const Node = {
   create(opts = {}) {
@@ -27,13 +26,13 @@ const Node = {
 
   defaults() {
     return {
-      key:      createID(), // all nodes have a key
+      key: createID(), // all nodes have a key
       children: [],
-      parent:   null,
+      parent: null,
       payload: {
         transform: Matrix.identity(),
-        class:     Class.create(),
-        bounds:    null,
+        class: Class.create(),
+        bounds: null,
       },
       splitter: Vector.create(-1000, -1000), // off-canvas, far away
     };
@@ -61,97 +60,71 @@ const Node = {
 
   // hierarchy (getters)
   get root() {
-    return this.findAncestor(
-      node => node.parent === null
-    );
+    return this.findAncestor(node => node.parent === null);
   },
 
   get store() {
-    return this.findAncestor(
-      node => node.type === 'store'
-    );
+    return this.findAncestor(node => node.type === 'store');
   },
 
   get message() {
-    return this.root.findDescendant(
-      node => node.type === 'message'
-    );
+    return this.root.findDescendant(node => node.type === 'message');
   },
 
   get scene() {
-    return this.root.findDescendant(
-      node => node.type === 'scene'
-    );
+    return this.root.findDescendant(node => node.type === 'scene');
   },
 
   get docs() {
-    return this.root.findDescendant(
-      node => node.type === 'docs'
-    );
+    return this.root.findDescendant(node => node.type === 'docs');
   },
 
   get doc() {
-    return this.root.findDescendant(
-      node => node.type === 'doc'
-    );
+    return this.root.findDescendant(node => node.type === 'doc');
   },
 
   get markup() {
-    return this.root.findDescendant(
-      node => node.type === 'markup'
-    );
+    return this.root.findDescendant(node => node.type === 'markup');
   },
 
   get leaves() {
-    return this.findDescendants(
-      node => node.children.length === 0
-    );
+    return this.findDescendants(node => node.children.length === 0);
   },
 
   get ancestors() {
-    return this.findAncestors(
-      node => true
-    );
+    return this.findAncestors(node => true);
   },
 
   get properAncestors() {
-    return this.parent.findAncestors(
-      node => true
-    );
+    return this.parent.findAncestors(node => true);
   },
 
   get descendants() {
-    return this.findDescendants(
-      node => true
-    );
+    return this.findDescendants(node => true);
   },
 
   get siblings() {
-    return this.parent.children.filter(
-      node => node !== this
-    );
+    return this.parent.children.filter(node => node !== this);
   },
 
   get graphicsChildren() {
-    return this.children.filter(
-      node => ['group', 'shape'].includes(node.type)
-    );
+    return this.children.filter(node => ['group', 'shape'].includes(node.type));
   },
 
   get selected() {
-    return this.scene.findDescendant((node) => {
+    return this.scene.findDescendant(node => {
       return node.class.includes('selected');
     });
   },
 
   get editing() {
-    return this.scene.findDescendant((node) => {
+    return this.scene.findDescendant(node => {
       return node.class.includes('editing');
     });
   },
 
   get frontier() {
-    return this.scene.findDescendants((node) => {
+    return this.scene.findDescendants(node => {
       return node.class.includes('frontier');
     });
   },
@@ -179,8 +152,7 @@ const Node = {
   },
 
   get bounds() {
-    if ([
-      'segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
+    if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
       return null;
     }
 
@@ -199,10 +171,12 @@ const Node = {
       'segment',
       'anchor',
       'handleIn',
-      'handleOut'
+      'handleOut',
     ];
 
-    if (ignoredTypes.includes(this.type)) { return; }
+    if (ignoredTypes.includes(this.type)) {
+      return;
+    }
 
     const corners = [];
     for (let child of this.children) {
@@ -211,9 +185,9 @@ const Node = {
       }
     }
 
-    const xValue  = vector => vector.x;
+    const xValue = vector => vector.x;
     const xValues = corners.map(xValue);
-    const yValue  = vector => vector.y;
+    const yValue = vector => vector.y;
     const yValues = corners.map(yValue);
 
     const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
@@ -278,7 +252,9 @@ const Node = {
     } else {
       for (let child of this.children) {
         let val = child.findDescendant(predicate);
-        if (val) { return val; }
+        if (val) {
+          return val;
+        }
       }
     }
 
@@ -299,21 +275,21 @@ const Node = {
   },
 
   findDescendantByKey(key) {
-    return this.findDescendant((node) => {
+    return this.findDescendant(node => {
       return node.key === key;
     });
   },
 
   findDescendantByClass(className) {
-    return this.findDescendant((node) => {
+    return this.findDescendant(node => {
       return node.class.includes(className);
     });
   },
 
   findAncestorByClass(className) {
-    return this.findAncestor((node) => {
+    return this.findAncestor(node => {
       return node.class.includes(className);
-    })
+    });
   },
 
   // tree manipulation
@@ -334,7 +310,7 @@ const Node = {
     this.children.splice(index, 0, node);
   },
 
-   // hit testing: is a point within the bounding box of this shape?
+  // hit testing: is a point within the bounding box of this shape?
 
   contains(globalPoint) {
     return globalPoint
@@ -366,7 +342,7 @@ const Node = {
   },
 
   removeFrontier() {
-    const frontier = this.scene.findDescendants((node) => {
+    const frontier = this.scene.findDescendants(node => {
       return node.class.includes('frontier');
     });
 
@@ -380,7 +356,7 @@ const Node = {
   },
 
   unfocusAll() {
-    const focussed = this.scene.findDescendants((node) => {
+    const focussed = this.scene.findDescendants(node => {
       return node.class.includes('focus');
     });
 
@@ -443,16 +419,16 @@ const Node = {
   },
 
   translate(offset) {
-    this.transform = this
-      .ancestorTransform().invert()
+    this.transform = this.ancestorTransform()
+      .invert()
       .multiply(Matrix.translation(offset))
       .multiply(this.globalTransform());
   },
 
   globalScaleFactor() {
-    const total  = this.globalTransform();
-    const a      = total.m[0][0];
-    const b      = total.m[1][0];
+    const total = this.globalTransform();
+    const a = total.m[0][0];
+    const b = total.m[1][0];
 
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
   },

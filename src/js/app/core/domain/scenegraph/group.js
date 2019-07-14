@@ -1,28 +1,28 @@
-import { Node      } from './node.js';
-import { Matrix    } from '../geometry.js';
+import { Node } from './node.js';
+import { Matrix } from '../geometry.js';
 import { SyntaxTree } from '../syntaxtree.js';
 
 const Group = Object.create(Node);
-Group.type  = 'group';
+Group.type = 'group';
 
 Group.toVDOMNode = function() {
   return {
-    tag:      'g',
+    tag: 'g',
     children: [],
     props: {
-      'data-key':   this.key,
+      'data-key': this.key,
       'data-type': 'content',
-      transform:   this.transform.toString(),
-      class:       this.class.toString(),
+      transform: this.transform.toString(),
+      class: this.class.toString(),
     },
   };
 };
 
 Group.toSVGNode = function() {
   const svgNode = {
-    tag:      'g',
+    tag: 'g',
     children: [],
-    props:    {},
+    props: {},
   };
 
   if (!this.transform.equals(Matrix.identity())) {

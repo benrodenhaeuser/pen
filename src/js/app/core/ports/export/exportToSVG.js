@@ -1,4 +1,4 @@
-const exportToSVG = (store) => {
+const exportToSVG = store => {
   const markup = [];
   const vNode = buildSceneNode(store.scene);
 
@@ -54,7 +54,7 @@ const appendOpenTag = (markup, svgNode, level) => {
   tag.push('>');
 
   // if (svgNode.tag !== 'path') {
-    tag.push('\n');
+  tag.push('\n');
   // }
 
   markup.push(tag.join(''));
@@ -64,9 +64,9 @@ const appendCloseTag = (markup, svgNode, level) => {
   const tag = [];
 
   // if (svgNode.tag !== 'path') {
-    for (let i = 0; i < level; i += 1) {
-      tag.push('  ');
-    }
+  for (let i = 0; i < level; i += 1) {
+    tag.push('  ');
+  }
   // }
 
   tag.push('</');
@@ -76,6 +76,5 @@ const appendCloseTag = (markup, svgNode, level) => {
 
   markup.push(tag.join(''));
 };
-
 
 export { exportToSVG };
