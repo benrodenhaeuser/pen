@@ -1,8 +1,8 @@
-import { ParseTree } from '../../domain.js';
+import { SyntaxTree } from '../../domain.js';
 
 const domToParseTree = ($svg) => {
   if ($svg instanceof SVGElement) {
-    const pNode = ParseTree.create();
+    const pNode = SyntaxTree.create();
     return buildTree($svg, pNode);
   } else {
     return null;
@@ -11,7 +11,7 @@ const domToParseTree = ($svg) => {
 
 const buildTree = ($node, pNode) => {
   if ($node.nodeName === '#text') {
-    const tNode = ParseTree.create();
+    const tNode = SyntaxTree.create();
     tNode.markup = $node.nodeValue;
     pNode.children.push(tNode);
   } else {
@@ -27,8 +27,8 @@ const buildTree = ($node, pNode) => {
 
     const closeTag = `</${$node.nodeName}>`;
 
-    const openNode  = ParseTree.create();
-    const closeNode = ParseTree.create();
+    const openNode  = SyntaxTree.create();
+    const closeNode = SyntaxTree.create();
 
     openNode.markup  = openTag;
     openNode.tag     = $node.nodeName;
@@ -41,7 +41,7 @@ const buildTree = ($node, pNode) => {
     pNode.children.push(openNode);
 
     if ($node.childNodes.length > 0) {
-      const innerNode = ParseTree.create();
+      const innerNode = SyntaxTree.create();
 
       for (let $child of $node.childNodes) {
         buildTree($child, innerNode);

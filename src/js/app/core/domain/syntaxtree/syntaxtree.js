@@ -1,8 +1,8 @@
 // Do these features account for the presence of text nodes?
 
-const ParseTree = {
+const SyntaxTree = {
   create() {
-    return Object.create(ParseTree).init();
+    return Object.create(SyntaxTree).init();
   },
 
   init() {
@@ -66,4 +66,4 @@ const ParseTree = {
   },
 };
 
-export { ParseTree };
+export { SyntaxTree };

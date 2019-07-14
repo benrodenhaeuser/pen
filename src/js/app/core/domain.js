@@ -27,8 +27,8 @@ import {
 } from './domain/helpers.js';
 
 import {
-  ParseTree
-} from './domain/parsetree.js';
+  SyntaxTree
+} from './domain/syntaxtree.js';
 
 export {
   Vector,
@@ -50,5 +50,5 @@ export {
   Text,
   Identifier,
   Class,
-  ParseTree
+  SyntaxTree
 };

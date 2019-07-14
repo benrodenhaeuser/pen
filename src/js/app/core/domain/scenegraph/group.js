@@ -1,6 +1,6 @@
 import { Node      } from './node.js';
 import { Matrix    } from '../geometry.js';
-import { ParseTree } from '../parsetree.js';
+import { SyntaxTree } from '../syntaxtree.js';
 
 const Group = Object.create(Node);
 Group.type  = 'group';
@@ -33,7 +33,7 @@ Group.toSVGNode = function() {
 };
 
 Group.toASTNodes = function() {
-  const open = ParseTree.create();
+  const open = SyntaxTree.create();
 
   if (!this.transform.equals(Matrix.identity())) {
     open.markup = `<g transform="${this.transform.toString()}">`;
@@ -43,7 +43,7 @@ Group.toASTNodes = function() {
 
   open.key = this.key;
 
-  const close = ParseTree.create();
+  const close = SyntaxTree.create();
   close.markup = '</g>';
   close.key = this.key;
 

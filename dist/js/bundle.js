@@ -761,9 +761,9 @@
 
   // Do these features account for the presence of text nodes?
 
-  const ParseTree = {
+  const SyntaxTree = {
     create() {
-      return Object.create(ParseTree).init();
+      return Object.create(SyntaxTree).init();
     },
 
     init() {
@@ -858,11 +858,11 @@
   };
 
   Scene.toASTNodes = function() {
-    const open = ParseTree.create();
+    const open = SyntaxTree.create();
     open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
     open.key = this.key;
 
-    const close = ParseTree.create();
+    const close = SyntaxTree.create();
     close.markup = '</svg>';
     close.key = this.key;
 
@@ -903,7 +903,7 @@
   };
 
   Group.toASTNodes = function() {
-    const open = ParseTree.create();
+    const open = SyntaxTree.create();
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<g transform="${this.transform.toString()}">`;
@@ -913,7 +913,7 @@
 
     open.key = this.key;
 
-    const close = ParseTree.create();
+    const close = SyntaxTree.create();
     close.markup = '</g>';
     close.key = this.key;
 
@@ -992,7 +992,7 @@
   };
 
   Shape.toASTNodes = function() {
-    const open = ParseTree.create();
+    const open = SyntaxTree.create();
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
@@ -1002,7 +1002,7 @@
 
     open.key = this.key;
 
-    const close = ParseTree.create();
+    const close = SyntaxTree.create();
     close.markup = '</path>';
     close.key = this.key;
 
@@ -4785,7 +4785,7 @@
 
   const domToParseTree = ($svg) => {
     if ($svg instanceof SVGElement) {
-      const pNode = ParseTree.create();
+      const pNode = SyntaxTree.create();
       return buildTree$2($svg, pNode);
     } else {
       return null;
@@ -4794,7 +4794,7 @@
 
   const buildTree$2 = ($node, pNode) => {
     if ($node.nodeName === '#text') {
-      const tNode = ParseTree.create();
+      const tNode = SyntaxTree.create();
       tNode.markup = $node.nodeValue;
       pNode.children.push(tNode);
     } else {
@@ -4810,8 +4810,8 @@
 
       const closeTag = `</${$node.nodeName}>`;
 
-      const openNode  = ParseTree.create();
-      const closeNode = ParseTree.create();
+      const openNode  = SyntaxTree.create();
+      const closeNode = SyntaxTree.create();
 
       openNode.markup  = openTag;
       openNode.tag     = $node.nodeName;
@@ -4824,7 +4824,7 @@
       pNode.children.push(openNode);
 
       if ($node.childNodes.length > 0) {
-        const innerNode = ParseTree.create();
+        const innerNode = SyntaxTree.create();
 
         for (let $child of $node.childNodes) {
           buildTree$2($child, innerNode);
@@ -4846,7 +4846,7 @@
   };
 
   const sceneToParseTree = (scene) => {
-    const astRoot = ParseTree.create();
+    const astRoot = SyntaxTree.create();
     parse(scene, astRoot, 0);
     astRoot.indexify();
     return astRoot;
@@ -4861,7 +4861,7 @@
 
     // indent
     const pad = indent(level);
-    const indentNode = ParseTree.create();
+    const indentNode = SyntaxTree.create();
     indentNode.markup = pad;
     astParent.children.push(indentNode);
 
@@ -4869,12 +4869,12 @@
     astParent.children.push(open);
 
     // linebreak
-    const tNode = ParseTree.create();
+    const tNode = SyntaxTree.create();
     tNode.markup = '\n';
     astParent.children.push(tNode);
 
     if (sceneNode.graphicsChildren.length > 0) {
-      const astNode = ParseTree.create();
+      const astNode = SyntaxTree.create();
       astParent.children.push(astNode);
 
       for (let sceneChild of sceneNode.graphicsChildren) {
@@ -5361,7 +5361,7 @@
       this.input     = {};
       this.update    = '';
       this.store     = this.buildStore();
-      this.parseTree = ParseTree.create();
+      this.syntaxTree = SyntaxTree.create();
 
       return this;
     },
@@ -5419,7 +5419,7 @@
         update:    this.update,
         vDOM:      this.exportToVDOM(),
         plain:     this.exportToPlain(),
-        parseTree: this.parseTree,
+        syntaxTree: this.syntaxTree,
       };
     },
 
@@ -5470,8 +5470,8 @@
   const updates = {
     after(state, input) {
       if (input.type !== 'markupChange') {
-        // => from canvas to editor: derive parsetree from scene
-        state.parseTree = state.sceneToParseTree();
+        // => from canvas to editor: derive syntax tree from scene
+        state.syntaxTree = state.sceneToParseTree();
       }
     },
 
@@ -5806,10 +5806,10 @@
       const $svg = state.markupToDOM(input.value);
 
       if ($svg) {
-        const parseTree = state.domToParseTree($svg);
-        parseTree.indexify();
+        const syntaxTree = state.domToParseTree($svg);
+        syntaxTree.indexify();
 
-        state.parseTree = parseTree;
+        state.syntaxTree = syntaxTree;
         state.store.scene.replaceWith(state.domToScene($svg));
       } else {
         const scene = Scene.create();
@@ -5822,17 +5822,17 @@
     selectFromEditor(state, input) {
       this.cleanup(state, input);
 
-      let parseTreeNode;
-      let sceneNode;
+      let syntaxTreeNode;
+      let sceneGraphNode;
 
-      parseTreeNode = state.parseTree.findNodeByIndex(input.index);
+      syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
-      if (parseTreeNode) {
-        sceneNode = state.store.scene.findDescendantByKey(parseTreeNode.key);
+      if (syntaxTreeNode) {
+        sceneGraphNode = state.store.scene.findDescendantByKey(syntaxTreeNode.key);
       }
 
-      if (sceneNode) {
-        sceneNode.select();
+      if (sceneGraphNode) {
+        sceneGraphNode.select();
       }
 
       state.label = 'selectMode';
@@ -16565,10 +16565,10 @@
         lineNumbers:  true,
         lineWrapping: true,
         mode:         'xml',
-        value:        state.parseTree.toMarkup(),
+        value:        state.syntaxTree.toMarkup(),
       });
 
-      this.previousParseTree = state.parseTree;
+      this.previousSyntaxTree = state.syntaxTree;
 
       return this;
     },
@@ -16609,17 +16609,17 @@
     },
 
     react(state) {
-      const currentParseTree = state.parseTree;
-      const previousParseTree = this.previousParseTree;
+      const currentSyntaxTree = state.syntaxTree;
+      const previousSyntaxTree = this.previousSyntaxTree;
 
       if (['penMode', 'selectMode'].includes(state.label)) {
-        if (!this.editor.hasFocus() && currentParseTree !== previousParseTree) {
-          this.editor.getDoc().setValue(state.parseTree.toMarkup());
+        if (!this.editor.hasFocus() && currentSyntaxTree !== previousSyntaxTree) {
+          this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
           // ^ TODO: replace with reconciliation mechanism
-          // highlight markup corresponding to selected nodes
+          // + highlight markup corresponding to selected canvas nodes
         }
 
-        this.previousParseTree = state.parseTree;
+        this.previousSyntaxTree = state.syntaxTree;
       }
     },
 

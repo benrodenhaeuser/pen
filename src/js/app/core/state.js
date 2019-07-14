@@ -13,7 +13,7 @@ import { Doc              } from './domain.js';
 import { Message          } from './domain.js';
 import { Scene            } from './domain.js';
 import { Rectangle        } from './domain.js';
-import { ParseTree        } from './domain.js';
+import { SyntaxTree        } from './domain.js';
 
 const State = {
   create() {
@@ -25,7 +25,7 @@ const State = {
     this.input     = {};
     this.update    = '';
     this.store     = this.buildStore();
-    this.parseTree = ParseTree.create();
+    this.syntaxTree = SyntaxTree.create();
 
     return this;
   },
@@ -83,7 +83,7 @@ const State = {
       update:    this.update,
       vDOM:      this.exportToVDOM(),
       plain:     this.exportToPlain(),
-      parseTree: this.parseTree,
+      syntaxTree: this.syntaxTree,
     };
   },
 

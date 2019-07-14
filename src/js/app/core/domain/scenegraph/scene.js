@@ -1,5 +1,5 @@
 import { Node      } from './node.js';
-import { ParseTree } from '../parsetree.js';
+import { SyntaxTree } from '../syntaxtree.js';
 
 const Scene = Object.create(Node);
 Scene.type  = 'scene';
@@ -32,11 +32,11 @@ Scene.toSVGNode = function() {
 };
 
 Scene.toASTNodes = function() {
-  const open = ParseTree.create();
+  const open = SyntaxTree.create();
   open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
   open.key = this.key;
 
-  const close = ParseTree.create();
+  const close = SyntaxTree.create();
   close.markup = '</svg>';
   close.key = this.key;
 

@@ -8,10 +8,10 @@ const editor = {
       lineNumbers:  true,
       lineWrapping: true,
       mode:         'xml',
-      value:        state.parseTree.toMarkup(),
+      value:        state.syntaxTree.toMarkup(),
     });
 
-    this.previousParseTree = state.parseTree;
+    this.previousSyntaxTree = state.syntaxTree;
 
     return this;
   },
@@ -53,17 +53,17 @@ const editor = {
   },
 
   react(state) {
-    const currentParseTree = state.parseTree;
-    const previousParseTree = this.previousParseTree;
+    const currentSyntaxTree = state.syntaxTree;
+    const previousSyntaxTree = this.previousSyntaxTree;
 
     if (['penMode', 'selectMode'].includes(state.label)) {
-      if (!this.editor.hasFocus() && currentParseTree !== previousParseTree) {
-        this.editor.getDoc().setValue(state.parseTree.toMarkup());
+      if (!this.editor.hasFocus() && currentSyntaxTree !== previousSyntaxTree) {
+        this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
         // ^ TODO: replace with reconciliation mechanism
-        // highlight markup corresponding to selected nodes
+        // + highlight markup corresponding to selected canvas nodes
       }
 
-      this.previousParseTree = state.parseTree;
+      this.previousSyntaxTree = state.syntaxTree;
     }
   },
 

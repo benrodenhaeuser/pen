@@ -1,7 +1,7 @@
-import { ParseTree } from '../../domain/parsetree.js';
+import { SyntaxTree } from '../../domain/syntaxtree.js';
 
 const sceneToParseTree = (scene) => {
-  const astRoot = ParseTree.create();
+  const astRoot = SyntaxTree.create();
   parse(scene, astRoot, 0);
   astRoot.indexify();
   return astRoot;
@@ -16,7 +16,7 @@ const parse = (sceneNode, astParent, level) => {
 
   // indent
   const pad = indent(level);
-  const indentNode = ParseTree.create();
+  const indentNode = SyntaxTree.create();
   indentNode.markup = pad;
   astParent.children.push(indentNode);
 
@@ -24,12 +24,12 @@ const parse = (sceneNode, astParent, level) => {
   astParent.children.push(open);
 
   // linebreak
-  const tNode = ParseTree.create();
+  const tNode = SyntaxTree.create();
   tNode.markup = '\n';
   astParent.children.push(tNode);
 
   if (sceneNode.graphicsChildren.length > 0) {
-    const astNode = ParseTree.create();
+    const astNode = SyntaxTree.create();
     astParent.children.push(astNode);
 
     for (let sceneChild of sceneNode.graphicsChildren) {
