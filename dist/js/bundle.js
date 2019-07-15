@@ -16692,6 +16692,16 @@
 
         const node = state.syntaxTree.findNodeByClassName('selected');
 
+        if (node) {
+          const range = [node.start, node.end];
+
+          console.log(range); // FINE
+
+          // TODO: we need an array containing two codemirror position objects
+
+          this.textMarker = this.editor.getDoc().markText(...range, { className: 'mark' });
+        }
+
         this.previousSyntaxTree = state.syntaxTree;
       }
     },
