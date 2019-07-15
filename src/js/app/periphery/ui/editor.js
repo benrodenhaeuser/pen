@@ -56,12 +56,13 @@ const editor = {
     const currentSyntaxTree = state.syntaxTree;
     const previousSyntaxTree = this.previousSyntaxTree;
 
-    if (['penMode', 'selectMode'].includes(state.label)) {
-      if (!this.editor.hasFocus() && currentSyntaxTree !== previousSyntaxTree) {
-        this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
-        // ^ TODO: replace with reconciliation mechanism
-        // + highlight markup corresponding to selected canvas nodes
-      }
+    if (['penMode', 'selectMode'].includes(state.label) && !this.editor.hasFocus()) {
+      // task: (1) update editor 'value' and (2) update text markers
+
+      // here, we only do (1), in the most unsophisticated way:
+      this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
+
+      // if we diff the two trees, then it would be natural to do (2) simultaneously
 
       this.previousSyntaxTree = state.syntaxTree;
     }

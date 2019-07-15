@@ -755,8 +755,6 @@
     },
   };
 
-  // Do these features account for the presence of text nodes?
-
   const SyntaxTree = {
     create() {
       return Object.create(SyntaxTree).init();
@@ -768,17 +766,22 @@
       return this;
     },
 
-    // flatten tree to a list of leaf nodes
-    flatten(list = []) {
+    // decorate tree with start and end indices
+    indexify(start = 0) {
+      this.start = start;
+
       if (this.markup) {
-        list.push(this);
+        this.end = this.start + this.markup.length - 1;
+        return this.end + 1;
       } else {
         for (let child of this.children) {
-          child.flatten(list);
+          start = child.indexify(start);
         }
-      }
 
-      return list;
+        this.end = start - 1;
+
+        return start;
+      }
     },
 
     // find node whose start to end range includes given index
@@ -802,22 +805,17 @@
       }
     },
 
-    // decorate tree with start and end indices
-    indexify(start = 0) {
-      this.start = start;
-
+    // flatten tree to a list of leaf nodes
+    flatten(list = []) {
       if (this.markup) {
-        this.end = this.start + this.markup.length - 1;
-        return this.end + 1;
+        list.push(this);
       } else {
         for (let child of this.children) {
-          start = child.indexify(start);
+          child.flatten(list);
         }
-
-        this.end = start - 1;
-
-        return start;
       }
+
+      return list;
     },
 
     toMarkup() {
@@ -16672,12 +16670,13 @@
       const currentSyntaxTree = state.syntaxTree;
       const previousSyntaxTree = this.previousSyntaxTree;
 
-      if (['penMode', 'selectMode'].includes(state.label)) {
-        if (!this.editor.hasFocus() && currentSyntaxTree !== previousSyntaxTree) {
-          this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
-          // ^ TODO: replace with reconciliation mechanism
-          // + highlight markup corresponding to selected canvas nodes
-        }
+      if (['penMode', 'selectMode'].includes(state.label) && !this.editor.hasFocus()) {
+        // task: (1) update editor 'value' and (2) update text markers
+
+        // here, we only do (1), in the most unsophisticated way:
+        this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
+
+        // if we diff the two trees, then it would be natural to do (2) simultaneously
 
         this.previousSyntaxTree = state.syntaxTree;
       }
