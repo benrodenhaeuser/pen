@@ -57,12 +57,9 @@ const editor = {
     const previousSyntaxTree = this.previousSyntaxTree;
 
     if (['penMode', 'selectMode'].includes(state.label) && !this.editor.hasFocus()) {
-      // task: (1) update editor 'value' and (2) update text markers
-
-      // here, we only do (1), in the most unsophisticated way:
       this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
 
-      // if we diff the two trees, then it would be natural to do (2) simultaneously
+      const node = state.syntaxTree.findNodeByClassName('selected');
 
       this.previousSyntaxTree = state.syntaxTree;
     }

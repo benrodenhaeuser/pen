@@ -80,6 +80,7 @@ Shape.toASTNodes = function() {
   }
 
   open.key = this.key;
+  open.class = this.class;
 
   const close = SyntaxTree.create();
   close.markup = '</path>';

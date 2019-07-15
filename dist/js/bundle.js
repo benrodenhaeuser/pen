@@ -805,6 +805,22 @@
       }
     },
 
+    // find node whose class list includes given class name
+    findNodeByClassName(cls) {
+      if (this.markup) {
+        if (this.class && this.class.includes(cls)) {
+          return this;
+        }
+      } else {
+        for (let child of this.children) {
+          const val = child.findNodeByClassName(cls);
+          if (val) {
+            return val;
+          }
+        }
+      }
+    },
+
     // flatten tree to a list of leaf nodes
     flatten(list = []) {
       if (this.markup) {
@@ -999,6 +1015,7 @@
     }
 
     open.key = this.key;
+    open.class = this.class;
 
     const close = SyntaxTree.create();
     close.markup = '</path>';
@@ -16671,12 +16688,9 @@
       const previousSyntaxTree = this.previousSyntaxTree;
 
       if (['penMode', 'selectMode'].includes(state.label) && !this.editor.hasFocus()) {
-        // task: (1) update editor 'value' and (2) update text markers
-
-        // here, we only do (1), in the most unsophisticated way:
         this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
 
-        // if we diff the two trees, then it would be natural to do (2) simultaneously
+        const node = state.syntaxTree.findNodeByClassName('selected');
 
         this.previousSyntaxTree = state.syntaxTree;
       }

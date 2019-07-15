@@ -48,6 +48,22 @@ const SyntaxTree = {
     }
   },
 
+  // find node whose class list includes given class name
+  findNodeByClassName(cls) {
+    if (this.markup) {
+      if (this.class && this.class.includes(cls)) {
+        return this;
+      }
+    } else {
+      for (let child of this.children) {
+        const val = child.findNodeByClassName(cls);
+        if (val) {
+          return val;
+        }
+      }
+    }
+  },
+
   // flatten tree to a list of leaf nodes
   flatten(list = []) {
     if (this.markup) {
