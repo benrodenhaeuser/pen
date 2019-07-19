@@ -10,73 +10,93 @@ const editor = {
       mode: 'xml',
       value: state.syntaxTree.toMarkup(),
     });
-
+    this.document = this.editor.getDoc();
     this.previousSyntaxTree = state.syntaxTree;
 
     return this;
   },
 
   bindEvents(func) {
-    this.editor.on('focus', () => {
-      // if (this.textMarker) {
-      //   this.textMarker.clear();
-      // }
-    });
+    this.bindCodemirrorEvents();
+    this.bindCustomEvents(func);
+  },
 
-    this.editor.on('change', () => {
-      if (this.editor.hasFocus()) {
-        func({
-          source: this.name,
-          type: 'markupChange',
-          value: this.editor.getValue(),
-        });
-      } else {
+  bindCodemirrorEvents() {
+    this.editor.on('change', (instance, changeObj) => {
+      if (changeObj.origin !== 'setValue') {
+        window.dispatchEvent(
+          new CustomEvent('userChangedMarkup')
+        );
       }
     });
 
-    this.editor.on('cursorActivity', () => {
-      const cursorPosition = this.editor.getDoc().getCursor();
-      const index = this.editor.getDoc().indexFromPos(cursorPosition);
-
-      // an index of 0 is an indication that the event
-      // was fired by programmatic text insertion
-      if (index === 0) {
-        return;
+    this.editor.on('beforeSelectionChange', (instance, obj) => {
+      if (obj.origin !== undefined) {
+        obj.update(obj.ranges);
+        const cursorPosition = obj.ranges[0].anchor;
+        const index = this.document.indexFromPos(cursorPosition);
+        window.dispatchEvent(
+          new CustomEvent('userChangedEditorSelection', { detail: index })
+        );
       }
+    });
+  },
+
+  bindCustomEvents(func) {
+    window.addEventListener('userChangedMarkup', event => {
+      console.log('user changed markup');
 
       func({
         source: this.name,
-        type: 'cursorSelect',
-        index: index,
+        type: 'userChangedMarkup',
+        value: this.editor.getValue(),
+      });
+    });
+
+    window.addEventListener('userChangedEditorSelection', event => {
+      console.log('user changed selection');
+
+      func({
+        source: this.name,
+        type: 'userChangedEditorSelection',
+        index: event.detail,
       });
     });
   },
 
   react(state) {
-    const currentSyntaxTree = state.syntaxTree;
-    const previousSyntaxTree = this.previousSyntaxTree;
-
-    if (['penMode', 'selectMode'].includes(state.label) && !this.editor.hasFocus()) {
-      this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
-
-      const node = state.syntaxTree.findNodeByClassName('selected');
-
-      if (node) {
-        const range = [node.start, node.end];
-
-        console.log(range); // FINE
-
-        // TODO: we need an array containing two codemirror position objects
-
-        this.textMarker = this.editor.getDoc().markText(...range, { className: 'mark' });
-      }
-
-      this.previousSyntaxTree = state.syntaxTree;
+    // clear text marker
+    if (this.textMarker) {
+      this.textMarker.clear();
     }
-  },
 
-  // TODO
-  reconcile(oldANode, newANode, value) {},
+    // update document value
+    if (this.previousSyntaxTree.toMarkup() !== state.syntaxTree.toMarkup()) {
+      this.ignoreCursor = true;
+      const cursor = this.document.getCursor();
+      this.document.setValue(state.syntaxTree.toMarkup());
+      this.document.setCursor(cursor);
+      this.ignoreCursor = false;
+    }
+
+    // set text marker
+    const node = state.syntaxTree.findNodeByClassName('selected');
+    if (node) {
+      const from = this.editor.doc.posFromIndex(node.start);
+      const to = this.editor.doc.posFromIndex(node.end + 1);
+      const range = [from, to];
+      this.textMarker = this.document.markText(
+        ...range, { className: 'selected-markup' }
+      );
+    }
+
+    // store syntax tree received
+    this.previousSyntaxTree = state.syntaxTree;
+  },
 };
 
 export { editor };
+
+// const anchor = this.document.getCursor('anchor');
+// const head = this.document.getCursor('head');
+// this.document.setSelection(anchor, head);

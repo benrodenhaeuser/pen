@@ -23,6 +23,7 @@ const canvas = Object.assign(Object.create(UIModule), {
     for (let eventType of mouseEvents) {
       this.mountPoint.addEventListener(eventType, event => {
         if (this.clickLike(event) && event.detail > 1) {
+          event.stopPropagation();
           return;
         }
 

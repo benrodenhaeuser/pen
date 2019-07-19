@@ -240,13 +240,13 @@ const transitions = [
 
   // process editor input (=> from editor module)
   {
-    type: 'markupChange',
-    do: 'changeMarkup',
+    type: 'userChangedMarkup',
+    do: 'userChangedMarkup',
   },
 
   {
-    type: 'cursorSelect',
-    do: 'selectFromEditor',
+    type: 'userChangedEditorSelection',
+    do: 'userChangedEditorSelection',
   },
 
   // MISCELLANEOUS

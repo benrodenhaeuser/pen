@@ -84,10 +84,6 @@ textarea:focus {
   display: inline;
 }
 
-.mark {
-  background-color: yellow;
-}
-
 #message {
   position: absolute;
   right: 10px;

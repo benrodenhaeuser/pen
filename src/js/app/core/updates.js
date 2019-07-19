@@ -1,6 +1,6 @@
 import { Scene, Shape, Group } from './domain.js';
 import { Spline, Segment, Anchor } from './domain.js';
-import { HandleIn, HandleOut } from './domain.js'; 
+import { HandleIn, HandleOut } from './domain.js';
 import { Identifier, Doc } from './domain.js';
 import { Vector } from './domain.js';
 import { Matrix } from './domain.js';
@@ -10,7 +10,7 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 
 const updates = {
   after(state, input) {
-    if (input.type !== 'markupChange') {
+    if (input.source === 'canvas') {
       // => from canvas to editor: derive syntax tree from scene
       state.syntaxTree = state.sceneToSyntaxTree();
     }
@@ -346,25 +346,7 @@ const updates = {
 
   // EDITOR
 
-  // "editor to scenegraph"
-  changeMarkup(state, input) {
-    const $svg = state.markupToDOM(input.value);
-
-    if ($svg) {
-      const syntaxTree = state.domToSyntaxTree($svg);
-      syntaxTree.indexify();
-
-      state.syntaxTree = syntaxTree;
-      state.store.scene.replaceWith(state.domToScene($svg));
-    } else {
-      const scene = Scene.create();
-      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-      state.store.scene.replaceWith(scene);
-      // TODO: at this point, editor and scene are potentially out of sync.
-    }
-  },
-
-  selectFromEditor(state, input) {
+  userChangedEditorSelection(state, input) {
     this.cleanup(state, input);
 
     let syntaxTreeNode;
@@ -383,6 +365,25 @@ const updates = {
     }
 
     state.label = 'selectMode';
+  },
+
+  // "editor to scenegraph"
+  userChangedMarkup(state, input) {
+    const $svg = state.markupToDOM(input.value);
+
+    if ($svg) {
+      const syntaxTree = state.domToSyntaxTree($svg);
+      syntaxTree.indexify();
+
+      state.syntaxTree = syntaxTree;
+      state.store.scene.replaceWith(state.domToScene($svg));
+    } else {
+      console.log('cannot update scenegraph and syntaxtree');
+      // TODO
+      // at this point, scenegraph and syntax tree are in sync
+      // but they don't reflect the current markup
+      // they reflect the most recent non-faulty markup
+    }
   },
 };
 

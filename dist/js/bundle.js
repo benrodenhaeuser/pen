@@ -926,6 +926,7 @@
     }
 
     open.key = this.key;
+    open.class = this.class;
 
     const close = SyntaxTree.create();
     close.markup = '</g>';
@@ -4801,22 +4802,20 @@
 
   const domToSyntaxTree = $svg => {
     if ($svg instanceof SVGElement) {
-      const pNode = SyntaxTree.create();
-      return buildTree$2($svg, pNode);
+      const node = SyntaxTree.create();
+      return buildTree$2($svg, node);
     } else {
       return null;
     }
   };
 
-  const buildTree$2 = ($node, pNode) => {
+  const buildTree$2 = ($node, node) => {
     if ($node.nodeName === '#text') {
       const tNode = SyntaxTree.create();
       tNode.markup = $node.nodeValue;
-      pNode.children.push(tNode);
+      node.children.push(tNode);
     } else {
-      let openTag;
-
-      openTag = `<${$node.nodeName}`;
+      let openTag = `<${$node.nodeName}`;
       const attrs = [];
       for (let attr of $node.attributes) {
         attrs.push(`${attr.name}="${attr.value}"`);
@@ -4837,7 +4836,7 @@
       openNode.key = $node.key;
       closeNode.key = $node.key;
 
-      pNode.children.push(openNode);
+      node.children.push(openNode);
 
       if ($node.childNodes.length > 0) {
         const innerNode = SyntaxTree.create();
@@ -4846,19 +4845,19 @@
           buildTree$2($child, innerNode);
         }
 
-        pNode.children.push(innerNode);
+        node.children.push(innerNode);
       }
 
-      pNode.children.push(closeNode);
+      node.children.push(closeNode);
 
-      return pNode;
+      return node;
     }
 
     for (let $child of $node.childNodes) {
-      pNode.children.push(buildTree$2($child));
+      node.children.push(buildTree$2($child));
     }
 
-    return pNode;
+    return node;
   };
 
   const sceneToSyntaxTree = scene => {
@@ -5536,7 +5535,7 @@
 
   const updates = {
     after(state, input) {
-      if (input.type !== 'markupChange') {
+      if (input.source === 'canvas') {
         // => from canvas to editor: derive syntax tree from scene
         state.syntaxTree = state.sceneToSyntaxTree();
       }
@@ -5872,25 +5871,7 @@
 
     // EDITOR
 
-    // "editor to scenegraph"
-    changeMarkup(state, input) {
-      const $svg = state.markupToDOM(input.value);
-
-      if ($svg) {
-        const syntaxTree = state.domToSyntaxTree($svg);
-        syntaxTree.indexify();
-
-        state.syntaxTree = syntaxTree;
-        state.store.scene.replaceWith(state.domToScene($svg));
-      } else {
-        const scene = Scene.create();
-        scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-        state.store.scene.replaceWith(scene);
-        // TODO: at this point, editor and scene are potentially out of sync.
-      }
-    },
-
-    selectFromEditor(state, input) {
+    userChangedEditorSelection(state, input) {
       this.cleanup(state, input);
 
       let syntaxTreeNode;
@@ -5909,6 +5890,25 @@
       }
 
       state.label = 'selectMode';
+    },
+
+    // "editor to scenegraph"
+    userChangedMarkup(state, input) {
+      const $svg = state.markupToDOM(input.value);
+
+      if ($svg) {
+        const syntaxTree = state.domToSyntaxTree($svg);
+        syntaxTree.indexify();
+
+        state.syntaxTree = syntaxTree;
+        state.store.scene.replaceWith(state.domToScene($svg));
+      } else {
+        console.log('cannot update scenegraph and syntaxtree');
+        // TODO
+        // at this point, scenegraph and syntax tree are in sync
+        // but they don't reflect the current markup
+        // they reflect the most recent non-faulty markup
+      }
     },
   };
 
@@ -6154,13 +6154,13 @@
 
     // process editor input (=> from editor module)
     {
-      type: 'markupChange',
-      do: 'changeMarkup',
+      type: 'userChangedMarkup',
+      do: 'userChangedMarkup',
     },
 
     {
-      type: 'cursorSelect',
-      do: 'selectFromEditor',
+      type: 'userChangedEditorSelection',
+      do: 'userChangedEditorSelection',
     },
 
     // MISCELLANEOUS
@@ -6228,6 +6228,8 @@
     },
 
     compute(input) {
+      console.log(input);
+
       this.state.input = input;
 
       const transition = transitions.get(this.state, input);
@@ -6484,6 +6486,7 @@
       for (let eventType of mouseEvents) {
         this.mountPoint.addEventListener(eventType, event => {
           if (this.clickLike(event) && event.detail > 1) {
+            event.stopPropagation();
             return;
           }
 
@@ -16642,73 +16645,94 @@
         mode: 'xml',
         value: state.syntaxTree.toMarkup(),
       });
-
+      this.document = this.editor.getDoc();
       this.previousSyntaxTree = state.syntaxTree;
 
       return this;
     },
 
     bindEvents(func) {
-      this.editor.on('focus', () => {
-        // if (this.textMarker) {
-        //   this.textMarker.clear();
-        // }
-      });
+      this.bindCodemirrorEvents();
+      this.bindCustomEvents(func);
+    },
 
-      this.editor.on('change', () => {
-        if (this.editor.hasFocus()) {
-          func({
-            source: this.name,
-            type: 'markupChange',
-            value: this.editor.getValue(),
-          });
+    bindCodemirrorEvents() {
+      this.editor.on('change', (instance, changeObj) => {
+        if (changeObj.origin !== 'setValue') {
+          window.dispatchEvent(
+            new CustomEvent('userChangedMarkup')
+          );
         }
       });
 
-      this.editor.on('cursorActivity', () => {
-        const cursorPosition = this.editor.getDoc().getCursor();
-        const index = this.editor.getDoc().indexFromPos(cursorPosition);
-
-        // an index of 0 is an indication that the event
-        // was fired by programmatic text insertion
-        if (index === 0) {
-          return;
+      this.editor.on('beforeSelectionChange', (instance, obj) => {
+        if (obj.origin !== undefined) {
+          obj.update(obj.ranges);
+          const cursorPosition = obj.ranges[0].anchor;
+          const index = this.document.indexFromPos(cursorPosition);
+          window.dispatchEvent(
+            new CustomEvent('userChangedEditorSelection', { detail: index })
+          );
         }
+      });
+    },
+
+    bindCustomEvents(func) {
+      window.addEventListener('userChangedMarkup', event => {
+        console.log('user changed markup');
 
         func({
           source: this.name,
-          type: 'cursorSelect',
-          index: index,
+          type: 'userChangedMarkup',
+          value: this.editor.getValue(),
+        });
+      });
+
+      window.addEventListener('userChangedEditorSelection', event => {
+        console.log('user changed selection');
+
+        func({
+          source: this.name,
+          type: 'userChangedEditorSelection',
+          index: event.detail,
         });
       });
     },
 
     react(state) {
-      const currentSyntaxTree = state.syntaxTree;
-      const previousSyntaxTree = this.previousSyntaxTree;
-
-      if (['penMode', 'selectMode'].includes(state.label) && !this.editor.hasFocus()) {
-        this.editor.getDoc().setValue(state.syntaxTree.toMarkup());
-
-        const node = state.syntaxTree.findNodeByClassName('selected');
-
-        if (node) {
-          const range = [node.start, node.end];
-
-          console.log(range); // FINE
-
-          // TODO: we need an array containing two codemirror position objects
-
-          this.textMarker = this.editor.getDoc().markText(...range, { className: 'mark' });
-        }
-
-        this.previousSyntaxTree = state.syntaxTree;
+      // clear text marker
+      if (this.textMarker) {
+        this.textMarker.clear();
       }
-    },
 
-    // TODO
-    reconcile(oldANode, newANode, value) {},
+      // update document value
+      if (this.previousSyntaxTree.toMarkup() !== state.syntaxTree.toMarkup()) {
+        this.ignoreCursor = true;
+        const cursor = this.document.getCursor();
+        this.document.setValue(state.syntaxTree.toMarkup());
+        this.document.setCursor(cursor);
+        this.ignoreCursor = false;
+      }
+
+      // set text marker
+      const node = state.syntaxTree.findNodeByClassName('selected');
+      if (node) {
+        const from = this.editor.doc.posFromIndex(node.start);
+        const to = this.editor.doc.posFromIndex(node.end + 1);
+        const range = [from, to];
+        this.textMarker = this.document.markText(
+          ...range, { className: 'selected-markup' }
+        );
+      }
+
+      // store syntax tree received
+      this.previousSyntaxTree = state.syntaxTree;
+    },
   };
+
+  // const anchor = this.document.getCursor('anchor');
+  // const head = this.document.getCursor('head');
+  // this.document.setSelection(anchor, head);
 
   const tools$1 = Object.assign(Object.create(UIModule), {
     init(state) {
