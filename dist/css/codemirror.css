@@ -150,7 +150,9 @@
 }
 
 
-.cm-s-default .cm-error {color: #f00;}
+.cm-s-default .cm-error {
+  color: #f00;
+}
 .cm-invalidchar {color: #f00;}
 
 .CodeMirror-composing { border-bottom: 2px solid; }

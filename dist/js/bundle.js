@@ -5545,16 +5545,7 @@
       this.aux = {};
     },
 
-    exitEdit(state, input) {
-      if (state.label === 'penMode') {
-        const target = state.scene.editing;
-        this.cleanup(state, input);
-        target.select();
-        state.label = 'selectMode';
-      } else if (state.label === 'selectMode') {
-        this.cleanup(state, input);
-      }
-    },
+    // SELECTION
 
     select(state, input) {
       const target = state.scene.findDescendantByKey(input.key);
@@ -5566,18 +5557,6 @@
       } else {
         state.scene.deselectAll();
       }
-    },
-
-    release(state, input) {
-      const current = state.scene.selected || state.scene.editing;
-
-      if (current) {
-        for (let ancestor of current.ancestors) {
-          ancestor.updateBounds();
-        }
-      }
-
-      this.aux = {};
     },
 
     deepSelect(state, input) {
@@ -5598,7 +5577,7 @@
 
         if (toSelect) {
           toSelect.select();
-          state.scene.setFrontier();
+          state.scene.setFrontier();  // TODO: why do we need to do this?
           state.scene.unfocusAll();
         }
       }
@@ -5618,6 +5597,18 @@
           toFocus.focus();
         }
       }
+    },
+
+    release(state, input) {
+      const current = state.scene.selected || state.scene.editing;
+
+      if (current) {
+        for (let ancestor of current.ancestors) {
+          ancestor.updateBounds();
+        }
+      }
+
+      this.aux = {};
     },
 
     cleanup(state, event) {
@@ -5640,6 +5631,20 @@
 
       this.aux = {};
     },
+
+    // triggered by escape key
+    exitEdit(state, input) {
+      if (state.label === 'penMode') {
+        const target = state.scene.editing;
+        this.cleanup(state, input);
+        target.select();
+        state.label = 'selectMode';
+      } else if (state.label === 'selectMode') {
+        this.cleanup(state, input);
+      }
+    },
+
+    // TRANSFORMS
 
     initTransform(state, input) {
       const node = state.scene.selected;
@@ -5696,6 +5701,8 @@
 
       this.aux.from = to;
     },
+
+    // PEN
 
     addSegment(state, input) {
       let shape;
@@ -5777,6 +5784,7 @@
       this.aux.from = to;
     },
 
+    // find point on curve
     projectInput(state, input) {
       const startSegment = state.scene.findDescendantByKey(input.key);
       const spline = startSegment.parent;
@@ -5834,6 +5842,8 @@
       shape.splitter = Vector.create(-1000, -1000);
     },
 
+    // DOCUMENT MANAGEMENT
+
     createDoc(state, input) {
       state.store.doc.replaceWith(state.buildDoc());
     },
@@ -5848,14 +5858,6 @@
       }
     },
 
-    setSavedMessage(state, input) {
-      state.store.message.payload.text = 'Saved';
-    },
-
-    wipeMessage(state, input) {
-      state.store.message.payload.text = '';
-    },
-
     getPrevious(state, input) {
       window.history.back(); // TODO: shouldn't we do this inside of hist?
     },
@@ -5868,6 +5870,8 @@
       state.store.scene.replaceWith(state.objectToDoc(input.data.doc));
       this.cleanup(state, input);
     },
+
+    // MESSAGES
 
     // EDITOR
 
