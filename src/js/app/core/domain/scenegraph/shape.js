@@ -10,7 +10,7 @@ Shape.toVDOMNode = function() {
     tag: 'path',
     children: [],
     props: {
-      'data-type': 'content',
+      'data-type': 'shape',
       'data-key': this.key,
       d: this.pathString(),
       transform: this.transform.toString(),

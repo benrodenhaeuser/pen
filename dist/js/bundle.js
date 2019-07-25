@@ -361,6 +361,14 @@
       return this.class.includes('selected');
     },
 
+    isInFocus() {
+      return this.class.includes('focus');
+    },
+
+    isAtFrontier() {
+      return this.class.includes('frontier');
+    },
+
     // hierarchy (getters)
     get root() {
       return this.findAncestor(node => node.parent === null);
@@ -852,7 +860,7 @@
       children: [],
       props: {
         'data-key': this.key,
-        'data-type': 'content',
+        'data-type': 'scene',
         viewBox: this.viewBox.toString(),
         xmlns: 'http://www.w3.org/2000/svg',
         class: this.class.toString(),
@@ -895,7 +903,7 @@
       children: [],
       props: {
         'data-key': this.key,
-        'data-type': 'content',
+        'data-type': 'group',
         transform: this.transform.toString(),
         class: this.class.toString(),
       },
@@ -946,7 +954,7 @@
       tag: 'path',
       children: [],
       props: {
-        'data-type': 'content',
+        'data-type': 'shape',
         'data-key': this.key,
         d: this.pathString(),
         transform: this.transform.toString(),
@@ -5534,6 +5542,10 @@
   };
 
   const updates = {
+    init() {
+      this.aux = {};
+    },
+
     after(state, input) {
       if (input.source === 'canvas') {
         // => from canvas to editor: derive syntax tree from scene
@@ -5541,47 +5553,7 @@
       }
     },
 
-    init() {
-      this.aux = {};
-    },
-
     // SELECTION
-
-    select(state, input) {
-      const target = state.scene.findDescendantByKey(input.key);
-      const node = target && target.findAncestorByClass('frontier');
-
-      if (node) {
-        node.select();
-        this.initTransform(state, input);
-      } else {
-        state.scene.deselectAll();
-      }
-    },
-
-    deepSelect(state, input) {
-      const target = state.scene.findDescendantByKey(input.key);
-
-      if (!target) {
-        return;
-      }
-
-      if (target.isSelected()) {
-        target.edit();
-        state.scene.unfocusAll();
-        state.label = 'penMode';
-      } else {
-        const toSelect = target.findAncestor(node => {
-          return node.parent && node.parent.class.includes('frontier');
-        });
-
-        if (toSelect) {
-          toSelect.select();
-          state.scene.setFrontier();  // TODO: why do we need to do this?
-          state.scene.unfocusAll();
-        }
-      }
-    },
 
     focus(state, input) {
       state.scene.unfocusAll();
@@ -5595,6 +5567,47 @@
 
         if (toFocus && toFocus.contains(hit)) {
           toFocus.focus();
+        }
+      }
+    },
+
+    select(state, input) {
+      const node = state.scene.findDescendantByClass('focus');
+
+      if (node) {
+        node.select();
+        this.initTransform(state, input);
+      } else {
+        state.scene.deselectAll();
+      }
+    },
+
+    deepSelect(state, input) {
+      // alternative:
+      // - find focus node
+      // - find target by input.key
+      // - the thing to select is the child of focus node on chain towards target node
+      // - if target node is focus node, then switch to editing
+
+      const target = state.scene.findDescendantByKey(input.key);
+
+      if (!target) {
+        return;
+      }
+
+      if (target.isAtFrontier()) {
+        target.edit();
+        state.scene.unfocusAll();
+        state.label = 'penMode';
+      } else { // select in group
+        const toSelect = target.findAncestor(node => {
+          return node.parent && node.parent.class.includes('frontier');
+        });
+
+        if (toSelect) {
+          toSelect.select();
+          state.scene.setFrontier();  // TODO: why do we need to do this?
+          state.scene.unfocusAll();
         }
       }
     },
@@ -5873,6 +5886,14 @@
 
     // MESSAGES
 
+    setSavedMessage(state, input) {
+      state.store.message.payload.text = 'Saved';
+    },
+
+    wipeMessage(state, input) {
+      state.store.message.payload.text = '';
+    },
+
     // EDITOR
 
     userChangedEditorSelection(state, input) {
@@ -5916,7 +5937,7 @@
     },
   };
 
-  // NOTE: 'type' is mandatory. 'from', 'target', 'to' and `do` are optional
+  // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
   const transitions = [
     // KICKOFF
@@ -5997,7 +6018,7 @@
     {
       from: 'selectMode',
       type: 'dblclick',
-      target: 'content',
+      target: ['shape', 'group', 'scene'],
       do: 'deepSelect',
     },
 
@@ -6005,7 +6026,7 @@
     {
       from: 'selectMode',
       type: 'mousedown',
-      target: 'content',
+      target: ['shape', 'group', 'scene'],
       do: 'select',
       to: 'shifting',
     },
@@ -6079,7 +6100,7 @@
     {
       from: 'penMode',
       type: 'mousedown',
-      target: 'content',
+      target: ['shape', 'group', 'scene'],
       do: 'addSegment',
       to: 'settingHandles',
     },
@@ -6202,7 +6223,10 @@
 
       const stateMatch = from === state.label || from === undefined;
       const typeMatch = type === input.type;
-      const targetMatch = target === input.target || target === undefined;
+      // const targetMatch = target === input.target || target === undefined;
+
+      const targetMatch = Array.isArray(target) && target.includes(input.target) ||
+        typeof target === 'string' && target === input.target || target === undefined;
 
       return stateMatch && typeMatch && targetMatch;
     };

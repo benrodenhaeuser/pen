@@ -1,4 +1,4 @@
-// NOTE: 'type' is mandatory. 'from', 'target', 'to' and `do` are optional
+// NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
 const transitions = [
   // KICKOFF
@@ -79,7 +79,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'dblclick',
-    target: 'content',
+    target: ['shape', 'group', 'scene'],
     do: 'deepSelect',
   },
 
@@ -87,7 +87,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'mousedown',
-    target: 'content',
+    target: ['shape', 'group', 'scene'],
     do: 'select',
     to: 'shifting',
   },
@@ -161,7 +161,7 @@ const transitions = [
   {
     from: 'penMode',
     type: 'mousedown',
-    target: 'content',
+    target: ['shape', 'group', 'scene'],
     do: 'addSegment',
     to: 'settingHandles',
   },
@@ -284,7 +284,10 @@ transitions.get = function(state, input) {
 
     const stateMatch = from === state.label || from === undefined;
     const typeMatch = type === input.type;
-    const targetMatch = target === input.target || target === undefined;
+    // const targetMatch = target === input.target || target === undefined;
+
+    const targetMatch = Array.isArray(target) && target.includes(input.target) ||
+      typeof target === 'string' && target === input.target || target === undefined;
 
     return stateMatch && typeMatch && targetMatch;
   };

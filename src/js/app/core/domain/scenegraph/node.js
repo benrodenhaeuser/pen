@@ -58,6 +58,14 @@ const Node = {
     return this.class.includes('selected');
   },
 
+  isInFocus() {
+    return this.class.includes('focus');
+  },
+
+  isAtFrontier() {
+    return this.class.includes('frontier');
+  },
+
   // hierarchy (getters)
   get root() {
     return this.findAncestor(node => node.parent === null);

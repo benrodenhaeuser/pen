@@ -9,6 +9,10 @@ import { Curve } from './domain.js';
 import { Bezier } from '/vendor/bezier/bezier.js';
 
 const updates = {
+  init() {
+    this.aux = {};
+  },
+
   after(state, input) {
     if (input.source === 'canvas') {
       // => from canvas to editor: derive syntax tree from scene
@@ -16,47 +20,7 @@ const updates = {
     }
   },
 
-  init() {
-    this.aux = {};
-  },
-
   // SELECTION
-
-  select(state, input) {
-    const target = state.scene.findDescendantByKey(input.key);
-    const node = target && target.findAncestorByClass('frontier');
-
-    if (node) {
-      node.select();
-      this.initTransform(state, input);
-    } else {
-      state.scene.deselectAll();
-    }
-  },
-
-  deepSelect(state, input) {
-    const target = state.scene.findDescendantByKey(input.key);
-
-    if (!target) {
-      return;
-    }
-
-    if (target.isSelected()) {
-      target.edit();
-      state.scene.unfocusAll();
-      state.label = 'penMode';
-    } else {
-      const toSelect = target.findAncestor(node => {
-        return node.parent && node.parent.class.includes('frontier');
-      });
-
-      if (toSelect) {
-        toSelect.select();
-        state.scene.setFrontier();  // TODO: why do we need to do this?
-        state.scene.unfocusAll();
-      }
-    }
-  },
 
   focus(state, input) {
     state.scene.unfocusAll();
@@ -70,6 +34,47 @@ const updates = {
 
       if (toFocus && toFocus.contains(hit)) {
         toFocus.focus();
+      }
+    }
+  },
+
+  select(state, input) {
+    const node = state.scene.findDescendantByClass('focus');
+
+    if (node) {
+      node.select();
+      this.initTransform(state, input);
+    } else {
+      state.scene.deselectAll();
+    }
+  },
+
+  deepSelect(state, input) {
+    // alternative:
+    // - find focus node
+    // - find target by input.key
+    // - the thing to select is the child of focus node on chain towards target node
+    // - if target node is focus node, then switch to editing
+
+    const target = state.scene.findDescendantByKey(input.key);
+
+    if (!target) {
+      return;
+    }
+
+    if (target.isAtFrontier()) {
+      target.edit();
+      state.scene.unfocusAll();
+      state.label = 'penMode';
+    } else { // select in group
+      const toSelect = target.findAncestor(node => {
+        return node.parent && node.parent.class.includes('frontier');
+      });
+
+      if (toSelect) {
+        toSelect.select();
+        state.scene.setFrontier();  // TODO: why do we need to do this?
+        state.scene.unfocusAll();
       }
     }
   },
@@ -347,6 +352,14 @@ const updates = {
   },
 
   // MESSAGES
+
+  setSavedMessage(state, input) {
+    state.store.message.payload.text = 'Saved';
+  },
+
+  wipeMessage(state, input) {
+    state.store.message.payload.text = '';
+  },
 
   // EDITOR
 

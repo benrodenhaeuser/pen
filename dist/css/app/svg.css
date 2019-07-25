@@ -122,7 +122,7 @@ line {
   pointer-events: none;
 }
 
-[data-type="content"] {
+[data-type="scene"], [data-type="shape"], [data-type="group"]  {
   pointer-events: bounding-box;
 }
 

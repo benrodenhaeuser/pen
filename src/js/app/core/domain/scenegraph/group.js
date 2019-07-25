@@ -11,7 +11,7 @@ Group.toVDOMNode = function() {
     children: [],
     props: {
       'data-key': this.key,
-      'data-type': 'content',
+      'data-type': 'group',
       transform: this.transform.toString(),
       class: this.class.toString(),
     },
