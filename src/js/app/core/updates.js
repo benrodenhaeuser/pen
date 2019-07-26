@@ -54,7 +54,7 @@ const updates = {
     // - find focus node
     // - find target by input.key
     // - the thing to select is the child of focus node on chain towards target node
-    // - if target node is focus node, then switch to editing
+    // - if target node equals focus node, then switch to editing
 
     const target = state.scene.findDescendantByKey(input.key);
 
@@ -62,7 +62,7 @@ const updates = {
       return;
     }
 
-    if (target.isAtFrontier()) {
+    if (target.isAtFrontier()) { // select in shape => TODO: selection mechanism
       target.edit();
       state.scene.unfocusAll();
       state.label = 'penMode';

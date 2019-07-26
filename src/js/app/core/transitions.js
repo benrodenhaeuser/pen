@@ -75,7 +75,7 @@ const transitions = [
     do: 'focus',
   },
 
-  // open a group
+  // open a group or shape
   {
     from: 'selectMode',
     type: 'dblclick',

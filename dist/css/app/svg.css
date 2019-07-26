@@ -126,10 +126,6 @@ line {
   pointer-events: bounding-box;
 }
 
-/* [data-type="content"].editing {
-  pointer-events: none;
-} */
-
 /* curve is the pointer target for curve splitting */
 .editing ~ [data-type="curves"] > [data-type="curve"] {
   pointer-events: stroke;
