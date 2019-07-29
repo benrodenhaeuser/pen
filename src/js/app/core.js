@@ -17,7 +17,7 @@ const core = {
   },
 
   compute(input) {
-    console.log(input);
+    // console.log(input);
 
     this.state.input = input;
 

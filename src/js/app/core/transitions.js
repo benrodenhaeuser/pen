@@ -186,7 +186,7 @@ const transitions = [
   {
     from: 'penMode',
     type: 'mousedown',
-    target: 'control',
+    target: 'control', // TODO: ['anchor', 'handleIn', 'handleOut']
     do: 'initEditSegment',
     to: 'editingSegment',
   },

@@ -38,6 +38,9 @@ line {
 }
 
 /* bezier curve controls (anchors and handles) */
+
+/* TODO: replace with rules for anchor, handleIn, handleOut */
+
 [data-type="control"] {
   stroke: #5DADE2;
   fill: #FFFFFF;
@@ -77,6 +80,11 @@ line {
   fill: white;
   stroke: #5DADE2;
 }
+
+[data-type="control"].pen {
+  stroke: red;
+}
+
 
 /* VISIBILITY */
 

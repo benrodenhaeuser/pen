@@ -5253,6 +5253,8 @@
   };
 
   const innerUI = node => {
+    const spline = node.children[0];
+
     const vInnerUI = h('g', {
       'data-type': 'innerUI',
       'data-key': node.key,
@@ -5322,6 +5324,7 @@
       r: diameter / 2,
       cx: controlNode.vector.x,
       cy: controlNode.vector.y,
+      class: controlNode.class.toString(), // add 'pen' to node that is being edited
     });
   };
 
@@ -5548,7 +5551,7 @@
 
     after(state, input) {
       if (input.source === 'canvas') {
-        // => from canvas to editor: derive syntax tree from scene
+        // => scenegraph to syntaxtree
         state.syntaxTree = state.sceneToSyntaxTree();
       }
     },
@@ -5557,9 +5560,7 @@
 
     focus(state, input) {
       state.scene.unfocusAll();
-
       const target = state.scene.findDescendantByKey(input.key);
-
       const hit = Vector.create(input.x, input.y);
 
       if (target) {
@@ -5583,18 +5584,13 @@
     },
 
     deepSelect(state, input) {
-      // alternative:
-      // - find focus node
-      // - find target by input.key
-      // - the thing to select is the child of focus node on chain towards target node
-      // - if target node equals focus node, then switch to editing
-
       const target = state.scene.findDescendantByKey(input.key);
 
       if (!target) {
         return;
       }
 
+      // TODO
       if (target.isAtFrontier()) { // select in shape => TODO: selection mechanism
         target.edit();
         state.scene.unfocusAll();
@@ -5612,6 +5608,7 @@
       }
     },
 
+    // TODO
     release(state, input) {
       const current = state.scene.selected || state.scene.editing;
 
@@ -5624,6 +5621,7 @@
       this.aux = {};
     },
 
+    // TODO
     cleanup(state, event) {
       const current = state.scene.editing;
 
@@ -5641,10 +5639,10 @@
 
       state.scene.deselectAll();
       state.scene.deeditAll();
-
       this.aux = {};
     },
 
+    // TODO
     // triggered by escape key
     exitEdit(state, input) {
       if (state.label === 'penMode') {
@@ -5717,6 +5715,7 @@
 
     // PEN
 
+    // TODO
     addSegment(state, input) {
       let shape;
       let spline;
@@ -5727,10 +5726,8 @@
       } else {
         shape = Shape.create();
         state.scene.append(shape);
-
         spline = Spline.create();
         shape.append(spline);
-
         shape.edit();
       }
 
@@ -5739,6 +5736,7 @@
 
       const anchor = Anchor.create();
       segment.append(anchor);
+      anchor.class = anchor.class.add('pen'); // PEN
 
       anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(
         shape
@@ -5917,7 +5915,7 @@
       state.label = 'selectMode';
     },
 
-    // "editor to scenegraph"
+    // => "syntaxtree to scenegraph"
     userChangedMarkup(state, input) {
       const $svg = state.markupToDOM(input.value);
 
@@ -5929,10 +5927,6 @@
         state.store.scene.replaceWith(state.domToScene($svg));
       } else {
         console.log('cannot update scenegraph and syntaxtree');
-        // TODO
-        // at this point, scenegraph and syntax tree are in sync
-        // but they don't reflect the current markup
-        // they reflect the most recent non-faulty markup
       }
     },
   };
@@ -6125,7 +6119,7 @@
     {
       from: 'penMode',
       type: 'mousedown',
-      target: 'control',
+      target: 'control', // TODO: ['anchor', 'handleIn', 'handleOut']
       do: 'initEditSegment',
       to: 'editingSegment',
     },
@@ -6256,7 +6250,7 @@
     },
 
     compute(input) {
-      console.log(input);
+      // console.log(input);
 
       this.state.input = input;
 

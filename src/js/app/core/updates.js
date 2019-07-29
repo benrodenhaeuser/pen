@@ -15,7 +15,7 @@ const updates = {
 
   after(state, input) {
     if (input.source === 'canvas') {
-      // => from canvas to editor: derive syntax tree from scene
+      // => scenegraph to syntaxtree
       state.syntaxTree = state.sceneToSyntaxTree();
     }
   },
@@ -24,9 +24,7 @@ const updates = {
 
   focus(state, input) {
     state.scene.unfocusAll();
-
     const target = state.scene.findDescendantByKey(input.key);
-
     const hit = Vector.create(input.x, input.y);
 
     if (target) {
@@ -50,18 +48,13 @@ const updates = {
   },
 
   deepSelect(state, input) {
-    // alternative:
-    // - find focus node
-    // - find target by input.key
-    // - the thing to select is the child of focus node on chain towards target node
-    // - if target node equals focus node, then switch to editing
-
     const target = state.scene.findDescendantByKey(input.key);
 
     if (!target) {
       return;
     }
 
+    // TODO
     if (target.isAtFrontier()) { // select in shape => TODO: selection mechanism
       target.edit();
       state.scene.unfocusAll();
@@ -79,6 +72,7 @@ const updates = {
     }
   },
 
+  // TODO
   release(state, input) {
     const current = state.scene.selected || state.scene.editing;
 
@@ -91,6 +85,7 @@ const updates = {
     this.aux = {};
   },
 
+  // TODO
   cleanup(state, event) {
     const current = state.scene.editing;
 
@@ -108,10 +103,10 @@ const updates = {
 
     state.scene.deselectAll();
     state.scene.deeditAll();
-
     this.aux = {};
   },
 
+  // TODO
   // triggered by escape key
   exitEdit(state, input) {
     if (state.label === 'penMode') {
@@ -184,6 +179,7 @@ const updates = {
 
   // PEN
 
+  // TODO
   addSegment(state, input) {
     let shape;
     let spline;
@@ -194,10 +190,8 @@ const updates = {
     } else {
       shape = Shape.create();
       state.scene.append(shape);
-
       spline = Spline.create();
       shape.append(spline);
-
       shape.edit();
     }
 
@@ -206,6 +200,7 @@ const updates = {
 
     const anchor = Anchor.create();
     segment.append(anchor);
+    anchor.class = anchor.class.add('pen'); // PEN
 
     anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(
       shape
@@ -384,7 +379,7 @@ const updates = {
     state.label = 'selectMode';
   },
 
-  // "editor to scenegraph"
+  // => "syntaxtree to scenegraph"
   userChangedMarkup(state, input) {
     const $svg = state.markupToDOM(input.value);
 
@@ -396,10 +391,6 @@ const updates = {
       state.store.scene.replaceWith(state.domToScene($svg));
     } else {
       console.log('cannot update scenegraph and syntaxtree');
-      // TODO
-      // at this point, scenegraph and syntax tree are in sync
-      // but they don't reflect the current markup
-      // they reflect the most recent non-faulty markup
     }
   },
 };

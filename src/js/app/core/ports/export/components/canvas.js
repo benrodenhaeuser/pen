@@ -194,6 +194,8 @@ const frame = node => {
 };
 
 const innerUI = node => {
+  const spline = node.children[0];
+
   const vInnerUI = h('g', {
     'data-type': 'innerUI',
     'data-key': node.key,
@@ -263,6 +265,7 @@ const control = (pathNode, controlNode, diameter) => {
     r: diameter / 2,
     cx: controlNode.vector.x,
     cy: controlNode.vector.y,
+    class: controlNode.class.toString(), // add 'pen' to node that is being edited
   });
 };
 
