@@ -410,36 +410,6 @@
       });
     },
 
-    // hierarchy
-
-    get root() {
-      return this.findAncestor(node => node.parent === null);
-    },
-
-    get leaves() {
-      return this.findDescendants(node => node.children.length === 0);
-    },
-
-    get ancestors() {
-      return this.findAncestors(node => true);
-    },
-
-    get properAncestors() {
-      return this.parent.findAncestors(node => true);
-    },
-
-    get descendants() {
-      return this.findDescendants(node => true);
-    },
-
-    get siblings() {
-      return this.parent.children.filter(node => node !== this);
-    },
-
-    get lastChild() {
-      return this.children[this.children.length - 1];
-    },
-
     // hierarchy operations
 
     append(node) {
@@ -456,14 +426,6 @@
     insertChild(node, index) {
       node.parent = this;
       this.children.splice(index, 0, node);
-    },
-
-    get class() {
-      return this.payload.class;
-    },
-
-    set class(value) {
-      this.payload.class = value;
     },
 
     // hierarchy tests
@@ -489,6 +451,59 @@
       return plain;
     },
   };
+
+  // Getters and setters
+
+  Object.defineProperty(Node, 'root', {
+    get() {
+      return this.findAncestor(node => node.parent === null);
+    },
+  });
+
+  Object.defineProperty(Node, 'leaves', {
+    get() {
+      return this.findDescendants(node => node.children.length === 0);
+    },
+  });
+
+  Object.defineProperty(Node, 'ancestors', {
+    get() {
+      return this.findAncestors(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'properAncestors', {
+    get() {
+      return this.parent.findAncestors(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'descendants', {
+    get() {
+      return this.findDescendants(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'siblings', {
+    get() {
+      return this.parent.children.filter(node => node !== this);
+    },
+  });
+
+  Object.defineProperty(Node, 'lastChild', {
+    get() {
+      return this.children[this.children.length - 1];
+    },
+  });
+
+  Object.defineProperty(Node, 'class', {
+    get() {
+      return this.payload.class;
+    },
+    set(value) {
+      this.payload.class = value;
+    },
+  });
 
   const Graphics = Object.create(Node);
 
