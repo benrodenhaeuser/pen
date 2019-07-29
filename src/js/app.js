@@ -1,10 +1,10 @@
 import { core } from './app/core.js';
-import { db } from './app/periphery/periphery.js';
-import { hist } from './app/periphery/periphery.js';
-import { canvas } from './app/periphery/periphery.js';
-import { editor } from './app/periphery/periphery.js';
-import { tools } from './app/periphery/periphery.js';
-import { message } from './app/periphery/periphery.js';
+import { db } from './app/periphery/dir.js';
+import { hist } from './app/periphery/dir.js';
+import { canvas } from './app/periphery/dir.js';
+import { editor } from './app/periphery/dir.js';
+import { tools } from './app/periphery/dir.js';
+import { message } from './app/periphery/dir.js';
 
 const modules = [canvas, editor, tools, message, hist, db];
 
@@ -22,4 +22,4 @@ const app = {
   },
 };
 
-document.addEventListener('DOMContentLoaded', app.init.bind(app));
+document.addEventListener('DOMContentLoaded', app.init);

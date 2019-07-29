@@ -1,8 +1,8 @@
 import { Node } from './node.js';
-import { Class } from '../helpers/helpers.js';
-import { Matrix } from '../geometry/geometry.js';
-import { Vector } from '../geometry/geometry.js';
-import { Rectangle } from '../geometry/geometry.js';
+import { Class } from '../helpers/dir.js';
+import { Matrix } from '../geometry/dir.js';
+import { Vector } from '../geometry/dir.js';
+import { Rectangle } from '../geometry/dir.js';
 
 const Graphics = Object.create(Node);
 

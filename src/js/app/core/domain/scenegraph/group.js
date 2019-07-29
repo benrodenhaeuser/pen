@@ -1,5 +1,5 @@
 import { Graphics } from './graphics.js';
-import { Matrix } from '../geometry/geometry.js';
+import { Matrix } from '../geometry/dir.js';
 import { SyntaxTree } from '../syntaxtree/syntaxtree.js';
 
 const Group = Object.create(Graphics);

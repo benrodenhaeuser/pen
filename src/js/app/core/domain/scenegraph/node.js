@@ -1,5 +1,5 @@
-import { Class } from '../helpers/helpers.js';
-import { createID } from '../helpers/helpers.js';
+import { Class } from '../helpers/dir.js';
+import { createID } from '../helpers/dir.js';
 
 const Node = {
   create() {

@@ -7,14 +7,13 @@ var rootImport = require('rollup-plugin-root-import');
 gulp.task('rollup', () => {
   return rollup.rollup({
     input: './src/js/app.js',
-    // suppress circular dependency warnings:
     onwarn: function(warning, rollupWarn) {
       if (warning.code !== 'CIRCULAR_DEPENDENCY') {
         rollupWarn(warning);
       }
     },
     plugins: [
-      // allow absolute paths (starting with `/`), will resolve to `src/js...`:
+      // allow absolute paths (starting with `/`), will resolve to `src/js`:
       rootImport({ root: `${__dirname}/src/js`, useEntry: 'prepend' }),
       resolve(),
       commonjs()

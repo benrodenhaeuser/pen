@@ -16898,7 +16898,7 @@
     },
   };
 
-  document.addEventListener('DOMContentLoaded', app.init.bind(app));
+  document.addEventListener('DOMContentLoaded', app.init);
 
 }());
 //# sourceMappingURL=bundle.js.map
