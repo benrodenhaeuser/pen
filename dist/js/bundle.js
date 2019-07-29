@@ -434,8 +434,7 @@
 
     toJSON() {
       const plain = {
-        key: this.key, // all Node instances have it
-        // _id: this._id, // only Doc instances have it
+        key: this.key,
         type: this.type,
         children: this.children,
         payload: this.payload,
