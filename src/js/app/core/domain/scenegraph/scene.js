@@ -1,7 +1,7 @@
-import { Node } from './node.js';
+import { Graphics } from './graphics.js';
 import { SyntaxTree } from '../syntaxtree.js';
 
-const Scene = Object.create(Node);
+const Scene = Object.create(Graphics);
 Scene.type = 'scene';
 
 const xmlns = 'http://www.w3.org/2000/svg';

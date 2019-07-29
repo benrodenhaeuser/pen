@@ -13,7 +13,6 @@ import {
   Doc,
   Docs,
   Message,
-  Text,
   Identifier,
 } from './domain/scenegraph.js';
 
@@ -38,7 +37,6 @@ export {
   Doc,
   Docs,
   Message,
-  Text,
   Identifier,
   Class,
   SyntaxTree,

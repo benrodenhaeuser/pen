@@ -1,9 +1,9 @@
-import { Node } from './node.js';
+import { Graphics } from './graphics.js';
 import { Segment } from './segment.js';
 import { Rectangle } from '../geometry.js';
 import { Curve } from '../geometry.js';
 
-const Spline = Object.create(Node);
+const Spline = Object.create(Graphics);
 Spline.type = 'spline';
 
 // generate array of curves given by a spline

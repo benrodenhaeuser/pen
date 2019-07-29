@@ -66,7 +66,7 @@ const updates = {
 
       if (toSelect) {
         toSelect.select();
-        state.scene.setFrontier();  // TODO: why do we need to do this?
+        state.scene.updateFrontier();  // TODO: why do we need to do this?
         state.scene.unfocusAll();
       }
     }
@@ -77,7 +77,7 @@ const updates = {
     const current = state.scene.selected || state.scene.editing;
 
     if (current) {
-      for (let ancestor of current.ancestors) {
+      for (let ancestor of current.graphicsAncestors) {
         ancestor.updateBounds();
       }
     }
@@ -95,8 +95,8 @@ const updates = {
         child.updateBounds();
       }
 
-      // update bounds of shape itself and its proper ancestors:
-      for (let ancestor of current.ancestors) {
+      // update bounds of shape and its containing groups:
+      for (let ancestor of current.graphicsAncestors) {
         ancestor.updateBounds();
       }
     }
@@ -320,16 +320,16 @@ const updates = {
   // DOCUMENT MANAGEMENT
 
   createDoc(state, input) {
-    state.store.doc.replaceWith(state.buildDoc());
+    state.doc.replaceWith(state.buildDoc());
   },
 
   updateDocList(state, input) {
-    state.store.docs.children = [];
+    state.docs.children = [];
 
     for (let id of input.data.docIDs) {
       const identNode = Identifier.create();
       identNode.payload._id = id;
-      state.store.docs.append(identNode);
+      state.docs.append(identNode);
     }
   },
 
@@ -342,18 +342,18 @@ const updates = {
   },
 
   switchDocument(state, input) {
-    state.store.scene.replaceWith(state.objectToDoc(input.data.doc));
+    state.scene.replaceWith(state.objectToDoc(input.data.doc));
     this.cleanup(state, input);
   },
 
   // MESSAGES
 
   setSavedMessage(state, input) {
-    state.store.message.payload.text = 'Saved';
+    state.message.payload.text = 'Saved';
   },
 
   wipeMessage(state, input) {
-    state.store.message.payload.text = '';
+    state.message.payload.text = '';
   },
 
   // EDITOR
@@ -367,7 +367,7 @@ const updates = {
     syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
     if (syntaxTreeNode) {
-      sceneGraphNode = state.store.scene.findDescendantByKey(
+      sceneGraphNode = state.scene.findDescendantByKey(
         syntaxTreeNode.key
       );
     }
@@ -388,7 +388,7 @@ const updates = {
       syntaxTree.indexify();
 
       state.syntaxTree = syntaxTree;
-      state.store.scene.replaceWith(state.domToScene($svg));
+      state.scene.replaceWith(state.domToScene($svg));
     } else {
       console.log('cannot update scenegraph and syntaxtree');
     }

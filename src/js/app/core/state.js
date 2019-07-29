@@ -51,11 +51,9 @@ const State = {
 
   buildDoc() {
     const doc = Doc.create();
-    const sceneGraph = Scene.create({
-      viewBox: Rectangle.createFromDimensions(0, 0, 600, 395),
-    });
-
-    doc.append(sceneGraph);
+    const scene = Scene.create();
+    scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+    doc.append(scene);
 
     return doc;
   },
@@ -64,16 +62,16 @@ const State = {
     return this.store.scene;
   },
 
-  get markup() {
-    return this.store.markup;
-  },
-
   get doc() {
     return this.store.doc;
   },
 
   get docs() {
     return this.store.docs;
+  },
+
+  get message() {
+    return this.store.message;
   },
 
   export() {

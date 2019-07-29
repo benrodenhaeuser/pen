@@ -1,8 +1,8 @@
-import { Node } from './node.js';
+import { Graphics } from './graphics.js';
 import { Matrix } from '../geometry.js';
 import { SyntaxTree } from '../syntaxtree.js';
 
-const Group = Object.create(Node);
+const Group = Object.create(Graphics);
 Group.type = 'group';
 
 Group.toVDOMNode = function() {

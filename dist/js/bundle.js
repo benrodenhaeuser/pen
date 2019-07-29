@@ -310,34 +310,27 @@
   };
 
   const Node = {
-    create(opts = {}) {
-      const node = Object.create(this).init(opts);
-
-      if (Object.getPrototypeOf(node) === Doc) {
-        node._id = createID(); // NOTE: docs have an _id
-      }
-
-      return node;
+    create() {
+      return Object
+        .create(this)
+        .setType()
+        .set(this.nodeDefaults());
     },
 
-    init(opts) {
-      this.set(this.defaults());
-      this.set(opts);
-
+    // set type as an own property of the instance created
+    setType() {
+      this.type = Object.getPrototypeOf(this).type;
       return this;
     },
 
-    defaults() {
+    nodeDefaults() {
       return {
-        key: createID(), // all nodes have a key
+        key: createID(),
         children: [],
         parent: null,
         payload: {
-          transform: Matrix.identity(),
           class: Class.create(),
-          bounds: null,
         },
-        splitter: Vector.create(-1000, -1000), // off-canvas, far away
       };
     },
 
@@ -345,9 +338,9 @@
       for (let key of Object.keys(opts)) {
         this[key] = opts[key];
       }
-    },
 
-    // hierarchy (predicates)
+      return this;
+    },
 
     isLeaf() {
       return this.children.length === 0;
@@ -357,182 +350,6 @@
       return this.parent === null;
     },
 
-    isSelected() {
-      return this.class.includes('selected');
-    },
-
-    isInFocus() {
-      return this.class.includes('focus');
-    },
-
-    isAtFrontier() {
-      return this.class.includes('frontier');
-    },
-
-    // hierarchy (getters)
-    get root() {
-      return this.findAncestor(node => node.parent === null);
-    },
-
-    get store() {
-      return this.findAncestor(node => node.type === 'store');
-    },
-
-    get message() {
-      return this.root.findDescendant(node => node.type === 'message');
-    },
-
-    get scene() {
-      return this.root.findDescendant(node => node.type === 'scene');
-    },
-
-    get docs() {
-      return this.root.findDescendant(node => node.type === 'docs');
-    },
-
-    get doc() {
-      return this.root.findDescendant(node => node.type === 'doc');
-    },
-
-    get markup() {
-      return this.root.findDescendant(node => node.type === 'markup');
-    },
-
-    get leaves() {
-      return this.findDescendants(node => node.children.length === 0);
-    },
-
-    get ancestors() {
-      return this.findAncestors(node => true);
-    },
-
-    get properAncestors() {
-      return this.parent.findAncestors(node => true);
-    },
-
-    get descendants() {
-      return this.findDescendants(node => true);
-    },
-
-    get siblings() {
-      return this.parent.children.filter(node => node !== this);
-    },
-
-    get graphicsChildren() {
-      return this.children.filter(node => ['group', 'shape'].includes(node.type));
-    },
-
-    get selected() {
-      return this.scene.findDescendant(node => {
-        return node.class.includes('selected');
-      });
-    },
-
-    get editing() {
-      return this.scene.findDescendant(node => {
-        return node.class.includes('editing');
-      });
-    },
-
-    get frontier() {
-      return this.scene.findDescendants(node => {
-        return node.class.includes('frontier');
-      });
-    },
-
-    get lastChild() {
-      return this.children[this.children.length - 1];
-    },
-
-    // payload (getters/setters)
-
-    get transform() {
-      return this.payload.transform;
-    },
-
-    set transform(value) {
-      this.payload.transform = value;
-    },
-
-    get class() {
-      return this.payload.class;
-    },
-
-    set class(value) {
-      this.payload.class = value;
-    },
-
-    get bounds() {
-      if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
-        return null;
-      }
-
-      if (this.payload.bounds) {
-        return this.payload.bounds;
-      }
-
-      return this.updateBounds();
-    },
-
-    updateBounds() {
-      const ignoredTypes = [
-        'store',
-        'doc',
-        'scene',
-        'segment',
-        'anchor',
-        'handleIn',
-        'handleOut',
-      ];
-
-      if (ignoredTypes.includes(this.type)) {
-        return;
-      }
-
-      const corners = [];
-      for (let child of this.children) {
-        for (let corner of child.bounds.corners) {
-          corners.push(corner.transform(child.transform));
-        }
-      }
-
-      const xValue = vector => vector.x;
-      const xValues = corners.map(xValue);
-      const yValue = vector => vector.y;
-      const yValues = corners.map(yValue);
-
-      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
-
-      const bounds = Rectangle.createFromMinMax(min, max);
-
-      this.payload.bounds = bounds;
-      return bounds;
-    },
-
-    set bounds(value) {
-      this.payload.bounds = value;
-    },
-
-    get viewBox() {
-      return this.payload.viewBox;
-    },
-
-    set viewBox(value) {
-      this.payload.viewBox = value;
-    },
-
-    get vector() {
-      return this.payload.vector;
-    },
-
-    set vector(value) {
-      this.payload.vector = value;
-    },
-
-    // traversal
-
-    // NOTE: a node is an ancestor of itself
     findAncestor(predicate) {
       if (predicate(this)) {
         return this;
@@ -543,7 +360,6 @@
       }
     },
 
-    // NOTE: a node is an ancestor of itself
     findAncestors(predicate, ancestors = []) {
       if (predicate(this)) {
         ancestors.push(this);
@@ -556,7 +372,6 @@
       }
     },
 
-    // NOTE: a node is a descendant of itself
     findDescendant(predicate) {
       if (predicate(this)) {
         return this;
@@ -572,7 +387,6 @@
       return null;
     },
 
-    // NOTE: a node is a descendant of itself
     findDescendants(predicate, descendants = []) {
       if (predicate(this)) {
         descendants.push(this);
@@ -603,8 +417,6 @@
       });
     },
 
-    // tree manipulation
-
     append(node) {
       this.children = this.children.concat([node]);
       node.parent = this;
@@ -621,17 +433,125 @@
       this.children.splice(index, 0, node);
     },
 
-    // hit testing: is a point within the bounding box of this shape?
+    toJSON() {
+      const plain = {
+        key: this.key, // all Node instances have it
+        _id: this._id, // only Doc instances have it
+        type: this.type,
+        children: this.children,
+        payload: this.payload,
+      };
 
-    contains(globalPoint) {
-      return globalPoint
-        .transform(this.globalTransform().invert())
-        .isWithin(this.bounds);
+      // // TODO: awkward special case for Doc node
+      // if (this._id) {
+      //   plain._id = this._id;
+      // }
+
+      return plain;
+    },
+  };
+
+  // GETTERS AND SETTERS
+
+  Object.defineProperty(Node, 'root', {
+    get() {
+      return this.findAncestor(node => node.parent === null);
+    },
+  });
+
+  Object.defineProperty(Node, 'leaves', {
+    get() {
+      return this.findDescendants(node => node.children.length === 0);
+    },
+  });
+
+  Object.defineProperty(Node, 'ancestors', {
+    get() {
+      return this.findAncestors(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'properAncestors', {
+    get() {
+      return this.parent.findAncestors(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'descendants', {
+    get() {
+      return this.findDescendants(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'siblings', {
+    get() {
+      return this.parent.children.filter(node => node !== this);
+    },
+  });
+
+  Object.defineProperty(Node, 'lastChild', {
+    get() {
+      return this.children[this.children.length - 1];
+    },
+  });
+
+  Object.defineProperty(Node, 'class', {
+    get() {
+      return this.payload.class;
+    },
+    set(value) {
+      this.payload.class = value;
+    },
+  });
+
+  const Graphics = Object.create(Node);
+
+  Object.assign(Graphics, {
+    create() {
+      return Node
+        .create.bind(this)()
+        .set(this.graphicsDefaults());
     },
 
-    // classes
+    graphicsDefaults() {
+      return {
+        payload: {
+          transform: Matrix.identity(),
+          class: Class.create(),
+          bounds: null,
+        },
+        splitter: Vector.create(-1000, -1000), // <= off-canvas, far away
+        // ^ TODO: this is in an odd place,
+      };
+    },
 
-    setFrontier() {
+    updateBounds() {
+      if (!['shape', 'group'].includes(this.type)) {
+        return;
+      }
+
+      const corners = [];
+      for (let child of this.children) {
+        for (let corner of child.bounds.corners) {
+          corners.push(corner.transform(child.transform));
+        }
+      }
+
+      const xValue = vector => vector.x;
+      const xValues = corners.map(xValue);
+      const yValue = vector => vector.y;
+      const yValues = corners.map(yValue);
+
+      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+      const bounds = Rectangle.createFromMinMax(min, max);
+
+      this.payload.bounds = bounds;
+      return bounds;
+    },
+
+    updateFrontier() {
       this.removeFrontier();
 
       if (this.selected && this.selected.type !== 'scene') {
@@ -644,7 +564,7 @@
             sibling.class = sibling.class.add('frontier');
           }
           node = node.parent;
-        } while (node.parent !== null);
+        } while (node.parent.type !== 'doc');
       } else {
         for (let child of this.scene.children) {
           child.class = child.class.add('frontier');
@@ -660,6 +580,26 @@
       for (let node of frontier) {
         node.class.remove('frontier');
       }
+    },
+
+    isSelected() {
+      return this.class.includes('selected');
+    },
+
+    isInFocus() {
+      return this.class.includes('focus');
+    },
+
+    isAtFrontier() {
+      return this.class.includes('frontier');
+    },
+
+    // new
+
+    contains(globalPoint) {
+      return globalPoint
+        .transform(this.globalTransform().invert())
+        .isWithin(this.bounds);
     },
 
     focus() {
@@ -679,12 +619,12 @@
     select() {
       this.deselectAll();
       this.class = this.class.add('selected');
-      this.setFrontier();
+      this.updateFrontier();
     },
 
     edit() {
       this.deselectAll();
-      this.setFrontier();
+      this.updateFrontier();
       this.class = this.class.add('editing');
     },
 
@@ -692,7 +632,7 @@
       if (this.selected) {
         this.selected.class.remove('selected');
       }
-      this.setFrontier();
+      this.updateFrontier();
     },
 
     deeditAll() {
@@ -700,8 +640,6 @@
         this.editing.class.remove('editing');
       }
     },
-
-    // transforms
 
     globalTransform() {
       return this.ancestorTransform().multiply(this.transform);
@@ -713,7 +651,9 @@
 
       // we use properAncestors, which does not include the current node:
       for (let ancestor of this.properAncestors.reverse()) {
-        matrix = matrix.multiply(ancestor.transform);
+        if (ancestor.transform) {
+          matrix = matrix.multiply(ancestor.transform);
+        }
       }
 
       return matrix;
@@ -743,25 +683,88 @@
 
       return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
     },
+  });
 
-    // string encoding
+  Object.defineProperty(Graphics, 'graphicsChildren', {
+    get() {
+      return this.children.filter(node => ['group', 'shape'].includes(node.type));
+    },
+  });
 
-    toJSON() {
-      const plain = {
-        key: this.key,
-        type: this.type,
-        children: this.children,
-        payload: this.payload,
-      };
+  Object.defineProperty(Graphics, 'graphicsAncestors', {
+    get() {
+      return this.ancestors.filter(node => ['scene', 'group', 'shape'].includes(node.type));
+    },
+  });
 
-      // TODO: awkward
-      if (this._id) {
-        plain._id = this._id;
+  Object.defineProperty(Graphics, 'selected', {
+    get() {
+      return this.scene.findDescendant(node => {
+        return node.class.includes('selected');
+      });
+    },
+  });
+
+  Object.defineProperty(Graphics, 'editing', {
+    get() {
+      return this.scene.findDescendant(node => {
+        return node.class.includes('editing');
+      });
+    },
+  });
+
+  Object.defineProperty(Graphics, 'frontier', {
+    get() {
+      return this.scene.findDescendants(node => {
+        return node.class.includes('frontier');
+      });
+    },
+  });
+
+  Object.defineProperty(Graphics, 'transform', {
+    get() {
+      return this.payload.transform;
+    },
+    set(value) {
+      this.payload.transform = value;
+    },
+  });
+
+
+  Object.defineProperty(Graphics, 'bounds', {
+    get() {
+      if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
+        return null;
       }
 
-      return plain;
+      if (this.payload.bounds) {
+        return this.payload.bounds;
+      }
+
+      return this.updateBounds();
     },
-  };
+    set(value) {
+      this.payload.bounds = value;
+    },
+  });
+
+  Object.defineProperty(Graphics, 'vector', {
+    get() {
+      return this.payload.vector;
+    },
+    set(value) {
+      this.payload.vector = value;
+    },
+  });
+
+  Object.defineProperty(Graphics, 'viewBox', {
+    get() {
+      return this.payload.viewBox;
+    },
+    set(value) {
+      this.payload.viewBox = value;
+    },
+  });
 
   const SyntaxTree = {
     create() {
@@ -849,7 +852,7 @@
     },
   };
 
-  const Scene = Object.create(Node);
+  const Scene = Object.create(Graphics);
   Scene.type = 'scene';
 
   const xmlns = 'http://www.w3.org/2000/svg';
@@ -894,7 +897,7 @@
     };
   };
 
-  const Group = Object.create(Node);
+  const Group = Object.create(Graphics);
   Group.type = 'group';
 
   Group.toVDOMNode = function() {
@@ -946,7 +949,7 @@
     };
   };
 
-  const Shape = Object.create(Node);
+  const Shape = Object.create(Graphics);
   Shape.type = 'shape';
 
   Shape.toVDOMNode = function() {
@@ -1070,27 +1073,16 @@
     return d;
   };
 
-  const Anchor = Object.create(Node);
-  const HandleIn = Object.create(Node);
-  const HandleOut = Object.create(Node);
-  const Doc = Object.create(Node);
-  const Docs = Object.create(Node); // TODO: get rid of this?
-  const Store = Object.create(Node); // TODO: get rid of this?
-  const Message = Object.create(Node); // TODO: get rid of this?
-  const Text = Object.create(Node); // TODO: get rid of this?
-  const Identifier$1 = Object.create(Node); // TODO: get rid of this?
-
+  const Anchor = Object.create(Graphics);
   Anchor.type = 'anchor';
-  HandleIn.type = 'handleIn';
-  HandleOut.type = 'handleOut';
-  Doc.type = 'doc';
-  Store.type = 'store';
-  Docs.type = 'docs';
-  Message.type = 'message';
-  Text.type = 'text';
-  Identifier$1.type = 'identifier';
 
-  const Segment = Object.create(Node);
+  const HandleIn = Object.create(Graphics);
+  HandleIn.type = 'handleIn';
+
+  const HandleOut = Object.create(Graphics);
+  HandleOut.type = 'handleOut';
+
+  const Segment = Object.create(Graphics);
   Segment.type = 'segment';
 
   // convenience API for getting/setting anchor and handle values of a segment
@@ -1167,7 +1159,7 @@
     },
   });
 
-  const Spline = Object.create(Node);
+  const Spline = Object.create(Graphics);
   Spline.type = 'spline';
 
   // generate array of curves given by a spline
@@ -1230,6 +1222,61 @@
     this.payload.bounds = bounds;
     return bounds;
   };
+
+  const Doc = Object.create(Node);
+  Doc.type = 'doc';
+
+  // Object.assign(Graphics, {
+  //   create() {
+  //     return Node
+  //       .create.bind(this)()
+  //       .set(this.graphicsDefaults());
+  //   },
+  // });
+
+  Object.assign(Doc, {
+    create() {
+      return Node
+        .create.bind(this)()
+        .set({ _id: createID() });
+    },
+  });
+
+  const Store = Object.create(Node);
+  Store.type = 'store';
+
+  Object.defineProperty(Node, 'message', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'message');
+    },
+  });
+
+  Object.defineProperty(Node, 'scene', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'scene');
+    },
+  });
+
+  Object.defineProperty(Node, 'docs', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'docs');
+    },
+  });
+
+  Object.defineProperty(Node, 'doc', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'doc');
+    },
+  });
+
+  const Docs = Object.create(Node);
+  Docs.type = 'docs';
+
+  const Message = Object.create(Node);
+  Message.type = 'message';
+
+  const Identifier$1 = Object.create(Node);
+  Identifier$1.type = 'identifier';
 
   /**
    * 2 Dimensional Vector
@@ -4425,6 +4472,7 @@
       switch (key) {
         case 'viewBox':
           node.viewBox = Rectangle.createFromObject(value);
+          console.log(node);
           break;
         case 'transform':
           node.transform = Matrix.create(value);
@@ -4456,7 +4504,7 @@
     if ($svg instanceof SVGElement) {
       const scene = Scene.create();
       buildTree($svg, scene);
-      scene.setFrontier();
+      scene.updateFrontier();
       return scene;
     } else {
       return null;
@@ -4642,9 +4690,10 @@
 
   const domToScene = $svg => {
     if ($svg instanceof SVGElement) {
-      const scene = Scene.create({ key: $svg.key });
+      const scene = Scene.create();
+      scene.key = $svg.key;
       buildTree$1($svg, scene);
-      scene.setFrontier();
+      scene.updateFrontier();
       return scene;
     } else {
       return null;
@@ -4664,7 +4713,8 @@
       let child;
 
       if ($child instanceof SVGGElement) {
-        child = Group.create({ key: $child.key });
+        child = Group.create();
+        child.key = $child.key;
         node.append(child);
         buildTree$1($child, child);
       } else {
@@ -4698,7 +4748,8 @@
   };
 
   const buildShapeTree$1 = $geometryNode => {
-    const shape = Shape.create({ key: $geometryNode.key });
+    const shape = Shape.create();
+    shape.key = $geometryNode.key;
 
     processAttributes$1($geometryNode, shape);
     // ^ TODO: we are also calling processAttributes further above, duplication!
@@ -5464,11 +5515,9 @@
 
     buildDoc() {
       const doc = Doc.create();
-      const sceneGraph = Scene.create({
-        viewBox: Rectangle.createFromDimensions(0, 0, 600, 395),
-      });
-
-      doc.append(sceneGraph);
+      const scene = Scene.create();
+      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+      doc.append(scene);
 
       return doc;
     },
@@ -5477,16 +5526,16 @@
       return this.store.scene;
     },
 
-    get markup() {
-      return this.store.markup;
-    },
-
     get doc() {
       return this.store.doc;
     },
 
     get docs() {
       return this.store.docs;
+    },
+
+    get message() {
+      return this.store.message;
     },
 
     export() {
@@ -5602,7 +5651,7 @@
 
         if (toSelect) {
           toSelect.select();
-          state.scene.setFrontier();  // TODO: why do we need to do this?
+          state.scene.updateFrontier();  // TODO: why do we need to do this?
           state.scene.unfocusAll();
         }
       }
@@ -5613,7 +5662,7 @@
       const current = state.scene.selected || state.scene.editing;
 
       if (current) {
-        for (let ancestor of current.ancestors) {
+        for (let ancestor of current.graphicsAncestors) {
           ancestor.updateBounds();
         }
       }
@@ -5631,8 +5680,8 @@
           child.updateBounds();
         }
 
-        // update bounds of shape itself and its proper ancestors:
-        for (let ancestor of current.ancestors) {
+        // update bounds of shape and its containing groups:
+        for (let ancestor of current.graphicsAncestors) {
           ancestor.updateBounds();
         }
       }
@@ -5856,16 +5905,16 @@
     // DOCUMENT MANAGEMENT
 
     createDoc(state, input) {
-      state.store.doc.replaceWith(state.buildDoc());
+      state.doc.replaceWith(state.buildDoc());
     },
 
     updateDocList(state, input) {
-      state.store.docs.children = [];
+      state.docs.children = [];
 
       for (let id of input.data.docIDs) {
         const identNode = Identifier$1.create();
         identNode.payload._id = id;
-        state.store.docs.append(identNode);
+        state.docs.append(identNode);
       }
     },
 
@@ -5878,18 +5927,18 @@
     },
 
     switchDocument(state, input) {
-      state.store.scene.replaceWith(state.objectToDoc(input.data.doc));
+      state.scene.replaceWith(state.objectToDoc(input.data.doc));
       this.cleanup(state, input);
     },
 
     // MESSAGES
 
     setSavedMessage(state, input) {
-      state.store.message.payload.text = 'Saved';
+      state.message.payload.text = 'Saved';
     },
 
     wipeMessage(state, input) {
-      state.store.message.payload.text = '';
+      state.message.payload.text = '';
     },
 
     // EDITOR
@@ -5903,7 +5952,7 @@
       syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
       if (syntaxTreeNode) {
-        sceneGraphNode = state.store.scene.findDescendantByKey(
+        sceneGraphNode = state.scene.findDescendantByKey(
           syntaxTreeNode.key
         );
       }
@@ -5924,7 +5973,7 @@
         syntaxTree.indexify();
 
         state.syntaxTree = syntaxTree;
-        state.store.scene.replaceWith(state.domToScene($svg));
+        state.scene.replaceWith(state.domToScene($svg));
       } else {
         console.log('cannot update scenegraph and syntaxtree');
       }
@@ -6250,7 +6299,7 @@
     },
 
     compute(input) {
-      // console.log(input);
+      console.log(this.state);
 
       this.state.input = input;
 
@@ -16667,7 +16716,7 @@
         mode: 'xml',
         value: state.syntaxTree.toMarkup(),
       });
-      this.document = this.editor.getDoc();
+      this.markupDoc = this.editor.getDoc();
       this.previousSyntaxTree = state.syntaxTree;
 
       return this;
@@ -16691,7 +16740,7 @@
         if (obj.origin !== undefined) {
           obj.update(obj.ranges);
           const cursorPosition = obj.ranges[0].anchor;
-          const index = this.document.indexFromPos(cursorPosition);
+          const index = this.markupDoc.indexFromPos(cursorPosition);
           window.dispatchEvent(
             new CustomEvent('userChangedEditorSelection', { detail: index })
           );
@@ -16730,9 +16779,9 @@
       // update document value
       if (this.previousSyntaxTree.toMarkup() !== state.syntaxTree.toMarkup()) {
         this.ignoreCursor = true;
-        const cursor = this.document.getCursor();
-        this.document.setValue(state.syntaxTree.toMarkup());
-        this.document.setCursor(cursor);
+        const cursor = this.markupDoc.getCursor();
+        this.markupDoc.setValue(state.syntaxTree.toMarkup());
+        this.markupDoc.setCursor(cursor);
         this.ignoreCursor = false;
       }
 
@@ -16742,7 +16791,7 @@
         const from = this.editor.doc.posFromIndex(node.start);
         const to = this.editor.doc.posFromIndex(node.end + 1);
         const range = [from, to];
-        this.textMarker = this.document.markText(
+        this.textMarker = this.markupDoc.markText(
           ...range, { className: 'selected-markup' }
         );
       }
@@ -16752,9 +16801,9 @@
     },
   };
 
-  // const anchor = this.document.getCursor('anchor');
-  // const head = this.document.getCursor('head');
-  // this.document.setSelection(anchor, head);
+  // const anchor = this.markupDoc.getCursor('anchor');
+  // const head = this.markupDoc.getCursor('head');
+  // this.markupDoc.setSelection(anchor, head);
 
   const tools$1 = Object.assign(Object.create(UIModule), {
     init(state) {

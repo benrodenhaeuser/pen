@@ -10,7 +10,7 @@ const editor = {
       mode: 'xml',
       value: state.syntaxTree.toMarkup(),
     });
-    this.document = this.editor.getDoc();
+    this.markupDoc = this.editor.getDoc();
     this.previousSyntaxTree = state.syntaxTree;
 
     return this;
@@ -34,7 +34,7 @@ const editor = {
       if (obj.origin !== undefined) {
         obj.update(obj.ranges);
         const cursorPosition = obj.ranges[0].anchor;
-        const index = this.document.indexFromPos(cursorPosition);
+        const index = this.markupDoc.indexFromPos(cursorPosition);
         window.dispatchEvent(
           new CustomEvent('userChangedEditorSelection', { detail: index })
         );
@@ -73,9 +73,9 @@ const editor = {
     // update document value
     if (this.previousSyntaxTree.toMarkup() !== state.syntaxTree.toMarkup()) {
       this.ignoreCursor = true;
-      const cursor = this.document.getCursor();
-      this.document.setValue(state.syntaxTree.toMarkup());
-      this.document.setCursor(cursor);
+      const cursor = this.markupDoc.getCursor();
+      this.markupDoc.setValue(state.syntaxTree.toMarkup());
+      this.markupDoc.setCursor(cursor);
       this.ignoreCursor = false;
     }
 
@@ -85,7 +85,7 @@ const editor = {
       const from = this.editor.doc.posFromIndex(node.start);
       const to = this.editor.doc.posFromIndex(node.end + 1);
       const range = [from, to];
-      this.textMarker = this.document.markText(
+      this.textMarker = this.markupDoc.markText(
         ...range, { className: 'selected-markup' }
       );
     }
@@ -97,6 +97,6 @@ const editor = {
 
 export { editor };
 
-// const anchor = this.document.getCursor('anchor');
-// const head = this.document.getCursor('head');
-// this.document.setSelection(anchor, head);
+// const anchor = this.markupDoc.getCursor('anchor');
+// const head = this.markupDoc.getCursor('head');
+// this.markupDoc.setSelection(anchor, head);

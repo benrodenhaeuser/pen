@@ -10,9 +10,10 @@ import { SVGPathDataTransformer } from 'svg-pathdata';
 
 const domToScene = $svg => {
   if ($svg instanceof SVGElement) {
-    const scene = Scene.create({ key: $svg.key });
+    const scene = Scene.create();
+    scene.key = $svg.key;
     buildTree($svg, scene);
-    scene.setFrontier();
+    scene.updateFrontier();
     return scene;
   } else {
     return null;
@@ -40,7 +41,8 @@ const buildTree = ($node, node) => {
     let child;
 
     if ($child instanceof SVGGElement) {
-      child = Group.create({ key: $child.key });
+      child = Group.create();
+      child.key = $child.key;
       node.append(child);
       buildTree($child, child);
     } else {
@@ -74,7 +76,8 @@ const processAttributes = ($node, node) => {
 };
 
 const buildShapeTree = $geometryNode => {
-  const shape = Shape.create({ key: $geometryNode.key });
+  const shape = Shape.create();
+  shape.key = $geometryNode.key;
 
   processAttributes($geometryNode, shape);
   // ^ TODO: we are also calling processAttributes further above, duplication!

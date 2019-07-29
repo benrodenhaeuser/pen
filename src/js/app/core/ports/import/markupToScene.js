@@ -15,7 +15,7 @@ const markupToScene = markup => {
   if ($svg instanceof SVGElement) {
     const scene = Scene.create();
     buildTree($svg, scene);
-    scene.setFrontier();
+    scene.updateFrontier();
     return scene;
   } else {
     return null;

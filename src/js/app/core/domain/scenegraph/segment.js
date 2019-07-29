@@ -1,9 +1,9 @@
-import { Node } from './node.js';
-import { Anchor } from './otherTypes.js';
-import { HandleIn } from './otherTypes.js';
-import { HandleOut } from './otherTypes.js';
+import { Graphics } from './graphics.js';
+import { Anchor } from './anchor.js';
+import { HandleIn } from './handleIn.js';
+import { HandleOut } from './handleOut.js';
 
-const Segment = Object.create(Node);
+const Segment = Object.create(Graphics);
 Segment.type = 'segment';
 
 // convenience API for getting/setting anchor and handle values of a segment
