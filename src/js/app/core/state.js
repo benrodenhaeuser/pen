@@ -1,20 +1,20 @@
-import { exportToSVG } from './ports.js';
-import { exportToVDOM } from './ports.js';
-import { exportToPlain } from './ports.js';
-import { markupToScene } from './ports.js';
-import { objectToDoc } from './ports.js';
-import { markupToDOM } from './ports.js';
-import { domToScene } from './ports.js';
-import { domToSyntaxTree } from './ports.js';
-import { sceneToSyntaxTree } from './ports.js';
+import { exportToSVG } from './ports/ports.js';
+import { exportToVDOM } from './ports/ports.js';
+import { exportToPlain } from './ports/ports.js';
+import { markupToScene } from './ports/ports.js';
+import { objectToDoc } from './ports/ports.js';
+import { markupToDOM } from './ports/ports.js';
+import { domToScene } from './ports/ports.js';
+import { domToSyntaxTree } from './ports/ports.js';
+import { sceneToSyntaxTree } from './ports/ports.js';
 
-import { Store } from './domain.js';
-import { Docs } from './domain.js';
-import { Doc } from './domain.js';
-import { Message } from './domain.js';
-import { Scene } from './domain.js';
-import { Rectangle } from './domain.js';
-import { SyntaxTree } from './domain.js';
+import { Store } from './domain/domain.js';
+import { Docs } from './domain/domain.js';
+import { Doc } from './domain/domain.js';
+import { Message } from './domain/domain.js';
+import { Scene } from './domain/domain.js';
+import { Rectangle } from './domain/domain.js';
+import { SyntaxTree } from './domain/domain.js';
 
 const State = {
   create() {

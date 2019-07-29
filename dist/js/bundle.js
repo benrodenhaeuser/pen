@@ -258,1037 +258,6 @@
     },
   };
 
-  const Class = {
-    create(classNames = []) {
-      return Object.create(Class).init(classNames);
-    },
-
-    init(classNames) {
-      if (classNames instanceof Array) {
-        this.set = new Set(classNames);
-      } else if (classNames instanceof Set) {
-        this.set = classNames;
-      } else {
-        throw new Error('Create Class instances from array or set');
-      }
-
-      return this;
-    },
-
-    // return value: string
-    toString() {
-      return Array.from(this.set).join(' ');
-    },
-
-    toJSON() {
-      return Array.from(this.set);
-    },
-
-    // return value: boolean
-    includes(className) {
-      return this.set.has(className);
-    },
-
-    // return value: new Class instance
-    add(className) {
-      return Class.create(this.set.add(className));
-    },
-
-    // return value: new Class instance
-    remove(className) {
-      this.set.delete(className);
-      return Class.create(this.set);
-    },
-  };
-
-  const createID = () => {
-    const randomString = Math.random()
-      .toString(36)
-      .substring(2);
-    const timestamp = new Date().getTime().toString(36);
-    return randomString + timestamp;
-  };
-
-  const Node = {
-    create() {
-      return Object.create(this)
-        .setType()
-        .set(this.nodeDefaults());
-    },
-
-    // => set type as an own property of the instance created
-    setType() {
-      this.type = Object.getPrototypeOf(this).type;
-      return this;
-    },
-
-    nodeDefaults() {
-      return {
-        key: createID(),
-        children: [],
-        parent: null,
-        payload: {
-          class: Class.create(),
-        },
-      };
-    },
-
-    set(opts) {
-      for (let key of Object.keys(opts)) {
-        this[key] = opts[key];
-      }
-
-      return this;
-    },
-
-    // search
-
-    findAncestor(predicate) {
-      if (predicate(this)) {
-        return this;
-      } else if (this.parent === null) {
-        return null;
-      } else {
-        return this.parent.findAncestor(predicate);
-      }
-    },
-
-    findAncestors(predicate, ancestors = []) {
-      if (predicate(this)) {
-        ancestors.push(this);
-      }
-
-      if (this.parent === null) {
-        return ancestors;
-      } else {
-        return this.parent.findAncestors(predicate, ancestors);
-      }
-    },
-
-    findDescendant(predicate) {
-      if (predicate(this)) {
-        return this;
-      } else {
-        for (let child of this.children) {
-          let val = child.findDescendant(predicate);
-          if (val) {
-            return val;
-          }
-        }
-      }
-
-      return null;
-    },
-
-    findDescendants(predicate, descendants = []) {
-      if (predicate(this)) {
-        descendants.push(this);
-      }
-
-      for (let child of this.children) {
-        child.findDescendants(predicate, descendants);
-      }
-
-      return descendants;
-    },
-
-    findDescendantByKey(key) {
-      return this.findDescendant(node => {
-        return node.key === key;
-      });
-    },
-
-    findDescendantByClass(className) {
-      return this.findDescendant(node => {
-        return node.class.includes(className);
-      });
-    },
-
-    findAncestorByClass(className) {
-      return this.findAncestor(node => {
-        return node.class.includes(className);
-      });
-    },
-
-    // hierarchy operations
-
-    append(node) {
-      this.children = this.children.concat([node]);
-      node.parent = this;
-    },
-
-    replaceWith(node) {
-      node.parent = this.parent;
-      const index = this.parent.children.indexOf(this);
-      this.parent.children.splice(index, 1, node);
-    },
-
-    insertChild(node, index) {
-      node.parent = this;
-      this.children.splice(index, 0, node);
-    },
-
-    // hierarchy tests
-
-    isLeaf() {
-      return this.children.length === 0;
-    },
-
-    isRoot() {
-      return this.parent === null;
-    },
-
-    // string encoding
-
-    toJSON() {
-      const plain = {
-        key: this.key,
-        type: this.type,
-        children: this.children,
-        payload: this.payload,
-      };
-
-      return plain;
-    },
-  };
-
-  // Getters and setters
-
-  Object.defineProperty(Node, 'root', {
-    get() {
-      return this.findAncestor(node => node.parent === null);
-    },
-  });
-
-  Object.defineProperty(Node, 'leaves', {
-    get() {
-      return this.findDescendants(node => node.children.length === 0);
-    },
-  });
-
-  Object.defineProperty(Node, 'ancestors', {
-    get() {
-      return this.findAncestors(node => true);
-    },
-  });
-
-  Object.defineProperty(Node, 'properAncestors', {
-    get() {
-      return this.parent.findAncestors(node => true);
-    },
-  });
-
-  Object.defineProperty(Node, 'descendants', {
-    get() {
-      return this.findDescendants(node => true);
-    },
-  });
-
-  Object.defineProperty(Node, 'siblings', {
-    get() {
-      return this.parent.children.filter(node => node !== this);
-    },
-  });
-
-  Object.defineProperty(Node, 'lastChild', {
-    get() {
-      return this.children[this.children.length - 1];
-    },
-  });
-
-  Object.defineProperty(Node, 'class', {
-    get() {
-      return this.payload.class;
-    },
-    set(value) {
-      this.payload.class = value;
-    },
-  });
-
-  const Graphics = Object.create(Node);
-
-  Object.assign(Graphics, {
-    create() {
-      return Node.create
-        .bind(this)()
-        .set(this.graphicsDefaults());
-    },
-
-    graphicsDefaults() {
-      return {
-        payload: {
-          transform: Matrix.identity(),
-          class: Class.create(),
-          bounds: null,
-        },
-        splitter: Vector.create(-1000, -1000), // <= off-canvas, far away
-        // ^ TODO: this is in an odd place
-        // it should be in Shape (shapeDefaults())
-      };
-    },
-
-    updateBounds() {
-      if (!['shape', 'group'].includes(this.type)) {
-        return;
-      }
-
-      const corners = [];
-      for (let child of this.children) {
-        for (let corner of child.bounds.corners) {
-          corners.push(corner.transform(child.transform));
-        }
-      }
-
-      const xValue = vector => vector.x;
-      const xValues = corners.map(xValue);
-      const yValue = vector => vector.y;
-      const yValues = corners.map(yValue);
-
-      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
-
-      const bounds = Rectangle.createFromMinMax(min, max);
-
-      this.payload.bounds = bounds;
-      return bounds;
-    },
-
-    updateFrontier() {
-      this.removeFrontier();
-
-      if (this.selected && this.selected.type !== 'scene') {
-        this.selected.class = this.selected.class.add('frontier');
-
-        let node = this.selected;
-
-        do {
-          for (let sibling of node.siblings) {
-            sibling.class = sibling.class.add('frontier');
-          }
-          node = node.parent;
-        } while (node.parent.type !== 'doc');
-      } else {
-        for (let child of this.scene.children) {
-          child.class = child.class.add('frontier');
-        }
-      }
-    },
-
-    removeFrontier() {
-      const frontier = this.scene.findDescendants(node => {
-        return node.class.includes('frontier');
-      });
-
-      for (let node of frontier) {
-        node.class.remove('frontier');
-      }
-    },
-
-    isSelected() {
-      return this.class.includes('selected');
-    },
-
-    isInFocus() {
-      return this.class.includes('focus');
-    },
-
-    isAtFrontier() {
-      return this.class.includes('frontier');
-    },
-
-    // new
-
-    contains(globalPoint) {
-      return globalPoint
-        .transform(this.globalTransform().invert())
-        .isWithin(this.bounds);
-    },
-
-    focus() {
-      this.class = this.class.add('focus');
-    },
-
-    unfocusAll() {
-      const focussed = this.scene.findDescendants(node => {
-        return node.class.includes('focus');
-      });
-
-      for (let node of focussed) {
-        node.class.remove('focus');
-      }
-    },
-
-    select() {
-      this.deselectAll();
-      this.class = this.class.add('selected');
-      this.updateFrontier();
-    },
-
-    edit() {
-      this.deselectAll();
-      this.updateFrontier();
-      this.class = this.class.add('editing');
-    },
-
-    deselectAll() {
-      if (this.selected) {
-        this.selected.class.remove('selected');
-      }
-      this.updateFrontier();
-    },
-
-    deeditAll() {
-      if (this.editing) {
-        this.editing.class.remove('editing');
-      }
-    },
-
-    globalTransform() {
-      return this.ancestorTransform().multiply(this.transform);
-    },
-
-    // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
-    ancestorTransform() {
-      let matrix = Matrix.identity();
-
-      // we use properAncestors, which does not include the current node:
-      for (let ancestor of this.properAncestors.reverse()) {
-        if (ancestor.transform) {
-          matrix = matrix.multiply(ancestor.transform);
-        }
-      }
-
-      return matrix;
-    },
-
-    rotate(angle, center) {
-      center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix.rotation(angle, center).multiply(this.transform);
-    },
-
-    scale(factor, center) {
-      center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix.scale(factor, center).multiply(this.transform);
-    },
-
-    translate(offset) {
-      this.transform = this.ancestorTransform()
-        .invert()
-        .multiply(Matrix.translation(offset))
-        .multiply(this.globalTransform());
-    },
-
-    globalScaleFactor() {
-      const total = this.globalTransform();
-      const a = total.m[0][0];
-      const b = total.m[1][0];
-
-      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-    },
-  });
-
-  // TODO: rename (but how?)
-  Object.defineProperty(Graphics, 'graphicsChildren', {
-    get() {
-      return this.children.filter(node => ['group', 'shape'].includes(node.type));
-    },
-  });
-
-  // TODO: rename (but how?)
-  Object.defineProperty(Graphics, 'graphicsAncestors', {
-    get() {
-      return this.ancestors.filter(node =>
-        ['scene', 'group', 'shape'].includes(node.type)
-      );
-    },
-  });
-
-  Object.defineProperty(Graphics, 'scene', {
-    get() {
-      return this.findAncestor(
-        node => node.type === 'scene'
-      );
-    },
-  });
-
-  Object.defineProperty(Graphics, 'selected', {
-    get() {
-      return this.scene.findDescendant(node => {
-        return node.class.includes('selected');
-      });
-    },
-  });
-
-  Object.defineProperty(Graphics, 'editing', {
-    get() {
-      return this.scene.findDescendant(node => {
-        return node.class.includes('editing');
-      });
-    },
-  });
-
-  Object.defineProperty(Graphics, 'frontier', {
-    get() {
-      return this.scene.findDescendants(node => {
-        return node.class.includes('frontier');
-      });
-    },
-  });
-
-  Object.defineProperty(Graphics, 'transform', {
-    get() {
-      return this.payload.transform;
-    },
-    set(value) {
-      this.payload.transform = value;
-    },
-  });
-
-  Object.defineProperty(Graphics, 'bounds', {
-    get() {
-      if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
-        return null;
-      }
-
-      if (this.payload.bounds) {
-        return this.payload.bounds;
-      }
-
-      return this.updateBounds();
-    },
-    set(value) {
-      this.payload.bounds = value;
-    },
-  });
-
-  Object.defineProperty(Graphics, 'vector', {
-    get() {
-      return this.payload.vector;
-    },
-    set(value) {
-      this.payload.vector = value;
-    },
-  });
-
-  Object.defineProperty(Graphics, 'viewBox', {
-    get() {
-      return this.payload.viewBox;
-    },
-    set(value) {
-      this.payload.viewBox = value;
-    },
-  });
-
-  const SyntaxTree = {
-    create() {
-      return Object.create(SyntaxTree).init();
-    },
-
-    init() {
-      this.children = [];
-
-      return this;
-    },
-
-    // decorate tree with start and end indices
-    indexify(start = 0) {
-      this.start = start;
-
-      if (this.markup) {
-        this.end = this.start + this.markup.length - 1;
-        return this.end + 1;
-      } else {
-        for (let child of this.children) {
-          start = child.indexify(start);
-        }
-
-        this.end = start - 1;
-
-        return start;
-      }
-    },
-
-    // find node whose start to end range includes given index
-    findNodeByIndex(idx) {
-      if (this.markup) {
-        if (this.start <= idx && idx <= this.end) {
-          return this;
-        } else {
-          return null;
-        }
-      } else {
-        const child = this.children.find(
-          child => child.start <= idx && idx <= child.end
-        );
-
-        if (child) {
-          return child.findNodeByIndex(idx);
-        } else {
-          return null;
-        }
-      }
-    },
-
-    // find node whose class list includes given class name
-    findNodeByClassName(cls) {
-      if (this.markup) {
-        if (this.class && this.class.includes(cls)) {
-          return this;
-        }
-      } else {
-        for (let child of this.children) {
-          const val = child.findNodeByClassName(cls);
-          if (val) {
-            return val;
-          }
-        }
-      }
-    },
-
-    // flatten tree to a list of leaf nodes
-    flatten(list = []) {
-      if (this.markup) {
-        list.push(this);
-      } else {
-        for (let child of this.children) {
-          child.flatten(list);
-        }
-      }
-
-      return list;
-    },
-
-    toMarkup() {
-      return this.flatten()
-        .map(node => node.markup)
-        .join('');
-    },
-  };
-
-  const Scene = Object.create(Graphics);
-  Scene.type = 'scene';
-
-  const xmlns = 'http://www.w3.org/2000/svg';
-
-  Scene.toVDOMNode = function() {
-    return {
-      tag: 'svg',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': 'scene',
-        viewBox: this.viewBox.toString(),
-        xmlns: 'http://www.w3.org/2000/svg',
-        class: this.class.toString(),
-      },
-    };
-  };
-
-  Scene.toSVGNode = function() {
-    return {
-      tag: 'svg',
-      children: [],
-      props: {
-        viewBox: this.viewBox.toString(),
-        xmlns: xmlns,
-      },
-    };
-  };
-
-  Scene.toASTNodes = function() {
-    const open = SyntaxTree.create();
-    open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
-    open.key = this.key;
-
-    const close = SyntaxTree.create();
-    close.markup = '</svg>';
-    close.key = this.key;
-
-    return {
-      open: open,
-      close: close,
-    };
-  };
-
-  const Group = Object.create(Graphics);
-  Group.type = 'group';
-
-  Group.toVDOMNode = function() {
-    return {
-      tag: 'g',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': 'group',
-        transform: this.transform.toString(),
-        class: this.class.toString(),
-      },
-    };
-  };
-
-  Group.toSVGNode = function() {
-    const svgNode = {
-      tag: 'g',
-      children: [],
-      props: {},
-    };
-
-    if (!this.transform.equals(Matrix.identity())) {
-      svgNode.props.transform = this.transform.toString();
-    }
-
-    return svgNode;
-  };
-
-  Group.toASTNodes = function() {
-    const open = SyntaxTree.create();
-
-    if (!this.transform.equals(Matrix.identity())) {
-      open.markup = `<g transform="${this.transform.toString()}">`;
-    } else {
-      open.markup = '<g>';
-    }
-
-    open.key = this.key;
-    open.class = this.class;
-
-    const close = SyntaxTree.create();
-    close.markup = '</g>';
-    close.key = this.key;
-
-    return {
-      open: open,
-      close: close,
-    };
-  };
-
-  const Shape = Object.create(Graphics);
-  Shape.type = 'shape';
-
-  Shape.toVDOMNode = function() {
-    return {
-      tag: 'path',
-      children: [],
-      props: {
-        'data-type': 'shape',
-        'data-key': this.key,
-        d: this.pathString(),
-        transform: this.transform.toString(),
-        class: this.class.toString(),
-      },
-    };
-  };
-
-  Shape.toVDOMCurves = function() {
-    const nodes = [];
-    const splines = this.children;
-
-    for (let spline of splines) {
-      const segments = spline.children;
-      const curves = spline.curves();
-
-      for (let i = 0; i < curves.length; i += 1) {
-        // this node will be the "hit target" for the curve:
-        nodes.push({
-          tag: 'path',
-          children: [],
-          props: {
-            'data-type': 'curve',
-            'data-key': segments[i].key,
-            d: curves[i].toPathString(),
-            transform: this.transform.toString(),
-          },
-        });
-
-        // this node will display the curve stroke:
-        nodes.push({
-          tag: 'path',
-          children: [],
-          props: {
-            'data-type': 'curve-stroke',
-            d: curves[i].toPathString(),
-            transform: this.transform.toString(),
-          },
-        });
-      }
-    }
-
-    return nodes;
-  };
-
-  Shape.toSVGNode = function() {
-    const svgNode = {
-      tag: 'path',
-      children: [],
-      props: { d: this.pathString() },
-    };
-
-    if (!this.transform.equals(Matrix.identity())) {
-      svgNode.props.transform = this.transform.toString();
-    }
-
-    return svgNode;
-  };
-
-  Shape.toASTNodes = function() {
-    const open = SyntaxTree.create();
-
-    if (!this.transform.equals(Matrix.identity())) {
-      open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
-    } else {
-      open.markup = `<path d="${this.pathString()}">`;
-    }
-
-    open.key = this.key;
-    open.class = this.class;
-
-    const close = SyntaxTree.create();
-    close.markup = '</path>';
-    close.key = this.key;
-
-    return {
-      open: open,
-      close: close,
-    };
-  };
-
-  Shape.pathString = function() {
-    let d = '';
-
-    for (let spline of this.children) {
-      const segment = spline.children[0];
-      d += `M ${segment.anchor.x} ${segment.anchor.y}`;
-
-      for (let i = 1; i < spline.children.length; i += 1) {
-        const currSeg = spline.children[i];
-        const prevSeg = spline.children[i - 1];
-
-        if (prevSeg.handleOut && currSeg.handleIn) {
-          d += ' C';
-        } else if (currSeg.handleIn || prevSeg.handleOut) {
-          d += ' Q';
-        } else {
-          d += ' L';
-        }
-
-        if (prevSeg.handleOut) {
-          d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
-        }
-
-        if (currSeg.handleIn) {
-          d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
-        }
-
-        d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
-      }
-    }
-
-    return d;
-  };
-
-  const Anchor = Object.create(Graphics);
-  Anchor.type = 'anchor';
-
-  const HandleIn = Object.create(Graphics);
-  HandleIn.type = 'handleIn';
-
-  const HandleOut = Object.create(Graphics);
-  HandleOut.type = 'handleOut';
-
-  const Segment = Object.create(Graphics);
-  Segment.type = 'segment';
-
-  // convenience API for getting/setting anchor and handle values of a segment
-
-  Object.defineProperty(Segment, 'anchor', {
-    get() {
-      const anchorNode = this.children.find(child => child.type === 'anchor');
-
-      if (anchorNode) {
-        return anchorNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let anchorNode;
-
-      if (this.anchor) {
-        anchorNode = this.children.find(child => child.type === 'anchor');
-      } else {
-        anchorNode = Anchor.create();
-        this.append(anchorNode);
-      }
-
-      anchorNode.vector = value;
-    },
-  });
-
-  Object.defineProperty(Segment, 'handleIn', {
-    get() {
-      const handleNode = this.children.find(child => child.type === 'handleIn');
-
-      if (handleNode) {
-        return handleNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let handleNode;
-
-      if (this.handleIn) {
-        handleNode = this.children.find(child => child.type === 'handleIn');
-      } else {
-        handleNode = HandleIn.create();
-        this.append(handleNode);
-      }
-
-      handleNode.vector = value;
-    },
-  });
-
-  Object.defineProperty(Segment, 'handleOut', {
-    get() {
-      const handleNode = this.children.find(child => child.type === 'handleOut');
-
-      if (handleNode) {
-        return handleNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let handleNode;
-
-      if (this.handleOut) {
-        handleNode = this.children.find(child => child.type === 'handleOut');
-      } else {
-        handleNode = HandleOut.create();
-        this.append(handleNode);
-      }
-
-      handleNode.vector = value;
-    },
-  });
-
-  const Spline = Object.create(Graphics);
-  Spline.type = 'spline';
-
-  // generate array of curves given by a spline
-  // (used to compute bounding boxes)
-
-  Spline.curves = function() {
-    const theCurves = [];
-
-    // this conditional creates a degenerate curve if
-    // there is exactly 1 segment in the spline
-    // TODO: this could be a problem!
-    if (this.children.length === 1) {
-      const start = this.children[0];
-      const end = Segment.create();
-
-      theCurves.push(Curve.createFromSegments(start, end));
-    }
-
-    // if spline has exactly 1 segment, no curves will be
-    // generated by the following code
-    for (let i = 0; i + 1 < this.children.length; i += 1) {
-      const start = this.children[i];
-      const end = this.children[i + 1];
-
-      theCurves.push(Curve.createFromSegments(start, end));
-    }
-
-    return theCurves;
-  };
-
-  // update bounding box of a spline
-
-  Spline.updateBounds = function() {
-    const curves = this.curves();
-    let bounds;
-
-    // no curves
-    if (curves.length === 0) {
-      bounds = Rectangle.create();
-      this.payload.bounds = bounds;
-      return bounds;
-    }
-
-    // a single, degenerate curve
-    if (curves.length === 1 && curves[0].isDegenerate()) {
-      bounds = Rectangle.create();
-      this.payload.bounds = bounds;
-      return bounds;
-    }
-
-    // one or more (non-degenerate) curves
-
-    bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
-
-    for (let i = 1; i < curves.length; i += 1) {
-      const curveBounds = curves[i].bounds;
-      bounds = bounds.getBoundingRect(curveBounds);
-    }
-
-    this.payload.bounds = bounds;
-    return bounds;
-  };
-
-  const Doc = Object.create(Node);
-  Doc.type = 'doc';
-
-  Object.assign(Doc, {
-    create() {
-      return Node.create
-        .bind(this)()
-        .set({ _id: createID() });
-    },
-
-    toJSON() {
-      const plain = Node.toJSON.bind(this)();
-      plain._id = this._id;
-      return plain;
-    },
-  });
-
-  const Store = Object.create(Node);
-  Store.type = 'store';
-
-  Object.defineProperty(Store, 'message', {
-    get() {
-      return this.root.findDescendant(node => node.type === 'message');
-    },
-  });
-
-  Object.defineProperty(Store, 'scene', {
-    get() {
-      return this.root.findDescendant(node => node.type === 'scene');
-    },
-  });
-
-  Object.defineProperty(Store, 'docs', {
-    get() {
-      return this.root.findDescendant(node => node.type === 'docs');
-    },
-  });
-
-  Object.defineProperty(Store, 'doc', {
-    get() {
-      return this.root.findDescendant(node => node.type === 'doc');
-    },
-  });
-
-  const Docs = Object.create(Node);
-  Docs.type = 'docs';
-
-  const Message = Object.create(Node);
-  Message.type = 'message';
-
-  const Identifier$1 = Object.create(Node);
-  Identifier$1.type = 'identifier';
-
   /**
    * 2 Dimensional Vector
    * @module vec2
@@ -4418,6 +3387,1037 @@
       return Rectangle.createFromMinMax(min, max);
     },
   };
+
+  const Class = {
+    create(classNames = []) {
+      return Object.create(Class).init(classNames);
+    },
+
+    init(classNames) {
+      if (classNames instanceof Array) {
+        this.set = new Set(classNames);
+      } else if (classNames instanceof Set) {
+        this.set = classNames;
+      } else {
+        throw new Error('Create Class instances from array or set');
+      }
+
+      return this;
+    },
+
+    // return value: string
+    toString() {
+      return Array.from(this.set).join(' ');
+    },
+
+    toJSON() {
+      return Array.from(this.set);
+    },
+
+    // return value: boolean
+    includes(className) {
+      return this.set.has(className);
+    },
+
+    // return value: new Class instance
+    add(className) {
+      return Class.create(this.set.add(className));
+    },
+
+    // return value: new Class instance
+    remove(className) {
+      this.set.delete(className);
+      return Class.create(this.set);
+    },
+  };
+
+  const createID = () => {
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2);
+    const timestamp = new Date().getTime().toString(36);
+    return randomString + timestamp;
+  };
+
+  const Node = {
+    create() {
+      return Object.create(this)
+        .setType()
+        .set(this.nodeDefaults());
+    },
+
+    // => set type as an own property of the instance created
+    setType() {
+      this.type = Object.getPrototypeOf(this).type;
+      return this;
+    },
+
+    nodeDefaults() {
+      return {
+        key: createID(),
+        children: [],
+        parent: null,
+        payload: {
+          class: Class.create(),
+        },
+      };
+    },
+
+    set(opts) {
+      for (let key of Object.keys(opts)) {
+        this[key] = opts[key];
+      }
+
+      return this;
+    },
+
+    // search
+
+    findAncestor(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else if (this.parent === null) {
+        return null;
+      } else {
+        return this.parent.findAncestor(predicate);
+      }
+    },
+
+    findAncestors(predicate, ancestors = []) {
+      if (predicate(this)) {
+        ancestors.push(this);
+      }
+
+      if (this.parent === null) {
+        return ancestors;
+      } else {
+        return this.parent.findAncestors(predicate, ancestors);
+      }
+    },
+
+    findDescendant(predicate) {
+      if (predicate(this)) {
+        return this;
+      } else {
+        for (let child of this.children) {
+          let val = child.findDescendant(predicate);
+          if (val) {
+            return val;
+          }
+        }
+      }
+
+      return null;
+    },
+
+    findDescendants(predicate, descendants = []) {
+      if (predicate(this)) {
+        descendants.push(this);
+      }
+
+      for (let child of this.children) {
+        child.findDescendants(predicate, descendants);
+      }
+
+      return descendants;
+    },
+
+    findDescendantByKey(key) {
+      return this.findDescendant(node => {
+        return node.key === key;
+      });
+    },
+
+    findDescendantByClass(className) {
+      return this.findDescendant(node => {
+        return node.class.includes(className);
+      });
+    },
+
+    findAncestorByClass(className) {
+      return this.findAncestor(node => {
+        return node.class.includes(className);
+      });
+    },
+
+    // hierarchy operations
+
+    append(node) {
+      this.children = this.children.concat([node]);
+      node.parent = this;
+    },
+
+    replaceWith(node) {
+      node.parent = this.parent;
+      const index = this.parent.children.indexOf(this);
+      this.parent.children.splice(index, 1, node);
+    },
+
+    insertChild(node, index) {
+      node.parent = this;
+      this.children.splice(index, 0, node);
+    },
+
+    // hierarchy tests
+
+    isLeaf() {
+      return this.children.length === 0;
+    },
+
+    isRoot() {
+      return this.parent === null;
+    },
+
+    // string encoding
+
+    toJSON() {
+      const plain = {
+        key: this.key,
+        type: this.type,
+        children: this.children,
+        payload: this.payload,
+      };
+
+      return plain;
+    },
+  };
+
+  // Getters and setters
+
+  Object.defineProperty(Node, 'root', {
+    get() {
+      return this.findAncestor(node => node.parent === null);
+    },
+  });
+
+  Object.defineProperty(Node, 'leaves', {
+    get() {
+      return this.findDescendants(node => node.children.length === 0);
+    },
+  });
+
+  Object.defineProperty(Node, 'ancestors', {
+    get() {
+      return this.findAncestors(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'properAncestors', {
+    get() {
+      return this.parent.findAncestors(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'descendants', {
+    get() {
+      return this.findDescendants(node => true);
+    },
+  });
+
+  Object.defineProperty(Node, 'siblings', {
+    get() {
+      return this.parent.children.filter(node => node !== this);
+    },
+  });
+
+  Object.defineProperty(Node, 'lastChild', {
+    get() {
+      return this.children[this.children.length - 1];
+    },
+  });
+
+  Object.defineProperty(Node, 'class', {
+    get() {
+      return this.payload.class;
+    },
+    set(value) {
+      this.payload.class = value;
+    },
+  });
+
+  const Graphics = Object.create(Node);
+
+  Object.assign(Graphics, {
+    create() {
+      return Node.create
+        .bind(this)()
+        .set(this.graphicsDefaults());
+    },
+
+    graphicsDefaults() {
+      return {
+        payload: {
+          transform: Matrix.identity(),
+          class: Class.create(),
+          bounds: null,
+        },
+        splitter: Vector.create(-1000, -1000), // <= off-canvas, far away
+        // ^ TODO: this is in an odd place
+        // it should be in Shape (shapeDefaults())
+      };
+    },
+
+    updateBounds() {
+      if (!['shape', 'group'].includes(this.type)) {
+        return;
+      }
+
+      const corners = [];
+      for (let child of this.children) {
+        for (let corner of child.bounds.corners) {
+          corners.push(corner.transform(child.transform));
+        }
+      }
+
+      const xValue = vector => vector.x;
+      const xValues = corners.map(xValue);
+      const yValue = vector => vector.y;
+      const yValues = corners.map(yValue);
+
+      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
+      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+
+      const bounds = Rectangle.createFromMinMax(min, max);
+
+      this.payload.bounds = bounds;
+      return bounds;
+    },
+
+    updateFrontier() {
+      this.removeFrontier();
+
+      if (this.selected && this.selected.type !== 'scene') {
+        this.selected.class = this.selected.class.add('frontier');
+
+        let node = this.selected;
+
+        do {
+          for (let sibling of node.siblings) {
+            sibling.class = sibling.class.add('frontier');
+          }
+          node = node.parent;
+        } while (node.parent.type !== 'doc');
+      } else {
+        for (let child of this.scene.children) {
+          child.class = child.class.add('frontier');
+        }
+      }
+    },
+
+    removeFrontier() {
+      const frontier = this.scene.findDescendants(node => {
+        return node.class.includes('frontier');
+      });
+
+      for (let node of frontier) {
+        node.class.remove('frontier');
+      }
+    },
+
+    isSelected() {
+      return this.class.includes('selected');
+    },
+
+    isInFocus() {
+      return this.class.includes('focus');
+    },
+
+    isAtFrontier() {
+      return this.class.includes('frontier');
+    },
+
+    // new
+
+    contains(globalPoint) {
+      return globalPoint
+        .transform(this.globalTransform().invert())
+        .isWithin(this.bounds);
+    },
+
+    focus() {
+      this.class = this.class.add('focus');
+    },
+
+    unfocusAll() {
+      const focussed = this.scene.findDescendants(node => {
+        return node.class.includes('focus');
+      });
+
+      for (let node of focussed) {
+        node.class.remove('focus');
+      }
+    },
+
+    select() {
+      this.deselectAll();
+      this.class = this.class.add('selected');
+      this.updateFrontier();
+    },
+
+    edit() {
+      this.deselectAll();
+      this.updateFrontier();
+      this.class = this.class.add('editing');
+    },
+
+    deselectAll() {
+      if (this.selected) {
+        this.selected.class.remove('selected');
+      }
+      this.updateFrontier();
+    },
+
+    deeditAll() {
+      if (this.editing) {
+        this.editing.class.remove('editing');
+      }
+    },
+
+    globalTransform() {
+      return this.ancestorTransform().multiply(this.transform);
+    },
+
+    // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
+    ancestorTransform() {
+      let matrix = Matrix.identity();
+
+      // we use properAncestors, which does not include the current node:
+      for (let ancestor of this.properAncestors.reverse()) {
+        if (ancestor.transform) {
+          matrix = matrix.multiply(ancestor.transform);
+        }
+      }
+
+      return matrix;
+    },
+
+    rotate(angle, center) {
+      center = center.transform(this.ancestorTransform().invert());
+      this.transform = Matrix.rotation(angle, center).multiply(this.transform);
+    },
+
+    scale(factor, center) {
+      center = center.transform(this.ancestorTransform().invert());
+      this.transform = Matrix.scale(factor, center).multiply(this.transform);
+    },
+
+    translate(offset) {
+      this.transform = this.ancestorTransform()
+        .invert()
+        .multiply(Matrix.translation(offset))
+        .multiply(this.globalTransform());
+    },
+
+    globalScaleFactor() {
+      const total = this.globalTransform();
+      const a = total.m[0][0];
+      const b = total.m[1][0];
+
+      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+    },
+  });
+
+  // TODO: rename (but how?)
+  Object.defineProperty(Graphics, 'graphicsChildren', {
+    get() {
+      return this.children.filter(node => ['group', 'shape'].includes(node.type));
+    },
+  });
+
+  // TODO: rename (but how?)
+  Object.defineProperty(Graphics, 'graphicsAncestors', {
+    get() {
+      return this.ancestors.filter(node =>
+        ['scene', 'group', 'shape'].includes(node.type)
+      );
+    },
+  });
+
+  Object.defineProperty(Graphics, 'scene', {
+    get() {
+      return this.findAncestor(
+        node => node.type === 'scene'
+      );
+    },
+  });
+
+  Object.defineProperty(Graphics, 'selected', {
+    get() {
+      return this.scene.findDescendant(node => {
+        return node.class.includes('selected');
+      });
+    },
+  });
+
+  Object.defineProperty(Graphics, 'editing', {
+    get() {
+      return this.scene.findDescendant(node => {
+        return node.class.includes('editing');
+      });
+    },
+  });
+
+  Object.defineProperty(Graphics, 'frontier', {
+    get() {
+      return this.scene.findDescendants(node => {
+        return node.class.includes('frontier');
+      });
+    },
+  });
+
+  Object.defineProperty(Graphics, 'transform', {
+    get() {
+      return this.payload.transform;
+    },
+    set(value) {
+      this.payload.transform = value;
+    },
+  });
+
+  Object.defineProperty(Graphics, 'bounds', {
+    get() {
+      if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
+        return null;
+      }
+
+      if (this.payload.bounds) {
+        return this.payload.bounds;
+      }
+
+      return this.updateBounds();
+    },
+    set(value) {
+      this.payload.bounds = value;
+    },
+  });
+
+  Object.defineProperty(Graphics, 'vector', {
+    get() {
+      return this.payload.vector;
+    },
+    set(value) {
+      this.payload.vector = value;
+    },
+  });
+
+  Object.defineProperty(Graphics, 'viewBox', {
+    get() {
+      return this.payload.viewBox;
+    },
+    set(value) {
+      this.payload.viewBox = value;
+    },
+  });
+
+  const SyntaxTree = {
+    create() {
+      return Object.create(SyntaxTree).init();
+    },
+
+    init() {
+      this.children = [];
+
+      return this;
+    },
+
+    // decorate tree with start and end indices
+    indexify(start = 0) {
+      this.start = start;
+
+      if (this.markup) {
+        this.end = this.start + this.markup.length - 1;
+        return this.end + 1;
+      } else {
+        for (let child of this.children) {
+          start = child.indexify(start);
+        }
+
+        this.end = start - 1;
+
+        return start;
+      }
+    },
+
+    // find node whose start to end range includes given index
+    findNodeByIndex(idx) {
+      if (this.markup) {
+        if (this.start <= idx && idx <= this.end) {
+          return this;
+        } else {
+          return null;
+        }
+      } else {
+        const child = this.children.find(
+          child => child.start <= idx && idx <= child.end
+        );
+
+        if (child) {
+          return child.findNodeByIndex(idx);
+        } else {
+          return null;
+        }
+      }
+    },
+
+    // find node whose class list includes given class name
+    findNodeByClassName(cls) {
+      if (this.markup) {
+        if (this.class && this.class.includes(cls)) {
+          return this;
+        }
+      } else {
+        for (let child of this.children) {
+          const val = child.findNodeByClassName(cls);
+          if (val) {
+            return val;
+          }
+        }
+      }
+    },
+
+    // flatten tree to a list of leaf nodes
+    flatten(list = []) {
+      if (this.markup) {
+        list.push(this);
+      } else {
+        for (let child of this.children) {
+          child.flatten(list);
+        }
+      }
+
+      return list;
+    },
+
+    toMarkup() {
+      return this.flatten()
+        .map(node => node.markup)
+        .join('');
+    },
+  };
+
+  const Scene = Object.create(Graphics);
+  Scene.type = 'scene';
+
+  const xmlns = 'http://www.w3.org/2000/svg';
+
+  Scene.toVDOMNode = function() {
+    return {
+      tag: 'svg',
+      children: [],
+      props: {
+        'data-key': this.key,
+        'data-type': 'scene',
+        viewBox: this.viewBox.toString(),
+        xmlns: 'http://www.w3.org/2000/svg',
+        class: this.class.toString(),
+      },
+    };
+  };
+
+  Scene.toSVGNode = function() {
+    return {
+      tag: 'svg',
+      children: [],
+      props: {
+        viewBox: this.viewBox.toString(),
+        xmlns: xmlns,
+      },
+    };
+  };
+
+  Scene.toASTNodes = function() {
+    const open = SyntaxTree.create();
+    open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
+    open.key = this.key;
+
+    const close = SyntaxTree.create();
+    close.markup = '</svg>';
+    close.key = this.key;
+
+    return {
+      open: open,
+      close: close,
+    };
+  };
+
+  const Group = Object.create(Graphics);
+  Group.type = 'group';
+
+  Group.toVDOMNode = function() {
+    return {
+      tag: 'g',
+      children: [],
+      props: {
+        'data-key': this.key,
+        'data-type': 'group',
+        transform: this.transform.toString(),
+        class: this.class.toString(),
+      },
+    };
+  };
+
+  Group.toSVGNode = function() {
+    const svgNode = {
+      tag: 'g',
+      children: [],
+      props: {},
+    };
+
+    if (!this.transform.equals(Matrix.identity())) {
+      svgNode.props.transform = this.transform.toString();
+    }
+
+    return svgNode;
+  };
+
+  Group.toASTNodes = function() {
+    const open = SyntaxTree.create();
+
+    if (!this.transform.equals(Matrix.identity())) {
+      open.markup = `<g transform="${this.transform.toString()}">`;
+    } else {
+      open.markup = '<g>';
+    }
+
+    open.key = this.key;
+    open.class = this.class;
+
+    const close = SyntaxTree.create();
+    close.markup = '</g>';
+    close.key = this.key;
+
+    return {
+      open: open,
+      close: close,
+    };
+  };
+
+  const Shape = Object.create(Graphics);
+  Shape.type = 'shape';
+
+  Shape.toVDOMNode = function() {
+    return {
+      tag: 'path',
+      children: [],
+      props: {
+        'data-type': 'shape',
+        'data-key': this.key,
+        d: this.pathString(),
+        transform: this.transform.toString(),
+        class: this.class.toString(),
+      },
+    };
+  };
+
+  Shape.toVDOMCurves = function() {
+    const nodes = [];
+    const splines = this.children;
+
+    for (let spline of splines) {
+      const segments = spline.children;
+      const curves = spline.curves();
+
+      for (let i = 0; i < curves.length; i += 1) {
+        // this node will be the "hit target" for the curve:
+        nodes.push({
+          tag: 'path',
+          children: [],
+          props: {
+            'data-type': 'curve',
+            'data-key': segments[i].key,
+            d: curves[i].toPathString(),
+            transform: this.transform.toString(),
+          },
+        });
+
+        // this node will display the curve stroke:
+        nodes.push({
+          tag: 'path',
+          children: [],
+          props: {
+            'data-type': 'curve-stroke',
+            d: curves[i].toPathString(),
+            transform: this.transform.toString(),
+          },
+        });
+      }
+    }
+
+    return nodes;
+  };
+
+  Shape.toSVGNode = function() {
+    const svgNode = {
+      tag: 'path',
+      children: [],
+      props: { d: this.pathString() },
+    };
+
+    if (!this.transform.equals(Matrix.identity())) {
+      svgNode.props.transform = this.transform.toString();
+    }
+
+    return svgNode;
+  };
+
+  Shape.toASTNodes = function() {
+    const open = SyntaxTree.create();
+
+    if (!this.transform.equals(Matrix.identity())) {
+      open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
+    } else {
+      open.markup = `<path d="${this.pathString()}">`;
+    }
+
+    open.key = this.key;
+    open.class = this.class;
+
+    const close = SyntaxTree.create();
+    close.markup = '</path>';
+    close.key = this.key;
+
+    return {
+      open: open,
+      close: close,
+    };
+  };
+
+  Shape.pathString = function() {
+    let d = '';
+
+    for (let spline of this.children) {
+      const segment = spline.children[0];
+      d += `M ${segment.anchor.x} ${segment.anchor.y}`;
+
+      for (let i = 1; i < spline.children.length; i += 1) {
+        const currSeg = spline.children[i];
+        const prevSeg = spline.children[i - 1];
+
+        if (prevSeg.handleOut && currSeg.handleIn) {
+          d += ' C';
+        } else if (currSeg.handleIn || prevSeg.handleOut) {
+          d += ' Q';
+        } else {
+          d += ' L';
+        }
+
+        if (prevSeg.handleOut) {
+          d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
+        }
+
+        if (currSeg.handleIn) {
+          d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
+        }
+
+        d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
+      }
+    }
+
+    return d;
+  };
+
+  const Anchor = Object.create(Graphics);
+  Anchor.type = 'anchor';
+
+  const HandleIn = Object.create(Graphics);
+  HandleIn.type = 'handleIn';
+
+  const HandleOut = Object.create(Graphics);
+  HandleOut.type = 'handleOut';
+
+  const Segment = Object.create(Graphics);
+  Segment.type = 'segment';
+
+  // convenience API for getting/setting anchor and handle values of a segment
+
+  Object.defineProperty(Segment, 'anchor', {
+    get() {
+      const anchorNode = this.children.find(child => child.type === 'anchor');
+
+      if (anchorNode) {
+        return anchorNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let anchorNode;
+
+      if (this.anchor) {
+        anchorNode = this.children.find(child => child.type === 'anchor');
+      } else {
+        anchorNode = Anchor.create();
+        this.append(anchorNode);
+      }
+
+      anchorNode.vector = value;
+    },
+  });
+
+  Object.defineProperty(Segment, 'handleIn', {
+    get() {
+      const handleNode = this.children.find(child => child.type === 'handleIn');
+
+      if (handleNode) {
+        return handleNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let handleNode;
+
+      if (this.handleIn) {
+        handleNode = this.children.find(child => child.type === 'handleIn');
+      } else {
+        handleNode = HandleIn.create();
+        this.append(handleNode);
+      }
+
+      handleNode.vector = value;
+    },
+  });
+
+  Object.defineProperty(Segment, 'handleOut', {
+    get() {
+      const handleNode = this.children.find(child => child.type === 'handleOut');
+
+      if (handleNode) {
+        return handleNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let handleNode;
+
+      if (this.handleOut) {
+        handleNode = this.children.find(child => child.type === 'handleOut');
+      } else {
+        handleNode = HandleOut.create();
+        this.append(handleNode);
+      }
+
+      handleNode.vector = value;
+    },
+  });
+
+  const Spline = Object.create(Graphics);
+  Spline.type = 'spline';
+
+  // generate array of curves given by a spline
+  // (used to compute bounding boxes)
+
+  Spline.curves = function() {
+    const theCurves = [];
+
+    // this conditional creates a degenerate curve if
+    // there is exactly 1 segment in the spline
+    // TODO: this could be a problem!
+    if (this.children.length === 1) {
+      const start = this.children[0];
+      const end = Segment.create();
+
+      theCurves.push(Curve.createFromSegments(start, end));
+    }
+
+    // if spline has exactly 1 segment, no curves will be
+    // generated by the following code
+    for (let i = 0; i + 1 < this.children.length; i += 1) {
+      const start = this.children[i];
+      const end = this.children[i + 1];
+
+      theCurves.push(Curve.createFromSegments(start, end));
+    }
+
+    return theCurves;
+  };
+
+  // update bounding box of a spline
+
+  Spline.updateBounds = function() {
+    const curves = this.curves();
+    let bounds;
+
+    // no curves
+    if (curves.length === 0) {
+      bounds = Rectangle.create();
+      this.payload.bounds = bounds;
+      return bounds;
+    }
+
+    // a single, degenerate curve
+    if (curves.length === 1 && curves[0].isDegenerate()) {
+      bounds = Rectangle.create();
+      this.payload.bounds = bounds;
+      return bounds;
+    }
+
+    // one or more (non-degenerate) curves
+
+    bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
+
+    for (let i = 1; i < curves.length; i += 1) {
+      const curveBounds = curves[i].bounds;
+      bounds = bounds.getBoundingRect(curveBounds);
+    }
+
+    this.payload.bounds = bounds;
+    return bounds;
+  };
+
+  const Doc = Object.create(Node);
+  Doc.type = 'doc';
+
+  Object.assign(Doc, {
+    create() {
+      return Node.create
+        .bind(this)()
+        .set({ _id: createID() });
+    },
+
+    toJSON() {
+      const plain = Node.toJSON.bind(this)();
+      plain._id = this._id;
+      return plain;
+    },
+  });
+
+  const Store = Object.create(Node);
+  Store.type = 'store';
+
+  Object.defineProperty(Store, 'message', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'message');
+    },
+  });
+
+  Object.defineProperty(Store, 'scene', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'scene');
+    },
+  });
+
+  Object.defineProperty(Store, 'docs', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'docs');
+    },
+  });
+
+  Object.defineProperty(Store, 'doc', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'doc');
+    },
+  });
+
+  const Docs = Object.create(Node);
+  Docs.type = 'docs';
+
+  const Message = Object.create(Node);
+  Message.type = 'message';
+
+  const Identifier$1 = Object.create(Node);
+  Identifier$1.type = 'identifier';
 
   const objectToDoc = object => {
     let node;

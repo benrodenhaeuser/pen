@@ -1,7 +1,7 @@
 import { Graphics } from './graphics.js';
 import { Segment } from './segment.js';
-import { Rectangle } from '../geometry.js';
-import { Curve } from '../geometry.js';
+import { Rectangle } from '../geometry/geometry.js';
+import { Curve } from '../geometry/geometry.js';
 
 const Spline = Object.create(Graphics);
 Spline.type = 'spline';

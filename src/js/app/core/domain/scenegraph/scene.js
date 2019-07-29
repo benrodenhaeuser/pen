@@ -1,5 +1,5 @@
 import { Graphics } from './graphics.js';
-import { SyntaxTree } from '../syntaxtree.js';
+import { SyntaxTree } from '../syntaxtree/syntaxtree.js';
 
 const Scene = Object.create(Graphics);
 Scene.type = 'scene';
