@@ -14,8 +14,8 @@ Doc.type = 'doc';
 
 Object.assign(Doc, {
   create() {
-    return Node
-      .create.bind(this)()
+    return Node.create
+      .bind(this)()
       .set({ _id: createID() });
   },
 });

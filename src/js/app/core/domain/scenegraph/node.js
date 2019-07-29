@@ -7,8 +7,7 @@ import { createID } from '../helpers.js';
 
 const Node = {
   create() {
-    return Object
-      .create(this)
+    return Object.create(this)
       .setType()
       .set(this.nodeDefaults());
   },

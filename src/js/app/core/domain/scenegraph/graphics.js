@@ -8,8 +8,8 @@ const Graphics = Object.create(Node);
 
 Object.assign(Graphics, {
   create() {
-    return Node
-      .create.bind(this)()
+    return Node.create
+      .bind(this)()
       .set(this.graphicsDefaults());
   },
 
@@ -193,7 +193,9 @@ Object.defineProperty(Graphics, 'graphicsChildren', {
 
 Object.defineProperty(Graphics, 'graphicsAncestors', {
   get() {
-    return this.ancestors.filter(node => ['scene', 'group', 'shape'].includes(node.type));
+    return this.ancestors.filter(node =>
+      ['scene', 'group', 'shape'].includes(node.type)
+    );
   },
 });
 
@@ -229,7 +231,6 @@ Object.defineProperty(Graphics, 'transform', {
     this.payload.transform = value;
   },
 });
-
 
 Object.defineProperty(Graphics, 'bounds', {
   get() {

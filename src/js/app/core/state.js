@@ -7,6 +7,7 @@ import { markupToDOM } from './ports.js';
 import { domToScene } from './ports.js';
 import { domToSyntaxTree } from './ports.js';
 import { sceneToSyntaxTree } from './ports.js';
+
 import { Store } from './domain.js';
 import { Docs } from './domain.js';
 import { Doc } from './domain.js';
@@ -25,7 +26,7 @@ const State = {
     this.input = {};
     this.update = '';
     this.store = this.buildStore();
-    this.syntaxTree = SyntaxTree.create();
+    this.syntaxTree = SyntaxTree.create(); // TODO: make a part of buildStore
 
     return this;
   },

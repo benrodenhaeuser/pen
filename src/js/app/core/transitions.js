@@ -286,8 +286,10 @@ transitions.get = function(state, input) {
     const typeMatch = type === input.type;
     // const targetMatch = target === input.target || target === undefined;
 
-    const targetMatch = Array.isArray(target) && target.includes(input.target) ||
-      typeof target === 'string' && target === input.target || target === undefined;
+    const targetMatch =
+      (Array.isArray(target) && target.includes(input.target)) ||
+      (typeof target === 'string' && target === input.target) ||
+      target === undefined;
 
     return stateMatch && typeMatch && targetMatch;
   };

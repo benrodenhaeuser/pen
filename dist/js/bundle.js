@@ -311,8 +311,7 @@
 
   const Node = {
     create() {
-      return Object
-        .create(this)
+      return Object.create(this)
         .setType()
         .set(this.nodeDefaults());
     },
@@ -508,8 +507,8 @@
 
   Object.assign(Graphics, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set(this.graphicsDefaults());
     },
 
@@ -693,7 +692,9 @@
 
   Object.defineProperty(Graphics, 'graphicsAncestors', {
     get() {
-      return this.ancestors.filter(node => ['scene', 'group', 'shape'].includes(node.type));
+      return this.ancestors.filter(node =>
+        ['scene', 'group', 'shape'].includes(node.type)
+      );
     },
   });
 
@@ -729,7 +730,6 @@
       this.payload.transform = value;
     },
   });
-
 
   Object.defineProperty(Graphics, 'bounds', {
     get() {
@@ -1236,8 +1236,8 @@
 
   Object.assign(Doc, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set({ _id: createID() });
     },
   });
@@ -5489,7 +5489,7 @@
       this.input = {};
       this.update = '';
       this.store = this.buildStore();
-      this.syntaxTree = SyntaxTree.create();
+      this.syntaxTree = SyntaxTree.create(); // TODO: make a part of buildStore
 
       return this;
     },
@@ -5640,18 +5640,20 @@
       }
 
       // TODO
-      if (target.isAtFrontier()) { // select in shape => TODO: selection mechanism
+      if (target.isAtFrontier()) {
+        // select in shape => TODO: selection mechanism
         target.edit();
         state.scene.unfocusAll();
         state.label = 'penMode';
-      } else { // select in group
+      } else {
+        // select in group
         const toSelect = target.findAncestor(node => {
           return node.parent && node.parent.class.includes('frontier');
         });
 
         if (toSelect) {
           toSelect.select();
-          state.scene.updateFrontier();  // TODO: why do we need to do this?
+          state.scene.updateFrontier(); // TODO: why do we need to do this?
           state.scene.unfocusAll();
         }
       }
@@ -5952,9 +5954,7 @@
       syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
       if (syntaxTreeNode) {
-        sceneGraphNode = state.scene.findDescendantByKey(
-          syntaxTreeNode.key
-        );
+        sceneGraphNode = state.scene.findDescendantByKey(syntaxTreeNode.key);
       }
 
       if (sceneGraphNode) {
@@ -6268,8 +6268,10 @@
       const typeMatch = type === input.type;
       // const targetMatch = target === input.target || target === undefined;
 
-      const targetMatch = Array.isArray(target) && target.includes(input.target) ||
-        typeof target === 'string' && target === input.target || target === undefined;
+      const targetMatch =
+        (Array.isArray(target) && target.includes(input.target)) ||
+        (typeof target === 'string' && target === input.target) ||
+        target === undefined;
 
       return stateMatch && typeMatch && targetMatch;
     };
@@ -16730,9 +16732,7 @@
     bindCodemirrorEvents() {
       this.editor.on('change', (instance, changeObj) => {
         if (changeObj.origin !== 'setValue') {
-          window.dispatchEvent(
-            new CustomEvent('userChangedMarkup')
-          );
+          window.dispatchEvent(new CustomEvent('userChangedMarkup'));
         }
       });
 
@@ -16791,9 +16791,9 @@
         const from = this.editor.doc.posFromIndex(node.start);
         const to = this.editor.doc.posFromIndex(node.end + 1);
         const range = [from, to];
-        this.textMarker = this.markupDoc.markText(
-          ...range, { className: 'selected-markup' }
-        );
+        this.textMarker = this.markupDoc.markText(...range, {
+          className: 'selected-markup',
+        });
       }
 
       // store syntax tree received

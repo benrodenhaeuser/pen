@@ -55,18 +55,20 @@ const updates = {
     }
 
     // TODO
-    if (target.isAtFrontier()) { // select in shape => TODO: selection mechanism
+    if (target.isAtFrontier()) {
+      // select in shape => TODO: selection mechanism
       target.edit();
       state.scene.unfocusAll();
       state.label = 'penMode';
-    } else { // select in group
+    } else {
+      // select in group
       const toSelect = target.findAncestor(node => {
         return node.parent && node.parent.class.includes('frontier');
       });
 
       if (toSelect) {
         toSelect.select();
-        state.scene.updateFrontier();  // TODO: why do we need to do this?
+        state.scene.updateFrontier(); // TODO: why do we need to do this?
         state.scene.unfocusAll();
       }
     }
@@ -367,9 +369,7 @@ const updates = {
     syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
     if (syntaxTreeNode) {
-      sceneGraphNode = state.scene.findDescendantByKey(
-        syntaxTreeNode.key
-      );
+      sceneGraphNode = state.scene.findDescendantByKey(syntaxTreeNode.key);
     }
 
     if (sceneGraphNode) {

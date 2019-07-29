@@ -24,9 +24,7 @@ const editor = {
   bindCodemirrorEvents() {
     this.editor.on('change', (instance, changeObj) => {
       if (changeObj.origin !== 'setValue') {
-        window.dispatchEvent(
-          new CustomEvent('userChangedMarkup')
-        );
+        window.dispatchEvent(new CustomEvent('userChangedMarkup'));
       }
     });
 
@@ -85,9 +83,9 @@ const editor = {
       const from = this.editor.doc.posFromIndex(node.start);
       const to = this.editor.doc.posFromIndex(node.end + 1);
       const range = [from, to];
-      this.textMarker = this.markupDoc.markText(
-        ...range, { className: 'selected-markup' }
-      );
+      this.textMarker = this.markupDoc.markText(...range, {
+        className: 'selected-markup',
+      });
     }
 
     // store syntax tree received
