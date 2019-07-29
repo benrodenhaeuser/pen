@@ -435,16 +435,11 @@
     toJSON() {
       const plain = {
         key: this.key, // all Node instances have it
-        _id: this._id, // only Doc instances have it
+        // _id: this._id, // only Doc instances have it
         type: this.type,
         children: this.children,
         payload: this.payload,
       };
-
-      // // TODO: awkward special case for Doc node
-      // if (this._id) {
-      //   plain._id = this._id;
-      // }
 
       return plain;
     },
@@ -1226,19 +1221,17 @@
   const Doc = Object.create(Node);
   Doc.type = 'doc';
 
-  // Object.assign(Graphics, {
-  //   create() {
-  //     return Node
-  //       .create.bind(this)()
-  //       .set(this.graphicsDefaults());
-  //   },
-  // });
-
   Object.assign(Doc, {
     create() {
       return Node.create
         .bind(this)()
         .set({ _id: createID() });
+    },
+
+    toJSON() {
+      const plain = Node.toJSON.bind(this)();
+      plain._id = this._id;
+      return plain;
     },
   });
 

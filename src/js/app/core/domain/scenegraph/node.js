@@ -1,7 +1,3 @@
-import { Matrix } from '../geometry.js';
-import { Vector } from '../geometry.js';
-import { Rectangle } from '../geometry.js';
-import { Curve } from '../geometry.js';
 import { Class } from '../helpers.js';
 import { createID } from '../helpers.js';
 
@@ -131,16 +127,11 @@ const Node = {
   toJSON() {
     const plain = {
       key: this.key, // all Node instances have it
-      _id: this._id, // only Doc instances have it
+      // _id: this._id, // only Doc instances have it
       type: this.type,
       children: this.children,
       payload: this.payload,
     };
-
-    // // TODO: awkward special case for Doc node
-    // if (this._id) {
-    //   plain._id = this._id;
-    // }
 
     return plain;
   },
