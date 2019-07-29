@@ -8,7 +8,7 @@ const Node = {
       .set(this.nodeDefaults());
   },
 
-  // => set type as an own property of the instance created:
+  // => set type as an own property of the instance created
   setType() {
     this.type = Object.getPrototypeOf(this).type;
     return this;

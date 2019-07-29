@@ -21,7 +21,8 @@ Object.assign(Graphics, {
         bounds: null,
       },
       splitter: Vector.create(-1000, -1000), // <= off-canvas, far away
-      // ^ TODO: this is in an odd place,
+      // ^ TODO: this is in an odd place
+      // it should be in Shape (shapeDefaults())
     };
   },
 
@@ -185,16 +186,26 @@ Object.assign(Graphics, {
   },
 });
 
+// TODO: rename (but how?)
 Object.defineProperty(Graphics, 'graphicsChildren', {
   get() {
     return this.children.filter(node => ['group', 'shape'].includes(node.type));
   },
 });
 
+// TODO: rename (but how?)
 Object.defineProperty(Graphics, 'graphicsAncestors', {
   get() {
     return this.ancestors.filter(node =>
       ['scene', 'group', 'shape'].includes(node.type)
+    );
+  },
+});
+
+Object.defineProperty(Graphics, 'scene', {
+  get() {
+    return this.findAncestor(
+      node => node.type === 'scene'
     );
   },
 });

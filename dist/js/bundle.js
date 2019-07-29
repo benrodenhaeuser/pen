@@ -316,7 +316,7 @@
         .set(this.nodeDefaults());
     },
 
-    // => set type as an own property of the instance created:
+    // => set type as an own property of the instance created
     setType() {
       this.type = Object.getPrototypeOf(this).type;
       return this;
@@ -507,7 +507,8 @@
           bounds: null,
         },
         splitter: Vector.create(-1000, -1000), // <= off-canvas, far away
-        // ^ TODO: this is in an odd place,
+        // ^ TODO: this is in an odd place
+        // it should be in Shape (shapeDefaults())
       };
     },
 
@@ -671,16 +672,26 @@
     },
   });
 
+  // TODO: rename (but how?)
   Object.defineProperty(Graphics, 'graphicsChildren', {
     get() {
       return this.children.filter(node => ['group', 'shape'].includes(node.type));
     },
   });
 
+  // TODO: rename (but how?)
   Object.defineProperty(Graphics, 'graphicsAncestors', {
     get() {
       return this.ancestors.filter(node =>
         ['scene', 'group', 'shape'].includes(node.type)
+      );
+    },
+  });
+
+  Object.defineProperty(Graphics, 'scene', {
+    get() {
+      return this.findAncestor(
+        node => node.type === 'scene'
       );
     },
   });
@@ -1230,25 +1241,25 @@
   const Store = Object.create(Node);
   Store.type = 'store';
 
-  Object.defineProperty(Node, 'message', {
+  Object.defineProperty(Store, 'message', {
     get() {
       return this.root.findDescendant(node => node.type === 'message');
     },
   });
 
-  Object.defineProperty(Node, 'scene', {
+  Object.defineProperty(Store, 'scene', {
     get() {
       return this.root.findDescendant(node => node.type === 'scene');
     },
   });
 
-  Object.defineProperty(Node, 'docs', {
+  Object.defineProperty(Store, 'docs', {
     get() {
       return this.root.findDescendant(node => node.type === 'docs');
     },
   });
 
-  Object.defineProperty(Node, 'doc', {
+  Object.defineProperty(Store, 'doc', {
     get() {
       return this.root.findDescendant(node => node.type === 'doc');
     },
