@@ -1,6 +1,6 @@
 import { GraphicsNode } from './_.js';
 import { Matrix } from '../geometry/_.js';
-import { SyntaxTree } from '../syntaxtree/syntaxtree.js';
+import { SyntaxTree } from './_.js';
 
 const Group = Object.create(GraphicsNode);
 Group.type = 'group';

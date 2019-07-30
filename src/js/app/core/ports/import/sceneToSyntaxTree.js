@@ -1,4 +1,4 @@
-import { SyntaxTree } from '../../domain/syntaxtree/syntaxtree.js';
+import { SyntaxTree } from '../../domain/nodes/_.js';
 
 const sceneToSyntaxTree = canvas => {
   const astRoot = SyntaxTree.create();

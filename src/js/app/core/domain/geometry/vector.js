@@ -1,4 +1,4 @@
-import { Matrix } from './matrix.js';
+import { Matrix } from './_.js';
 import * as vec2 from '/vendor/glmatrix/vec2.js';
 
 const Vector = {

@@ -1,5 +1,5 @@
 import { GraphicsNode } from './_.js';
-import { SyntaxTree } from '../syntaxtree/syntaxtree.js';
+import { SyntaxTree } from './_.js';
 
 const Canvas = Object.create(GraphicsNode);
 Canvas.type = 'canvas';

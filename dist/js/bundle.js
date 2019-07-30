@@ -29,6 +29,173 @@
   };
 
   /**
+   * 2 Dimensional Vector
+   * @module vec2
+   */
+
+  /**
+   * Creates a new, empty vec2
+   *
+   * @returns {vec2} a new 2D vector
+   */
+  function create() {
+    let out = new ARRAY_TYPE(2);
+    if(ARRAY_TYPE != Float32Array) {
+      out[0] = 0;
+      out[1] = 0;
+    }
+    return out;
+  }
+
+  /**
+   * Transforms the vec2 with a mat2d
+   *
+   * @param {vec2} out the receiving vector
+   * @param {vec2} a the vector to transform
+   * @param {mat2d} m matrix to transform with
+   * @returns {vec2} out
+   */
+  function transformMat2d(out, a, m) {
+    var x = a[0],
+      y = a[1];
+    out[0] = m[0] * x + m[2] * y + m[4];
+    out[1] = m[1] * x + m[3] * y + m[5];
+    return out;
+  }
+
+  /**
+   * Perform some operation over an array of vec2s.
+   *
+   * @param {Array} a the array of vectors to iterate over
+   * @param {Number} stride Number of elements between the start of each vec2. If 0 assumes tightly packed
+   * @param {Number} offset Number of elements to skip at the beginning of the array
+   * @param {Number} count Number of vec2s to iterate over. If 0 iterates over entire array
+   * @param {Function} fn Function to call for each vector in the array
+   * @param {Object} [arg] additional argument to pass to fn
+   * @returns {Array} a
+   * @function
+   */
+  const forEach = (function() {
+    let vec = create();
+
+    return function(a, stride, offset, count, fn, arg) {
+      let i, l;
+      if(!stride) {
+        stride = 2;
+      }
+
+      if(!offset) {
+        offset = 0;
+      }
+
+      if(count) {
+        l = Math.min((count * stride) + offset, a.length);
+      } else {
+        l = a.length;
+      }
+
+      for(i = offset; i < l; i += stride) {
+        vec[0] = a[i]; vec[1] = a[i+1];
+        fn(vec, vec, arg);
+        a[i] = vec[0]; a[i+1] = vec[1];
+      }
+
+      return a;
+    };
+  })();
+
+  const Vector$$1 = {
+    create(x = 0, y = 0) {
+      return Object.create(Vector$$1).init(x, y);
+    },
+
+    createFromObject(obj) {
+      return Object.create(Vector$$1).init(obj.x, obj.y);
+    },
+
+    init(x, y) {
+      this.x = x;
+      this.y = y;
+      return this;
+    },
+
+    coords() {
+      return { x: this.x, y: this.y };
+    },
+
+    // return value: new Vector instance
+    transform(matrix) {
+      const m = [
+        matrix.m[0][0],
+        matrix.m[1][0],
+        matrix.m[0][1],
+        matrix.m[1][1],
+        matrix.m[0][2],
+        matrix.m[1][2],
+      ];
+      const out = create();
+      transformMat2d(out, this.toArray(), m);
+      return Vector$$1.create(...out);
+    },
+
+    transformToLocal(shape) {
+      return this.transform(shape.globalTransform().invert());
+    },
+
+    // return value: new Vector instance
+    rotate(angle$$1, vector) {
+      return this.transform(Matrix$$1.rotation(angle$$1, vector));
+    },
+
+    // return value: new Vector instance
+    add(other) {
+      return Vector$$1.create(this.x + other.x, this.y + other.y);
+    },
+
+    // return value: new Vector instance
+    minus(other) {
+      return Vector$$1.create(this.x - other.x, this.y - other.y);
+    },
+
+    // return value: new Vector instance
+    abs() {
+      return Vector$$1.create(Math.abs(this.x), Math.abs(this.y));
+    },
+
+    // return value: boolean
+    isWithin(rectangle) {
+      return (
+        this.x >= rectangle.x &&
+        this.x <= rectangle.x + rectangle.width &&
+        this.y >= rectangle.y &&
+        this.y <= rectangle.y + rectangle.height
+      );
+    },
+
+    // return value: number
+    angle(...args) {
+      if (args.length === 0) {
+        return Math.atan2(this.y, this.x);
+      } else {
+        const [from, to] = args;
+        return to.minus(this).angle() - from.minus(this).angle();
+      }
+    },
+
+    length() {
+      return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+    },
+
+    toArray() {
+      return [this.x, this.y];
+    },
+
+    toString() {
+      return `${this.x} ${this.y}`;
+    },
+  };
+
+  /**
    * 2x3 Matrix
    * @module mat2d
    *
@@ -52,7 +219,7 @@
    *
    * @returns {mat2d} a new 2x3 matrix
    */
-  function create() {
+  function create$1() {
     let out = new ARRAY_TYPE(6);
     if(ARRAY_TYPE != Float32Array) {
       out[1] = 0;
@@ -99,7 +266,7 @@
    * @param {mat2d} b the second operand
    * @returns {mat2d} out
    */
-  function multiply(out, a, b) {
+  function multiply$1(out, a, b) {
     let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5];
     let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3], b4 = b[4], b5 = b[5];
     out[0] = a0 * b0 + a2 * b1;
@@ -185,9 +352,9 @@
         other.m[1][2],
       ];
 
-      const out = create();
+      const out = create$1();
 
-      multiply(out, m1, m2);
+      multiply$1(out, m1, m2);
 
       return Matrix$$1.create([
         [out[0], out[2], out[4]],
@@ -207,7 +374,7 @@
         this.m[1][2],
       ];
 
-      const out = create();
+      const out = create$1();
 
       invert(out, inp);
 
@@ -247,7 +414,7 @@
     },
 
     // return value: new Matrix instance
-    scale(factor, origin = Vector.create(0, 0)) {
+    scale(factor, origin = Vector$$1.create(0, 0)) {
       const m = [
         [factor, 0, origin.x - factor * origin.x],
         [0, factor, origin.y - factor * origin.y],
@@ -258,176 +425,9 @@
     },
   };
 
-  /**
-   * 2 Dimensional Vector
-   * @module vec2
-   */
-
-  /**
-   * Creates a new, empty vec2
-   *
-   * @returns {vec2} a new 2D vector
-   */
-  function create$1() {
-    let out = new ARRAY_TYPE(2);
-    if(ARRAY_TYPE != Float32Array) {
-      out[0] = 0;
-      out[1] = 0;
-    }
-    return out;
-  }
-
-  /**
-   * Transforms the vec2 with a mat2d
-   *
-   * @param {vec2} out the receiving vector
-   * @param {vec2} a the vector to transform
-   * @param {mat2d} m matrix to transform with
-   * @returns {vec2} out
-   */
-  function transformMat2d(out, a, m) {
-    var x = a[0],
-      y = a[1];
-    out[0] = m[0] * x + m[2] * y + m[4];
-    out[1] = m[1] * x + m[3] * y + m[5];
-    return out;
-  }
-
-  /**
-   * Perform some operation over an array of vec2s.
-   *
-   * @param {Array} a the array of vectors to iterate over
-   * @param {Number} stride Number of elements between the start of each vec2. If 0 assumes tightly packed
-   * @param {Number} offset Number of elements to skip at the beginning of the array
-   * @param {Number} count Number of vec2s to iterate over. If 0 iterates over entire array
-   * @param {Function} fn Function to call for each vector in the array
-   * @param {Object} [arg] additional argument to pass to fn
-   * @returns {Array} a
-   * @function
-   */
-  const forEach = (function() {
-    let vec = create$1();
-
-    return function(a, stride, offset, count, fn, arg) {
-      let i, l;
-      if(!stride) {
-        stride = 2;
-      }
-
-      if(!offset) {
-        offset = 0;
-      }
-
-      if(count) {
-        l = Math.min((count * stride) + offset, a.length);
-      } else {
-        l = a.length;
-      }
-
-      for(i = offset; i < l; i += stride) {
-        vec[0] = a[i]; vec[1] = a[i+1];
-        fn(vec, vec, arg);
-        a[i] = vec[0]; a[i+1] = vec[1];
-      }
-
-      return a;
-    };
-  })();
-
-  const Vector = {
-    create(x = 0, y = 0) {
-      return Object.create(Vector).init(x, y);
-    },
-
-    createFromObject(obj) {
-      return Object.create(Vector).init(obj.x, obj.y);
-    },
-
-    init(x, y) {
-      this.x = x;
-      this.y = y;
-      return this;
-    },
-
-    coords() {
-      return { x: this.x, y: this.y };
-    },
-
-    // return value: new Vector instance
-    transform(matrix) {
-      const m = [
-        matrix.m[0][0],
-        matrix.m[1][0],
-        matrix.m[0][1],
-        matrix.m[1][1],
-        matrix.m[0][2],
-        matrix.m[1][2],
-      ];
-      const out = create$1();
-      transformMat2d(out, this.toArray(), m);
-      return Vector.create(...out);
-    },
-
-    transformToLocal(shape) {
-      return this.transform(shape.globalTransform().invert());
-    },
-
-    // return value: new Vector instance
-    rotate(angle$$1, vector) {
-      return this.transform(Matrix$$1.rotation(angle$$1, vector));
-    },
-
-    // return value: new Vector instance
-    add(other) {
-      return Vector.create(this.x + other.x, this.y + other.y);
-    },
-
-    // return value: new Vector instance
-    minus(other) {
-      return Vector.create(this.x - other.x, this.y - other.y);
-    },
-
-    // return value: new Vector instance
-    abs() {
-      return Vector.create(Math.abs(this.x), Math.abs(this.y));
-    },
-
-    // return value: boolean
-    isWithin(rectangle) {
-      return (
-        this.x >= rectangle.x &&
-        this.x <= rectangle.x + rectangle.width &&
-        this.y >= rectangle.y &&
-        this.y <= rectangle.y + rectangle.height
-      );
-    },
-
-    // return value: number
-    angle(...args) {
-      if (args.length === 0) {
-        return Math.atan2(this.y, this.x);
-      } else {
-        const [from, to] = args;
-        return to.minus(this).angle() - from.minus(this).angle();
-      }
-    },
-
-    length() {
-      return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
-    },
-
-    toArray() {
-      return [this.x, this.y];
-    },
-
-    toString() {
-      return `${this.x} ${this.y}`;
-    },
-  };
-
   const Rectangle$$1 = {
     // => two vectors (origin and size)
-    create(origin = Vector.create(), size = Vector.create()) {
+    create(origin = Vector$$1.create(), size = Vector$$1.create()) {
       return Object.create(Rectangle$$1).init(origin, size);
     },
 
@@ -440,24 +440,24 @@
 
     // => 4 integers
     createFromDimensions(x, y, width, height) {
-      const origin = Vector.create(x, y);
-      const size = Vector.create(width, height);
+      const origin = Vector$$1.create(x, y);
+      const size = Vector$$1.create(width, height);
 
       return Rectangle$$1.create(origin, size);
     },
 
     // => { x: ..., y: ..., width: ..., height: ...}
     createFromObject(object) {
-      const origin = Vector.create(object.x, object.y);
-      const size = Vector.create(object.width, object.height);
+      const origin = Vector$$1.create(object.x, object.y);
+      const size = Vector$$1.create(object.width, object.height);
 
       return Rectangle$$1.create(origin, size);
     },
 
     // => two vectors (from and to, or equivalently, min and max)
     createFromMinMax(min, max) {
-      const origin = Vector.create(min.x, min.y);
-      const size = Vector.create(max.x - min.x, max.y - min.y);
+      const origin = Vector$$1.create(min.x, min.y);
+      const size = Vector$$1.create(max.x - min.x, max.y - min.y);
 
       return Rectangle$$1.create(origin, size);
     },
@@ -467,7 +467,7 @@
     },
 
     get max() {
-      return Vector.create(
+      return Vector$$1.create(
         this.origin.x + this.size.x,
         this.origin.y + this.size.y
       );
@@ -500,20 +500,20 @@
     get corners() {
       return [
         this.min, // nw
-        Vector.create(this.origin.x + this.size.x, this.origin.y), // ne
-        Vector.create(this.origin.x, this.origin.y + this.size.y), // sw
+        Vector$$1.create(this.origin.x + this.size.x, this.origin.y), // ne
+        Vector$$1.create(this.origin.x, this.origin.y + this.size.y), // sw
         this.max, // se
       ];
     },
 
     get center() {
-      return Vector.create(this.x + this.width / 2, this.y + this.height / 2);
+      return Vector$$1.create(this.x + this.width / 2, this.y + this.height / 2);
     },
 
     // smallest rectangle enclosing `this` and `other`
     getBoundingRect(other) {
-      let min = Vector.create();
-      let max = Vector.create();
+      let min = Vector$$1.create();
+      let max = Vector$$1.create();
 
       min.x = Math.min(this.min.x, other.min.x);
       min.y = Math.min(this.min.y, other.min.y);
@@ -3253,10 +3253,10 @@
     // coords is an array of points of the form { x: .., y: ...}
     createFromCoordinates(coords) {
       return Curve$$1.create(
-        Vector.create(coords[0]),
-        Vector.create(coords[1]),
-        Vector.create(coords[2]),
-        Vector.create(coords[3])
+        Vector$$1.create(coords[0]),
+        Vector$$1.create(coords[1]),
+        Vector$$1.create(coords[2]),
+        Vector$$1.create(coords[3])
       );
     },
 
@@ -3375,13 +3375,13 @@
         const maxX = Math.max(this.anchor1.x, this.anchor2.x);
         const maxY = Math.max(this.anchor1.y, this.anchor2.y);
 
-        min = Vector.create(minX, minY);
-        max = Vector.create(maxX, maxY);
+        min = Vector$$1.create(minX, minY);
+        max = Vector$$1.create(maxX, maxY);
       } else {
         const bbox = new Bezier$1(...this.coords()).bbox();
 
-        min = Vector.create(bbox.x.min, bbox.y.min);
-        max = Vector.create(bbox.x.max, bbox.y.max);
+        min = Vector$$1.create(bbox.x.min, bbox.y.min);
+        max = Vector$$1.create(bbox.x.max, bbox.y.max);
       }
 
       return Rectangle$$1.createFromMinMax(min, max);
@@ -3649,7 +3649,7 @@
           class: Class.create(),
           bounds: null, // => graphics and spline
         },
-        splitter: Vector.create(-1000, -1000), // => shape
+        splitter: Vector$$1.create(-1000, -1000), // => shape
       };
     },
 
@@ -3671,8 +3671,8 @@
       const yValue = vector => vector.y;
       const yValues = corners.map(yValue);
 
-      const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
-      const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
+      const min = Vector$$1.create(Math.min(...xValues), Math.min(...yValues));
+      const max = Vector$$1.create(Math.max(...xValues), Math.max(...yValues));
 
       const bounds = Rectangle$$1.createFromMinMax(min, max);
 
@@ -3921,92 +3921,6 @@
   });
 
   const GraphicsNode$$1 = SceneNode$$1.create();
-
-  const SyntaxTree = {
-    create() {
-      return Object.create(SyntaxTree).init();
-    },
-
-    init() {
-      this.children = [];
-
-      return this;
-    },
-
-    // decorate tree with start and end indices
-    indexify(start = 0) {
-      this.start = start;
-
-      if (this.markup) {
-        this.end = this.start + this.markup.length - 1;
-        return this.end + 1;
-      } else {
-        for (let child of this.children) {
-          start = child.indexify(start);
-        }
-
-        this.end = start - 1;
-
-        return start;
-      }
-    },
-
-    // find node whose start to end range includes given index
-    findNodeByIndex(idx) {
-      if (this.markup) {
-        if (this.start <= idx && idx <= this.end) {
-          return this;
-        } else {
-          return null;
-        }
-      } else {
-        const child = this.children.find(
-          child => child.start <= idx && idx <= child.end
-        );
-
-        if (child) {
-          return child.findNodeByIndex(idx);
-        } else {
-          return null;
-        }
-      }
-    },
-
-    // find node whose class list includes given class name
-    findNodeByClassName(cls) {
-      if (this.markup) {
-        if (this.class && this.class.includes(cls)) {
-          return this;
-        }
-      } else {
-        for (let child of this.children) {
-          const val = child.findNodeByClassName(cls);
-          if (val) {
-            return val;
-          }
-        }
-      }
-    },
-
-    // flatten tree to a list of leaf nodes
-    flatten(list = []) {
-      if (this.markup) {
-        list.push(this);
-      } else {
-        for (let child of this.children) {
-          child.flatten(list);
-        }
-      }
-
-      return list;
-    },
-
-    toMarkup() {
-      return this.flatten()
-        .map(node => node.markup)
-        .join('');
-    },
-  };
 
   const Canvas$$1 = Object.create(GraphicsNode$$1);
   Canvas$$1.type = 'canvas';
@@ -4443,6 +4357,92 @@
   const Identifier$$1 = Object.create(Node);
   Identifier$$1.type = 'identifier';
 
+  const SyntaxTree = {
+    create() {
+      return Object.create(SyntaxTree).init();
+    },
+
+    init() {
+      this.children = [];
+
+      return this;
+    },
+
+    // decorate tree with start and end indices
+    indexify(start = 0) {
+      this.start = start;
+
+      if (this.markup) {
+        this.end = this.start + this.markup.length - 1;
+        return this.end + 1;
+      } else {
+        for (let child of this.children) {
+          start = child.indexify(start);
+        }
+
+        this.end = start - 1;
+
+        return start;
+      }
+    },
+
+    // find node whose start to end range includes given index
+    findNodeByIndex(idx) {
+      if (this.markup) {
+        if (this.start <= idx && idx <= this.end) {
+          return this;
+        } else {
+          return null;
+        }
+      } else {
+        const child = this.children.find(
+          child => child.start <= idx && idx <= child.end
+        );
+
+        if (child) {
+          return child.findNodeByIndex(idx);
+        } else {
+          return null;
+        }
+      }
+    },
+
+    // find node whose class list includes given class name
+    findNodeByClassName(cls) {
+      if (this.markup) {
+        if (this.class && this.class.includes(cls)) {
+          return this;
+        }
+      } else {
+        for (let child of this.children) {
+          const val = child.findNodeByClassName(cls);
+          if (val) {
+            return val;
+          }
+        }
+      }
+    },
+
+    // flatten tree to a list of leaf nodes
+    flatten(list = []) {
+      if (this.markup) {
+        list.push(this);
+      } else {
+        for (let child of this.children) {
+          child.flatten(list);
+        }
+      }
+
+      return list;
+    },
+
+    toMarkup() {
+      return this.flatten()
+        .map(node => node.markup)
+        .join('');
+    },
+  };
+
   const objectToDoc = object => {
     let node;
 
@@ -4524,7 +4524,7 @@
           }
           break;
         case 'vector':
-          node.vector = Vector.createFromObject(value);
+          node.vector = Vector$$1.createFromObject(value);
           break;
       }
     }
@@ -4573,8 +4573,8 @@
     // viewBox
     if ($node.tagName === 'svg') {
       const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
-      const origin = Vector.create(viewBox[0], viewBox[1]);
-      const size = Vector.create(viewBox[2], viewBox[3]);
+      const origin = Vector$$1.create(viewBox[0], viewBox[1]);
+      const size = Vector$$1.create(viewBox[2], viewBox[3]);
       node.viewBox = Rectangle$$1.create(origin, size);
     }
 
@@ -4648,7 +4648,7 @@
     // the first command is ALWAYS an `M` command (no handles)
     segments[0] = Segment$$1.create();
     const child = Anchor$$1.create();
-    child.payload.vector = Vector.create(commands[0].x, commands[0].y);
+    child.payload.vector = Vector$$1.create(commands[0].x, commands[0].y);
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
@@ -4657,20 +4657,20 @@
       const currSeg = Segment$$1.create();
 
       const anchor = Anchor$$1.create();
-      anchor.payload.vector = Vector.create(command.x, command.y);
+      anchor.payload.vector = Vector$$1.create(command.x, command.y);
       currSeg.append(anchor);
 
       if (command.x1 && command.x2) {
         const handleOut = HandleOut$$1.create();
-        handleOut.payload.vector = Vector.create(command.x1, command.y1);
+        handleOut.payload.vector = Vector$$1.create(command.x1, command.y1);
         prevSeg.append(handleOut);
 
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector.create(command.x2, command.y2);
+        handleIn.payload.vector = Vector$$1.create(command.x2, command.y2);
         currSeg.append(handleIn);
       } else if (command.x1) {
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector.create(command.x1, command.y1);
+        handleIn.payload.vector = Vector$$1.create(command.x1, command.y1);
         currSeg.append(handleIn);
       }
 
@@ -4763,8 +4763,8 @@
     // viewBox
     if ($node.tagName === 'svg') {
       const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
-      const origin = Vector.create(viewBox[0], viewBox[1]);
-      const size = Vector.create(viewBox[2], viewBox[3]);
+      const origin = Vector$$1.create(viewBox[0], viewBox[1]);
+      const size = Vector$$1.create(viewBox[2], viewBox[3]);
       node.viewBox = Rectangle$$1.create(origin, size);
     }
 
@@ -4839,7 +4839,7 @@
     // the first command is ALWAYS an `M` command (no handles)
     segments[0] = Segment$$1.create();
     const child = Anchor$$1.create();
-    child.payload.vector = Vector.create(commands[0].x, commands[0].y);
+    child.payload.vector = Vector$$1.create(commands[0].x, commands[0].y);
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
@@ -4848,20 +4848,20 @@
       const currSeg = Segment$$1.create();
 
       const anchor = Anchor$$1.create();
-      anchor.payload.vector = Vector.create(command.x, command.y);
+      anchor.payload.vector = Vector$$1.create(command.x, command.y);
       currSeg.append(anchor);
 
       if (command.x1 && command.x2) {
         const handleOut = HandleOut$$1.create();
-        handleOut.payload.vector = Vector.create(command.x1, command.y1);
+        handleOut.payload.vector = Vector$$1.create(command.x1, command.y1);
         prevSeg.append(handleOut);
 
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector.create(command.x2, command.y2);
+        handleIn.payload.vector = Vector$$1.create(command.x2, command.y2);
         currSeg.append(handleIn);
       } else if (command.x1) {
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector.create(command.x1, command.y1);
+        handleIn.payload.vector = Vector$$1.create(command.x1, command.y1);
         currSeg.append(handleIn);
       }
 
@@ -5628,393 +5628,6 @@
     },
   };
 
-  const updates = {
-    init() {
-      this.aux = {};
-    },
-
-    after(state, input) {
-      if (input.source === 'canvas') {
-        // => scenegraph to syntaxtree
-        state.syntaxTree = state.sceneToSyntaxTree();
-      }
-    },
-
-    // SELECTION
-
-    focus(state, input) {
-      state.canvas.unfocusAll();
-      const target = state.canvas.findDescendantByKey(input.key);
-      const hit = Vector.create(input.x, input.y);
-
-      if (target) {
-        const toFocus = target.findAncestorByClass('frontier');
-
-        if (toFocus && toFocus.contains(hit)) {
-          toFocus.focus();
-        }
-      }
-    },
-
-    select(state, input) {
-      const node = state.canvas.findDescendantByClass('focus');
-
-      if (node) {
-        node.select();
-        this.initTransform(state, input);
-      } else {
-        state.canvas.deselectAll();
-      }
-    },
-
-    deepSelect(state, input) {
-      const target = state.canvas.findDescendantByKey(input.key);
-
-      if (!target) {
-        return;
-      }
-
-      // TODO
-      if (target.isAtFrontier()) {
-        // select in shape => TODO: selection mechanism
-        target.edit();
-        state.canvas.unfocusAll();
-        state.label = 'penMode';
-      } else {
-        // select in group
-        const toSelect = target.findAncestor(node => {
-          return node.parent && node.parent.class.includes('frontier');
-        });
-
-        if (toSelect) {
-          toSelect.select();
-          state.canvas.updateFrontier(); // TODO: why do we need to do this?
-          state.canvas.unfocusAll();
-        }
-      }
-    },
-
-    // TODO
-    release(state, input) {
-      const current = state.canvas.selected || state.canvas.editing;
-
-      if (current) {
-        for (let ancestor of current.graphicsAncestors) {
-          ancestor.updateBounds();
-        }
-      }
-
-      this.aux = {};
-    },
-
-    // TODO
-    cleanup(state, event) {
-      const current = state.canvas.editing;
-
-      if (current) {
-        // update bounds of splines of current shape:
-        for (let child of current.children) {
-          child.updateBounds();
-        }
-
-        // update bounds of shape and its containing groups:
-        for (let ancestor of current.graphicsAncestors) {
-          ancestor.updateBounds();
-        }
-      }
-
-      state.canvas.deselectAll();
-      state.canvas.deeditAll();
-      this.aux = {};
-    },
-
-    // TODO
-    // triggered by escape key
-    exitEdit(state, input) {
-      if (state.label === 'penMode') {
-        const target = state.canvas.editing;
-        this.cleanup(state, input);
-        target.select();
-        state.label = 'selectMode';
-      } else if (state.label === 'selectMode') {
-        this.cleanup(state, input);
-      }
-    },
-
-    // TRANSFORMS
-
-    initTransform(state, input) {
-      const node = state.canvas.selected;
-      this.aux.from = Vector.create(input.x, input.y);
-      this.aux.center = node.bounds.center.transform(node.globalTransform());
-    },
-
-    shift(state, input) {
-      const node = state.canvas.selected;
-
-      if (!node) {
-        return;
-      }
-
-      const to = Vector.create(input.x, input.y);
-      const from = this.aux.from;
-      const offset = to.minus(from);
-
-      node.translate(offset);
-
-      this.aux.from = to;
-    },
-
-    rotate(state, input) {
-      const node = state.canvas.selected;
-
-      if (!node) {
-        return;
-      }
-
-      const to = Vector.create(input.x, input.y);
-      const from = this.aux.from;
-      const center = this.aux.center;
-      const angle = center.angle(from, to);
-
-      node.rotate(angle, center);
-
-      this.aux.from = to;
-    },
-
-    scale(state, input) {
-      const node = state.canvas.selected;
-
-      if (!node) {
-        return;
-      }
-
-      const to = Vector.create(input.x, input.y);
-      const from = this.aux.from;
-      const center = this.aux.center;
-      const factor = to.minus(center).length() / from.minus(center).length();
-
-      node.scale(factor, center);
-
-      this.aux.from = to;
-    },
-
-    // PEN
-
-    // TODO
-    addSegment(state, input) {
-      let shape;
-      let spline;
-
-      if (state.canvas.editing) {
-        shape = state.canvas.editing;
-        spline = shape.lastChild;
-      } else {
-        shape = Shape$$1.create();
-        state.canvas.append(shape);
-        spline = Spline$$1.create();
-        shape.append(spline);
-        shape.edit();
-      }
-
-      const segment = Segment$$1.create();
-      spline.append(segment);
-
-      const anchor = Anchor$$1.create();
-      segment.append(anchor);
-      anchor.class = anchor.class.add('pen'); // PEN
-
-      anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(
-        shape
-      );
-
-      this.aux.shape = shape;
-      this.aux.segment = segment;
-    },
-
-    setHandles(state, input) {
-      const shape = this.aux.shape;
-      const segment = this.aux.segment;
-
-      const anchor = segment.anchor;
-      const handleIn = Vector.create(input.x, input.y).transformToLocal(shape);
-      const handleOut = handleIn.rotate(Math.PI, anchor);
-      segment.handleIn = handleIn;
-      segment.handleOut = handleOut;
-    },
-
-    initEditSegment(state, input) {
-      const control = state.canvas.findDescendantByKey(input.key);
-      const shape = control.parent.parent.parent;
-      const from = Vector.create(input.x, input.y).transformToLocal(shape);
-
-      this.aux.from = from;
-      this.aux.control = control;
-    },
-
-    editSegment(state, input) {
-      const control = this.aux.control;
-      const from = this.aux.from;
-      const segment = control.parent;
-      const shape = segment.parent.parent;
-      const to = Vector.create(input.x, input.y).transformToLocal(shape);
-      const change = to.minus(from);
-      control.payload.vector = control.payload.vector.add(change);
-
-      switch (control.type) {
-        case 'anchor':
-          if (segment.handleIn) {
-            segment.handleIn = segment.handleIn.add(change);
-          }
-          if (segment.handleOut) {
-            segment.handleOut = segment.handleOut.add(change);
-          }
-          break;
-        case 'handleIn':
-          segment.handleOut = segment.handleIn.rotate(Math.PI, segment.anchor);
-          break;
-        case 'handleOut':
-          segment.handleIn = segment.handleOut.rotate(Math.PI, segment.anchor);
-          break;
-      }
-
-      this.aux.from = to;
-    },
-
-    // find point on curve
-    projectInput(state, input) {
-      const startSegment = state.canvas.findDescendantByKey(input.key);
-      const spline = startSegment.parent;
-      const shape = spline.parent;
-      const startIndex = spline.children.indexOf(startSegment);
-      const endSegment = spline.children[startIndex + 1];
-      const curve = Curve$$1.createFromSegments(startSegment, endSegment);
-      const bCurve = new Bezier$1(...curve.coords());
-
-      const from = Vector.create(input.x, input.y).transformToLocal(shape);
-      const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
-      shape.splitter = Vector.createFromObject(pointOnCurve);
-
-      this.aux.spline = spline;
-      this.aux.splitter = shape.splitter;
-      this.aux.startSegment = startSegment;
-      this.aux.endSegment = endSegment;
-      this.aux.insertionIndex = startIndex + 1;
-      this.aux.bCurve = bCurve;
-      this.aux.curveTime = pointOnCurve.t;
-      this.aux.from = from;
-    },
-
-    splitCurve(state, input) {
-      const spline = this.aux.spline;
-      const newAnchor = this.aux.splitter; // careful: a vector, not a node!
-      const startSegment = this.aux.startSegment;
-      const endSegment = this.aux.endSegment;
-      const insertionIndex = this.aux.insertionIndex;
-      const bCurve = this.aux.bCurve;
-      const curveTime = this.aux.curveTime;
-
-      const splitCurves = bCurve.split(curveTime);
-      const left = splitCurves.left;
-      const right = splitCurves.right;
-      const newSegment = Segment$$1.create();
-      newSegment.anchor = newAnchor;
-      newSegment.handleIn = Vector.createFromObject(left.points[2]);
-      newSegment.handleOut = Vector.createFromObject(right.points[1]);
-      startSegment.handleOut = Vector.createFromObject(left.points[1]);
-      endSegment.handleIn = Vector.createFromObject(right.points[2]);
-
-      spline.insertChild(newSegment, insertionIndex);
-
-      this.aux.control = newSegment.findDescendant(
-        node => node.type === 'anchor'
-      );
-      this.hideSplitter(state, input);
-      this.editSegment(state, input);
-    },
-
-    hideSplitter(state, input) {
-      const segment = state.canvas.findDescendantByKey(input.key);
-      const shape = segment.parent.parent;
-      shape.splitter = Vector.create(-1000, -1000);
-    },
-
-    // DOCUMENT MANAGEMENT
-
-    createDoc(state, input) {
-      state.doc.replaceWith(state.buildDoc());
-    },
-
-    updateDocList(state, input) {
-      state.docs.children = [];
-
-      for (let id of input.data.docIDs) {
-        const identNode = Identifier$$1.create();
-        identNode.payload._id = id;
-        state.docs.append(identNode);
-      }
-    },
-
-    getPrevious(state, input) {
-      window.history.back(); // TODO: shouldn't we do this inside of hist?
-    },
-
-    getNext(state, input) {
-      window.history.forward(); // TODO: shouldn't we do this inside of hist?
-    },
-
-    switchDocument(state, input) {
-      state.canvas.replaceWith(state.objectToDoc(input.data.doc));
-      this.cleanup(state, input);
-    },
-
-    // MESSAGES
-
-    setSavedMessage(state, input) {
-      state.message.payload.text = 'Saved';
-    },
-
-    wipeMessage(state, input) {
-      state.message.payload.text = '';
-    },
-
-    // EDITOR
-
-    userChangedEditorSelection(state, input) {
-      this.cleanup(state, input);
-
-      let syntaxTreeNode;
-      let sceneGraphNode;
-
-      syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
-
-      if (syntaxTreeNode) {
-        sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
-      }
-
-      if (sceneGraphNode) {
-        sceneGraphNode.select();
-      }
-
-      state.label = 'selectMode';
-    },
-
-    // => "syntaxtree to scenegraph"
-    userChangedMarkup(state, input) {
-      const $svg = state.markupToDOM(input.value);
-
-      if ($svg) {
-        const syntaxTree = state.domToSyntaxTree($svg);
-        syntaxTree.indexify();
-
-        state.syntaxTree = syntaxTree;
-        state.canvas.replaceWith(state.domToScene($svg));
-      } else {
-        console.log('cannot update scenegraph and syntaxtree');
-      }
-    },
-  };
-
   // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional 
 
   const transitions = [
@@ -6319,6 +5932,393 @@
         to: match.to || state.label,
       };
     }
+  };
+
+  const updates = {
+    init() {
+      this.aux = {};
+    },
+
+    after(state, input) {
+      if (input.source === 'canvas') {
+        // => scenegraph to syntaxtree
+        state.syntaxTree = state.sceneToSyntaxTree();
+      }
+    },
+
+    // SELECTION
+
+    focus(state, input) {
+      state.canvas.unfocusAll();
+      const target = state.canvas.findDescendantByKey(input.key);
+      const hit = Vector$$1.create(input.x, input.y);
+
+      if (target) {
+        const toFocus = target.findAncestorByClass('frontier');
+
+        if (toFocus && toFocus.contains(hit)) {
+          toFocus.focus();
+        }
+      }
+    },
+
+    select(state, input) {
+      const node = state.canvas.findDescendantByClass('focus');
+
+      if (node) {
+        node.select();
+        this.initTransform(state, input);
+      } else {
+        state.canvas.deselectAll();
+      }
+    },
+
+    deepSelect(state, input) {
+      const target = state.canvas.findDescendantByKey(input.key);
+
+      if (!target) {
+        return;
+      }
+
+      // TODO
+      if (target.isAtFrontier()) {
+        // select in shape => TODO: selection mechanism
+        target.edit();
+        state.canvas.unfocusAll();
+        state.label = 'penMode';
+      } else {
+        // select in group
+        const toSelect = target.findAncestor(node => {
+          return node.parent && node.parent.class.includes('frontier');
+        });
+
+        if (toSelect) {
+          toSelect.select();
+          state.canvas.updateFrontier(); // TODO: why do we need to do this?
+          state.canvas.unfocusAll();
+        }
+      }
+    },
+
+    // TODO
+    release(state, input) {
+      const current = state.canvas.selected || state.canvas.editing;
+
+      if (current) {
+        for (let ancestor of current.graphicsAncestors) {
+          ancestor.updateBounds();
+        }
+      }
+
+      this.aux = {};
+    },
+
+    // TODO
+    cleanup(state, event) {
+      const current = state.canvas.editing;
+
+      if (current) {
+        // update bounds of splines of current shape:
+        for (let child of current.children) {
+          child.updateBounds();
+        }
+
+        // update bounds of shape and its containing groups:
+        for (let ancestor of current.graphicsAncestors) {
+          ancestor.updateBounds();
+        }
+      }
+
+      state.canvas.deselectAll();
+      state.canvas.deeditAll();
+      this.aux = {};
+    },
+
+    // TODO
+    // triggered by escape key
+    exitEdit(state, input) {
+      if (state.label === 'penMode') {
+        const target = state.canvas.editing;
+        this.cleanup(state, input);
+        target.select();
+        state.label = 'selectMode';
+      } else if (state.label === 'selectMode') {
+        this.cleanup(state, input);
+      }
+    },
+
+    // TRANSFORMS
+
+    initTransform(state, input) {
+      const node = state.canvas.selected;
+      this.aux.from = Vector$$1.create(input.x, input.y);
+      this.aux.center = node.bounds.center.transform(node.globalTransform());
+    },
+
+    shift(state, input) {
+      const node = state.canvas.selected;
+
+      if (!node) {
+        return;
+      }
+
+      const to = Vector$$1.create(input.x, input.y);
+      const from = this.aux.from;
+      const offset = to.minus(from);
+
+      node.translate(offset);
+
+      this.aux.from = to;
+    },
+
+    rotate(state, input) {
+      const node = state.canvas.selected;
+
+      if (!node) {
+        return;
+      }
+
+      const to = Vector$$1.create(input.x, input.y);
+      const from = this.aux.from;
+      const center = this.aux.center;
+      const angle = center.angle(from, to);
+
+      node.rotate(angle, center);
+
+      this.aux.from = to;
+    },
+
+    scale(state, input) {
+      const node = state.canvas.selected;
+
+      if (!node) {
+        return;
+      }
+
+      const to = Vector$$1.create(input.x, input.y);
+      const from = this.aux.from;
+      const center = this.aux.center;
+      const factor = to.minus(center).length() / from.minus(center).length();
+
+      node.scale(factor, center);
+
+      this.aux.from = to;
+    },
+
+    // PEN
+
+    // TODO
+    addSegment(state, input) {
+      let shape;
+      let spline;
+
+      if (state.canvas.editing) {
+        shape = state.canvas.editing;
+        spline = shape.lastChild;
+      } else {
+        shape = Shape$$1.create();
+        state.canvas.append(shape);
+        spline = Spline$$1.create();
+        shape.append(spline);
+        shape.edit();
+      }
+
+      const segment = Segment$$1.create();
+      spline.append(segment);
+
+      const anchor = Anchor$$1.create();
+      segment.append(anchor);
+      anchor.class = anchor.class.add('pen'); // PEN
+
+      anchor.payload.vector = Vector$$1.create(input.x, input.y).transformToLocal(
+        shape
+      );
+
+      this.aux.shape = shape;
+      this.aux.segment = segment;
+    },
+
+    setHandles(state, input) {
+      const shape = this.aux.shape;
+      const segment = this.aux.segment;
+
+      const anchor = segment.anchor;
+      const handleIn = Vector$$1.create(input.x, input.y).transformToLocal(shape);
+      const handleOut = handleIn.rotate(Math.PI, anchor);
+      segment.handleIn = handleIn;
+      segment.handleOut = handleOut;
+    },
+
+    initEditSegment(state, input) {
+      const control = state.canvas.findDescendantByKey(input.key);
+      const shape = control.parent.parent.parent;
+      const from = Vector$$1.create(input.x, input.y).transformToLocal(shape);
+
+      this.aux.from = from;
+      this.aux.control = control;
+    },
+
+    editSegment(state, input) {
+      const control = this.aux.control;
+      const from = this.aux.from;
+      const segment = control.parent;
+      const shape = segment.parent.parent;
+      const to = Vector$$1.create(input.x, input.y).transformToLocal(shape);
+      const change = to.minus(from);
+      control.payload.vector = control.payload.vector.add(change);
+
+      switch (control.type) {
+        case 'anchor':
+          if (segment.handleIn) {
+            segment.handleIn = segment.handleIn.add(change);
+          }
+          if (segment.handleOut) {
+            segment.handleOut = segment.handleOut.add(change);
+          }
+          break;
+        case 'handleIn':
+          segment.handleOut = segment.handleIn.rotate(Math.PI, segment.anchor);
+          break;
+        case 'handleOut':
+          segment.handleIn = segment.handleOut.rotate(Math.PI, segment.anchor);
+          break;
+      }
+
+      this.aux.from = to;
+    },
+
+    // find point on curve
+    projectInput(state, input) {
+      const startSegment = state.canvas.findDescendantByKey(input.key);
+      const spline = startSegment.parent;
+      const shape = spline.parent;
+      const startIndex = spline.children.indexOf(startSegment);
+      const endSegment = spline.children[startIndex + 1];
+      const curve = Curve$$1.createFromSegments(startSegment, endSegment);
+      const bCurve = new Bezier$1(...curve.coords());
+
+      const from = Vector$$1.create(input.x, input.y).transformToLocal(shape);
+      const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
+      shape.splitter = Vector$$1.createFromObject(pointOnCurve);
+
+      this.aux.spline = spline;
+      this.aux.splitter = shape.splitter;
+      this.aux.startSegment = startSegment;
+      this.aux.endSegment = endSegment;
+      this.aux.insertionIndex = startIndex + 1;
+      this.aux.bCurve = bCurve;
+      this.aux.curveTime = pointOnCurve.t;
+      this.aux.from = from;
+    },
+
+    splitCurve(state, input) {
+      const spline = this.aux.spline;
+      const newAnchor = this.aux.splitter; // careful: a vector, not a node!
+      const startSegment = this.aux.startSegment;
+      const endSegment = this.aux.endSegment;
+      const insertionIndex = this.aux.insertionIndex;
+      const bCurve = this.aux.bCurve;
+      const curveTime = this.aux.curveTime;
+
+      const splitCurves = bCurve.split(curveTime);
+      const left = splitCurves.left;
+      const right = splitCurves.right;
+      const newSegment = Segment$$1.create();
+      newSegment.anchor = newAnchor;
+      newSegment.handleIn = Vector$$1.createFromObject(left.points[2]);
+      newSegment.handleOut = Vector$$1.createFromObject(right.points[1]);
+      startSegment.handleOut = Vector$$1.createFromObject(left.points[1]);
+      endSegment.handleIn = Vector$$1.createFromObject(right.points[2]);
+
+      spline.insertChild(newSegment, insertionIndex);
+
+      this.aux.control = newSegment.findDescendant(
+        node => node.type === 'anchor'
+      );
+      this.hideSplitter(state, input);
+      this.editSegment(state, input);
+    },
+
+    hideSplitter(state, input) {
+      const segment = state.canvas.findDescendantByKey(input.key);
+      const shape = segment.parent.parent;
+      shape.splitter = Vector$$1.create(-1000, -1000);
+    },
+
+    // DOCUMENT MANAGEMENT
+
+    createDoc(state, input) {
+      state.doc.replaceWith(state.buildDoc());
+    },
+
+    updateDocList(state, input) {
+      state.docs.children = [];
+
+      for (let id of input.data.docIDs) {
+        const identNode = Identifier$$1.create();
+        identNode.payload._id = id;
+        state.docs.append(identNode);
+      }
+    },
+
+    getPrevious(state, input) {
+      window.history.back(); // TODO: shouldn't we do this inside of hist?
+    },
+
+    getNext(state, input) {
+      window.history.forward(); // TODO: shouldn't we do this inside of hist?
+    },
+
+    switchDocument(state, input) {
+      state.canvas.replaceWith(state.objectToDoc(input.data.doc));
+      this.cleanup(state, input);
+    },
+
+    // MESSAGES
+
+    setSavedMessage(state, input) {
+      state.message.payload.text = 'Saved';
+    },
+
+    wipeMessage(state, input) {
+      state.message.payload.text = '';
+    },
+
+    // EDITOR
+
+    userChangedEditorSelection(state, input) {
+      this.cleanup(state, input);
+
+      let syntaxTreeNode;
+      let sceneGraphNode;
+
+      syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
+
+      if (syntaxTreeNode) {
+        sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
+      }
+
+      if (sceneGraphNode) {
+        sceneGraphNode.select();
+      }
+
+      state.label = 'selectMode';
+    },
+
+    // => "syntaxtree to scenegraph"
+    userChangedMarkup(state, input) {
+      const $svg = state.markupToDOM(input.value);
+
+      if ($svg) {
+        const syntaxTree = state.domToSyntaxTree($svg);
+        syntaxTree.indexify();
+
+        state.syntaxTree = syntaxTree;
+        state.canvas.replaceWith(state.domToScene($svg));
+      } else {
+        console.log('cannot update scenegraph and syntaxtree');
+      }
+    },
   };
 
   const core = {

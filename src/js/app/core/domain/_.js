@@ -14,11 +14,10 @@ import {
   Docs,
   Message,
   Identifier,
-} from './scenegraph/_.js';
+  SyntaxTree, 
+} from './nodes/_.js';
 
 import { Class } from './helpers/_.js';
-
-import { SyntaxTree } from './syntaxtree/syntaxtree.js';
 
 export {
   Vector,

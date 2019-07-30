@@ -16,6 +16,8 @@ import { Docs } from './docs.js';
 import { Message } from './message.js';
 import { Identifier } from './identifier.js';
 
+import { SyntaxTree } from './syntaxtree.js';
+
 export {
   Node,
   SceneNode,
@@ -34,4 +36,5 @@ export {
   Docs,
   Message,
   Identifier,
+  SyntaxTree
 };
