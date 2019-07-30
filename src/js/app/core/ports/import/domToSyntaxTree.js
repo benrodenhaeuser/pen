@@ -1,4 +1,4 @@
-import { SyntaxTree } from '../../domain/dir.js';
+import { SyntaxTree } from '../../domain/_.js';
 
 const domToSyntaxTree = $svg => {
   if ($svg instanceof SVGElement) {

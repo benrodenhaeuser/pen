@@ -434,7 +434,7 @@
     init(origin, size) {
       this.origin = origin;
       this.size = size;
-
+   
       return this;
     },
 
@@ -6015,7 +6015,7 @@
     },
   };
 
-  // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
+  // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional 
 
   const transitions = [
     // KICKOFF

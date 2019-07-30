@@ -1,4 +1,4 @@
-import { Vector } from './dir.js';
+import { Vector } from './_.js';
 
 const Rectangle = {
   // => two vectors (origin and size)
@@ -9,7 +9,7 @@ const Rectangle = {
   init(origin, size) {
     this.origin = origin;
     this.size = size;
-
+ 
     return this;
   },
 

@@ -1,7 +1,7 @@
-import { SceneNode } from './dir.js';
-import { Anchor } from './dir.js';
-import { HandleIn } from './dir.js';
-import { HandleOut } from './dir.js';
+import { SceneNode } from './_.js';
+import { Anchor } from './_.js';
+import { HandleIn } from './_.js';
+import { HandleOut } from './_.js';
 
 const Segment = Object.create(SceneNode);
 Segment.type = 'segment';

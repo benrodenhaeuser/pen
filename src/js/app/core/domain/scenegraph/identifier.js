@@ -1,4 +1,4 @@
-import { Node } from './dir.js';
+import { Node } from './_.js';
 
 const Identifier = Object.create(Node);
 Identifier.type = 'identifier';

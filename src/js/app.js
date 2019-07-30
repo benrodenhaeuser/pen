@@ -1,10 +1,10 @@
 import { core } from './app/core.js';
-import { db } from './app/periphery/dir.js';
-import { hist } from './app/periphery/dir.js';
-import { canvas } from './app/periphery/dir.js';
-import { editor } from './app/periphery/dir.js';
-import { tools } from './app/periphery/dir.js';
-import { message } from './app/periphery/dir.js';
+import { db } from './app/periphery/_.js';
+import { hist } from './app/periphery/_.js';
+import { canvas } from './app/periphery/_.js';
+import { editor } from './app/periphery/_.js';
+import { tools } from './app/periphery/_.js';
+import { message } from './app/periphery/_.js';
 
 const modules = [canvas, editor, tools, message, hist, db];
 

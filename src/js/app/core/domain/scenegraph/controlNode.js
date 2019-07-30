@@ -1,4 +1,4 @@
-import { SceneNode } from './dir.js';
+import { SceneNode } from './_.js';
 
 const ControlNode = SceneNode.create();
 

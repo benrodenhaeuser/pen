@@ -1,4 +1,4 @@
-import { h } from './dir.js';
+import { h } from './_.js';
 
 const LENGTHS_IN_PX = {
   cornerSideLength: 8,

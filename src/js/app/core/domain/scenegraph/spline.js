@@ -1,7 +1,7 @@
-import { SceneNode } from './dir.js';
-import { Segment } from './dir.js';
-import { Rectangle } from '../geometry/dir.js';
-import { Curve } from '../geometry/dir.js';
+import { SceneNode } from './_.js';
+import { Segment } from './_.js';
+import { Rectangle } from '../geometry/_.js';
+import { Curve } from '../geometry/_.js';
 
 const Spline = Object.create(SceneNode);
 Spline.type = 'spline';

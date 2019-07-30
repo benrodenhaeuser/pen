@@ -1,4 +1,4 @@
-import { Node } from './dir.js';
+import { Node } from './_.js';
 
 const Docs = Object.create(Node);
 Docs.type = 'docs';

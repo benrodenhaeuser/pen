@@ -1,4 +1,4 @@
-import { createID } from '../../domain/helpers/dir.js';
+import { createID } from '../../domain/helpers/_.js';
 
 const markupToDOM = markup => {
   const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')

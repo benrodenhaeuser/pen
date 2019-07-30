@@ -1,5 +1,5 @@
-import { Node } from './dir.js';
-import { createID } from '../helpers/dir.js';
+import { Node } from './_.js';
+import { createID } from '../helpers/_.js';
 
 const Doc = Object.create(Node);
 Doc.type = 'doc';

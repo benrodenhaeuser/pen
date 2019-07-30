@@ -1,8 +1,8 @@
-import { Node } from './dir.js';
-import { Class } from '../helpers/dir.js';
-import { Matrix } from '../geometry/dir.js';
-import { Vector } from '../geometry/dir.js';
-import { Rectangle } from '../geometry/dir.js';
+import { Node } from './_.js';
+import { Class } from '../helpers/_.js';
+import { Matrix } from '../geometry/_.js';
+import { Vector } from '../geometry/_.js';
+import { Rectangle } from '../geometry/_.js';
 
 const SceneNode = Object.create(Node);
 

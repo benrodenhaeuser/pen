@@ -1,4 +1,4 @@
-import { GraphicsNode } from './dir.js';
+import { GraphicsNode } from './_.js';
 import { SyntaxTree } from '../syntaxtree/syntaxtree.js';
 
 const Canvas = Object.create(GraphicsNode);

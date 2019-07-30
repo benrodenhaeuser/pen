@@ -1,4 +1,4 @@
-import { Node } from './dir.js';
+import { Node } from './_.js';
 
 const Message = Object.create(Node);
 Message.type = 'message';

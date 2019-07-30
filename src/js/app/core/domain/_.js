@@ -1,4 +1,4 @@
-import { Vector, Matrix, Rectangle, Curve } from './geometry/dir.js';
+import { Vector, Matrix, Rectangle, Curve } from './geometry/_.js';
 
 import {
   Canvas,
@@ -14,9 +14,9 @@ import {
   Docs,
   Message,
   Identifier,
-} from './scenegraph/dir.js';
+} from './scenegraph/_.js';
 
-import { Class } from './helpers/dir.js';
+import { Class } from './helpers/_.js';
 
 import { SyntaxTree } from './syntaxtree/syntaxtree.js';
 
