@@ -12,7 +12,7 @@ import { Store } from './domain/dir.js';
 import { Docs } from './domain/dir.js';
 import { Doc } from './domain/dir.js';
 import { Message } from './domain/dir.js';
-import { Scene } from './domain/dir.js';
+import { Canvas } from './domain/dir.js';
 import { Rectangle } from './domain/dir.js';
 import { SyntaxTree } from './domain/dir.js';
 
@@ -52,15 +52,15 @@ const State = {
 
   buildDoc() {
     const doc = Doc.create();
-    const scene = Scene.create();
-    scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-    doc.append(scene);
+    const canvas = Canvas.create();
+    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+    doc.append(canvas);
 
     return doc;
   },
 
-  get scene() {
-    return this.store.scene;
+  get canvas() {
+    return this.store.canvas;
   },
 
   get doc() {
@@ -103,10 +103,10 @@ const State = {
   },
 
   sceneToSyntaxTree() {
-    return sceneToSyntaxTree(this.store.scene);
+    return sceneToSyntaxTree(this.store.canvas);
   },
 
-  // returns a Scene node
+  // returns a Canvas node
   markupToScene(markup) {
     return markupToScene(markup);
   },

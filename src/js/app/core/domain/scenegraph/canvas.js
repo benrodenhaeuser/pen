@@ -1,18 +1,18 @@
-import { Graphics } from './graphics.js';
+import { GraphicsNode } from './dir.js';
 import { SyntaxTree } from '../syntaxtree/syntaxtree.js';
 
-const Scene = Object.create(Graphics);
-Scene.type = 'scene';
+const Canvas = Object.create(GraphicsNode);
+Canvas.type = 'canvas';
 
 const xmlns = 'http://www.w3.org/2000/svg';
 
-Scene.toVDOMNode = function() {
+Canvas.toVDOMNode = function() {
   return {
     tag: 'svg',
     children: [],
     props: {
       'data-key': this.key,
-      'data-type': 'scene',
+      'data-type': 'canvas',
       viewBox: this.viewBox.toString(),
       xmlns: 'http://www.w3.org/2000/svg',
       class: this.class.toString(),
@@ -20,7 +20,7 @@ Scene.toVDOMNode = function() {
   };
 };
 
-Scene.toSVGNode = function() {
+Canvas.toSVGNode = function() {
   return {
     tag: 'svg',
     children: [],
@@ -31,7 +31,7 @@ Scene.toSVGNode = function() {
   };
 };
 
-Scene.toASTNodes = function() {
+Canvas.toASTNodes = function() {
   const open = SyntaxTree.create();
   open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
   open.key = this.key;
@@ -46,4 +46,4 @@ Scene.toASTNodes = function() {
   };
 };
 
-export { Scene };
+export { Canvas };

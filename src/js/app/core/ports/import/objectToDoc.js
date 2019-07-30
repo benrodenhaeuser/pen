@@ -1,5 +1,5 @@
 import { Store, Docs, Doc, Message } from '../../domain/dir.js';
-import { Scene, Shape, Group } from '../../domain/dir.js';
+import { Canvas, Shape, Group } from '../../domain/dir.js';
 import { Spline, Segment, Anchor } from '../../domain/dir.js';
 import { HandleIn, HandleOut } from '../../domain/dir.js';
 import { Matrix } from '../../domain/dir.js';
@@ -26,8 +26,8 @@ const objectToDoc = object => {
     case 'message':
       node = Message.create();
       break;
-    case 'scene':
-      node = Scene.create();
+    case 'canvas':
+      node = Canvas.create();
       break;
     case 'group':
       node = Group.create();

@@ -1,4 +1,4 @@
-import { Node } from './node.js';
+import { Node } from './dir.js';
 import { createID } from '../helpers/dir.js';
 
 const Doc = Object.create(Node);
@@ -12,9 +12,9 @@ Object.assign(Doc, {
   },
 
   toJSON() {
-    const plain = Node.toJSON.bind(this)();
-    plain._id = this._id;
-    return plain;
+    const obj = Node.toJSON.bind(this)();
+    obj._id = this._id;
+    return obj;
   },
 });
 

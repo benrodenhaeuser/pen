@@ -133,14 +133,12 @@ const Node = {
   // string encoding
 
   toJSON() {
-    const plain = {
+    return {
       key: this.key,
       type: this.type,
       children: this.children,
       payload: this.payload,
     };
-
-    return plain;
   },
 };
 

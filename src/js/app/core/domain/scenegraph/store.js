@@ -1,4 +1,4 @@
-import { Node } from './node.js';
+import { Node } from './dir.js';
 
 const Store = Object.create(Node);
 Store.type = 'store';
@@ -9,9 +9,9 @@ Object.defineProperty(Store, 'message', {
   },
 });
 
-Object.defineProperty(Store, 'scene', {
+Object.defineProperty(Store, 'canvas', {
   get() {
-    return this.root.findDescendant(node => node.type === 'scene');
+    return this.root.findDescendant(node => node.type === 'canvas');
   },
 });
 

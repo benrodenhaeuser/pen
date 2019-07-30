@@ -111,9 +111,9 @@
     return out;
   }
 
-  const Matrix = {
+  const Matrix$$1 = {
     create(m) {
-      return Object.create(Matrix).init(m);
+      return Object.create(Matrix$$1).init(m);
     },
 
     init(m) {
@@ -128,7 +128,7 @@
         [0, 0, 1],
       ];
 
-      return Matrix.create(m);
+      return Matrix$$1.create(m);
     },
 
     equals(other) {
@@ -189,7 +189,7 @@
 
       multiply(out, m1, m2);
 
-      return Matrix.create([
+      return Matrix$$1.create([
         [out[0], out[2], out[4]],
         [out[1], out[3], out[5]],
         [0, 0, 1],
@@ -211,7 +211,7 @@
 
       invert(out, inp);
 
-      return Matrix.create([
+      return Matrix$$1.create([
         [out[0], out[2], out[4]],
         [out[1], out[3], out[5]],
         [0, 0, 1],
@@ -222,7 +222,7 @@
     identity() {
       const m = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 
-      return Matrix.create(m);
+      return Matrix$$1.create(m);
     },
 
     // return value: new Matrix instance
@@ -236,14 +236,14 @@
         [0, 0, 1],
       ];
 
-      return Matrix.create(m);
+      return Matrix$$1.create(m);
     },
 
     // return value: new Matrix instance
     translation(vector) {
       const m = [[1, 0, vector.x], [0, 1, vector.y], [0, 0, 1]];
 
-      return Matrix.create(m);
+      return Matrix$$1.create(m);
     },
 
     // return value: new Matrix instance
@@ -254,7 +254,7 @@
         [0, 0, 1],
       ];
 
-      return Matrix.create(m);
+      return Matrix$$1.create(m);
     },
   };
 
@@ -374,7 +374,7 @@
 
     // return value: new Vector instance
     rotate(angle$$1, vector) {
-      return this.transform(Matrix.rotation(angle$$1, vector));
+      return this.transform(Matrix$$1.rotation(angle$$1, vector));
     },
 
     // return value: new Vector instance
@@ -425,10 +425,10 @@
     },
   };
 
-  const Rectangle = {
+  const Rectangle$$1 = {
     // => two vectors (origin and size)
     create(origin = Vector.create(), size = Vector.create()) {
-      return Object.create(Rectangle).init(origin, size);
+      return Object.create(Rectangle$$1).init(origin, size);
     },
 
     init(origin, size) {
@@ -443,7 +443,7 @@
       const origin = Vector.create(x, y);
       const size = Vector.create(width, height);
 
-      return Rectangle.create(origin, size);
+      return Rectangle$$1.create(origin, size);
     },
 
     // => { x: ..., y: ..., width: ..., height: ...}
@@ -451,7 +451,7 @@
       const origin = Vector.create(object.x, object.y);
       const size = Vector.create(object.width, object.height);
 
-      return Rectangle.create(origin, size);
+      return Rectangle$$1.create(origin, size);
     },
 
     // => two vectors (from and to, or equivalently, min and max)
@@ -459,7 +459,7 @@
       const origin = Vector.create(min.x, min.y);
       const size = Vector.create(max.x - min.x, max.y - min.y);
 
-      return Rectangle.create(origin, size);
+      return Rectangle$$1.create(origin, size);
     },
 
     get min() {
@@ -520,11 +520,11 @@
       max.x = Math.max(this.max.x, other.max.x);
       max.y = Math.max(this.max.y, other.max.y);
 
-      return Rectangle.createFromMinMax(min, max);
+      return Rectangle$$1.createFromMinMax(min, max);
     },
 
     transform(matrix) {
-      return Rectangle.create(
+      return Rectangle$$1.create(
         this.origin.transform(matrix),
         this.size.transform(matrix)
       );
@@ -3243,16 +3243,16 @@
     }
   };
 
-  const Curve = {
+  const Curve$$1 = {
     // the params are Vector instances
     create(anchor1, anchor2, handle1, handle2) {
-      return Object.create(Curve).init(anchor1, anchor2, handle1, handle2);
+      return Object.create(Curve$$1).init(anchor1, anchor2, handle1, handle2);
     },
 
     // TODO: this assumes cubic coordinates
     // coords is an array of points of the form { x: .., y: ...}
     createFromCoordinates(coords) {
-      return Curve.create(
+      return Curve$$1.create(
         Vector.create(coords[0]),
         Vector.create(coords[1]),
         Vector.create(coords[2]),
@@ -3262,7 +3262,7 @@
 
     // the params are Segment instances
     createFromSegments(segment1, segment2) {
-      return Curve.create(
+      return Curve$$1.create(
         segment1.anchor,
         segment2.anchor,
         segment1.handleOut,
@@ -3384,7 +3384,7 @@
         max = Vector.create(bbox.x.max, bbox.y.max);
       }
 
-      return Rectangle.createFromMinMax(min, max);
+      return Rectangle$$1.createFromMinMax(min, max);
     },
   };
 
@@ -3571,14 +3571,12 @@
     // string encoding
 
     toJSON() {
-      const plain = {
+      return {
         key: this.key,
         type: this.type,
         children: this.children,
         payload: this.payload,
       };
-
-      return plain;
     },
   };
 
@@ -3635,28 +3633,27 @@
     },
   });
 
-  const Graphics = Object.create(Node);
+  const SceneNode$$1 = Object.create(Node);
 
-  Object.assign(Graphics, {
+  Object.assign(SceneNode$$1, {
     create() {
       return Node.create
         .bind(this)()
-        .set(this.graphicsDefaults());
+        .set(this.sceneNodeDefaults());
     },
 
-    graphicsDefaults() {
+    sceneNodeDefaults() {
       return {
         payload: {
-          transform: Matrix.identity(),
+          transform: Matrix$$1.identity(), // => graphics
           class: Class.create(),
-          bounds: null,
+          bounds: null, // => graphics and spline
         },
-        splitter: Vector.create(-1000, -1000), // <= off-canvas, far away
-        // ^ TODO: this is in an odd place
-        // it should be in Shape (shapeDefaults())
+        splitter: Vector.create(-1000, -1000), // => shape
       };
     },
 
+    // => graphics
     updateBounds() {
       if (!['shape', 'group'].includes(this.type)) {
         return;
@@ -3677,16 +3674,17 @@
       const min = Vector.create(Math.min(...xValues), Math.min(...yValues));
       const max = Vector.create(Math.max(...xValues), Math.max(...yValues));
 
-      const bounds = Rectangle.createFromMinMax(min, max);
+      const bounds = Rectangle$$1.createFromMinMax(min, max);
 
       this.payload.bounds = bounds;
       return bounds;
     },
 
+    // => document
     updateFrontier() {
       this.removeFrontier();
 
-      if (this.selected && this.selected.type !== 'scene') {
+      if (this.selected && this.selected.type !== 'canvas') {
         this.selected.class = this.selected.class.add('frontier');
 
         let node = this.selected;
@@ -3698,14 +3696,15 @@
           node = node.parent;
         } while (node.parent.type !== 'doc');
       } else {
-        for (let child of this.scene.children) {
+        for (let child of this.canvas.children) {
           child.class = child.class.add('frontier');
         }
       }
     },
 
+    // => document
     removeFrontier() {
-      const frontier = this.scene.findDescendants(node => {
+      const frontier = this.canvas.findDescendants(node => {
         return node.class.includes('frontier');
       });
 
@@ -3714,32 +3713,36 @@
       }
     },
 
+    // => graphics
     isSelected() {
       return this.class.includes('selected');
     },
 
+    // => graphics
     isInFocus() {
       return this.class.includes('focus');
     },
 
+    // => graphics
     isAtFrontier() {
       return this.class.includes('frontier');
     },
 
-    // new
-
+    // => graphics
     contains(globalPoint) {
       return globalPoint
         .transform(this.globalTransform().invert())
         .isWithin(this.bounds);
     },
 
+    // => graphics
     focus() {
       this.class = this.class.add('focus');
     },
 
+    // => graphics
     unfocusAll() {
-      const focussed = this.scene.findDescendants(node => {
+      const focussed = this.canvas.findDescendants(node => {
         return node.class.includes('focus');
       });
 
@@ -3748,18 +3751,21 @@
       }
     },
 
+    // => graphics
     select() {
       this.deselectAll();
       this.class = this.class.add('selected');
       this.updateFrontier();
     },
 
+    // => graphics
     edit() {
       this.deselectAll();
       this.updateFrontier();
       this.class = this.class.add('editing');
     },
 
+    // => graphics
     deselectAll() {
       if (this.selected) {
         this.selected.class.remove('selected');
@@ -3767,19 +3773,22 @@
       this.updateFrontier();
     },
 
+    // => graphics
     deeditAll() {
       if (this.editing) {
         this.editing.class.remove('editing');
       }
     },
 
+    // => graphics
     globalTransform() {
       return this.ancestorTransform().multiply(this.transform);
     },
 
+    // => graphics
     // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
     ancestorTransform() {
-      let matrix = Matrix.identity();
+      let matrix = Matrix$$1.identity();
 
       // we use properAncestors, which does not include the current node:
       for (let ancestor of this.properAncestors.reverse()) {
@@ -3791,23 +3800,27 @@
       return matrix;
     },
 
+    // => graphics
     rotate(angle, center) {
       center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix.rotation(angle, center).multiply(this.transform);
+      this.transform = Matrix$$1.rotation(angle, center).multiply(this.transform);
     },
 
+    // => graphics
     scale(factor, center) {
       center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix.scale(factor, center).multiply(this.transform);
+      this.transform = Matrix$$1.scale(factor, center).multiply(this.transform);
     },
 
+    // => graphics
     translate(offset) {
       this.transform = this.ancestorTransform()
         .invert()
-        .multiply(Matrix.translation(offset))
+        .multiply(Matrix$$1.translation(offset))
         .multiply(this.globalTransform());
     },
 
+    // => graphics
     globalScaleFactor() {
       const total = this.globalTransform();
       const a = total.m[0][0];
@@ -3817,55 +3830,60 @@
     },
   });
 
-  // TODO: rename (but how?)
-  Object.defineProperty(Graphics, 'graphicsChildren', {
+  // => graphics
+  Object.defineProperty(SceneNode$$1, 'graphicsChildren', {
     get() {
-      return this.children.filter(node => ['group', 'shape'].includes(node.type));
+      return this.children.filter(node => ['canvas', 'group', 'shape'].includes(node.type));
     },
   });
 
-  // TODO: rename (but how?)
-  Object.defineProperty(Graphics, 'graphicsAncestors', {
+  // => graphics
+  Object.defineProperty(SceneNode$$1, 'graphicsAncestors', {
     get() {
       return this.ancestors.filter(node =>
-        ['scene', 'group', 'shape'].includes(node.type)
+        ['canvas', 'group', 'shape'].includes(node.type)
       );
     },
   });
 
-  Object.defineProperty(Graphics, 'scene', {
+  // => ?
+  Object.defineProperty(SceneNode$$1, 'canvas', {
     get() {
       return this.findAncestor(
-        node => node.type === 'scene'
+        node => node.type === 'canvas'
       );
     },
   });
 
-  Object.defineProperty(Graphics, 'selected', {
+  // => ?
+  Object.defineProperty(SceneNode$$1, 'selected', {
     get() {
-      return this.scene.findDescendant(node => {
+      return this.canvas.findDescendant(node => {
         return node.class.includes('selected');
       });
     },
   });
 
-  Object.defineProperty(Graphics, 'editing', {
+  // => ?
+  Object.defineProperty(SceneNode$$1, 'editing', {
     get() {
-      return this.scene.findDescendant(node => {
+      return this.canvas.findDescendant(node => {
         return node.class.includes('editing');
       });
     },
   });
 
-  Object.defineProperty(Graphics, 'frontier', {
+  // => doc
+  Object.defineProperty(SceneNode$$1, 'frontier', {
     get() {
-      return this.scene.findDescendants(node => {
+      return this.canvas.findDescendants(node => {
         return node.class.includes('frontier');
       });
     },
   });
 
-  Object.defineProperty(Graphics, 'transform', {
+  // => graphics
+  Object.defineProperty(SceneNode$$1, 'transform', {
     get() {
       return this.payload.transform;
     },
@@ -3874,7 +3892,8 @@
     },
   });
 
-  Object.defineProperty(Graphics, 'bounds', {
+  // => ?
+  Object.defineProperty(SceneNode$$1, 'bounds', {
     get() {
       if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
         return null;
@@ -3891,16 +3910,8 @@
     },
   });
 
-  Object.defineProperty(Graphics, 'vector', {
-    get() {
-      return this.payload.vector;
-    },
-    set(value) {
-      this.payload.vector = value;
-    },
-  });
-
-  Object.defineProperty(Graphics, 'viewBox', {
+  // => canvas
+  Object.defineProperty(SceneNode$$1, 'viewBox', {
     get() {
       return this.payload.viewBox;
     },
@@ -3908,6 +3919,8 @@
       this.payload.viewBox = value;
     },
   });
+
+  const GraphicsNode$$1 = SceneNode$$1.create();
 
   const SyntaxTree = {
     create() {
@@ -3995,18 +4008,18 @@
     },
   };
 
-  const Scene = Object.create(Graphics);
-  Scene.type = 'scene';
+  const Canvas$$1 = Object.create(GraphicsNode$$1);
+  Canvas$$1.type = 'canvas';
 
   const xmlns = 'http://www.w3.org/2000/svg';
 
-  Scene.toVDOMNode = function() {
+  Canvas$$1.toVDOMNode = function() {
     return {
       tag: 'svg',
       children: [],
       props: {
         'data-key': this.key,
-        'data-type': 'scene',
+        'data-type': 'canvas',
         viewBox: this.viewBox.toString(),
         xmlns: 'http://www.w3.org/2000/svg',
         class: this.class.toString(),
@@ -4014,7 +4027,7 @@
     };
   };
 
-  Scene.toSVGNode = function() {
+  Canvas$$1.toSVGNode = function() {
     return {
       tag: 'svg',
       children: [],
@@ -4025,7 +4038,7 @@
     };
   };
 
-  Scene.toASTNodes = function() {
+  Canvas$$1.toASTNodes = function() {
     const open = SyntaxTree.create();
     open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
     open.key = this.key;
@@ -4040,10 +4053,10 @@
     };
   };
 
-  const Group = Object.create(Graphics);
-  Group.type = 'group';
+  const Group$$1 = Object.create(GraphicsNode$$1);
+  Group$$1.type = 'group';
 
-  Group.toVDOMNode = function() {
+  Group$$1.toVDOMNode = function() {
     return {
       tag: 'g',
       children: [],
@@ -4056,24 +4069,24 @@
     };
   };
 
-  Group.toSVGNode = function() {
+  Group$$1.toSVGNode = function() {
     const svgNode = {
       tag: 'g',
       children: [],
       props: {},
     };
 
-    if (!this.transform.equals(Matrix.identity())) {
+    if (!this.transform.equals(Matrix$$1.identity())) {
       svgNode.props.transform = this.transform.toString();
     }
 
     return svgNode;
   };
 
-  Group.toASTNodes = function() {
+  Group$$1.toASTNodes = function() {
     const open = SyntaxTree.create();
 
-    if (!this.transform.equals(Matrix.identity())) {
+    if (!this.transform.equals(Matrix$$1.identity())) {
       open.markup = `<g transform="${this.transform.toString()}">`;
     } else {
       open.markup = '<g>';
@@ -4092,10 +4105,10 @@
     };
   };
 
-  const Shape = Object.create(Graphics);
-  Shape.type = 'shape';
+  const Shape$$1 = Object.create(GraphicsNode$$1);
+  Shape$$1.type = 'shape';
 
-  Shape.toVDOMNode = function() {
+  Shape$$1.toVDOMNode = function() {
     return {
       tag: 'path',
       children: [],
@@ -4109,7 +4122,7 @@
     };
   };
 
-  Shape.toVDOMCurves = function() {
+  Shape$$1.toVDOMCurves = function() {
     const nodes = [];
     const splines = this.children;
 
@@ -4146,24 +4159,24 @@
     return nodes;
   };
 
-  Shape.toSVGNode = function() {
+  Shape$$1.toSVGNode = function() {
     const svgNode = {
       tag: 'path',
       children: [],
       props: { d: this.pathString() },
     };
 
-    if (!this.transform.equals(Matrix.identity())) {
+    if (!this.transform.equals(Matrix$$1.identity())) {
       svgNode.props.transform = this.transform.toString();
     }
 
     return svgNode;
   };
 
-  Shape.toASTNodes = function() {
+  Shape$$1.toASTNodes = function() {
     const open = SyntaxTree.create();
 
-    if (!this.transform.equals(Matrix.identity())) {
+    if (!this.transform.equals(Matrix$$1.identity())) {
       open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
     } else {
       open.markup = `<path d="${this.pathString()}">`;
@@ -4182,7 +4195,7 @@
     };
   };
 
-  Shape.pathString = function() {
+  Shape$$1.pathString = function() {
     let d = '';
 
     for (let spline of this.children) {
@@ -4216,99 +4229,13 @@
     return d;
   };
 
-  const Anchor = Object.create(Graphics);
-  Anchor.type = 'anchor';
-
-  const HandleIn = Object.create(Graphics);
-  HandleIn.type = 'handleIn';
-
-  const HandleOut = Object.create(Graphics);
-  HandleOut.type = 'handleOut';
-
-  const Segment = Object.create(Graphics);
-  Segment.type = 'segment';
-
-  // convenience API for getting/setting anchor and handle values of a segment
-
-  Object.defineProperty(Segment, 'anchor', {
-    get() {
-      const anchorNode = this.children.find(child => child.type === 'anchor');
-
-      if (anchorNode) {
-        return anchorNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let anchorNode;
-
-      if (this.anchor) {
-        anchorNode = this.children.find(child => child.type === 'anchor');
-      } else {
-        anchorNode = Anchor.create();
-        this.append(anchorNode);
-      }
-
-      anchorNode.vector = value;
-    },
-  });
-
-  Object.defineProperty(Segment, 'handleIn', {
-    get() {
-      const handleNode = this.children.find(child => child.type === 'handleIn');
-
-      if (handleNode) {
-        return handleNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let handleNode;
-
-      if (this.handleIn) {
-        handleNode = this.children.find(child => child.type === 'handleIn');
-      } else {
-        handleNode = HandleIn.create();
-        this.append(handleNode);
-      }
-
-      handleNode.vector = value;
-    },
-  });
-
-  Object.defineProperty(Segment, 'handleOut', {
-    get() {
-      const handleNode = this.children.find(child => child.type === 'handleOut');
-
-      if (handleNode) {
-        return handleNode.vector;
-      }
-
-      return null;
-    },
-    set(value) {
-      let handleNode;
-
-      if (this.handleOut) {
-        handleNode = this.children.find(child => child.type === 'handleOut');
-      } else {
-        handleNode = HandleOut.create();
-        this.append(handleNode);
-      }
-
-      handleNode.vector = value;
-    },
-  });
-
-  const Spline = Object.create(Graphics);
-  Spline.type = 'spline';
+  const Spline$$1 = Object.create(SceneNode$$1);
+  Spline$$1.type = 'spline';
 
   // generate array of curves given by a spline
   // (used to compute bounding boxes)
 
-  Spline.curves = function() {
+  Spline$$1.curves = function() {
     const theCurves = [];
 
     // this conditional creates a degenerate curve if
@@ -4316,9 +4243,9 @@
     // TODO: this could be a problem!
     if (this.children.length === 1) {
       const start = this.children[0];
-      const end = Segment.create();
+      const end = Segment$$1.create();
 
-      theCurves.push(Curve.createFromSegments(start, end));
+      theCurves.push(Curve$$1.createFromSegments(start, end));
     }
 
     // if spline has exactly 1 segment, no curves will be
@@ -4327,7 +4254,7 @@
       const start = this.children[i];
       const end = this.children[i + 1];
 
-      theCurves.push(Curve.createFromSegments(start, end));
+      theCurves.push(Curve$$1.createFromSegments(start, end));
     }
 
     return theCurves;
@@ -4335,20 +4262,20 @@
 
   // update bounding box of a spline
 
-  Spline.updateBounds = function() {
+  Spline$$1.updateBounds = function() {
     const curves = this.curves();
     let bounds;
 
     // no curves
     if (curves.length === 0) {
-      bounds = Rectangle.create();
+      bounds = Rectangle$$1.create();
       this.payload.bounds = bounds;
       return bounds;
     }
 
     // a single, degenerate curve
     if (curves.length === 1 && curves[0].isDegenerate()) {
-      bounds = Rectangle.create();
+      bounds = Rectangle$$1.create();
       this.payload.bounds = bounds;
       return bounds;
     }
@@ -4366,10 +4293,107 @@
     return bounds;
   };
 
-  const Doc = Object.create(Node);
-  Doc.type = 'doc';
+  const Segment$$1 = Object.create(SceneNode$$1);
+  Segment$$1.type = 'segment';
 
-  Object.assign(Doc, {
+  // convenience API for getting/setting anchor and handle values of a segment
+
+  Object.defineProperty(Segment$$1, 'anchor', {
+    get() {
+      const anchorNode = this.children.find(child => child.type === 'anchor');
+
+      if (anchorNode) {
+        return anchorNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let anchorNode;
+
+      if (this.anchor) {
+        anchorNode = this.children.find(child => child.type === 'anchor');
+      } else {
+        anchorNode = Anchor$$1.create();
+        this.append(anchorNode);
+      }
+
+      anchorNode.vector = value;
+    },
+  });
+
+  Object.defineProperty(Segment$$1, 'handleIn', {
+    get() {
+      const handleNode = this.children.find(child => child.type === 'handleIn');
+
+      if (handleNode) {
+        return handleNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let handleNode;
+
+      if (this.handleIn) {
+        handleNode = this.children.find(child => child.type === 'handleIn');
+      } else {
+        handleNode = HandleIn$$1.create();
+        this.append(handleNode);
+      }
+
+      handleNode.vector = value;
+    },
+  });
+
+  Object.defineProperty(Segment$$1, 'handleOut', {
+    get() {
+      const handleNode = this.children.find(child => child.type === 'handleOut');
+
+      if (handleNode) {
+        return handleNode.vector;
+      }
+
+      return null;
+    },
+    set(value) {
+      let handleNode;
+
+      if (this.handleOut) {
+        handleNode = this.children.find(child => child.type === 'handleOut');
+      } else {
+        handleNode = HandleOut$$1.create();
+        this.append(handleNode);
+      }
+
+      handleNode.vector = value;
+    },
+  });
+
+  const ControlNode$$1 = SceneNode$$1.create();
+
+  Object.defineProperty(ControlNode$$1, 'vector', {
+    get() {
+      return this.payload.vector;
+    },
+    set(value) {
+      this.payload.vector = value;
+    },
+  });
+
+  const Anchor$$1 = Object.create(ControlNode$$1);
+  Anchor$$1.type = 'anchor';
+
+  const HandleIn$$1 = Object.create(ControlNode$$1);
+  HandleIn$$1.type = 'handleIn';
+
+  const HandleOut$$1 = Object.create(ControlNode$$1);
+  HandleOut$$1.type = 'handleOut';
+
+  const Doc$$1 = Object.create(Node);
+  Doc$$1.type = 'doc';
+
+  Object.assign(Doc$$1, {
     create() {
       return Node.create
         .bind(this)()
@@ -4377,91 +4401,91 @@
     },
 
     toJSON() {
-      const plain = Node.toJSON.bind(this)();
-      plain._id = this._id;
-      return plain;
+      const obj = Node.toJSON.bind(this)();
+      obj._id = this._id;
+      return obj;
     },
   });
 
-  const Store = Object.create(Node);
-  Store.type = 'store';
+  const Store$$1 = Object.create(Node);
+  Store$$1.type = 'store';
 
-  Object.defineProperty(Store, 'message', {
+  Object.defineProperty(Store$$1, 'message', {
     get() {
       return this.root.findDescendant(node => node.type === 'message');
     },
   });
 
-  Object.defineProperty(Store, 'scene', {
+  Object.defineProperty(Store$$1, 'canvas', {
     get() {
-      return this.root.findDescendant(node => node.type === 'scene');
+      return this.root.findDescendant(node => node.type === 'canvas');
     },
   });
 
-  Object.defineProperty(Store, 'docs', {
+  Object.defineProperty(Store$$1, 'docs', {
     get() {
       return this.root.findDescendant(node => node.type === 'docs');
     },
   });
 
-  Object.defineProperty(Store, 'doc', {
+  Object.defineProperty(Store$$1, 'doc', {
     get() {
       return this.root.findDescendant(node => node.type === 'doc');
     },
   });
 
-  const Docs = Object.create(Node);
-  Docs.type = 'docs';
+  const Docs$$1 = Object.create(Node);
+  Docs$$1.type = 'docs';
 
-  const Message = Object.create(Node);
-  Message.type = 'message';
+  const Message$$1 = Object.create(Node);
+  Message$$1.type = 'message';
 
-  const Identifier$1 = Object.create(Node);
-  Identifier$1.type = 'identifier';
+  const Identifier$$1 = Object.create(Node);
+  Identifier$$1.type = 'identifier';
 
   const objectToDoc = object => {
     let node;
 
     switch (object.type) {
       case 'store':
-        node = Store.create();
+        node = Store$$1.create();
         break;
       case 'doc':
-        node = Doc.create();
+        node = Doc$$1.create();
         break;
       case 'docs':
-        node = Docs.create();
+        node = Docs$$1.create();
         break;
       case 'identifier':
         node = Identifier.create();
         break;
       case 'message':
-        node = Message.create();
+        node = Message$$1.create();
         break;
-      case 'scene':
-        node = Scene.create();
+      case 'canvas':
+        node = Canvas$$1.create();
         break;
       case 'group':
-        node = Group.create();
+        node = Group$$1.create();
         break;
       case 'shape':
-        node = Shape.create();
+        node = Shape$$1.create();
         break;
       case 'spline':
-        node = Spline.create();
+        node = Spline$$1.create();
         break;
       case 'segment':
-        node = Segment.create();
+        node = Segment$$1.create();
         break;
       case 'anchor':
-        node = Anchor.create();
+        node = Anchor$$1.create();
         node.type = 'anchor';
         break;
       case 'handleIn':
-        node = HandleIn.create();
+        node = HandleIn$$1.create();
         break;
       case 'handleOut':
-        node = HandleOut.create();
+        node = HandleOut$$1.create();
         break;
     }
 
@@ -4482,11 +4506,11 @@
     for (let [key, value] of Object.entries(object.payload)) {
       switch (key) {
         case 'viewBox':
-          node.viewBox = Rectangle.createFromObject(value);
+          node.viewBox = Rectangle$$1.createFromObject(value);
           console.log(node);
           break;
         case 'transform':
-          node.transform = Matrix.create(value);
+          node.transform = Matrix$$1.create(value);
           break;
         case 'class':
           node.class = Class.create(value);
@@ -4496,7 +4520,7 @@
           break;
         case 'bounds':
           if (value) {
-            node.bounds = Rectangle.createFromObject(value);
+            node.bounds = Rectangle$$1.createFromObject(value);
           }
           break;
         case 'vector':
@@ -4513,10 +4537,10 @@
       .documentElement;
 
     if ($svg instanceof SVGElement) {
-      const scene = Scene.create();
-      buildTree($svg, scene);
-      scene.updateFrontier();
-      return scene;
+      const canvas = Canvas$$1.create();
+      buildTree($svg, canvas);
+      canvas.updateFrontier();
+      return canvas;
     } else {
       return null;
     }
@@ -4535,7 +4559,7 @@
       let child;
 
       if ($child instanceof SVGGElement) {
-        child = Group.create();
+        child = Group$$1.create();
         node.append(child);
         buildTree($child, child);
       } else {
@@ -4551,7 +4575,7 @@
       const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
       const origin = Vector.create(viewBox[0], viewBox[1]);
       const size = Vector.create(viewBox[2], viewBox[3]);
-      node.viewBox = Rectangle.create(origin, size);
+      node.viewBox = Rectangle$$1.create(origin, size);
     }
 
     // transform
@@ -4561,7 +4585,7 @@
       $node.transform.baseVal.consolidate()
     ) {
       const $matrix = $node.transform.baseVal.consolidate().matrix;
-      node.transform = Matrix.createFromDOMMatrix($matrix);
+      node.transform = Matrix$$1.createFromDOMMatrix($matrix);
     }
 
     // classes
@@ -4569,7 +4593,7 @@
   };
 
   const buildShapeTree = $geometryNode => {
-    const shape = Shape.create();
+    const shape = Shape$$1.create();
 
     processAttributes($geometryNode, shape);
     // ^ TODO: we are also calling processAttributes further above, duplication!
@@ -4606,7 +4630,7 @@
   };
 
   const buildSplineTree = sequence => {
-    const spline = Spline.create();
+    const spline = Spline$$1.create();
     for (let segment of buildSegmentList(sequence)) {
       spline.append(segment);
     }
@@ -4622,30 +4646,30 @@
     const segments = [];
 
     // the first command is ALWAYS an `M` command (no handles)
-    segments[0] = Segment.create();
-    const child = Anchor.create();
+    segments[0] = Segment$$1.create();
+    const child = Anchor$$1.create();
     child.payload.vector = Vector.create(commands[0].x, commands[0].y);
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
       const command = commands[i];
       const prevSeg = segments[i - 1];
-      const currSeg = Segment.create();
+      const currSeg = Segment$$1.create();
 
-      const anchor = Anchor.create();
+      const anchor = Anchor$$1.create();
       anchor.payload.vector = Vector.create(command.x, command.y);
       currSeg.append(anchor);
 
       if (command.x1 && command.x2) {
-        const handleOut = HandleOut.create();
+        const handleOut = HandleOut$$1.create();
         handleOut.payload.vector = Vector.create(command.x1, command.y1);
         prevSeg.append(handleOut);
 
-        const handleIn = HandleIn.create();
+        const handleIn = HandleIn$$1.create();
         handleIn.payload.vector = Vector.create(command.x2, command.y2);
         currSeg.append(handleIn);
       } else if (command.x1) {
-        const handleIn = HandleIn.create();
+        const handleIn = HandleIn$$1.create();
         handleIn.payload.vector = Vector.create(command.x1, command.y1);
         currSeg.append(handleIn);
       }
@@ -4701,11 +4725,11 @@
 
   const domToScene = $svg => {
     if ($svg instanceof SVGElement) {
-      const scene = Scene.create();
-      scene.key = $svg.key;
-      buildTree$1($svg, scene);
-      scene.updateFrontier();
-      return scene;
+      const canvas = Canvas$$1.create();
+      canvas.key = $svg.key;
+      buildTree$1($svg, canvas);
+      canvas.updateFrontier();
+      return canvas;
     } else {
       return null;
     }
@@ -4724,7 +4748,7 @@
       let child;
 
       if ($child instanceof SVGGElement) {
-        child = Group.create();
+        child = Group$$1.create();
         child.key = $child.key;
         node.append(child);
         buildTree$1($child, child);
@@ -4741,7 +4765,7 @@
       const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
       const origin = Vector.create(viewBox[0], viewBox[1]);
       const size = Vector.create(viewBox[2], viewBox[3]);
-      node.viewBox = Rectangle.create(origin, size);
+      node.viewBox = Rectangle$$1.create(origin, size);
     }
 
     // transform
@@ -4751,7 +4775,7 @@
       $node.transform.baseVal.consolidate()
     ) {
       const $matrix = $node.transform.baseVal.consolidate().matrix;
-      node.transform = Matrix.createFromDOMMatrix($matrix);
+      node.transform = Matrix$$1.createFromDOMMatrix($matrix);
     }
 
     // classes
@@ -4759,7 +4783,7 @@
   };
 
   const buildShapeTree$1 = $geometryNode => {
-    const shape = Shape.create();
+    const shape = Shape$$1.create();
     shape.key = $geometryNode.key;
 
     processAttributes$1($geometryNode, shape);
@@ -4797,7 +4821,7 @@
   };
 
   const buildSplineTree$1 = sequence => {
-    const spline = Spline.create();
+    const spline = Spline$$1.create();
     for (let segment of buildSegmentList$1(sequence)) {
       spline.append(segment);
     }
@@ -4813,30 +4837,30 @@
     const segments = [];
 
     // the first command is ALWAYS an `M` command (no handles)
-    segments[0] = Segment.create();
-    const child = Anchor.create();
+    segments[0] = Segment$$1.create();
+    const child = Anchor$$1.create();
     child.payload.vector = Vector.create(commands[0].x, commands[0].y);
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
       const command = commands[i];
       const prevSeg = segments[i - 1];
-      const currSeg = Segment.create();
+      const currSeg = Segment$$1.create();
 
-      const anchor = Anchor.create();
+      const anchor = Anchor$$1.create();
       anchor.payload.vector = Vector.create(command.x, command.y);
       currSeg.append(anchor);
 
       if (command.x1 && command.x2) {
-        const handleOut = HandleOut.create();
+        const handleOut = HandleOut$$1.create();
         handleOut.payload.vector = Vector.create(command.x1, command.y1);
         prevSeg.append(handleOut);
 
-        const handleIn = HandleIn.create();
+        const handleIn = HandleIn$$1.create();
         handleIn.payload.vector = Vector.create(command.x2, command.y2);
         currSeg.append(handleIn);
       } else if (command.x1) {
-        const handleIn = HandleIn.create();
+        const handleIn = HandleIn$$1.create();
         handleIn.payload.vector = Vector.create(command.x1, command.y1);
         currSeg.append(handleIn);
       }
@@ -4930,9 +4954,9 @@
     return node;
   };
 
-  const sceneToSyntaxTree = scene => {
+  const sceneToSyntaxTree = canvas => {
     const astRoot = SyntaxTree.create();
-    parse(scene, astRoot, 0);
+    parse(canvas, astRoot, 0);
     astRoot.indexify();
     return astRoot;
   };
@@ -4995,7 +5019,7 @@
     };
   };
 
-  const tools = store => {
+  const tools$$1 = store => {
     return h(
       'ul',
       { id: 'buttons' },
@@ -5127,16 +5151,16 @@
     controlDiameter: 6,
   };
 
-  const canvas = store => {
+  const canvas$$1 = store => {
     return renderScene(store);
   };
 
   const renderScene = store => {
-    if (store.scene === null) {
+    if (store.canvas === null) {
       return '';
     }
 
-    return buildTree$3(store.scene);
+    return buildTree$3(store.canvas);
   };
 
   const buildTree$3 = (node, vParent = null) => {
@@ -5394,12 +5418,12 @@
     return length / node.globalScaleFactor();
   };
 
-  const exportToVDOM = state => {
+  const exportToVDOM$$1 = state => {
     return {
-      tools: tools(state.store),
+      tools: tools$$1(state.store),
       // editor:   editor(state),     // not needed atm
       message: message(state.store),
-      canvas: canvas(state.store),
+      canvas: canvas$$1(state.store),
     };
   };
 
@@ -5413,7 +5437,7 @@
 
   const exportToSVG = store => {
     const markup = [];
-    const vNode = buildSceneNode(store.scene);
+    const vNode = buildSceneNode(store.canvas);
 
     return convertToMarkup(markup, vNode, 0);
   };
@@ -5506,8 +5530,8 @@
     },
 
     buildStore() {
-      const store = Store.create();
-      const docs = Docs.create();
+      const store = Store$$1.create();
+      const docs = Docs$$1.create();
       const message = this.buildMessage();
       const doc = this.buildDoc();
 
@@ -5519,22 +5543,22 @@
     },
 
     buildMessage() {
-      const message = Message.create();
+      const message = Message$$1.create();
       message.payload.text = 'Welcome!';
       return message;
     },
 
     buildDoc() {
-      const doc = Doc.create();
-      const scene = Scene.create();
-      scene.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-      doc.append(scene);
+      const doc = Doc$$1.create();
+      const canvas = Canvas$$1.create();
+      canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 600, 395);
+      doc.append(canvas);
 
       return doc;
     },
 
-    get scene() {
-      return this.store.scene;
+    get canvas() {
+      return this.store.canvas;
     },
 
     get doc() {
@@ -5577,10 +5601,10 @@
     },
 
     sceneToSyntaxTree() {
-      return sceneToSyntaxTree(this.store.scene);
+      return sceneToSyntaxTree(this.store.canvas);
     },
 
-    // returns a Scene node
+    // returns a Canvas node
     markupToScene(markup) {
       return markupToScene(markup);
     },
@@ -5591,7 +5615,7 @@
 
     // returns a Doc node and a list of ids (for docs)
     exportToVDOM() {
-      return exportToVDOM(this);
+      return exportToVDOM$$1(this);
     },
 
     exportToAST() {
@@ -5619,8 +5643,8 @@
     // SELECTION
 
     focus(state, input) {
-      state.scene.unfocusAll();
-      const target = state.scene.findDescendantByKey(input.key);
+      state.canvas.unfocusAll();
+      const target = state.canvas.findDescendantByKey(input.key);
       const hit = Vector.create(input.x, input.y);
 
       if (target) {
@@ -5633,18 +5657,18 @@
     },
 
     select(state, input) {
-      const node = state.scene.findDescendantByClass('focus');
+      const node = state.canvas.findDescendantByClass('focus');
 
       if (node) {
         node.select();
         this.initTransform(state, input);
       } else {
-        state.scene.deselectAll();
+        state.canvas.deselectAll();
       }
     },
 
     deepSelect(state, input) {
-      const target = state.scene.findDescendantByKey(input.key);
+      const target = state.canvas.findDescendantByKey(input.key);
 
       if (!target) {
         return;
@@ -5654,7 +5678,7 @@
       if (target.isAtFrontier()) {
         // select in shape => TODO: selection mechanism
         target.edit();
-        state.scene.unfocusAll();
+        state.canvas.unfocusAll();
         state.label = 'penMode';
       } else {
         // select in group
@@ -5664,15 +5688,15 @@
 
         if (toSelect) {
           toSelect.select();
-          state.scene.updateFrontier(); // TODO: why do we need to do this?
-          state.scene.unfocusAll();
+          state.canvas.updateFrontier(); // TODO: why do we need to do this?
+          state.canvas.unfocusAll();
         }
       }
     },
 
     // TODO
     release(state, input) {
-      const current = state.scene.selected || state.scene.editing;
+      const current = state.canvas.selected || state.canvas.editing;
 
       if (current) {
         for (let ancestor of current.graphicsAncestors) {
@@ -5685,7 +5709,7 @@
 
     // TODO
     cleanup(state, event) {
-      const current = state.scene.editing;
+      const current = state.canvas.editing;
 
       if (current) {
         // update bounds of splines of current shape:
@@ -5699,8 +5723,8 @@
         }
       }
 
-      state.scene.deselectAll();
-      state.scene.deeditAll();
+      state.canvas.deselectAll();
+      state.canvas.deeditAll();
       this.aux = {};
     },
 
@@ -5708,7 +5732,7 @@
     // triggered by escape key
     exitEdit(state, input) {
       if (state.label === 'penMode') {
-        const target = state.scene.editing;
+        const target = state.canvas.editing;
         this.cleanup(state, input);
         target.select();
         state.label = 'selectMode';
@@ -5720,13 +5744,13 @@
     // TRANSFORMS
 
     initTransform(state, input) {
-      const node = state.scene.selected;
+      const node = state.canvas.selected;
       this.aux.from = Vector.create(input.x, input.y);
       this.aux.center = node.bounds.center.transform(node.globalTransform());
     },
 
     shift(state, input) {
-      const node = state.scene.selected;
+      const node = state.canvas.selected;
 
       if (!node) {
         return;
@@ -5742,7 +5766,7 @@
     },
 
     rotate(state, input) {
-      const node = state.scene.selected;
+      const node = state.canvas.selected;
 
       if (!node) {
         return;
@@ -5759,7 +5783,7 @@
     },
 
     scale(state, input) {
-      const node = state.scene.selected;
+      const node = state.canvas.selected;
 
       if (!node) {
         return;
@@ -5782,21 +5806,21 @@
       let shape;
       let spline;
 
-      if (state.scene.editing) {
-        shape = state.scene.editing;
+      if (state.canvas.editing) {
+        shape = state.canvas.editing;
         spline = shape.lastChild;
       } else {
-        shape = Shape.create();
-        state.scene.append(shape);
-        spline = Spline.create();
+        shape = Shape$$1.create();
+        state.canvas.append(shape);
+        spline = Spline$$1.create();
         shape.append(spline);
         shape.edit();
       }
 
-      const segment = Segment.create();
+      const segment = Segment$$1.create();
       spline.append(segment);
 
-      const anchor = Anchor.create();
+      const anchor = Anchor$$1.create();
       segment.append(anchor);
       anchor.class = anchor.class.add('pen'); // PEN
 
@@ -5820,7 +5844,7 @@
     },
 
     initEditSegment(state, input) {
-      const control = state.scene.findDescendantByKey(input.key);
+      const control = state.canvas.findDescendantByKey(input.key);
       const shape = control.parent.parent.parent;
       const from = Vector.create(input.x, input.y).transformToLocal(shape);
 
@@ -5859,12 +5883,12 @@
 
     // find point on curve
     projectInput(state, input) {
-      const startSegment = state.scene.findDescendantByKey(input.key);
+      const startSegment = state.canvas.findDescendantByKey(input.key);
       const spline = startSegment.parent;
       const shape = spline.parent;
       const startIndex = spline.children.indexOf(startSegment);
       const endSegment = spline.children[startIndex + 1];
-      const curve = Curve.createFromSegments(startSegment, endSegment);
+      const curve = Curve$$1.createFromSegments(startSegment, endSegment);
       const bCurve = new Bezier$1(...curve.coords());
 
       const from = Vector.create(input.x, input.y).transformToLocal(shape);
@@ -5893,7 +5917,7 @@
       const splitCurves = bCurve.split(curveTime);
       const left = splitCurves.left;
       const right = splitCurves.right;
-      const newSegment = Segment.create();
+      const newSegment = Segment$$1.create();
       newSegment.anchor = newAnchor;
       newSegment.handleIn = Vector.createFromObject(left.points[2]);
       newSegment.handleOut = Vector.createFromObject(right.points[1]);
@@ -5910,7 +5934,7 @@
     },
 
     hideSplitter(state, input) {
-      const segment = state.scene.findDescendantByKey(input.key);
+      const segment = state.canvas.findDescendantByKey(input.key);
       const shape = segment.parent.parent;
       shape.splitter = Vector.create(-1000, -1000);
     },
@@ -5925,7 +5949,7 @@
       state.docs.children = [];
 
       for (let id of input.data.docIDs) {
-        const identNode = Identifier$1.create();
+        const identNode = Identifier$$1.create();
         identNode.payload._id = id;
         state.docs.append(identNode);
       }
@@ -5940,7 +5964,7 @@
     },
 
     switchDocument(state, input) {
-      state.scene.replaceWith(state.objectToDoc(input.data.doc));
+      state.canvas.replaceWith(state.objectToDoc(input.data.doc));
       this.cleanup(state, input);
     },
 
@@ -5965,7 +5989,7 @@
       syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
       if (syntaxTreeNode) {
-        sceneGraphNode = state.scene.findDescendantByKey(syntaxTreeNode.key);
+        sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
       }
 
       if (sceneGraphNode) {
@@ -5984,7 +6008,7 @@
         syntaxTree.indexify();
 
         state.syntaxTree = syntaxTree;
-        state.scene.replaceWith(state.domToScene($svg));
+        state.canvas.replaceWith(state.domToScene($svg));
       } else {
         console.log('cannot update scenegraph and syntaxtree');
       }
@@ -6072,7 +6096,7 @@
     {
       from: 'selectMode',
       type: 'dblclick',
-      target: ['shape', 'group', 'scene'],
+      target: ['shape', 'group', 'canvas'],
       do: 'deepSelect',
     },
 
@@ -6080,7 +6104,7 @@
     {
       from: 'selectMode',
       type: 'mousedown',
-      target: ['shape', 'group', 'scene'],
+      target: ['shape', 'group', 'canvas'],
       do: 'select',
       to: 'shifting',
     },
@@ -6154,7 +6178,7 @@
     {
       from: 'penMode',
       type: 'mousedown',
-      target: ['shape', 'group', 'scene'],
+      target: ['shape', 'group', 'canvas'],
       do: 'addSegment',
       to: 'settingHandles',
     },

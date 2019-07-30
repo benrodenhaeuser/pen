@@ -1,31 +1,30 @@
-import { Node } from './node.js';
+import { Node } from './dir.js';
 import { Class } from '../helpers/dir.js';
 import { Matrix } from '../geometry/dir.js';
 import { Vector } from '../geometry/dir.js';
 import { Rectangle } from '../geometry/dir.js';
 
-const Graphics = Object.create(Node);
+const SceneNode = Object.create(Node);
 
-Object.assign(Graphics, {
+Object.assign(SceneNode, {
   create() {
     return Node.create
       .bind(this)()
-      .set(this.graphicsDefaults());
+      .set(this.sceneNodeDefaults());
   },
 
-  graphicsDefaults() {
+  sceneNodeDefaults() {
     return {
       payload: {
-        transform: Matrix.identity(),
+        transform: Matrix.identity(), // => graphics
         class: Class.create(),
-        bounds: null,
+        bounds: null, // => graphics and spline
       },
-      splitter: Vector.create(-1000, -1000), // <= off-canvas, far away
-      // ^ TODO: this is in an odd place
-      // it should be in Shape (shapeDefaults())
+      splitter: Vector.create(-1000, -1000), // => shape
     };
   },
 
+  // => graphics
   updateBounds() {
     if (!['shape', 'group'].includes(this.type)) {
       return;
@@ -52,10 +51,11 @@ Object.assign(Graphics, {
     return bounds;
   },
 
+  // => document
   updateFrontier() {
     this.removeFrontier();
 
-    if (this.selected && this.selected.type !== 'scene') {
+    if (this.selected && this.selected.type !== 'canvas') {
       this.selected.class = this.selected.class.add('frontier');
 
       let node = this.selected;
@@ -67,14 +67,15 @@ Object.assign(Graphics, {
         node = node.parent;
       } while (node.parent.type !== 'doc');
     } else {
-      for (let child of this.scene.children) {
+      for (let child of this.canvas.children) {
         child.class = child.class.add('frontier');
       }
     }
   },
 
+  // => document
   removeFrontier() {
-    const frontier = this.scene.findDescendants(node => {
+    const frontier = this.canvas.findDescendants(node => {
       return node.class.includes('frontier');
     });
 
@@ -83,32 +84,36 @@ Object.assign(Graphics, {
     }
   },
 
+  // => graphics
   isSelected() {
     return this.class.includes('selected');
   },
 
+  // => graphics
   isInFocus() {
     return this.class.includes('focus');
   },
 
+  // => graphics
   isAtFrontier() {
     return this.class.includes('frontier');
   },
 
-  // new
-
+  // => graphics
   contains(globalPoint) {
     return globalPoint
       .transform(this.globalTransform().invert())
       .isWithin(this.bounds);
   },
 
+  // => graphics
   focus() {
     this.class = this.class.add('focus');
   },
 
+  // => graphics
   unfocusAll() {
-    const focussed = this.scene.findDescendants(node => {
+    const focussed = this.canvas.findDescendants(node => {
       return node.class.includes('focus');
     });
 
@@ -117,18 +122,21 @@ Object.assign(Graphics, {
     }
   },
 
+  // => graphics
   select() {
     this.deselectAll();
     this.class = this.class.add('selected');
     this.updateFrontier();
   },
 
+  // => graphics
   edit() {
     this.deselectAll();
     this.updateFrontier();
     this.class = this.class.add('editing');
   },
 
+  // => graphics
   deselectAll() {
     if (this.selected) {
       this.selected.class.remove('selected');
@@ -136,16 +144,19 @@ Object.assign(Graphics, {
     this.updateFrontier();
   },
 
+  // => graphics
   deeditAll() {
     if (this.editing) {
       this.editing.class.remove('editing');
     }
   },
 
+  // => graphics
   globalTransform() {
     return this.ancestorTransform().multiply(this.transform);
   },
 
+  // => graphics
   // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
   ancestorTransform() {
     let matrix = Matrix.identity();
@@ -160,16 +171,19 @@ Object.assign(Graphics, {
     return matrix;
   },
 
+  // => graphics
   rotate(angle, center) {
     center = center.transform(this.ancestorTransform().invert());
     this.transform = Matrix.rotation(angle, center).multiply(this.transform);
   },
 
+  // => graphics
   scale(factor, center) {
     center = center.transform(this.ancestorTransform().invert());
     this.transform = Matrix.scale(factor, center).multiply(this.transform);
   },
 
+  // => graphics
   translate(offset) {
     this.transform = this.ancestorTransform()
       .invert()
@@ -177,6 +191,7 @@ Object.assign(Graphics, {
       .multiply(this.globalTransform());
   },
 
+  // => graphics
   globalScaleFactor() {
     const total = this.globalTransform();
     const a = total.m[0][0];
@@ -186,55 +201,60 @@ Object.assign(Graphics, {
   },
 });
 
-// TODO: rename (but how?)
-Object.defineProperty(Graphics, 'graphicsChildren', {
+// => graphics
+Object.defineProperty(SceneNode, 'graphicsChildren', {
   get() {
-    return this.children.filter(node => ['group', 'shape'].includes(node.type));
+    return this.children.filter(node => ['canvas', 'group', 'shape'].includes(node.type));
   },
 });
 
-// TODO: rename (but how?)
-Object.defineProperty(Graphics, 'graphicsAncestors', {
+// => graphics
+Object.defineProperty(SceneNode, 'graphicsAncestors', {
   get() {
     return this.ancestors.filter(node =>
-      ['scene', 'group', 'shape'].includes(node.type)
+      ['canvas', 'group', 'shape'].includes(node.type)
     );
   },
 });
 
-Object.defineProperty(Graphics, 'scene', {
+// => ?
+Object.defineProperty(SceneNode, 'canvas', {
   get() {
     return this.findAncestor(
-      node => node.type === 'scene'
+      node => node.type === 'canvas'
     );
   },
 });
 
-Object.defineProperty(Graphics, 'selected', {
+// => ?
+Object.defineProperty(SceneNode, 'selected', {
   get() {
-    return this.scene.findDescendant(node => {
+    return this.canvas.findDescendant(node => {
       return node.class.includes('selected');
     });
   },
 });
 
-Object.defineProperty(Graphics, 'editing', {
+// => ?
+Object.defineProperty(SceneNode, 'editing', {
   get() {
-    return this.scene.findDescendant(node => {
+    return this.canvas.findDescendant(node => {
       return node.class.includes('editing');
     });
   },
 });
 
-Object.defineProperty(Graphics, 'frontier', {
+// => doc
+Object.defineProperty(SceneNode, 'frontier', {
   get() {
-    return this.scene.findDescendants(node => {
+    return this.canvas.findDescendants(node => {
       return node.class.includes('frontier');
     });
   },
 });
 
-Object.defineProperty(Graphics, 'transform', {
+// => graphics
+Object.defineProperty(SceneNode, 'transform', {
   get() {
     return this.payload.transform;
   },
@@ -243,7 +263,8 @@ Object.defineProperty(Graphics, 'transform', {
   },
 });
 
-Object.defineProperty(Graphics, 'bounds', {
+// => ?
+Object.defineProperty(SceneNode, 'bounds', {
   get() {
     if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
       return null;
@@ -260,16 +281,8 @@ Object.defineProperty(Graphics, 'bounds', {
   },
 });
 
-Object.defineProperty(Graphics, 'vector', {
-  get() {
-    return this.payload.vector;
-  },
-  set(value) {
-    this.payload.vector = value;
-  },
-});
-
-Object.defineProperty(Graphics, 'viewBox', {
+// => canvas
+Object.defineProperty(SceneNode, 'viewBox', {
   get() {
     return this.payload.viewBox;
   },
@@ -278,4 +291,4 @@ Object.defineProperty(Graphics, 'viewBox', {
   },
 });
 
-export { Graphics };
+export { SceneNode };

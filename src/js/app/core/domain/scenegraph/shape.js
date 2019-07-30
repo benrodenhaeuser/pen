@@ -1,8 +1,8 @@
-import { Graphics } from './graphics.js';
+import { GraphicsNode } from './dir.js';
 import { Matrix } from '../geometry/dir.js';
 import { SyntaxTree } from '../syntaxtree/syntaxtree.js';
 
-const Shape = Object.create(Graphics);
+const Shape = Object.create(GraphicsNode);
 Shape.type = 'shape';
 
 Shape.toVDOMNode = function() {

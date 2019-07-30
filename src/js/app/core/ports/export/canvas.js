@@ -1,4 +1,4 @@
-import { h } from './h.js';
+import { h } from './dir.js';
 
 const LENGTHS_IN_PX = {
   cornerSideLength: 8,
@@ -11,11 +11,11 @@ const canvas = store => {
 };
 
 const renderScene = store => {
-  if (store.scene === null) {
+  if (store.canvas === null) {
     return '';
   }
 
-  return buildTree(store.scene);
+  return buildTree(store.canvas);
 };
 
 const buildTree = (node, vParent = null) => {

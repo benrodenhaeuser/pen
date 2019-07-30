@@ -1,7 +1,7 @@
 import { Vector, Matrix, Rectangle, Curve } from './geometry/dir.js';
 
 import {
-  Scene,
+  Canvas,
   Group,
   Shape,
   Spline,
@@ -25,7 +25,7 @@ export {
   Matrix,
   Rectangle,
   Curve,
-  Scene,
+  Canvas,
   Group,
   Shape,
   Spline,

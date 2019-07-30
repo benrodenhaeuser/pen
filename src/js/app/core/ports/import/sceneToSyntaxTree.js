@@ -1,8 +1,8 @@
 import { SyntaxTree } from '../../domain/syntaxtree/syntaxtree.js';
 
-const sceneToSyntaxTree = scene => {
+const sceneToSyntaxTree = canvas => {
   const astRoot = SyntaxTree.create();
-  parse(scene, astRoot, 0);
+  parse(canvas, astRoot, 0);
   astRoot.indexify();
   return astRoot;
 };

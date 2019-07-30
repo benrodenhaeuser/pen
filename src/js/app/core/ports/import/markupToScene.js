@@ -1,4 +1,4 @@
-import { Scene, Shape, Group } from '../../domain/dir.js';
+import { Canvas, Shape, Group } from '../../domain/dir.js';
 import { Spline, Segment, Anchor } from '../../domain/dir.js';
 import { HandleIn, HandleOut } from '../../domain/dir.js';
 import { Matrix } from '../../domain/dir.js';
@@ -13,10 +13,10 @@ const markupToScene = markup => {
     .documentElement;
 
   if ($svg instanceof SVGElement) {
-    const scene = Scene.create();
-    buildTree($svg, scene);
-    scene.updateFrontier();
-    return scene;
+    const canvas = Canvas.create();
+    buildTree($svg, canvas);
+    canvas.updateFrontier();
+    return canvas;
   } else {
     return null;
   }

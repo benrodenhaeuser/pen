@@ -1,5 +1,5 @@
-import { Graphics } from './graphics.js';
+import { ControlNode } from './dir.js';
 
-const Anchor = Object.create(Graphics);
+const Anchor = Object.create(ControlNode);
 Anchor.type = 'anchor';
 export { Anchor };

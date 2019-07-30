@@ -1,9 +1,9 @@
-import { Graphics } from './graphics.js';
-import { Anchor } from './anchor.js';
-import { HandleIn } from './handleIn.js';
-import { HandleOut } from './handleOut.js';
+import { SceneNode } from './dir.js';
+import { Anchor } from './dir.js';
+import { HandleIn } from './dir.js';
+import { HandleOut } from './dir.js';
 
-const Segment = Object.create(Graphics);
+const Segment = Object.create(SceneNode);
 Segment.type = 'segment';
 
 // convenience API for getting/setting anchor and handle values of a segment

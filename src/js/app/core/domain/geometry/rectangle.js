@@ -1,4 +1,4 @@
-import { Vector } from './vector.js';
+import { Vector } from './dir.js';
 
 const Rectangle = {
   // => two vectors (origin and size)

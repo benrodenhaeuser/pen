@@ -1,4 +1,4 @@
-import { h } from './h.js';
+import { h } from './dir.js';
 
 const editor = state => {
   return state.exportToSVG();

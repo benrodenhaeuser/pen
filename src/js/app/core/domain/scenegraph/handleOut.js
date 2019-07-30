@@ -1,5 +1,5 @@
-import { Graphics } from './graphics.js';
+import { ControlNode } from './dir.js';
 
-const HandleOut = Object.create(Graphics);
+const HandleOut = Object.create(ControlNode);
 HandleOut.type = 'handleOut';
 export { HandleOut };

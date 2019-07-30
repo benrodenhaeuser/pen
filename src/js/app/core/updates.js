@@ -1,4 +1,4 @@
-import { Scene, Shape, Group } from './domain/dir.js';
+import { Canvas, Shape, Group } from './domain/dir.js';
 import { Spline, Segment, Anchor } from './domain/dir.js';
 import { HandleIn, HandleOut } from './domain/dir.js';
 import { Identifier, Doc } from './domain/dir.js';
@@ -23,8 +23,8 @@ const updates = {
   // SELECTION
 
   focus(state, input) {
-    state.scene.unfocusAll();
-    const target = state.scene.findDescendantByKey(input.key);
+    state.canvas.unfocusAll();
+    const target = state.canvas.findDescendantByKey(input.key);
     const hit = Vector.create(input.x, input.y);
 
     if (target) {
@@ -37,18 +37,18 @@ const updates = {
   },
 
   select(state, input) {
-    const node = state.scene.findDescendantByClass('focus');
+    const node = state.canvas.findDescendantByClass('focus');
 
     if (node) {
       node.select();
       this.initTransform(state, input);
     } else {
-      state.scene.deselectAll();
+      state.canvas.deselectAll();
     }
   },
 
   deepSelect(state, input) {
-    const target = state.scene.findDescendantByKey(input.key);
+    const target = state.canvas.findDescendantByKey(input.key);
 
     if (!target) {
       return;
@@ -58,7 +58,7 @@ const updates = {
     if (target.isAtFrontier()) {
       // select in shape => TODO: selection mechanism
       target.edit();
-      state.scene.unfocusAll();
+      state.canvas.unfocusAll();
       state.label = 'penMode';
     } else {
       // select in group
@@ -68,15 +68,15 @@ const updates = {
 
       if (toSelect) {
         toSelect.select();
-        state.scene.updateFrontier(); // TODO: why do we need to do this?
-        state.scene.unfocusAll();
+        state.canvas.updateFrontier(); // TODO: why do we need to do this?
+        state.canvas.unfocusAll();
       }
     }
   },
 
   // TODO
   release(state, input) {
-    const current = state.scene.selected || state.scene.editing;
+    const current = state.canvas.selected || state.canvas.editing;
 
     if (current) {
       for (let ancestor of current.graphicsAncestors) {
@@ -89,7 +89,7 @@ const updates = {
 
   // TODO
   cleanup(state, event) {
-    const current = state.scene.editing;
+    const current = state.canvas.editing;
 
     if (current) {
       // update bounds of splines of current shape:
@@ -103,8 +103,8 @@ const updates = {
       }
     }
 
-    state.scene.deselectAll();
-    state.scene.deeditAll();
+    state.canvas.deselectAll();
+    state.canvas.deeditAll();
     this.aux = {};
   },
 
@@ -112,7 +112,7 @@ const updates = {
   // triggered by escape key
   exitEdit(state, input) {
     if (state.label === 'penMode') {
-      const target = state.scene.editing;
+      const target = state.canvas.editing;
       this.cleanup(state, input);
       target.select();
       state.label = 'selectMode';
@@ -124,13 +124,13 @@ const updates = {
   // TRANSFORMS
 
   initTransform(state, input) {
-    const node = state.scene.selected;
+    const node = state.canvas.selected;
     this.aux.from = Vector.create(input.x, input.y);
     this.aux.center = node.bounds.center.transform(node.globalTransform());
   },
 
   shift(state, input) {
-    const node = state.scene.selected;
+    const node = state.canvas.selected;
 
     if (!node) {
       return;
@@ -146,7 +146,7 @@ const updates = {
   },
 
   rotate(state, input) {
-    const node = state.scene.selected;
+    const node = state.canvas.selected;
 
     if (!node) {
       return;
@@ -163,7 +163,7 @@ const updates = {
   },
 
   scale(state, input) {
-    const node = state.scene.selected;
+    const node = state.canvas.selected;
 
     if (!node) {
       return;
@@ -186,12 +186,12 @@ const updates = {
     let shape;
     let spline;
 
-    if (state.scene.editing) {
-      shape = state.scene.editing;
+    if (state.canvas.editing) {
+      shape = state.canvas.editing;
       spline = shape.lastChild;
     } else {
       shape = Shape.create();
-      state.scene.append(shape);
+      state.canvas.append(shape);
       spline = Spline.create();
       shape.append(spline);
       shape.edit();
@@ -224,7 +224,7 @@ const updates = {
   },
 
   initEditSegment(state, input) {
-    const control = state.scene.findDescendantByKey(input.key);
+    const control = state.canvas.findDescendantByKey(input.key);
     const shape = control.parent.parent.parent;
     const from = Vector.create(input.x, input.y).transformToLocal(shape);
 
@@ -263,7 +263,7 @@ const updates = {
 
   // find point on curve
   projectInput(state, input) {
-    const startSegment = state.scene.findDescendantByKey(input.key);
+    const startSegment = state.canvas.findDescendantByKey(input.key);
     const spline = startSegment.parent;
     const shape = spline.parent;
     const startIndex = spline.children.indexOf(startSegment);
@@ -314,7 +314,7 @@ const updates = {
   },
 
   hideSplitter(state, input) {
-    const segment = state.scene.findDescendantByKey(input.key);
+    const segment = state.canvas.findDescendantByKey(input.key);
     const shape = segment.parent.parent;
     shape.splitter = Vector.create(-1000, -1000);
   },
@@ -344,7 +344,7 @@ const updates = {
   },
 
   switchDocument(state, input) {
-    state.scene.replaceWith(state.objectToDoc(input.data.doc));
+    state.canvas.replaceWith(state.objectToDoc(input.data.doc));
     this.cleanup(state, input);
   },
 
@@ -369,7 +369,7 @@ const updates = {
     syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
 
     if (syntaxTreeNode) {
-      sceneGraphNode = state.scene.findDescendantByKey(syntaxTreeNode.key);
+      sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
     }
 
     if (sceneGraphNode) {
@@ -388,7 +388,7 @@ const updates = {
       syntaxTree.indexify();
 
       state.syntaxTree = syntaxTree;
-      state.scene.replaceWith(state.domToScene($svg));
+      state.canvas.replaceWith(state.domToScene($svg));
     } else {
       console.log('cannot update scenegraph and syntaxtree');
     }

@@ -1,4 +1,4 @@
-import { Scene, Shape, Group } from '../../domain/dir.js';
+import { Canvas, Shape, Group } from '../../domain/dir.js';
 import { Spline, Segment, Anchor } from '../../domain/dir.js';
 import { HandleIn, HandleOut } from '../../domain/dir.js';
 import { Matrix } from '../../domain/dir.js';
@@ -10,11 +10,11 @@ import { SVGPathDataTransformer } from 'svg-pathdata';
 
 const domToScene = $svg => {
   if ($svg instanceof SVGElement) {
-    const scene = Scene.create();
-    scene.key = $svg.key;
-    buildTree($svg, scene);
-    scene.updateFrontier();
-    return scene;
+    const canvas = Canvas.create();
+    canvas.key = $svg.key;
+    buildTree($svg, canvas);
+    canvas.updateFrontier();
+    return canvas;
   } else {
     return null;
   }

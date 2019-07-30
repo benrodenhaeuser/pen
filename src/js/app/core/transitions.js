@@ -79,7 +79,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'dblclick',
-    target: ['shape', 'group', 'scene'],
+    target: ['shape', 'group', 'canvas'],
     do: 'deepSelect',
   },
 
@@ -87,7 +87,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'mousedown',
-    target: ['shape', 'group', 'scene'],
+    target: ['shape', 'group', 'canvas'],
     do: 'select',
     to: 'shifting',
   },
@@ -161,7 +161,7 @@ const transitions = [
   {
     from: 'penMode',
     type: 'mousedown',
-    target: ['shape', 'group', 'scene'],
+    target: ['shape', 'group', 'canvas'],
     do: 'addSegment',
     to: 'settingHandles',
   },

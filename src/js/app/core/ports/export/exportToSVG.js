@@ -1,6 +1,6 @@
 const exportToSVG = store => {
   const markup = [];
-  const vNode = buildSceneNode(store.scene);
+  const vNode = buildSceneNode(store.canvas);
 
   return convertToMarkup(markup, vNode, 0);
 };

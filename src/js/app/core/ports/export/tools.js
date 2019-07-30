@@ -1,4 +1,4 @@
-import { h } from './h.js';
+import { h } from './dir.js';
 
 const tools = store => {
   return h(
