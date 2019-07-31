@@ -48,7 +48,7 @@ Object.assign(Canvas, {
         node = node.parent;
       } while (node.parent.type !== 'doc');
     } else {
-      for (let child of this.canvas.children) {
+      for (let child of this.children) {
         child.class = child.class.add('frontier');
       }
     }

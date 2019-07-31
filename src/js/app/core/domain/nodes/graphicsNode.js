@@ -114,6 +114,14 @@ Object.assign(GraphicsNode, {
   },
 });
 
+Object.defineProperty(GraphicsNode, 'canvas', {
+  get() {
+    return this.findAncestor(
+      node => node.type === 'canvas'
+    );
+  },
+});
+
 Object.defineProperty(GraphicsNode, 'bounds', {
   get() {
     if (this.payload.bounds) {

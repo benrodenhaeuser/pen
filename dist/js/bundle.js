@@ -3635,15 +3635,6 @@
 
   const SceneNode$$1 = Object.create(Node);
 
-  // allow any node to jump to the root of the scene:
-  Object.defineProperty(SceneNode$$1, 'canvas', {
-    get() {
-      return this.findAncestor(
-        node => node.type === 'canvas'
-      );
-    },
-  });
-
   const GraphicsNode$$1 = SceneNode$$1.create();
 
   Object.assign(GraphicsNode$$1, {
@@ -3754,6 +3745,14 @@
     },
   });
 
+  Object.defineProperty(GraphicsNode$$1, 'canvas', {
+    get() {
+      return this.findAncestor(
+        node => node.type === 'canvas'
+      );
+    },
+  });
+
   Object.defineProperty(GraphicsNode$$1, 'bounds', {
     get() {
       if (this.payload.bounds) {
@@ -3840,7 +3839,7 @@
           node = node.parent;
         } while (node.parent.type !== 'doc');
       } else {
-        for (let child of this.canvas.children) {
+        for (let child of this.children) {
           child.class = child.class.add('frontier');
         }
       }
