@@ -84,6 +84,30 @@ Object.assign(Canvas, {
     }
   },
 
+  findPen() {
+    return this.findDescendant(
+      node => node.class.includes('pen')
+    );
+  },
+
+  removePen() {
+    const pen = this.findPen();
+
+    if (pen) {
+      pen.class.remove('pen');
+    }
+  },
+
+  globallyUpdateBounds(graphicsNode) {
+    for (let child of graphicsNode.children) {
+      child.updateBounds();
+    }
+
+    for (let ancestor of graphicsNode.graphicsAncestors) {
+      ancestor.updateBounds();
+    }
+  },
+
   toVDOMNode() {
     return {
       tag: 'svg',

@@ -22,6 +22,10 @@ Object.assign(GraphicsNode, {
     };
   },
 
+  focus() {
+    this.class = this.class.add('focus');
+  },
+
   select() {
     this.canvas.removeSelection();
     this.class = this.class.add('selected');
@@ -32,10 +36,6 @@ Object.assign(GraphicsNode, {
     this.canvas.removeSelection();
     this.class = this.class.add('editing');
     this.canvas.updateFrontier();
-  },
-
-  focus() {
-    this.class = this.class.add('focus');
   },
 
   rotate(angle, center) {
@@ -111,14 +111,6 @@ Object.assign(GraphicsNode, {
 
     this.payload.bounds = bounds;
     return bounds;
-  },
-});
-
-Object.defineProperty(GraphicsNode, 'canvas', {
-  get() {
-    return this.findAncestor(
-      node => node.type === 'canvas'
-    );
   },
 });
 

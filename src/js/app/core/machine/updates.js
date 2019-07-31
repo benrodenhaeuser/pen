@@ -74,33 +74,22 @@ const updates = {
     }
   },
 
-  // TODO
+  // TODO: cleanup and release do something very similar
   release(state, input) {
     const current = state.canvas.findSelection() || state.canvas.findEditing();
 
     if (current) {
-      for (let ancestor of current.graphicsAncestors) {
-        ancestor.updateBounds();
-      }
+      state.canvas.globallyUpdateBounds(current);
     }
 
     this.aux = {};
   },
 
-  // TODO
   cleanup(state, event) {
     const current = state.canvas.findEditing();
 
     if (current) {
-      // update bounds of splines of current shape:
-      for (let child of current.children) {
-        child.updateBounds();
-      }
-
-      // update bounds of shape and its containing groups:
-      for (let ancestor of current.graphicsAncestors) {
-        ancestor.updateBounds();
-      }
+      state.canvas.globallyUpdateBounds(current);
     }
 
     state.canvas.removeSelection();
@@ -202,7 +191,7 @@ const updates = {
 
     const anchor = Anchor.create();
     segment.append(anchor);
-    anchor.class = anchor.class.add('pen'); // PEN
+    anchor.placePen();
 
     anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(
       shape
@@ -218,9 +207,15 @@ const updates = {
 
     const anchor = segment.anchor;
     const handleIn = Vector.create(input.x, input.y).transformToLocal(shape);
+    // ^ TODO: not a node, but a vector!
     const handleOut = handleIn.rotate(Math.PI, anchor);
+    // ^ TODO: not a node, but a vector!
     segment.handleIn = handleIn;
     segment.handleOut = handleOut;
+
+    // TODO: segment.handleIn should be a node, not a vector.
+    // anything else is confusing.
+
   },
 
   initEditSegment(state, input) {
