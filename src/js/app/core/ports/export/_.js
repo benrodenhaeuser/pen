@@ -17,5 +17,5 @@ export {
   canvas,
   exportToVDOM,
   exportToPlain,
-  exportToSVG
+  exportToSVG,
 };

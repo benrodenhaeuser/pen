@@ -36,5 +36,5 @@ export {
   Docs,
   Message,
   Identifier,
-  SyntaxTree
+  SyntaxTree,
 };

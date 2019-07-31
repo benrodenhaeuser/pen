@@ -434,7 +434,7 @@
     init(origin, size) {
       this.origin = origin;
       this.size = size;
-   
+
       return this;
     },
 
@@ -3833,7 +3833,9 @@
   // => graphics
   Object.defineProperty(SceneNode$$1, 'graphicsChildren', {
     get() {
-      return this.children.filter(node => ['canvas', 'group', 'shape'].includes(node.type));
+      return this.children.filter(node =>
+        ['canvas', 'group', 'shape'].includes(node.type)
+      );
     },
   });
 
@@ -3849,9 +3851,7 @@
   // => ?
   Object.defineProperty(SceneNode$$1, 'canvas', {
     get() {
-      return this.findAncestor(
-        node => node.type === 'canvas'
-      );
+      return this.findAncestor(node => node.type === 'canvas');
     },
   });
 
@@ -5141,6 +5141,8 @@
     return container;
   };
 
+  // not needed atm
+
   const message = store => {
     return store.message.payload.text;
   };
@@ -5628,7 +5630,7 @@
     },
   };
 
-  // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional 
+  // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
   const transitions = [
     // KICKOFF

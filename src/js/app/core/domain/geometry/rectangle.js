@@ -9,7 +9,7 @@ const Rectangle = {
   init(origin, size) {
     this.origin = origin;
     this.size = size;
- 
+
     return this;
   },
 

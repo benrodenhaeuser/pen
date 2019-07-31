@@ -204,7 +204,9 @@ Object.assign(SceneNode, {
 // => graphics
 Object.defineProperty(SceneNode, 'graphicsChildren', {
   get() {
-    return this.children.filter(node => ['canvas', 'group', 'shape'].includes(node.type));
+    return this.children.filter(node =>
+      ['canvas', 'group', 'shape'].includes(node.type)
+    );
   },
 });
 
@@ -220,9 +222,7 @@ Object.defineProperty(SceneNode, 'graphicsAncestors', {
 // => ?
 Object.defineProperty(SceneNode, 'canvas', {
   get() {
-    return this.findAncestor(
-      node => node.type === 'canvas'
-    );
+    return this.findAncestor(node => node.type === 'canvas');
   },
 });
 

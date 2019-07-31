@@ -14,7 +14,7 @@ import {
   Docs,
   Message,
   Identifier,
-  SyntaxTree, 
+  SyntaxTree,
 } from './nodes/_.js';
 
 import { Class } from './helpers/_.js';
@@ -37,6 +37,6 @@ export {
   Docs,
   Message,
   Identifier,
-  Class,
   SyntaxTree,
+  Class,
 };
