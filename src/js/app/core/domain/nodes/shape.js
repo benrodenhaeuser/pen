@@ -1,9 +1,22 @@
 import { GraphicsNode } from './_.js';
 import { Matrix } from '../geometry/_.js';
+import { Vector } from '../geometry/_.js';
 import { SyntaxTree } from './_.js';
 
 const Shape = Object.create(GraphicsNode);
 Shape.type = 'shape';
+
+Shape.create = function() {
+  return GraphicsNode
+    .create.bind(this)()
+    .set(this.shapeDefaults());
+};
+
+Shape.shapeDefaults = function() {
+  return {
+    splitter: Vector.create(-1000, -1000),
+  };
+}
 
 Shape.toVDOMNode = function() {
   return {

@@ -23,7 +23,7 @@ const updates = {
   // SELECTION
 
   focus(state, input) {
-    state.canvas.unfocusAll();
+    state.canvas.removeFocus();
     const target = state.canvas.findDescendantByKey(input.key);
     const hit = Vector.create(input.x, input.y);
 
@@ -37,13 +37,13 @@ const updates = {
   },
 
   select(state, input) {
-    const node = state.canvas.findDescendantByClass('focus');
+    const node = state.canvas.findFocus();
 
     if (node) {
       node.select();
       this.initTransform(state, input);
     } else {
-      state.canvas.deselectAll();
+      state.canvas.removeSelection();
     }
   },
 
@@ -55,10 +55,10 @@ const updates = {
     }
 
     // TODO
-    if (target.isAtFrontier()) {
+    if (target.class.includes('frontier')) {
       // select in shape => TODO: selection mechanism
       target.edit();
-      state.canvas.unfocusAll();
+      state.canvas.removeFocus();
       state.label = 'penMode';
     } else {
       // select in group
@@ -69,14 +69,14 @@ const updates = {
       if (toSelect) {
         toSelect.select();
         state.canvas.updateFrontier(); // TODO: why do we need to do this?
-        state.canvas.unfocusAll();
+        state.canvas.removeFocus();
       }
     }
   },
 
   // TODO
   release(state, input) {
-    const current = state.canvas.selected || state.canvas.editing;
+    const current = state.canvas.findSelection() || state.canvas.findEditing();
 
     if (current) {
       for (let ancestor of current.graphicsAncestors) {
@@ -89,7 +89,7 @@ const updates = {
 
   // TODO
   cleanup(state, event) {
-    const current = state.canvas.editing;
+    const current = state.canvas.findEditing();
 
     if (current) {
       // update bounds of splines of current shape:
@@ -103,8 +103,8 @@ const updates = {
       }
     }
 
-    state.canvas.deselectAll();
-    state.canvas.deeditAll();
+    state.canvas.removeSelection();
+    state.canvas.removeEditing();
     this.aux = {};
   },
 
@@ -112,7 +112,7 @@ const updates = {
   // triggered by escape key
   exitEdit(state, input) {
     if (state.label === 'penMode') {
-      const target = state.canvas.editing;
+      const target = state.canvas.findEditing();
       this.cleanup(state, input);
       target.select();
       state.label = 'selectMode';
@@ -124,13 +124,13 @@ const updates = {
   // TRANSFORMS
 
   initTransform(state, input) {
-    const node = state.canvas.selected;
+    const node = state.canvas.findSelection();
     this.aux.from = Vector.create(input.x, input.y);
     this.aux.center = node.bounds.center.transform(node.globalTransform());
   },
 
   shift(state, input) {
-    const node = state.canvas.selected;
+    const node = state.canvas.findSelection();
 
     if (!node) {
       return;
@@ -146,7 +146,7 @@ const updates = {
   },
 
   rotate(state, input) {
-    const node = state.canvas.selected;
+    const node = state.canvas.findSelection();
 
     if (!node) {
       return;
@@ -163,7 +163,7 @@ const updates = {
   },
 
   scale(state, input) {
-    const node = state.canvas.selected;
+    const node = state.canvas.findSelection();
 
     if (!node) {
       return;
@@ -186,8 +186,8 @@ const updates = {
     let shape;
     let spline;
 
-    if (state.canvas.editing) {
-      shape = state.canvas.editing;
+    if (state.canvas.findEditing()) {
+      shape = state.canvas.findEditing();
       spline = shape.lastChild;
     } else {
       shape = Shape.create();

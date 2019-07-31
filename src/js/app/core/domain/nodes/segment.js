@@ -42,6 +42,7 @@ Object.defineProperty(Segment, 'handleIn', {
 
     return null;
   },
+  
   set(value) {
     let handleNode;
 

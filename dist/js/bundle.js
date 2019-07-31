@@ -3635,34 +3635,107 @@
 
   const SceneNode$$1 = Object.create(Node);
 
-  Object.assign(SceneNode$$1, {
+  // allow any node to jump to the root of the scene:
+  Object.defineProperty(SceneNode$$1, 'canvas', {
+    get() {
+      return this.findAncestor(
+        node => node.type === 'canvas'
+      );
+    },
+  });
+
+  const GraphicsNode$$1 = SceneNode$$1.create();
+
+  Object.assign(GraphicsNode$$1, {
     create() {
-      return Node.create
-        .bind(this)()
-        .set(this.sceneNodeDefaults());
+      return SceneNode$$1
+        .create.bind(this)()
+        .set(this.graphicsNodeDefaults());
     },
 
-    sceneNodeDefaults() {
+    graphicsNodeDefaults() {
       return {
         payload: {
-          transform: Matrix$$1.identity(), // => graphics
+          transform: Matrix$$1.identity(),
           class: Class.create(),
-          bounds: null, // => graphics and spline
         },
-        splitter: Vector$$1.create(-1000, -1000), // => shape
       };
     },
 
-    // => graphics
-    updateBounds() {
-      if (!['shape', 'group'].includes(this.type)) {
-        return;
+    select() {
+      this.canvas.removeSelection();
+      this.class = this.class.add('selected');
+      this.canvas.updateFrontier();
+    },
+
+    edit() {
+      this.canvas.removeSelection();
+      this.class = this.class.add('editing');
+      this.canvas.updateFrontier();
+    },
+
+    focus() {
+      this.class = this.class.add('focus');
+    },
+
+    rotate(angle, center) {
+      center = center.transform(this.properAncestorTransform().invert());
+      this.transform = Matrix$$1.rotation(angle, center).multiply(this.transform);
+    },
+
+    scale(factor, center) {
+      center = center.transform(this.properAncestorTransform().invert());
+      this.transform = Matrix$$1.scale(factor, center).multiply(this.transform);
+    },
+
+    translate(offset) {
+      this.transform = this.properAncestorTransform()
+        .invert()
+        .multiply(Matrix$$1.translation(offset))
+        .multiply(this.globalTransform());
+    },
+
+    globalTransform() {
+      return this.properAncestorTransform().multiply(this.transform);
+    },
+
+    properAncestorTransform() {
+      let matrix = Matrix$$1.identity();
+
+      // we use properAncestors, which does not include the current node:
+      for (let ancestor of this.properAncestors.reverse()) {
+        if (ancestor.transform) {
+          matrix = matrix.multiply(ancestor.transform);
+        }
       }
 
+      return matrix;
+    },
+
+    globalScaleFactor() {
+      const total = this.globalTransform();
+      const a = total.m[0][0];
+      const b = total.m[1][0];
+
+      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+    },
+
+    contains(globalPoint) {
+      return globalPoint
+        .transform(this.globalTransform().invert()) // TODO: confusing?
+        .isWithin(this.bounds);
+    },
+
+    updateBounds() {
       const corners = [];
+
       for (let child of this.children) {
         for (let corner of child.bounds.corners) {
-          corners.push(corner.transform(child.transform));
+          if (child.type === 'spline') {
+            corners.push(corner);
+          } else {
+            corners.push(corner.transform(child.transform));
+          }
         }
       }
 
@@ -3679,15 +3752,86 @@
       this.payload.bounds = bounds;
       return bounds;
     },
+  });
 
-    // => document
+  Object.defineProperty(GraphicsNode$$1, 'bounds', {
+    get() {
+      if (this.payload.bounds) {
+        return this.payload.bounds;
+      }
+
+      return this.updateBounds();
+    },
+
+    set(value) {
+      this.payload.bounds = value;
+    },
+  });
+
+  Object.defineProperty(GraphicsNode$$1, 'transform', {
+    get() {
+      return this.payload.transform;
+    },
+    set(value) {
+      this.payload.transform = value;
+    },
+  });
+
+  Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
+    get() {
+      return this.children.filter(node =>
+        ['canvas', 'group', 'shape'].includes(node.type)
+      );
+    },
+  });
+
+  Object.defineProperty(GraphicsNode$$1, 'graphicsAncestors', {
+    get() {
+      return this.ancestors.filter(node =>
+        ['canvas', 'group', 'shape'].includes(node.type)
+      );
+    },
+  });
+
+  const xmlns = 'http://www.w3.org/2000/svg';
+
+  const Canvas$$1 = Object.create(GraphicsNode$$1);
+  Canvas$$1.type = 'canvas';
+
+  Object.assign(Canvas$$1, {
+    findFocus() {
+      return this.findDescendant(
+        node => node.class.includes('focus')
+      );
+    },
+
+    removeFocus() {
+      const focus = this.findFocus();
+
+      if (focus) {
+        focus.class.remove('focus');
+      }
+    },
+
+    findFrontier() {
+      return this.findDescendants(
+        node => node.class.includes('frontier')
+      );
+    },
+
+    removeFrontier() {
+      for (let node of this.findFrontier()) {
+        node.class.remove('frontier');
+      }
+    },
+
     updateFrontier() {
       this.removeFrontier();
 
-      if (this.selected && this.selected.type !== 'canvas') {
-        this.selected.class = this.selected.class.add('frontier');
-
-        let node = this.selected;
+      if (this.findSelection() && this.findSelection() !== this) {
+        const selected = this.findSelection();
+        selected.class = selected.class.add('frontier');
+        let node = selected;
 
         do {
           for (let sibling of node.siblings) {
@@ -3702,216 +3846,78 @@
       }
     },
 
-    // => document
-    removeFrontier() {
-      const frontier = this.canvas.findDescendants(node => {
-        return node.class.includes('frontier');
-      });
-
-      for (let node of frontier) {
-        node.class.remove('frontier');
-      }
-    },
-
-    // => graphics
-    isSelected() {
-      return this.class.includes('selected');
-    },
-
-    // => graphics
-    isInFocus() {
-      return this.class.includes('focus');
-    },
-
-    // => graphics
-    isAtFrontier() {
-      return this.class.includes('frontier');
-    },
-
-    // => graphics
-    contains(globalPoint) {
-      return globalPoint
-        .transform(this.globalTransform().invert())
-        .isWithin(this.bounds);
-    },
-
-    // => graphics
-    focus() {
-      this.class = this.class.add('focus');
-    },
-
-    // => graphics
-    unfocusAll() {
-      const focussed = this.canvas.findDescendants(node => {
-        return node.class.includes('focus');
-      });
-
-      for (let node of focussed) {
-        node.class.remove('focus');
-      }
-    },
-
-    // => graphics
-    select() {
-      this.deselectAll();
-      this.class = this.class.add('selected');
-      this.updateFrontier();
-    },
-
-    // => graphics
-    edit() {
-      this.deselectAll();
-      this.updateFrontier();
-      this.class = this.class.add('editing');
-    },
-
-    // => graphics
-    deselectAll() {
-      if (this.selected) {
-        this.selected.class.remove('selected');
-      }
-      this.updateFrontier();
-    },
-
-    // => graphics
-    deeditAll() {
-      if (this.editing) {
-        this.editing.class.remove('editing');
-      }
-    },
-
-    // => graphics
-    globalTransform() {
-      return this.ancestorTransform().multiply(this.transform);
-    },
-
-    // => graphics
-    // NOTE: "ancestorTransform" in the sense of *proper* ancestors!
-    ancestorTransform() {
-      let matrix = Matrix$$1.identity();
-
-      // we use properAncestors, which does not include the current node:
-      for (let ancestor of this.properAncestors.reverse()) {
-        if (ancestor.transform) {
-          matrix = matrix.multiply(ancestor.transform);
-        }
-      }
-
-      return matrix;
-    },
-
-    // => graphics
-    rotate(angle, center) {
-      center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix$$1.rotation(angle, center).multiply(this.transform);
-    },
-
-    // => graphics
-    scale(factor, center) {
-      center = center.transform(this.ancestorTransform().invert());
-      this.transform = Matrix$$1.scale(factor, center).multiply(this.transform);
-    },
-
-    // => graphics
-    translate(offset) {
-      this.transform = this.ancestorTransform()
-        .invert()
-        .multiply(Matrix$$1.translation(offset))
-        .multiply(this.globalTransform());
-    },
-
-    // => graphics
-    globalScaleFactor() {
-      const total = this.globalTransform();
-      const a = total.m[0][0];
-      const b = total.m[1][0];
-
-      return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-    },
-  });
-
-  // => graphics
-  Object.defineProperty(SceneNode$$1, 'graphicsChildren', {
-    get() {
-      return this.children.filter(node =>
-        ['canvas', 'group', 'shape'].includes(node.type)
+    findSelection() {
+      return this.findDescendant(
+        node => node.class.includes('selected')
       );
     },
-  });
 
-  // => graphics
-  Object.defineProperty(SceneNode$$1, 'graphicsAncestors', {
-    get() {
-      return this.ancestors.filter(node =>
-        ['canvas', 'group', 'shape'].includes(node.type)
+    removeSelection() {
+      const selected = this.findSelection();
+
+      if (selected) {
+        selected.class.remove('selected');
+      }
+
+      this.updateFrontier();
+    },
+
+    findEditing() {
+      return this.findDescendant(
+        node => node.class.includes('editing')
       );
     },
-  });
 
-  // => ?
-  Object.defineProperty(SceneNode$$1, 'canvas', {
-    get() {
-      return this.findAncestor(node => node.type === 'canvas');
-    },
-  });
+    removeEditing() {
+      const editing = this.findEditing();
 
-  // => ?
-  Object.defineProperty(SceneNode$$1, 'selected', {
-    get() {
-      return this.canvas.findDescendant(node => {
-        return node.class.includes('selected');
-      });
-    },
-  });
-
-  // => ?
-  Object.defineProperty(SceneNode$$1, 'editing', {
-    get() {
-      return this.canvas.findDescendant(node => {
-        return node.class.includes('editing');
-      });
-    },
-  });
-
-  // => doc
-  Object.defineProperty(SceneNode$$1, 'frontier', {
-    get() {
-      return this.canvas.findDescendants(node => {
-        return node.class.includes('frontier');
-      });
-    },
-  });
-
-  // => graphics
-  Object.defineProperty(SceneNode$$1, 'transform', {
-    get() {
-      return this.payload.transform;
-    },
-    set(value) {
-      this.payload.transform = value;
-    },
-  });
-
-  // => ?
-  Object.defineProperty(SceneNode$$1, 'bounds', {
-    get() {
-      if (['segment', 'anchor', 'handleIn', 'handleOut'].includes(this.type)) {
-        return null;
+      if (editing) {
+        editing.class.remove('editing');
       }
-
-      if (this.payload.bounds) {
-        return this.payload.bounds;
-      }
-
-      return this.updateBounds();
     },
-    set(value) {
-      this.payload.bounds = value;
+
+    toVDOMNode() {
+      return {
+        tag: 'svg',
+        children: [],
+        props: {
+          'data-key': this.key,
+          'data-type': 'canvas',
+          viewBox: this.viewBox.toString(),
+          xmlns: 'http://www.w3.org/2000/svg',
+          class: this.class.toString(),
+        },
+      };
+    },
+
+    toSVGNode() {
+      return {
+        tag: 'svg',
+        children: [],
+        props: {
+          viewBox: this.viewBox.toString(),
+          xmlns: xmlns,
+        },
+      };
+    },
+
+    toASTNodes() {
+      const open = SyntaxTree.create();
+      open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
+      open.key = this.key;
+
+      const close = SyntaxTree.create();
+      close.markup = '</svg>';
+      close.key = this.key;
+
+      return {
+        open: open,
+        close: close,
+      };
     },
   });
 
-  // => canvas
-  Object.defineProperty(SceneNode$$1, 'viewBox', {
+  Object.defineProperty(Canvas$$1, 'viewBox', {
     get() {
       return this.payload.viewBox;
     },
@@ -3919,53 +3925,6 @@
       this.payload.viewBox = value;
     },
   });
-
-  const GraphicsNode$$1 = SceneNode$$1.create();
-
-  const Canvas$$1 = Object.create(GraphicsNode$$1);
-  Canvas$$1.type = 'canvas';
-
-  const xmlns = 'http://www.w3.org/2000/svg';
-
-  Canvas$$1.toVDOMNode = function() {
-    return {
-      tag: 'svg',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': 'canvas',
-        viewBox: this.viewBox.toString(),
-        xmlns: 'http://www.w3.org/2000/svg',
-        class: this.class.toString(),
-      },
-    };
-  };
-
-  Canvas$$1.toSVGNode = function() {
-    return {
-      tag: 'svg',
-      children: [],
-      props: {
-        viewBox: this.viewBox.toString(),
-        xmlns: xmlns,
-      },
-    };
-  };
-
-  Canvas$$1.toASTNodes = function() {
-    const open = SyntaxTree.create();
-    open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
-    open.key = this.key;
-
-    const close = SyntaxTree.create();
-    close.markup = '</svg>';
-    close.key = this.key;
-
-    return {
-      open: open,
-      close: close,
-    };
-  };
 
   const Group$$1 = Object.create(GraphicsNode$$1);
   Group$$1.type = 'group';
@@ -4021,6 +3980,18 @@
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
   Shape$$1.type = 'shape';
+
+  Shape$$1.create = function() {
+    return GraphicsNode$$1
+      .create.bind(this)()
+      .set(this.shapeDefaults());
+  };
+
+  Shape$$1.shapeDefaults = function() {
+    return {
+      splitter: Vector$$1.create(-1000, -1000),
+    };
+  };
 
   Shape$$1.toVDOMNode = function() {
     return {
@@ -4146,66 +4117,77 @@
   const Spline$$1 = Object.create(SceneNode$$1);
   Spline$$1.type = 'spline';
 
-  // generate array of curves given by a spline
-  // (used to compute bounding boxes)
+  Object.assign(Spline$$1, {
+    curves() {
+      const theCurves = [];
 
-  Spline$$1.curves = function() {
-    const theCurves = [];
+      // this conditional creates a degenerate curve if
+      // there is exactly 1 segment in the spline
+      // TODO: this could be a problem!
+      if (this.children.length === 1) {
+        const start = this.children[0];
+        const end = Segment$$1.create();
 
-    // this conditional creates a degenerate curve if
-    // there is exactly 1 segment in the spline
-    // TODO: this could be a problem!
-    if (this.children.length === 1) {
-      const start = this.children[0];
-      const end = Segment$$1.create();
+        theCurves.push(Curve$$1.createFromSegments(start, end));
+      }
 
-      theCurves.push(Curve$$1.createFromSegments(start, end));
-    }
+      // if spline has exactly 1 segment, no curves will be
+      // generated by the following code
+      for (let i = 0; i + 1 < this.children.length; i += 1) {
+        const start = this.children[i];
+        const end = this.children[i + 1];
 
-    // if spline has exactly 1 segment, no curves will be
-    // generated by the following code
-    for (let i = 0; i + 1 < this.children.length; i += 1) {
-      const start = this.children[i];
-      const end = this.children[i + 1];
+        theCurves.push(Curve$$1.createFromSegments(start, end));
+      }
 
-      theCurves.push(Curve$$1.createFromSegments(start, end));
-    }
+      return theCurves;
+    },
 
-    return theCurves;
-  };
+    updateBounds() {
+      const curves = this.curves();
+      let bounds;
 
-  // update bounding box of a spline
+      // no curves
+      if (curves.length === 0) {
+        bounds = Rectangle$$1.create();
+        this.payload.bounds = bounds;
+        return bounds;
+      }
 
-  Spline$$1.updateBounds = function() {
-    const curves = this.curves();
-    let bounds;
+      // a single, degenerate curve
+      if (curves.length === 1 && curves[0].isDegenerate()) {
+        bounds = Rectangle$$1.create();
+        this.payload.bounds = bounds;
+        return bounds;
+      }
 
-    // no curves
-    if (curves.length === 0) {
-      bounds = Rectangle$$1.create();
+      // one or more (non-degenerate) curves
+
+      bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
+
+      for (let i = 1; i < curves.length; i += 1) {
+        const curveBounds = curves[i].bounds;
+        bounds = bounds.getBoundingRect(curveBounds);
+      }
+
       this.payload.bounds = bounds;
       return bounds;
-    }
+    },
+  });
 
-    // a single, degenerate curve
-    if (curves.length === 1 && curves[0].isDegenerate()) {
-      bounds = Rectangle$$1.create();
-      this.payload.bounds = bounds;
-      return bounds;
-    }
+  Object.defineProperty(Spline$$1, 'bounds', {
+    get() {
+      if (this.payload.bounds) {
+        return this.payload.bounds;
+      }
 
-    // one or more (non-degenerate) curves
-
-    bounds = curves[0] && curves[0].bounds; // computed by Bezier plugin
-
-    for (let i = 1; i < curves.length; i += 1) {
-      const curveBounds = curves[i].bounds;
-      bounds = bounds.getBoundingRect(curveBounds);
-    }
-
-    this.payload.bounds = bounds;
-    return bounds;
-  };
+      return this.updateBounds();
+    },
+    
+    set(value) {
+      this.payload.bounds = value;
+    },
+  });
 
   const Segment$$1 = Object.create(SceneNode$$1);
   Segment$$1.type = 'segment';
@@ -4246,6 +4228,7 @@
 
       return null;
     },
+    
     set(value) {
       let handleNode;
 
@@ -5951,7 +5934,7 @@
     // SELECTION
 
     focus(state, input) {
-      state.canvas.unfocusAll();
+      state.canvas.removeFocus();
       const target = state.canvas.findDescendantByKey(input.key);
       const hit = Vector$$1.create(input.x, input.y);
 
@@ -5965,13 +5948,13 @@
     },
 
     select(state, input) {
-      const node = state.canvas.findDescendantByClass('focus');
+      const node = state.canvas.findFocus();
 
       if (node) {
         node.select();
         this.initTransform(state, input);
       } else {
-        state.canvas.deselectAll();
+        state.canvas.removeSelection();
       }
     },
 
@@ -5983,10 +5966,10 @@
       }
 
       // TODO
-      if (target.isAtFrontier()) {
+      if (target.class.includes('frontier')) {
         // select in shape => TODO: selection mechanism
         target.edit();
-        state.canvas.unfocusAll();
+        state.canvas.removeFocus();
         state.label = 'penMode';
       } else {
         // select in group
@@ -5997,14 +5980,14 @@
         if (toSelect) {
           toSelect.select();
           state.canvas.updateFrontier(); // TODO: why do we need to do this?
-          state.canvas.unfocusAll();
+          state.canvas.removeFocus();
         }
       }
     },
 
     // TODO
     release(state, input) {
-      const current = state.canvas.selected || state.canvas.editing;
+      const current = state.canvas.findSelection() || state.canvas.findEditing();
 
       if (current) {
         for (let ancestor of current.graphicsAncestors) {
@@ -6017,7 +6000,7 @@
 
     // TODO
     cleanup(state, event) {
-      const current = state.canvas.editing;
+      const current = state.canvas.findEditing();
 
       if (current) {
         // update bounds of splines of current shape:
@@ -6031,8 +6014,8 @@
         }
       }
 
-      state.canvas.deselectAll();
-      state.canvas.deeditAll();
+      state.canvas.removeSelection();
+      state.canvas.removeEditing();
       this.aux = {};
     },
 
@@ -6040,7 +6023,7 @@
     // triggered by escape key
     exitEdit(state, input) {
       if (state.label === 'penMode') {
-        const target = state.canvas.editing;
+        const target = state.canvas.findEditing();
         this.cleanup(state, input);
         target.select();
         state.label = 'selectMode';
@@ -6052,13 +6035,13 @@
     // TRANSFORMS
 
     initTransform(state, input) {
-      const node = state.canvas.selected;
+      const node = state.canvas.findSelection();
       this.aux.from = Vector$$1.create(input.x, input.y);
       this.aux.center = node.bounds.center.transform(node.globalTransform());
     },
 
     shift(state, input) {
-      const node = state.canvas.selected;
+      const node = state.canvas.findSelection();
 
       if (!node) {
         return;
@@ -6074,7 +6057,7 @@
     },
 
     rotate(state, input) {
-      const node = state.canvas.selected;
+      const node = state.canvas.findSelection();
 
       if (!node) {
         return;
@@ -6091,7 +6074,7 @@
     },
 
     scale(state, input) {
-      const node = state.canvas.selected;
+      const node = state.canvas.findSelection();
 
       if (!node) {
         return;
@@ -6114,8 +6097,8 @@
       let shape;
       let spline;
 
-      if (state.canvas.editing) {
-        shape = state.canvas.editing;
+      if (state.canvas.findEditing()) {
+        shape = state.canvas.findEditing();
         spline = shape.lastChild;
       } else {
         shape = Shape$$1.create();
@@ -6338,7 +6321,7 @@
     },
 
     compute(input) {
-      console.log(this.state);
+      // console.log(this.state);
 
       this.state.input = input;
 
