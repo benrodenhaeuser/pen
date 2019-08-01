@@ -15,7 +15,6 @@ const updates = {
 
   after(state, input) {
     if (input.source === 'canvas') {
-      // => scenegraph to syntaxtree
       state.syntaxTree = state.sceneToSyntaxTree();
     }
   },
@@ -54,10 +53,9 @@ const updates = {
       return;
     }
 
-    // TODO
     if (target.class.includes('frontier')) {
-      // select in shape => TODO: selection mechanism
-      target.edit();
+      // use pen in shape
+      target.placePen();
       state.canvas.removeFocus();
       state.label = 'penMode';
     } else {
@@ -74,26 +72,26 @@ const updates = {
     }
   },
 
-  // TODO: cleanup and release do something very similar
+  // TODO: cleanup and release are very similar
   release(state, input) {
-    const current = state.canvas.findSelection() || state.canvas.findEditing();
+    const current = state.canvas.findSelection() || state.canvas.findPen();
 
     if (current) {
-      state.canvas.globallyUpdateBounds(current);
+      state.canvas.updateBounds(current);
     }
 
     this.aux = {};
   },
 
   cleanup(state, event) {
-    const current = state.canvas.findEditing();
+    const current = state.canvas.findPen();
 
     if (current) {
-      state.canvas.globallyUpdateBounds(current);
+      state.canvas.updateBounds(current);
     }
 
     state.canvas.removeSelection();
-    state.canvas.removeEditing();
+    state.canvas.removePen();
     this.aux = {};
   },
 
@@ -101,7 +99,7 @@ const updates = {
   // triggered by escape key
   exitEdit(state, input) {
     if (state.label === 'penMode') {
-      const target = state.canvas.findEditing();
+      const target = state.canvas.findPen();
       this.cleanup(state, input);
       target.select();
       state.label = 'selectMode';
@@ -170,32 +168,20 @@ const updates = {
 
   // PEN
 
-  // TODO
   addSegment(state, input) {
-    let shape;
-    let spline;
+    const shape = state.canvas.findPen() || state.canvas.appendShape();
 
-    if (state.canvas.findEditing()) {
-      shape = state.canvas.findEditing();
-      spline = shape.lastChild;
-    } else {
-      shape = Shape.create();
-      state.canvas.append(shape);
-      spline = Spline.create();
-      shape.append(spline);
-      shape.edit();
-    }
+    const spline = shape.lastChild || shape.appendSpline();
+    const segment = spline.appendSegment();
+    const anchor = segment.appendAnchor();
 
-    const segment = Segment.create();
-    spline.append(segment);
+    shape.placePen();
 
-    const anchor = Anchor.create();
-    segment.append(anchor);
-    anchor.placePen();
+    segment.anchor.vector = Vector
+      .create(input.x, input.y)
+      .transformToLocal(shape);
 
-    anchor.payload.vector = Vector.create(input.x, input.y).transformToLocal(
-      shape
-    );
+    anchor.placePenTip();
 
     this.aux.shape = shape;
     this.aux.segment = segment;
@@ -206,28 +192,31 @@ const updates = {
     const segment = this.aux.segment;
 
     const anchor = segment.anchor;
-    const handleIn = Vector.create(input.x, input.y).transformToLocal(shape);
-    // ^ TODO: not a node, but a vector!
-    const handleOut = handleIn.rotate(Math.PI, anchor);
-    // ^ TODO: not a node, but a vector!
-    segment.handleIn = handleIn;
-    segment.handleOut = handleOut;
+    const inVector = Vector.create(input.x, input.y).transformToLocal(shape);
+    const outVector = inVector.rotate(Math.PI, anchor.vector);
 
-    // TODO: segment.handleIn should be a node, not a vector.
-    // anything else is confusing.
+    const handleIn = segment.handleIn || segment.appendHandleIn();
+    const handleOut = segment.handleOut || segment.appendHandleOut();
 
+    handleIn.vector = inVector;
+    handleOut.vector = outVector;
+
+    handleIn.placePenTip();
   },
 
-  initEditSegment(state, input) {
-    const control = state.canvas.findDescendantByKey(input.key);
-    const shape = control.parent.parent.parent;
+  initAdjustSegment(state, input) {
+    const control = state.canvas.findDescendantByKey(input.key); // here, it's a node
+    const shape = control.parent.parent.parent; // great
     const from = Vector.create(input.x, input.y).transformToLocal(shape);
 
     this.aux.from = from;
     this.aux.control = control;
+
+    // TODO: if we want to place the pen tip, we also need the segment ...
+    // but that's awkward
   },
 
-  editSegment(state, input) {
+  adjustSegment(state, input) {
     const control = this.aux.control;
     const from = this.aux.from;
     const segment = control.parent;
@@ -293,7 +282,7 @@ const updates = {
     const left = splitCurves.left;
     const right = splitCurves.right;
     const newSegment = Segment.create();
-    newSegment.anchor = newAnchor;
+    newSegment.anchor = newAnchor; // a vector
     newSegment.handleIn = Vector.createFromObject(left.points[2]);
     newSegment.handleOut = Vector.createFromObject(right.points[1]);
     startSegment.handleOut = Vector.createFromObject(left.points[1]);
@@ -305,7 +294,7 @@ const updates = {
       node => node.type === 'anchor'
     );
     this.hideSplitter(state, input);
-    this.editSegment(state, input);
+    this.adjustSegment(state, input);
   },
 
   hideSplitter(state, input) {

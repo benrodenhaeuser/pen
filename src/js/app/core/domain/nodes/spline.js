@@ -7,14 +7,19 @@ const Spline = Object.create(SceneNode);
 Spline.type = 'spline';
 
 Object.assign(Spline, {
+  appendSegment() {
+    const segment = Segment.create();
+    this.append(segment);
+    return segment;
+  },
+
   curves() {
     const theCurves = [];
 
     // this conditional creates a degenerate curve if
     // there is exactly 1 segment in the spline
-    // TODO: this could be a problem!
     if (this.children.length === 1) {
-      const start = this.children[0];
+      const start = this.children[0]; 
       const end = Segment.create();
 
       theCurves.push(Curve.createFromSegments(start, end));
@@ -32,21 +37,21 @@ Object.assign(Spline, {
     return theCurves;
   },
 
-  updateBounds() {
+  computeBounds() {
     const curves = this.curves();
     let bounds;
 
     // no curves
     if (curves.length === 0) {
       bounds = Rectangle.create();
-      this.payload.bounds = bounds;
+      this.bounds = bounds;
       return bounds;
     }
 
     // a single, degenerate curve
     if (curves.length === 1 && curves[0].isDegenerate()) {
       bounds = Rectangle.create();
-      this.payload.bounds = bounds;
+      this.bounds = bounds;
       return bounds;
     }
 
@@ -59,7 +64,7 @@ Object.assign(Spline, {
       bounds = bounds.getBoundingRect(curveBounds);
     }
 
-    this.payload.bounds = bounds;
+    this.bounds = bounds;
     return bounds;
   },
 });
@@ -70,9 +75,9 @@ Object.defineProperty(Spline, 'bounds', {
       return this.payload.bounds;
     }
 
-    return this.updateBounds();
+    return this.computeBounds();
   },
-  
+
   set(value) {
     this.payload.bounds = value;
   },

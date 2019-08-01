@@ -1,4 +1,5 @@
 import { GraphicsNode } from './_.js';
+import { Spline } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
 import { SyntaxTree } from './_.js';
@@ -10,6 +11,12 @@ Shape.create = function() {
   return GraphicsNode
     .create.bind(this)()
     .set(this.shapeDefaults());
+};
+
+Shape.appendSpline = function() {
+  const spline = Spline.create();
+  this.append(spline);
+  return spline;
 };
 
 Shape.shapeDefaults = function() {
@@ -110,7 +117,8 @@ Shape.pathString = function() {
 
   for (let spline of this.children) {
     const segment = spline.children[0];
-    d += `M ${segment.anchor.x} ${segment.anchor.y}`;
+
+    d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
 
     for (let i = 1; i < spline.children.length; i += 1) {
       const currSeg = spline.children[i];
@@ -125,14 +133,14 @@ Shape.pathString = function() {
       }
 
       if (prevSeg.handleOut) {
-        d += ` ${prevSeg.handleOut.x} ${prevSeg.handleOut.y}`;
+        d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
       }
 
       if (currSeg.handleIn) {
-        d += ` ${currSeg.handleIn.x} ${currSeg.handleIn.y}`;
+        d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
       }
 
-      d += ` ${currSeg.anchor.x} ${currSeg.anchor.y}`;
+      d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
     }
   }
 

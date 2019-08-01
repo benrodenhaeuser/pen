@@ -6,78 +6,50 @@ import { HandleOut } from './_.js';
 const Segment = Object.create(SceneNode);
 Segment.type = 'segment';
 
-// convenience API for getting/setting anchor and handle values of a segment
+Object.assign(Segment, {
+  placePenTip(nodeType) {
+    const node = this.children.find(node => node.type === nodeType);
+
+    if (node) {
+      this.canvas.removePenTip();
+      node.class = node.class.add('tip');
+    }
+  },
+
+  appendAnchor() {
+    const anchor = Anchor.create();
+    this.append(anchor);
+    return anchor;
+  },
+
+  appendHandleIn() {
+    const handleIn = HandleIn.create();
+    this.append(handleIn);
+    return handleIn;
+  },
+
+  appendHandleOut() {
+    const handleOut = HandleOut.create();
+    this.append(handleOut);
+    return handleOut;
+  },
+});
 
 Object.defineProperty(Segment, 'anchor', {
   get() {
-    const anchorNode = this.children.find(child => child.type === 'anchor');
-
-    if (anchorNode) {
-      return anchorNode.vector;
-    }
-
-    return null;
-  },
-  set(value) {
-    let anchorNode;
-
-    if (this.anchor) {
-      anchorNode = this.children.find(child => child.type === 'anchor');
-    } else {
-      anchorNode = Anchor.create();
-      this.append(anchorNode);
-    }
-
-    anchorNode.vector = value;
+    return this.children.find(child => child.type === 'anchor');
   },
 });
 
 Object.defineProperty(Segment, 'handleIn', {
   get() {
-    const handleNode = this.children.find(child => child.type === 'handleIn');
-
-    if (handleNode) {
-      return handleNode.vector;
-    }
-
-    return null;
-  },
-
-  set(value) {
-    let handleNode;
-
-    if (this.handleIn) {
-      handleNode = this.children.find(child => child.type === 'handleIn');
-    } else {
-      handleNode = HandleIn.create();
-      this.append(handleNode);
-    }
-
-    handleNode.vector = value;
+    return this.children.find(child => child.type === 'handleIn');
   },
 });
 
 Object.defineProperty(Segment, 'handleOut', {
   get() {
-    const handleNode = this.children.find(child => child.type === 'handleOut');
-
-    if (handleNode) {
-      return handleNode.vector;
-    }
-
-    return null;
-  },
-  set(value) {
-    let handleNode;
-
-    if (this.handleOut) {
-      handleNode = this.children.find(child => child.type === 'handleOut');
-    } else {
-      handleNode = HandleOut.create();
-      this.append(handleNode);
-    }
-
-    handleNode.vector = value;
+    return this.children.find(child => child.type === 'handleOut');
   },
 });
 

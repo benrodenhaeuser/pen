@@ -1,4 +1,5 @@
 import { GraphicsNode } from './_.js';
+import { Shape } from './_.js';
 import { SyntaxTree } from './_.js';
 
 const xmlns = 'http://www.w3.org/2000/svg';
@@ -18,6 +19,50 @@ Object.assign(Canvas, {
 
     if (focus) {
       focus.class.remove('focus');
+    }
+  },
+
+  findSelection() {
+    return this.findDescendant(
+      node => node.class.includes('selected')
+    );
+  },
+
+  removeSelection() {
+    const selected = this.findSelection();
+
+    if (selected) {
+      selected.class.remove('selected');
+    }
+
+    this.updateFrontier();
+  },
+
+  findPen() {
+    return this.findDescendant(
+      node => node.class.includes('pen')
+    );
+  },
+
+  removePen() {
+    const pen = this.findPen();
+
+    if (pen) {
+      pen.class.remove('pen');
+    }
+  },
+
+  findPenTip() {
+    return this.findDescendant(
+      node => node.class.includes('tip')
+    );
+  },
+
+  removePenTip() {
+    const penTip = this.findPenTip();
+
+    if (penTip) {
+      penTip.class.remove('tip');
     }
   },
 
@@ -54,58 +99,20 @@ Object.assign(Canvas, {
     }
   },
 
-  findSelection() {
-    return this.findDescendant(
-      node => node.class.includes('selected')
-    );
-  },
-
-  removeSelection() {
-    const selected = this.findSelection();
-
-    if (selected) {
-      selected.class.remove('selected');
-    }
-
-    this.updateFrontier();
-  },
-
-  findEditing() {
-    return this.findDescendant(
-      node => node.class.includes('editing')
-    );
-  },
-
-  removeEditing() {
-    const editing = this.findEditing();
-
-    if (editing) {
-      editing.class.remove('editing');
-    }
-  },
-
-  findPen() {
-    return this.findDescendant(
-      node => node.class.includes('pen')
-    );
-  },
-
-  removePen() {
-    const pen = this.findPen();
-
-    if (pen) {
-      pen.class.remove('pen');
-    }
-  },
-
-  globallyUpdateBounds(graphicsNode) {
+  updateBounds(graphicsNode) {
     for (let child of graphicsNode.children) {
-      child.updateBounds();
+      child.computeBounds();
     }
 
     for (let ancestor of graphicsNode.graphicsAncestors) {
-      ancestor.updateBounds();
+      ancestor.computeBounds();
     }
+  },
+
+  appendShape() {
+    const shape = Shape.create();
+    this.append(shape);
+    return shape;
   },
 
   toVDOMNode() {

@@ -182,26 +182,26 @@ const transitions = [
     to: 'penMode',
   },
 
-  // initiate editing of segment
+  // initiate adjustment of segment
   {
     from: 'penMode',
     type: 'mousedown',
     target: 'control', // TODO: ['anchor', 'handleIn', 'handleOut']
-    do: 'initEditSegment',
-    to: 'editingSegment',
+    do: 'initAdjustSegment',
+    to: 'adjustingSegment',
   },
 
-  // edit segment
+  // adjust segment
   {
-    from: 'editingSegment',
+    from: 'adjustingSegment',
     type: 'mousemove',
-    do: 'editSegment',
-    to: 'editingSegment',
+    do: 'adjustSegment',
+    to: 'adjustingSegment',
   },
 
-  // finish up editing segment
+  // finish up adjusting segment
   {
-    from: 'editingSegment',
+    from: 'adjustingSegment',
     type: 'mouseup',
     do: 'releasePen',
     to: 'penMode',
@@ -233,7 +233,7 @@ const transitions = [
     type: 'mousedown',
     target: 'curve',
     do: 'splitCurve',
-    to: 'editingSegment',
+    to: 'adjustingSegment',
   },
 
   // EDITOR

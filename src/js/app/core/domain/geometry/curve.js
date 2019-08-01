@@ -22,13 +22,14 @@ const Curve = {
   // the params are Segment instances
   createFromSegments(segment1, segment2) {
     return Curve.create(
-      segment1.anchor,
-      segment2.anchor,
-      segment1.handleOut,
-      segment2.handleIn
+      segment1.anchor && segment1.anchor.vector,
+      segment2.anchor && segment2.anchor.vector,
+      segment1.handleOut && segment1.handleOut.vector,
+      segment2.handleIn && segment2.handleIn.vector
     );
   },
 
+  // the params are Vector instances
   init(anchor1, anchor2, handle1, handle2) {
     this.anchor1 = anchor1;
     this.anchor2 = anchor2;

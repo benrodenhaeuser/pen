@@ -32,9 +32,9 @@ Object.assign(GraphicsNode, {
     this.canvas.updateFrontier();
   },
 
-  edit() {
+  placePen() {
     this.canvas.removeSelection();
-    this.class = this.class.add('editing');
+    this.class = this.class.add('pen');
     this.canvas.updateFrontier();
   },
 
@@ -86,7 +86,7 @@ Object.assign(GraphicsNode, {
       .isWithin(this.bounds);
   },
 
-  updateBounds() {
+  computeBounds() {
     const corners = [];
 
     for (let child of this.children) {
@@ -109,7 +109,7 @@ Object.assign(GraphicsNode, {
 
     const bounds = Rectangle.createFromMinMax(min, max);
 
-    this.payload.bounds = bounds;
+    this.bounds = bounds;
     return bounds;
   },
 });
@@ -120,7 +120,7 @@ Object.defineProperty(GraphicsNode, 'bounds', {
       return this.payload.bounds;
     }
 
-    return this.updateBounds();
+    return this.computeBounds();
   },
 
   set(value) {

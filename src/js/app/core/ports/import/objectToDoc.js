@@ -71,7 +71,6 @@ const setPayload = (node, object) => {
     switch (key) {
       case 'viewBox':
         node.viewBox = Rectangle.createFromObject(value);
-        console.log(node);
         break;
       case 'transform':
         node.transform = Matrix.create(value);

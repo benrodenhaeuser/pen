@@ -222,7 +222,7 @@ const connections = node => {
   for (let spline of node.children) {
     for (let segment of spline.children) {
       for (let handle of ['handleIn', 'handleOut']) {
-        if (segment[handle] !== null) {
+        if (segment[handle]) {
           vConnections.push(connection(node, segment.anchor, segment[handle]));
         }
       }
@@ -234,10 +234,10 @@ const connections = node => {
 
 const connection = (node, anchor, handle) => {
   return h('line', {
-    x1: anchor.x,
-    y1: anchor.y,
-    x2: handle.x,
-    y2: handle.y,
+    x1: anchor.vector.x,
+    y1: anchor.vector.y,
+    x2: handle.vector.x,
+    y2: handle.vector.y,
     transform: node.transform.toString(),
   });
 };
@@ -248,8 +248,8 @@ const controls = pathNode => {
 
   for (let spline of pathNode.children) {
     for (let segment of spline.children) {
-      for (let aControl of segment.children) {
-        vControls.push(control(pathNode, aControl, diameter));
+      for (let controlNode of segment.children) {
+        vControls.push(control(pathNode, controlNode, diameter));
       }
     }
   }
@@ -265,7 +265,7 @@ const control = (pathNode, controlNode, diameter) => {
     r: diameter / 2,
     cx: controlNode.vector.x,
     cy: controlNode.vector.y,
-    class: controlNode.class.toString(), // add 'pen' to node that is being edited
+    class: controlNode.class.toString(), // adds 'tip' to node that is being edited
   });
 };
 

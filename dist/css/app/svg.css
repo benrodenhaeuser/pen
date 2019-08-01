@@ -52,8 +52,8 @@ line {
   stroke-width: 40px;
 }
 
-/* curve hover in editing mode */
-.editing ~ [data-type="curves"] > [data-type="curve"]:hover + [data-type="curve-stroke"] {
+/* curve hover in pen mode */
+.pen ~ [data-type="curves"] > [data-type="curve"]:hover + [data-type="curve-stroke"] {
   stroke: red;
 }
 
@@ -81,7 +81,7 @@ line {
   stroke: #5DADE2;
 }
 
-[data-type="control"].pen {
+[data-type="control"].tip {
   stroke: red;
 }
 
@@ -100,7 +100,7 @@ line {
   visibility: hidden;
 }
 
-.editing ~ [data-type="innerUI"] {
+.pen ~ [data-type="innerUI"] {
   visibility: visible;
 }
 
@@ -135,7 +135,7 @@ line {
 }
 
 /* curve is the pointer target for curve splitting */
-.editing ~ [data-type="curves"] > [data-type="curve"] {
+.pen ~ [data-type="curves"] > [data-type="curve"] {
   pointer-events: stroke;
 }
 

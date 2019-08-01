@@ -3,9 +3,9 @@ import { SceneNode } from './_.js';
 const ControlNode = SceneNode.create();
 
 Object.assign(ControlNode, {
-  placePen() {
-    this.canvas.removePen();
-    this.class = this.class.add('pen');
+  placePenTip() {
+    this.canvas.removePenTip();
+    this.class = this.class.add('tip');
   },
 });
 
