@@ -186,7 +186,7 @@ const transitions = [
   {
     from: 'penMode',
     type: 'mousedown',
-    target: 'control', // TODO: ['anchor', 'handleIn', 'handleOut']
+    target: ['anchor', 'handleIn', 'handleOut'], 
     do: 'initAdjustSegment',
     to: 'adjustingSegment',
   },

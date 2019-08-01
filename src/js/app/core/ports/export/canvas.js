@@ -201,39 +201,49 @@ const innerUI = node => {
     'data-key': node.key,
   });
 
-  const vConnections = connections(node);
-
-  for (let vConnection of vConnections) {
-    vInnerUI.children.push(vConnection);
+  for (let segment of spline.children) {
+    vInnerUI.children.push(segmentUI(node, segment));
   }
 
-  const vControls = controls(node);
-
-  for (let vControl of vControls) {
-    vInnerUI.children.push(vControl);
-  }
+  // const vConnections = connections(node);
+  //
+  // for (let vConnection of vConnections) {
+  //   vInnerUI.children.push(vConnection);
+  // }
+  //
+  // const vControls = controls(node);
+  //
+  // for (let vControl of vControls) {
+  //   vInnerUI.children.push(vControl);
+  // }
 
   return vInnerUI;
 };
 
-const connections = node => {
-  const vConnections = [];
+const segmentUI = (node, segment) => {
+  const vSegmentUI = h('g', {
+    'data-type': 'segment',
+    'data-key': node.key,
+  });
 
-  for (let spline of node.children) {
-    for (let segment of spline.children) {
-      for (let handle of ['handleIn', 'handleOut']) {
-        if (segment[handle]) {
-          vConnections.push(connection(node, segment.anchor, segment[handle]));
-        }
-      }
+  const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
+
+  for (let controlNode of segment.children)  {
+    vSegmentUI.children.push(control(node, controlNode, diameter));
+  }
+
+  for (let handle of ['handleIn', 'handleOut']) {
+    if (segment[handle]) {
+      vSegmentUI.children.push(connection(node, segment.anchor, segment[handle]));
     }
   }
 
-  return vConnections;
+  return vSegmentUI;
 };
 
 const connection = (node, anchor, handle) => {
   return h('line', {
+    'data-type': 'connection',
     x1: anchor.vector.x,
     y1: anchor.vector.y,
     x2: handle.vector.x,
@@ -242,24 +252,9 @@ const connection = (node, anchor, handle) => {
   });
 };
 
-const controls = pathNode => {
-  const vControls = [];
-  const diameter = scale(pathNode, LENGTHS_IN_PX.controlDiameter);
-
-  for (let spline of pathNode.children) {
-    for (let segment of spline.children) {
-      for (let controlNode of segment.children) {
-        vControls.push(control(pathNode, controlNode, diameter));
-      }
-    }
-  }
-
-  return vControls;
-};
-
 const control = (pathNode, controlNode, diameter) => {
   return h('circle', {
-    'data-type': 'control',
+    'data-type': controlNode.type,
     'data-key': controlNode.key,
     transform: pathNode.transform.toString(),
     r: diameter / 2,
@@ -272,5 +267,37 @@ const control = (pathNode, controlNode, diameter) => {
 const scale = (node, length) => {
   return length / node.globalScaleFactor();
 };
+
+// const connections = node => {
+//   const vConnections = [];
+//
+//   for (let spline of node.children) {
+//     for (let segment of spline.children) {
+//       for (let handle of ['handleIn', 'handleOut']) {
+//         if (segment[handle]) {
+//           vConnections.push(connection(node, segment.anchor, segment[handle]));
+//         }
+//       }
+//     }
+//   }
+//
+//   return vConnections;
+// };
+
+// const controls = pathNode => {
+//   const vControls = [];
+//   const diameter = scale(pathNode, LENGTHS_IN_PX.controlDiameter);
+//
+//   for (let spline of pathNode.children) {
+//     for (let segment of spline.children) {
+//       for (let controlNode of segment.children) {
+//         vControls.push(control(pathNode, controlNode, diameter));
+//       }
+//     }
+//   }
+//
+//   return vControls;
+// };
+
 
 export { canvas };

@@ -114,6 +114,7 @@ const updates = {
     const node = state.canvas.findSelection();
     this.aux.from = Vector.create(input.x, input.y);
     this.aux.center = node.bounds.center.transform(node.globalTransform());
+    // ^ TODO: can we get rid of this? it looks like we can find the selection within the transform, and derive the center using the result.
   },
 
   shift(state, input) {
@@ -241,6 +242,7 @@ const updates = {
     shape.splitter = Vector.createFromObject(pointOnCurve);
 
     // TODO: do we really need all this stuff?
+    // It looks like we can at least condense it!
     this.aux.spline = spline;
     this.aux.splitter = shape.splitter;
     this.aux.startSegment = startSegment;
@@ -267,10 +269,10 @@ const updates = {
     const right = splitCurves.right;
 
     const segment = Segment.create();
+    const anchor = segment.appendAnchor();
     const handleIn = segment.appendHandleIn();
     const handleOut = segment.appendHandleOut();
-    const anchor = segment.appendAnchor();
-
+    
     spline.insertChild(segment, insertionIndex);
 
     anchor.vector = splitter;
@@ -282,8 +284,6 @@ const updates = {
     anchor.placePenTip();
     this.hideSplitter(state, input);
     this.adjustSegment(state, input);
-
-    this.aux.control = anchor;
   },
 
   hideSplitter(state, input) {

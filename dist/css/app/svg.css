@@ -16,12 +16,12 @@ rect, circ {
 
 path {
   stroke-width: 2px;
-  stroke: #242424;
+  stroke: #d3d3d3;
 }
 
 line {
   stroke-width: 1px;
-  stroke: #d3d3d3;
+  stroke: #ededed;
 }
 
 /* corners of selection */
@@ -37,19 +37,17 @@ line {
   fill: none;
 }
 
-/* bezier curve controls (anchors and handles) */
+/* bezier curve controls */
 
-/* TODO: replace with rules for anchor, handleIn, handleOut */
-
-[data-type="control"] {
-  stroke: #5DADE2;
-  fill: #FFFFFF;
+[data-type="anchor"], [data-type="handleIn"], [data-type="handleOut"] {
+  stroke: black;
+  fill: none;
 }
 
 /* 'curve' is the pointer target for bezier curves  */
 [data-type="curve"] {
   stroke: transparent;
-  stroke-width: 40px;
+  stroke-width: 13px;
 }
 
 /* curve hover in pen mode */
@@ -81,11 +79,10 @@ line {
   stroke: #5DADE2;
 }
 
-[data-type="control"].tip {
+[data-type="anchor"].tip, [data-type="handleIn"].tip, [data-type="handleOut"].tip {
+  fill: red;
   stroke: red;
-  stroke-width: 2px;
 }
-
 
 /* VISIBILITY */
 
@@ -114,6 +111,26 @@ line {
 }
 
 .focus ~ g > [data-type="frame"] {
+  visibility: visible;
+}
+
+[data-type="handleIn"], [data-type="handleOut"] {
+  visibility: hidden;
+}
+
+.tip ~ [data-type="handleIn"], .tip ~ [data-type="handleOut"] {
+  visibility: visible;
+}
+
+[data-type="handleIn"].tip, [data-type="handleOut"].tip {
+  visibility: visible;
+}
+
+[data-type="connection"] {
+  visibility: hidden;
+}
+
+.tip ~ [data-type="connection"] {
   visibility: visible;
 }
 

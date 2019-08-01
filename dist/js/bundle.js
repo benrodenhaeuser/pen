@@ -3961,54 +3961,56 @@
   const Group$$1 = Object.create(GraphicsNode$$1);
   Group$$1.type = 'group';
 
-  Group$$1.toVDOMNode = function() {
-    return {
-      tag: 'g',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': 'group',
-        transform: this.transform.toString(),
-        class: this.class.toString(),
-      },
-    };
-  };
+  Object.assign(Group$$1, {
+    toVDOMNode() {
+      return {
+        tag: 'g',
+        children: [],
+        props: {
+          'data-key': this.key,
+          'data-type': 'group',
+          transform: this.transform.toString(),
+          class: this.class.toString(),
+        },
+      };
+    },
 
-  Group$$1.toSVGNode = function() {
-    const svgNode = {
-      tag: 'g',
-      children: [],
-      props: {},
-    };
+    toSVGNode() {
+      const svgNode = {
+        tag: 'g',
+        children: [],
+        props: {},
+      };
 
-    if (!this.transform.equals(Matrix$$1.identity())) {
-      svgNode.props.transform = this.transform.toString();
-    }
+      if (!this.transform.equals(Matrix$$1.identity())) {
+        svgNode.props.transform = this.transform.toString();
+      }
 
-    return svgNode;
-  };
+      return svgNode;
+    },
 
-  Group$$1.toASTNodes = function() {
-    const open = SyntaxTree.create();
+    toASTNodes() {
+      const open = SyntaxTree.create();
 
-    if (!this.transform.equals(Matrix$$1.identity())) {
-      open.markup = `<g transform="${this.transform.toString()}">`;
-    } else {
-      open.markup = '<g>';
-    }
+      if (!this.transform.equals(Matrix$$1.identity())) {
+        open.markup = `<g transform="${this.transform.toString()}">`;
+      } else {
+        open.markup = '<g>';
+      }
 
-    open.key = this.key;
-    open.class = this.class;
+      open.key = this.key;
+      open.class = this.class;
 
-    const close = SyntaxTree.create();
-    close.markup = '</g>';
-    close.key = this.key;
+      const close = SyntaxTree.create();
+      close.markup = '</g>';
+      close.key = this.key;
 
-    return {
-      open: open,
-      close: close,
-    };
-  };
+      return {
+        open: open,
+        close: close,
+      };
+    },
+  });
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
   Shape$$1.type = 'shape';
@@ -5351,39 +5353,49 @@
       'data-key': node.key,
     });
 
-    const vConnections = connections(node);
-
-    for (let vConnection of vConnections) {
-      vInnerUI.children.push(vConnection);
+    for (let segment of spline.children) {
+      vInnerUI.children.push(segmentUI(node, segment));
     }
 
-    const vControls = controls(node);
-
-    for (let vControl of vControls) {
-      vInnerUI.children.push(vControl);
-    }
+    // const vConnections = connections(node);
+    //
+    // for (let vConnection of vConnections) {
+    //   vInnerUI.children.push(vConnection);
+    // }
+    //
+    // const vControls = controls(node);
+    //
+    // for (let vControl of vControls) {
+    //   vInnerUI.children.push(vControl);
+    // }
 
     return vInnerUI;
   };
 
-  const connections = node => {
-    const vConnections = [];
+  const segmentUI = (node, segment) => {
+    const vSegmentUI = h('g', {
+      'data-type': 'segment',
+      'data-key': node.key,
+    });
 
-    for (let spline of node.children) {
-      for (let segment of spline.children) {
-        for (let handle of ['handleIn', 'handleOut']) {
-          if (segment[handle]) {
-            vConnections.push(connection(node, segment.anchor, segment[handle]));
-          }
-        }
+    const diameter = scale$2(node, LENGTHS_IN_PX.controlDiameter);
+
+    for (let controlNode of segment.children)  {
+      vSegmentUI.children.push(control(node, controlNode, diameter));
+    }
+
+    for (let handle of ['handleIn', 'handleOut']) {
+      if (segment[handle]) {
+        vSegmentUI.children.push(connection(node, segment.anchor, segment[handle]));
       }
     }
 
-    return vConnections;
+    return vSegmentUI;
   };
 
   const connection = (node, anchor, handle) => {
     return h('line', {
+      'data-type': 'connection',
       x1: anchor.vector.x,
       y1: anchor.vector.y,
       x2: handle.vector.x,
@@ -5392,24 +5404,9 @@
     });
   };
 
-  const controls = pathNode => {
-    const vControls = [];
-    const diameter = scale$2(pathNode, LENGTHS_IN_PX.controlDiameter);
-
-    for (let spline of pathNode.children) {
-      for (let segment of spline.children) {
-        for (let controlNode of segment.children) {
-          vControls.push(control(pathNode, controlNode, diameter));
-        }
-      }
-    }
-
-    return vControls;
-  };
-
   const control = (pathNode, controlNode, diameter) => {
     return h('circle', {
-      'data-type': 'control',
+      'data-type': controlNode.type,
       'data-key': controlNode.key,
       transform: pathNode.transform.toString(),
       r: diameter / 2,
@@ -5821,7 +5818,7 @@
     {
       from: 'penMode',
       type: 'mousedown',
-      target: 'control', // TODO: ['anchor', 'handleIn', 'handleOut']
+      target: ['anchor', 'handleIn', 'handleOut'], 
       do: 'initAdjustSegment',
       to: 'adjustingSegment',
     },
@@ -6045,6 +6042,7 @@
       const node = state.canvas.findSelection();
       this.aux.from = Vector$$1.create(input.x, input.y);
       this.aux.center = node.bounds.center.transform(node.globalTransform());
+      // ^ TODO: can we get rid of this? it looks like we can find the selection within the transform, and derive the center using the result.
     },
 
     shift(state, input) {
@@ -6172,6 +6170,7 @@
       shape.splitter = Vector$$1.createFromObject(pointOnCurve);
 
       // TODO: do we really need all this stuff?
+      // It looks like we can at least condense it!
       this.aux.spline = spline;
       this.aux.splitter = shape.splitter;
       this.aux.startSegment = startSegment;
@@ -6198,10 +6197,10 @@
       const right = splitCurves.right;
 
       const segment = Segment$$1.create();
+      const anchor = segment.appendAnchor();
       const handleIn = segment.appendHandleIn();
       const handleOut = segment.appendHandleOut();
-      const anchor = segment.appendAnchor();
-
+      
       spline.insertChild(segment, insertionIndex);
 
       anchor.vector = splitter;
@@ -6213,8 +6212,6 @@
       anchor.placePenTip();
       this.hideSplitter(state, input);
       this.adjustSegment(state, input);
-
-      this.aux.control = anchor;
     },
 
     hideSplitter(state, input) {
