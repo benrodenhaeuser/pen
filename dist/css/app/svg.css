@@ -102,11 +102,11 @@ line {
   visibility: visible;
 }
 
-[data-type="innerUI"] {
+[data-type="segments"] {
   visibility: hidden;
 }
 
-.pen ~ [data-type="innerUI"] {
+.pen ~ [data-type="segments"] {
   visibility: visible;
 }
 
@@ -118,11 +118,7 @@ line {
   visibility: hidden;
 }
 
-.tip ~ [data-type="handleIn"], .tip ~ [data-type="handleOut"] {
-  visibility: visible;
-}
-
-[data-type="handleIn"].tip, [data-type="handleOut"].tip {
+.containsTip > [data-type="handleIn"], .containsTip > [data-type="handleOut"] {
   visibility: visible;
 }
 
@@ -130,7 +126,7 @@ line {
   visibility: hidden;
 }
 
-.tip ~ [data-type="connection"] {
+.containsTip > [data-type="connection"] {
   visibility: visible;
 }
 
@@ -144,7 +140,7 @@ line {
   pointer-events: visiblePainted;
 }
 
-[data-type="innerUI"] {
+[data-type="segments"] {
   pointer-events: visible;
 }
 

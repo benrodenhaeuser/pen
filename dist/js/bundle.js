@@ -3842,6 +3842,7 @@
 
       if (pen) {
         pen.class.remove('pen');
+        this.removePenTip();
       }
     },
 
@@ -3856,6 +3857,8 @@
 
       if (penTip) {
         penTip.class.remove('tip');
+        penTip.parent.class.remove('containsTip');
+        // ^ helper class to enhance CSS styling
       }
     },
 
@@ -4288,6 +4291,8 @@
     placePenTip() {
       this.canvas.removePenTip();
       this.class = this.class.add('tip');
+      this.parent.class = this.parent.class.add('containsTip');
+      // ^ helper class to enhance CSS styling
     },
   });
 
@@ -5196,7 +5201,7 @@
 
     if (node.type === 'shape') {
       vWrapper.children.push(curves(node));
-      vWrapper.children.push(innerUI(node));
+      vWrapper.children.push(segments(node));
     }
 
     vWrapper.children.push(outerUI(node));
@@ -5345,16 +5350,16 @@
     });
   };
 
-  const innerUI = node => {
+  const segments = node => {
     const spline = node.children[0];
 
-    const vInnerUI = h('g', {
-      'data-type': 'innerUI',
+    const vSegments = h('g', {
+      'data-type': 'segments',
       'data-key': node.key,
     });
 
     for (let segment of spline.children) {
-      vInnerUI.children.push(segmentUI(node, segment));
+      vSegments.children.push(segmentUI(node, segment));
     }
 
     // const vConnections = connections(node);
@@ -5369,25 +5374,26 @@
     //   vInnerUI.children.push(vControl);
     // }
 
-    return vInnerUI;
+    return vSegments;
   };
 
   const segmentUI = (node, segment) => {
     const vSegmentUI = h('g', {
       'data-type': 'segment',
+      class: segment.class.toString(),
       'data-key': node.key,
     });
 
     const diameter = scale$2(node, LENGTHS_IN_PX.controlDiameter);
 
-    for (let controlNode of segment.children)  {
-      vSegmentUI.children.push(control(node, controlNode, diameter));
-    }
-
     for (let handle of ['handleIn', 'handleOut']) {
       if (segment[handle]) {
         vSegmentUI.children.push(connection(node, segment.anchor, segment[handle]));
       }
+    }
+
+    for (let controlNode of segment.children)  {
+      vSegmentUI.children.push(control(node, controlNode, diameter));
     }
 
     return vSegmentUI;
