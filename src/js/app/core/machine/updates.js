@@ -169,83 +169,64 @@ const updates = {
   // PEN
 
   addSegment(state, input) {
-    const shape = state.canvas.findPen() || state.canvas.appendShape();
-
-    const spline = shape.lastChild || shape.appendSpline();
+    const pen = state.canvas.findPen() || state.canvas.appendShape().placePen();
+    const spline = pen.lastChild || pen.appendSpline();
     const segment = spline.appendSegment();
-    const anchor = segment.appendAnchor();
 
-    shape.placePen();
-
-    segment.anchor.vector = Vector
-      .create(input.x, input.y)
-      .transformToLocal(shape);
-
-    anchor.placePenTip();
-
-    this.aux.shape = shape;
-    this.aux.segment = segment;
+    segment
+      .appendAnchor(Vector.create(input.x, input.y).transformToLocal(pen))
+      .placePenTip();
   },
 
   setHandles(state, input) {
-    const shape = this.aux.shape;
-    const segment = this.aux.segment;
-
-    const anchor = segment.anchor;
-    const inVector = Vector.create(input.x, input.y).transformToLocal(shape);
-    const outVector = inVector.rotate(Math.PI, anchor.vector);
-
+    const pen = state.canvas.findPen();
+    const segment = pen.lastChild.lastChild;
     const handleIn = segment.handleIn || segment.appendHandleIn();
+    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(pen);
     const handleOut = segment.handleOut || segment.appendHandleOut();
-
-    handleIn.vector = inVector;
-    handleOut.vector = outVector;
-
+    handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
     handleIn.placePenTip();
   },
 
   initAdjustSegment(state, input) {
-    const control = state.canvas.findDescendantByKey(input.key); // here, it's a node
-    const shape = control.parent.parent.parent; // great
+    const control = state.canvas.findDescendantByKey(input.key);
+    const shape = control.parent.parent.parent;
     const from = Vector.create(input.x, input.y).transformToLocal(shape);
+    control.placePenTip();
 
     this.aux.from = from;
-    this.aux.control = control;
-
-    // TODO: if we want to place the pen tip, we also need the segment ...
-    // but that's awkward
   },
 
   adjustSegment(state, input) {
-    const control = this.aux.control;
     const from = this.aux.from;
+
+    const control = state.canvas.findPenTip();
     const segment = control.parent;
     const shape = segment.parent.parent;
     const to = Vector.create(input.x, input.y).transformToLocal(shape);
     const change = to.minus(from);
-    control.payload.vector = control.payload.vector.add(change);
+    control.vector = control.vector.add(change);
 
     switch (control.type) {
       case 'anchor':
         if (segment.handleIn) {
-          segment.handleIn = segment.handleIn.add(change);
+          segment.handleIn.vector = segment.handleIn.vector.add(change);
         }
         if (segment.handleOut) {
-          segment.handleOut = segment.handleOut.add(change);
+          segment.handleOut.vector = segment.handleOut.vector.add(change);
         }
         break;
       case 'handleIn':
-        segment.handleOut = segment.handleIn.rotate(Math.PI, segment.anchor);
+        segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
         break;
       case 'handleOut':
-        segment.handleIn = segment.handleOut.rotate(Math.PI, segment.anchor);
+        segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
         break;
     }
 
     this.aux.from = to;
   },
 
-  // find point on curve
   projectInput(state, input) {
     const startSegment = state.canvas.findDescendantByKey(input.key);
     const spline = startSegment.parent;
@@ -259,6 +240,7 @@ const updates = {
     const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
     shape.splitter = Vector.createFromObject(pointOnCurve);
 
+    // TODO: do we really need all this stuff?
     this.aux.spline = spline;
     this.aux.splitter = shape.splitter;
     this.aux.startSegment = startSegment;
@@ -269,9 +251,11 @@ const updates = {
     this.aux.from = from;
   },
 
+  // TODO: refactor
   splitCurve(state, input) {
+    // TODO: see preceding comment
     const spline = this.aux.spline;
-    const newAnchor = this.aux.splitter; // careful: a vector, not a node!
+    const splitter = this.aux.splitter;
     const startSegment = this.aux.startSegment;
     const endSegment = this.aux.endSegment;
     const insertionIndex = this.aux.insertionIndex;
@@ -281,20 +265,25 @@ const updates = {
     const splitCurves = bCurve.split(curveTime);
     const left = splitCurves.left;
     const right = splitCurves.right;
-    const newSegment = Segment.create();
-    newSegment.anchor = newAnchor; // a vector
-    newSegment.handleIn = Vector.createFromObject(left.points[2]);
-    newSegment.handleOut = Vector.createFromObject(right.points[1]);
-    startSegment.handleOut = Vector.createFromObject(left.points[1]);
-    endSegment.handleIn = Vector.createFromObject(right.points[2]);
 
-    spline.insertChild(newSegment, insertionIndex);
+    const segment = Segment.create();
+    const handleIn = segment.appendHandleIn();
+    const handleOut = segment.appendHandleOut();
+    const anchor = segment.appendAnchor();
 
-    this.aux.control = newSegment.findDescendant(
-      node => node.type === 'anchor'
-    );
+    spline.insertChild(segment, insertionIndex);
+
+    anchor.vector = splitter;
+    handleIn.vector = Vector.createFromObject(left.points[2]); // ?
+    handleOut.vector = Vector.createFromObject(right.points[1]); // ?
+    startSegment.handleOut.vector = Vector.createFromObject(left.points[1]); // ?
+    endSegment.handleIn.vector = Vector.createFromObject(right.points[2]); // ?
+
+    anchor.placePenTip();
     this.hideSplitter(state, input);
     this.adjustSegment(state, input);
+
+    this.aux.control = anchor;
   },
 
   hideSplitter(state, input) {

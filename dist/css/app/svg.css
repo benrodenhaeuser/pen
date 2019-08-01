@@ -83,10 +83,19 @@ line {
 
 [data-type="control"].tip {
   stroke: red;
+  stroke-width: 2px;
 }
 
 
 /* VISIBILITY */
+
+[data-type="splitter"] {
+  visibility: hidden;
+}
+
+.pen ~ g > [data-type="splitter"] {
+  visibility: visible;
+}
 
 [data-type="outerUI"] {
   visibility: hidden;

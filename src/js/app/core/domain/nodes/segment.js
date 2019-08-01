@@ -7,29 +7,23 @@ const Segment = Object.create(SceneNode);
 Segment.type = 'segment';
 
 Object.assign(Segment, {
-  placePenTip(nodeType) {
-    const node = this.children.find(node => node.type === nodeType);
-
-    if (node) {
-      this.canvas.removePenTip();
-      node.class = node.class.add('tip');
-    }
-  },
-
-  appendAnchor() {
+  appendAnchor(vector) {
     const anchor = Anchor.create();
+    anchor.vector = vector;
     this.append(anchor);
     return anchor;
   },
 
-  appendHandleIn() {
+  appendHandleIn(vector) {
     const handleIn = HandleIn.create();
+    handleIn.vector = vector;
     this.append(handleIn);
     return handleIn;
   },
 
-  appendHandleOut() {
+  appendHandleOut(vector) {
     const handleOut = HandleOut.create();
+    handleOut.vector = vector;
     this.append(handleOut);
     return handleOut;
   },

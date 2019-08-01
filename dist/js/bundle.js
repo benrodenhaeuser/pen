@@ -3676,6 +3676,8 @@
       this.canvas.removeSelection();
       this.class = this.class.add('pen');
       this.canvas.updateFrontier();
+
+      return this;
     },
 
     rotate(angle, center) {
@@ -4011,145 +4013,148 @@
   const Shape$$1 = Object.create(GraphicsNode$$1);
   Shape$$1.type = 'shape';
 
-  Shape$$1.create = function() {
-    return GraphicsNode$$1
-      .create.bind(this)()
-      .set(this.shapeDefaults());
-  };
+  Object.assign(Shape$$1, {
+    create() {
+      return GraphicsNode$$1
+        .create.bind(this)()
+        .set(this.shapeDefaults());
+    },
 
-  Shape$$1.appendSpline = function() {
-    const spline = Spline$$1.create();
-    this.append(spline);
-    return spline;
-  };
+    shapeDefaults() {
+      return {
+        splitter: Vector$$1.create(-1000, -1000),
+      };
+    },
 
-  Shape$$1.shapeDefaults = function() {
-    return {
-      splitter: Vector$$1.create(-1000, -1000),
-    };
-  };
+    appendSpline() {
+      const spline = Spline$$1.create();
+      this.append(spline);
+      return spline;
+    },
 
-  Shape$$1.toVDOMNode = function() {
-    return {
-      tag: 'path',
-      children: [],
-      props: {
-        'data-type': 'shape',
-        'data-key': this.key,
-        d: this.pathString(),
-        transform: this.transform.toString(),
-        class: this.class.toString(),
-      },
-    };
-  };
+    toVDOMNode() {
+      return {
+        tag: 'path',
+        children: [],
+        props: {
+          'data-type': 'shape',
+          'data-key': this.key,
+          d: this.toPathString(),
+          transform: this.transform.toString(),
+          class: this.class.toString(),
+        },
+      };
+    },
 
-  Shape$$1.toVDOMCurves = function() {
-    const nodes = [];
-    const splines = this.children;
 
-    for (let spline of splines) {
-      const segments = spline.children;
-      const curves = spline.curves();
+    toVDOMCurves() {
+      const nodes = [];
+      const splines = this.children;
 
-      for (let i = 0; i < curves.length; i += 1) {
-        // this node will be the "hit target" for the curve:
-        nodes.push({
-          tag: 'path',
-          children: [],
-          props: {
-            'data-type': 'curve',
-            'data-key': segments[i].key,
-            d: curves[i].toPathString(),
-            transform: this.transform.toString(),
-          },
-        });
+      for (let spline of splines) {
+        const segments = spline.children;
+        const curves = spline.curves();
 
-        // this node will display the curve stroke:
-        nodes.push({
-          tag: 'path',
-          children: [],
-          props: {
-            'data-type': 'curve-stroke',
-            d: curves[i].toPathString(),
-            transform: this.transform.toString(),
-          },
-        });
+        for (let i = 0; i < curves.length; i += 1) {
+          // this node will be the "hit target" for the curve:
+          nodes.push({
+            tag: 'path',
+            children: [],
+            props: {
+              'data-type': 'curve',
+              'data-key': segments[i].key,
+              d: curves[i].toPathString(),
+              transform: this.transform.toString(),
+            },
+          });
+
+          // this node will display the curve stroke:
+          nodes.push({
+            tag: 'path',
+            children: [],
+            props: {
+              'data-type': 'curve-stroke',
+              d: curves[i].toPathString(),
+              transform: this.transform.toString(),
+            },
+          });
+        }
       }
-    }
 
-    return nodes;
-  };
+      return nodes;
+    },
 
-  Shape$$1.toSVGNode = function() {
-    const svgNode = {
-      tag: 'path',
-      children: [],
-      props: { d: this.pathString() },
-    };
+    toSVGNode() {
+      const svgNode = {
+        tag: 'path',
+        children: [],
+        props: { d: this.toPathString() },
+      };
 
-    if (!this.transform.equals(Matrix$$1.identity())) {
-      svgNode.props.transform = this.transform.toString();
-    }
-
-    return svgNode;
-  };
-
-  Shape$$1.toASTNodes = function() {
-    const open = SyntaxTree.create();
-
-    if (!this.transform.equals(Matrix$$1.identity())) {
-      open.markup = `<path d="${this.pathString()}" transform="${this.transform.toString()}">`;
-    } else {
-      open.markup = `<path d="${this.pathString()}">`;
-    }
-
-    open.key = this.key;
-    open.class = this.class;
-
-    const close = SyntaxTree.create();
-    close.markup = '</path>';
-    close.key = this.key;
-
-    return {
-      open: open,
-      close: close,
-    };
-  };
-
-  Shape$$1.pathString = function() {
-    let d = '';
-
-    for (let spline of this.children) {
-      const segment = spline.children[0];
-
-      d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
-
-      for (let i = 1; i < spline.children.length; i += 1) {
-        const currSeg = spline.children[i];
-        const prevSeg = spline.children[i - 1];
-
-        if (prevSeg.handleOut && currSeg.handleIn) {
-          d += ' C';
-        } else if (currSeg.handleIn || prevSeg.handleOut) {
-          d += ' Q';
-        } else {
-          d += ' L';
-        }
-
-        if (prevSeg.handleOut) {
-          d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
-        }
-
-        if (currSeg.handleIn) {
-          d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
-        }
-
-        d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
+      if (!this.transform.equals(Matrix$$1.identity())) {
+        svgNode.props.transform = this.transform.toString();
       }
-    }
 
-    return d;
-  };
+      return svgNode;
+    },
+
+    toASTNodes() {
+      const open = SyntaxTree.create();
+
+      if (!this.transform.equals(Matrix$$1.identity())) {
+        open.markup = `<path d="${this.toPathString()}" transform="${this.transform.toString()}">`;
+      } else {
+        open.markup = `<path d="${this.toPathString()}">`;
+      }
+
+      open.key = this.key;
+      open.class = this.class;
+
+      const close = SyntaxTree.create();
+      close.markup = '</path>';
+      close.key = this.key;
+
+      return {
+        open: open,
+        close: close,
+      };
+    },
+
+    toPathString() {
+      let d = '';
+
+      for (let spline of this.children) {
+        const segment = spline.children[0];
+
+        d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
+
+        for (let i = 1; i < spline.children.length; i += 1) {
+          const currSeg = spline.children[i];
+          const prevSeg = spline.children[i - 1];
+
+          if (prevSeg.handleOut && currSeg.handleIn) {
+            d += ' C';
+          } else if (currSeg.handleIn || prevSeg.handleOut) {
+            d += ' Q';
+          } else {
+            d += ' L';
+          }
+
+          if (prevSeg.handleOut) {
+            d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
+          }
+
+          if (currSeg.handleIn) {
+            d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
+          }
+
+          d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
+        }
+      }
+
+      return d;
+    },
+  });
 
   const Spline$$1 = Object.create(SceneNode$$1);
   Spline$$1.type = 'spline';
@@ -4235,29 +4240,23 @@
   Segment$$1.type = 'segment';
 
   Object.assign(Segment$$1, {
-    placePenTip(nodeType) {
-      const node = this.children.find(node => node.type === nodeType);
-
-      if (node) {
-        this.canvas.removePenTip();
-        node.class = node.class.add('tip');
-      }
-    },
-
-    appendAnchor() {
+    appendAnchor(vector) {
       const anchor = Anchor$$1.create();
+      anchor.vector = vector;
       this.append(anchor);
       return anchor;
     },
 
-    appendHandleIn() {
+    appendHandleIn(vector) {
       const handleIn = HandleIn$$1.create();
+      handleIn.vector = vector;
       this.append(handleIn);
       return handleIn;
     },
 
-    appendHandleOut() {
+    appendHandleOut(vector) {
       const handleOut = HandleOut$$1.create();
+      handleOut.vector = vector;
       this.append(handleOut);
       return handleOut;
     },
@@ -6101,83 +6100,64 @@
     // PEN
 
     addSegment(state, input) {
-      const shape = state.canvas.findPen() || state.canvas.appendShape();
-
-      const spline = shape.lastChild || shape.appendSpline();
+      const pen = state.canvas.findPen() || state.canvas.appendShape().placePen();
+      const spline = pen.lastChild || pen.appendSpline();
       const segment = spline.appendSegment();
-      const anchor = segment.appendAnchor();
 
-      shape.placePen();
-
-      segment.anchor.vector = Vector$$1
-        .create(input.x, input.y)
-        .transformToLocal(shape);
-
-      anchor.placePenTip();
-
-      this.aux.shape = shape;
-      this.aux.segment = segment;
+      segment
+        .appendAnchor(Vector$$1.create(input.x, input.y).transformToLocal(pen))
+        .placePenTip();
     },
 
     setHandles(state, input) {
-      const shape = this.aux.shape;
-      const segment = this.aux.segment;
-
-      const anchor = segment.anchor;
-      const inVector = Vector$$1.create(input.x, input.y).transformToLocal(shape);
-      const outVector = inVector.rotate(Math.PI, anchor.vector);
-
+      const pen = state.canvas.findPen();
+      const segment = pen.lastChild.lastChild;
       const handleIn = segment.handleIn || segment.appendHandleIn();
+      handleIn.vector = Vector$$1.create(input.x, input.y).transformToLocal(pen);
       const handleOut = segment.handleOut || segment.appendHandleOut();
-
-      handleIn.vector = inVector;
-      handleOut.vector = outVector;
-
+      handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
       handleIn.placePenTip();
     },
 
     initAdjustSegment(state, input) {
-      const control = state.canvas.findDescendantByKey(input.key); // here, it's a node
-      const shape = control.parent.parent.parent; // great
+      const control = state.canvas.findDescendantByKey(input.key);
+      const shape = control.parent.parent.parent;
       const from = Vector$$1.create(input.x, input.y).transformToLocal(shape);
+      control.placePenTip();
 
       this.aux.from = from;
-      this.aux.control = control;
-
-      // TODO: if we want to place the pen tip, we also need the segment ...
-      // but that's awkward
     },
 
     adjustSegment(state, input) {
-      const control = this.aux.control;
       const from = this.aux.from;
+
+      const control = state.canvas.findPenTip();
       const segment = control.parent;
       const shape = segment.parent.parent;
       const to = Vector$$1.create(input.x, input.y).transformToLocal(shape);
       const change = to.minus(from);
-      control.payload.vector = control.payload.vector.add(change);
+      control.vector = control.vector.add(change);
 
       switch (control.type) {
         case 'anchor':
           if (segment.handleIn) {
-            segment.handleIn = segment.handleIn.add(change);
+            segment.handleIn.vector = segment.handleIn.vector.add(change);
           }
           if (segment.handleOut) {
-            segment.handleOut = segment.handleOut.add(change);
+            segment.handleOut.vector = segment.handleOut.vector.add(change);
           }
           break;
         case 'handleIn':
-          segment.handleOut = segment.handleIn.rotate(Math.PI, segment.anchor);
+          segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
           break;
         case 'handleOut':
-          segment.handleIn = segment.handleOut.rotate(Math.PI, segment.anchor);
+          segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
           break;
       }
 
       this.aux.from = to;
     },
 
-    // find point on curve
     projectInput(state, input) {
       const startSegment = state.canvas.findDescendantByKey(input.key);
       const spline = startSegment.parent;
@@ -6191,6 +6171,7 @@
       const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
       shape.splitter = Vector$$1.createFromObject(pointOnCurve);
 
+      // TODO: do we really need all this stuff?
       this.aux.spline = spline;
       this.aux.splitter = shape.splitter;
       this.aux.startSegment = startSegment;
@@ -6201,9 +6182,11 @@
       this.aux.from = from;
     },
 
+    // TODO: refactor
     splitCurve(state, input) {
+      // TODO: see preceding comment
       const spline = this.aux.spline;
-      const newAnchor = this.aux.splitter; // careful: a vector, not a node!
+      const splitter = this.aux.splitter;
       const startSegment = this.aux.startSegment;
       const endSegment = this.aux.endSegment;
       const insertionIndex = this.aux.insertionIndex;
@@ -6213,20 +6196,25 @@
       const splitCurves = bCurve.split(curveTime);
       const left = splitCurves.left;
       const right = splitCurves.right;
-      const newSegment = Segment$$1.create();
-      newSegment.anchor = newAnchor; // a vector
-      newSegment.handleIn = Vector$$1.createFromObject(left.points[2]);
-      newSegment.handleOut = Vector$$1.createFromObject(right.points[1]);
-      startSegment.handleOut = Vector$$1.createFromObject(left.points[1]);
-      endSegment.handleIn = Vector$$1.createFromObject(right.points[2]);
 
-      spline.insertChild(newSegment, insertionIndex);
+      const segment = Segment$$1.create();
+      const handleIn = segment.appendHandleIn();
+      const handleOut = segment.appendHandleOut();
+      const anchor = segment.appendAnchor();
 
-      this.aux.control = newSegment.findDescendant(
-        node => node.type === 'anchor'
-      );
+      spline.insertChild(segment, insertionIndex);
+
+      anchor.vector = splitter;
+      handleIn.vector = Vector$$1.createFromObject(left.points[2]); // ?
+      handleOut.vector = Vector$$1.createFromObject(right.points[1]); // ?
+      startSegment.handleOut.vector = Vector$$1.createFromObject(left.points[1]); // ?
+      endSegment.handleIn.vector = Vector$$1.createFromObject(right.points[2]); // ?
+
+      anchor.placePenTip();
       this.hideSplitter(state, input);
       this.adjustSegment(state, input);
+
+      this.aux.control = anchor;
     },
 
     hideSplitter(state, input) {

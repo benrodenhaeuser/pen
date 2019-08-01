@@ -36,6 +36,8 @@ Object.assign(GraphicsNode, {
     this.canvas.removeSelection();
     this.class = this.class.add('pen');
     this.canvas.updateFrontier();
+
+    return this;
   },
 
   rotate(angle, center) {
