@@ -1,7 +1,14 @@
 import { Node } from './_.js';
 
 const Identifier = Object.create(Node);
-Identifier.type = 'identifier';
+
+Object.assign(Identifier, {
+  create() {
+    return Node
+      .create.bind(this)()
+      .set({ type: 'identifier' });
+  },
+});
 
 Object.defineProperty(Identifier, '_id', {
   get() {

@@ -63,26 +63,6 @@ const State = {
     return doc;
   },
 
-  get canvas() {
-    return this.store.canvas;
-  },
-
-  get syntaxTree() {
-    return this.store.syntaxTree;
-  },
-
-  get doc() {
-    return this.store.doc;
-  },
-
-  get docs() {
-    return this.store.docs;
-  },
-
-  get message() {
-    return this.store.message;
-  },
-
   export() {
     return {
       label: this.label,
@@ -133,5 +113,35 @@ const State = {
     return exportToPlain(this.store);
   },
 };
+
+Object.defineProperty(State, 'canvas', {
+  get() {
+    return this.store.canvas;
+  },
+});
+
+Object.defineProperty(State, 'syntaxTree', {
+  get() {
+    return this.store.syntaxTree;
+  },
+});
+
+Object.defineProperty(State, 'doc', {
+  get() {
+    return this.store.doc;
+  },
+});
+
+Object.defineProperty(State, 'docs', {
+  get() {
+    return this.store.docs;
+  },
+});
+
+Object.defineProperty(State, 'message', {
+  get() {
+    return this.store.message;
+  },
+});
 
 export { State };

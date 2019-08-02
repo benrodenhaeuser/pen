@@ -5,21 +5,17 @@ import { Vector } from '../geometry/_.js';
 import { MarkupNode } from './_.js';
 
 const Shape = Object.create(GraphicsNode);
-Shape.type = 'shape';
 
 Object.assign(Shape, {
   create() {
     return GraphicsNode.create
       .bind(this)()
-      .set(this.shapeDefaults());
+      .set({
+        type: 'shape',
+        splitter: Vector.create(-1000, -1000),
+      });
   },
-
-  shapeDefaults() {
-    return {
-      splitter: Vector.create(-1000, -1000),
-    };
-  },
-
+  
   appendSpline() {
     const spline = Spline.create();
     this.append(spline);

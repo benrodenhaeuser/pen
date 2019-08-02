@@ -1,6 +1,13 @@
 import { Node } from './_.js';
 
 const Docs = Object.create(Node);
-Docs.type = 'docs';
+
+Object.assign(Docs, {
+  create() {
+    return Node
+      .create.bind(this)()
+      .set({ type: 'docs' });
+  },
+});
 
 export { Docs };

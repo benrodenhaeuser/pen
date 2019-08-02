@@ -4,9 +4,14 @@ import { Rectangle } from '../geometry/_.js';
 import { Curve } from '../geometry/_.js';
 
 const Spline = Object.create(SceneNode);
-Spline.type = 'spline';
 
 Object.assign(Spline, {
+  create() {
+    return SceneNode.create
+      .bind(this)()
+      .set({ type: 'spline' });
+  },
+
   appendSegment() {
     const segment = Segment.create();
     this.append(segment);

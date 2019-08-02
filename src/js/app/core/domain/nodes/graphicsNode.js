@@ -10,14 +10,10 @@ Object.assign(GraphicsNode, {
   create() {
     return SceneNode.create
       .bind(this)()
-      .set(this.graphicsNodeDefaults());
-  },
-
-  graphicsNodeDefaults() {
-    return {
-      transform: Matrix.identity(),
-      class: Class.create(),
-    };
+      .set({
+        transform: Matrix.identity(),
+        class: Class.create(),
+      });
   },
 
   focus() {

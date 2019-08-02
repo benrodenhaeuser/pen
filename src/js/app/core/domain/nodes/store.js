@@ -1,7 +1,14 @@
 import { Node } from './_.js';
 
 const Store = Object.create(Node);
-Store.type = 'store';
+
+Object.assign(Store, {
+  create() {
+    return Node
+      .create.bind(this)()
+      .set({ type: 'store' });
+  },
+});
 
 Object.defineProperty(Store, 'message', {
   get() {

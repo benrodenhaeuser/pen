@@ -3,26 +3,15 @@ import { createID } from '../helpers/_.js';
 
 const Node = {
   create() {
-    return Object.create(this)
-      .setType()
-      .set(this.nodeDefaults());
-  },
-
-  setType() {
-    this.type = Object.getPrototypeOf(this).type;
-    return this;
-  },
-
-  nodeDefaults() {
-    return {
-      children: [],
-      parent: null,
-      payload: {
-        type: this.type,
+    return Object
+      .create(this)
+      .set({
+        children: [],
+        parent: null,
+        payload: {},
         key: createID(),
         class: Class.create(),
-      },
-    };
+      });
   },
 
   set(opts) {
@@ -163,15 +152,15 @@ Object.defineProperty(Node, 'class', {
   },
 });
 
-// Object.defineProperty(Node, 'type', {
-//   get() {
-//     return this.payload.type;
-//   },
-//
-//   set(value) {
-//     this.payload.type = value;
-//   },
-// });
+Object.defineProperty(Node, 'type', {
+  get() {
+    return this.payload.type;
+  },
+
+  set(value) {
+    this.payload.type = value;
+  },
+});
 
 Object.defineProperty(Node, 'root', {
   get() {

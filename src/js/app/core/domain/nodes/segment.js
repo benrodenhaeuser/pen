@@ -4,9 +4,14 @@ import { HandleIn } from './_.js';
 import { HandleOut } from './_.js';
 
 const Segment = Object.create(SceneNode);
-Segment.type = 'segment';
 
 Object.assign(Segment, {
+  create() {
+    return SceneNode
+      .create.bind(this)()
+      .set({ type: 'segment' });
+  },
+
   appendAnchor(vector) {
     const anchor = Anchor.create();
     anchor.vector = vector;

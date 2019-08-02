@@ -3,9 +3,14 @@ import { Matrix } from '../geometry/_.js';
 import { MarkupNode } from './_.js';
 
 const Group = Object.create(GraphicsNode);
-Group.type = 'group';
 
 Object.assign(Group, {
+  create() {
+    return GraphicsNode
+      .create.bind(this)()
+      .set({ type: 'group' });
+  },
+
   toVDOMNode() {
     return {
       tag: 'g',

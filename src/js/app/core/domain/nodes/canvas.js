@@ -5,9 +5,14 @@ import { MarkupNode } from './_.js';
 const xmlns = 'http://www.w3.org/2000/svg';
 
 const Canvas = Object.create(GraphicsNode);
-Canvas.type = 'canvas';
 
 Object.assign(Canvas, {
+  create() {
+    return GraphicsNode
+      .create.bind(this)()
+      .set({ type: 'canvas' });
+  },
+
   findFocus() {
     return this.findDescendant(node => node.class.includes('focus'));
   },

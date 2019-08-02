@@ -3442,26 +3442,15 @@
 
   const Node = {
     create() {
-      return Object.create(this)
-        .setType()
-        .set(this.nodeDefaults());
-    },
-
-    setType() {
-      this.type = Object.getPrototypeOf(this).type;
-      return this;
-    },
-
-    nodeDefaults() {
-      return {
-        children: [],
-        parent: null,
-        payload: {
-          type: this.type,
+      return Object
+        .create(this)
+        .set({
+          children: [],
+          parent: null,
+          payload: {},
           key: createID(),
           class: Class.create(),
-        },
-      };
+        });
     },
 
     set(opts) {
@@ -3602,15 +3591,15 @@
     },
   });
 
-  // Object.defineProperty(Node, 'type', {
-  //   get() {
-  //     return this.payload.type;
-  //   },
-  //
-  //   set(value) {
-  //     this.payload.type = value;
-  //   },
-  // });
+  Object.defineProperty(Node, 'type', {
+    get() {
+      return this.payload.type;
+    },
+
+    set(value) {
+      this.payload.type = value;
+    },
+  });
 
   Object.defineProperty(Node, 'root', {
     get() {
@@ -3668,14 +3657,10 @@
     create() {
       return SceneNode$$1.create
         .bind(this)()
-        .set(this.graphicsNodeDefaults());
-    },
-
-    graphicsNodeDefaults() {
-      return {
-        transform: Matrix$$1.identity(),
-        class: Class.create(),
-      };
+        .set({
+          transform: Matrix$$1.identity(),
+          class: Class.create(),
+        });
     },
 
     focus() {
@@ -3814,9 +3799,14 @@
   const xmlns = 'http://www.w3.org/2000/svg';
 
   const Canvas$$1 = Object.create(GraphicsNode$$1);
-  Canvas$$1.type = 'canvas';
 
   Object.assign(Canvas$$1, {
+    create() {
+      return GraphicsNode$$1
+        .create.bind(this)()
+        .set({ type: 'canvas' });
+    },
+
     findFocus() {
       return this.findDescendant(node => node.class.includes('focus'));
     },
@@ -3967,9 +3957,14 @@
   });
 
   const Group$$1 = Object.create(GraphicsNode$$1);
-  Group$$1.type = 'group';
 
   Object.assign(Group$$1, {
+    create() {
+      return GraphicsNode$$1
+        .create.bind(this)()
+        .set({ type: 'group' });
+    },
+
     toVDOMNode() {
       return {
         tag: 'g',
@@ -4021,21 +4016,17 @@
   });
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
-  Shape$$1.type = 'shape';
 
   Object.assign(Shape$$1, {
     create() {
       return GraphicsNode$$1.create
         .bind(this)()
-        .set(this.shapeDefaults());
+        .set({
+          type: 'shape',
+          splitter: Vector$$1.create(-1000, -1000),
+        });
     },
-
-    shapeDefaults() {
-      return {
-        splitter: Vector$$1.create(-1000, -1000),
-      };
-    },
-
+    
     appendSpline() {
       const spline = Spline$$1.create();
       this.append(spline);
@@ -4176,9 +4167,14 @@
   });
 
   const Spline$$1 = Object.create(SceneNode$$1);
-  Spline$$1.type = 'spline';
 
   Object.assign(Spline$$1, {
+    create() {
+      return SceneNode$$1.create
+        .bind(this)()
+        .set({ type: 'spline' });
+    },
+
     appendSegment() {
       const segment = Segment$$1.create();
       this.append(segment);
@@ -4256,9 +4252,14 @@
   });
 
   const Segment$$1 = Object.create(SceneNode$$1);
-  Segment$$1.type = 'segment';
 
   Object.assign(Segment$$1, {
+    create() {
+      return SceneNode$$1
+        .create.bind(this)()
+        .set({ type: 'segment' });
+    },
+
     appendAnchor(vector) {
       const anchor = Anchor$$1.create();
       anchor.vector = vector;
@@ -4320,22 +4321,45 @@
   });
 
   const Anchor$$1 = Object.create(ControlNode$$1);
-  Anchor$$1.type = 'anchor';
+
+  Object.assign(Anchor$$1, {
+    create() {
+      return ControlNode$$1
+        .create.bind(this)()
+        .set({ type: 'anchor' });
+    },
+  });
 
   const HandleIn$$1 = Object.create(ControlNode$$1);
-  HandleIn$$1.type = 'handleIn';
+
+  Object.assign(HandleIn$$1, {
+    create() {
+      return ControlNode$$1
+        .create.bind(this)()
+        .set({ type: 'handleIn' });
+    },
+  });
 
   const HandleOut$$1 = Object.create(ControlNode$$1);
-  HandleOut$$1.type = 'handleOut';
+
+  Object.assign(HandleOut$$1, {
+    create() {
+      return ControlNode$$1
+        .create.bind(this)()
+        .set({ type: 'handleOut' });
+    },
+  });
 
   const Doc$$1 = Object.create(Node);
-  Doc$$1.type = 'doc';
 
   Object.assign(Doc$$1, {
     create() {
       return Node
         .create.bind(this)()
-        .set({ _id: createID() });
+        .set({
+          type: 'doc',
+          _id: createID(),
+         });
     },
   });
 
@@ -4350,7 +4374,14 @@
   });
 
   const Store$$1 = Object.create(Node);
-  Store$$1.type = 'store';
+
+  Object.assign(Store$$1, {
+    create() {
+      return Node
+        .create.bind(this)()
+        .set({ type: 'store' });
+    },
+  });
 
   Object.defineProperty(Store$$1, 'message', {
     get() {
@@ -4383,13 +4414,34 @@
   });
 
   const Docs$$1 = Object.create(Node);
-  Docs$$1.type = 'docs';
+
+  Object.assign(Docs$$1, {
+    create() {
+      return Node
+        .create.bind(this)()
+        .set({ type: 'docs' });
+    },
+  });
 
   const Message$$1 = Object.create(Node);
-  Message$$1.type = 'message';
+
+  Object.assign(Message$$1, {
+    create() {
+      return Node
+        .create.bind(this)()
+        .set({ type: 'message' });
+    },
+  });
 
   const Identifier$$1 = Object.create(Node);
-  Identifier$$1.type = 'identifier';
+
+  Object.assign(Identifier$$1, {
+    create() {
+      return Node
+        .create.bind(this)()
+        .set({ type: 'identifier' });
+    },
+  });
 
   Object.defineProperty(Identifier$$1, '_id', {
     get() {
@@ -4402,9 +4454,14 @@
   });
 
   const MarkupNode$$1 = Object.create(Node);
-  MarkupNode$$1.type = 'markupNode';
 
   Object.assign(MarkupNode$$1, {
+    create() {
+      return Node
+        .create.bind(this)()
+        .set({ type: 'markupNode' });
+    },
+
     indexify(start = 0) {
       this.start = start;
 
@@ -5574,26 +5631,6 @@
       return doc;
     },
 
-    get canvas() {
-      return this.store.canvas;
-    },
-
-    get syntaxTree() {
-      return this.store.syntaxTree;
-    },
-
-    get doc() {
-      return this.store.doc;
-    },
-
-    get docs() {
-      return this.store.docs;
-    },
-
-    get message() {
-      return this.store.message;
-    },
-
     export() {
       return {
         label: this.label,
@@ -5644,6 +5681,36 @@
       return exportToPlain(this.store);
     },
   };
+
+  Object.defineProperty(State, 'canvas', {
+    get() {
+      return this.store.canvas;
+    },
+  });
+
+  Object.defineProperty(State, 'syntaxTree', {
+    get() {
+      return this.store.syntaxTree;
+    },
+  });
+
+  Object.defineProperty(State, 'doc', {
+    get() {
+      return this.store.doc;
+    },
+  });
+
+  Object.defineProperty(State, 'docs', {
+    get() {
+      return this.store.docs;
+    },
+  });
+
+  Object.defineProperty(State, 'message', {
+    get() {
+      return this.store.message;
+    },
+  });
 
   // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
