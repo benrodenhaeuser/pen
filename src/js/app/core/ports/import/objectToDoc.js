@@ -11,7 +11,7 @@ import { Class } from '../../domain/_.js';
 const objectToDoc = object => {
   let node;
 
-  switch (object.type) {
+  switch (object.payload.type) {
     case 'store':
       node = Store.create();
       break;
@@ -57,7 +57,7 @@ const objectToDoc = object => {
       break;
   }
 
-  node.type = object.type; // put in payload.
+  node.type = object.payload.type;
 
   setPayload(node, object);
 
@@ -81,7 +81,7 @@ const setPayload = (node, object) => {
         node.class = Class.create(value);
         break;
       case 'text':
-        node.payload.text = value;
+        node.text = value;
         break;
       case 'bounds':
         if (value) {

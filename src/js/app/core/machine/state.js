@@ -45,7 +45,7 @@ const State = {
 
   buildMessage() {
     const message = Message.create();
-    message.payload.text = 'Welcome!';
+    message.text = 'Welcome!';
     return message;
   },
 

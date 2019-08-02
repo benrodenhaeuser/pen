@@ -3581,12 +3581,8 @@
       return this.parent === null;
     },
 
-    // string encoding
-
     toJSON() {
       return {
-        key: this.key, // TODO: this is part of payload, so we should omit it here
-        type: this.type, // TODO: this is part of payload, so we should omit it here
         children: this.children,
         payload: this.payload,
       };
@@ -4365,6 +4361,7 @@
   });
 
   const Message$$1 = Object.create(Node$$1);
+  Message$$1.defineProps(['text']);
 
   Object.assign(Message$$1, {
     create() {
@@ -4556,10 +4553,10 @@
             'a',
             {
               class: 'pure-menu-link',
-              'data-key': identifier.payload._id,
+              'data-key': identifier._id,
               'data-type': 'doc-identifier',
             },
-            identifier.payload._id
+            identifier._id
           )
           //  TODO: This is where we would need to put the *name* of the document.
         )
@@ -4589,7 +4586,7 @@
   // not needed atm
 
   const message = store => {
-    return store.message.payload.text;
+    return store.message.text;
   };
 
   const LENGTHS_IN_PX = {
@@ -4853,7 +4850,7 @@
   const objectToDoc = object => {
     let node;
 
-    switch (object.type) {
+    switch (object.payload.type) {
       case 'store':
         node = Store$$1.create();
         break;
@@ -4899,7 +4896,7 @@
         break;
     }
 
-    node.type = object.type; // put in payload.
+    node.type = object.payload.type;
 
     setPayload(node, object);
 
@@ -4923,7 +4920,7 @@
           node.class = Class.create(value);
           break;
         case 'text':
-          node.payload.text = value;
+          node.text = value;
           break;
         case 'bounds':
           if (value) {
@@ -5057,7 +5054,7 @@
     // the first command is ALWAYS an `M` command (no handles)
     segments[0] = Segment$$1.create();
     const child = Anchor$$1.create();
-    child.payload.vector = Vector$$1.create(commands[0].x, commands[0].y);
+    child.vector = Vector$$1.create(commands[0].x, commands[0].y);
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
@@ -5066,20 +5063,20 @@
       const currSeg = Segment$$1.create();
 
       const anchor = Anchor$$1.create();
-      anchor.payload.vector = Vector$$1.create(command.x, command.y);
+      anchor.vector = Vector$$1.create(command.x, command.y);
       currSeg.append(anchor);
 
       if (command.x1 && command.x2) {
         const handleOut = HandleOut$$1.create();
-        handleOut.payload.vector = Vector$$1.create(command.x1, command.y1);
+        handleOut.vector = Vector$$1.create(command.x1, command.y1);
         prevSeg.append(handleOut);
 
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector$$1.create(command.x2, command.y2);
+        handleIn.vector = Vector$$1.create(command.x2, command.y2);
         currSeg.append(handleIn);
       } else if (command.x1) {
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector$$1.create(command.x1, command.y1);
+        handleIn.vector = Vector$$1.create(command.x1, command.y1);
         currSeg.append(handleIn);
       }
 
@@ -5248,7 +5245,7 @@
     // the first command is ALWAYS an `M` command (no handles)
     segments[0] = Segment$$1.create();
     const child = Anchor$$1.create();
-    child.payload.vector = Vector$$1.create(commands[0].x, commands[0].y);
+    child.vector = Vector$$1.create(commands[0].x, commands[0].y);
     segments[0].append(child);
 
     for (let i = 1; i < commands.length; i += 1) {
@@ -5257,20 +5254,20 @@
       const currSeg = Segment$$1.create();
 
       const anchor = Anchor$$1.create();
-      anchor.payload.vector = Vector$$1.create(command.x, command.y);
+      anchor.vector = Vector$$1.create(command.x, command.y);
       currSeg.append(anchor);
 
       if (command.x1 && command.x2) {
         const handleOut = HandleOut$$1.create();
-        handleOut.payload.vector = Vector$$1.create(command.x1, command.y1);
+        handleOut.vector = Vector$$1.create(command.x1, command.y1);
         prevSeg.append(handleOut);
 
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector$$1.create(command.x2, command.y2);
+        handleIn.vector = Vector$$1.create(command.x2, command.y2);
         currSeg.append(handleIn);
       } else if (command.x1) {
         const handleIn = HandleIn$$1.create();
-        handleIn.payload.vector = Vector$$1.create(command.x1, command.y1);
+        handleIn.vector = Vector$$1.create(command.x1, command.y1);
         currSeg.append(handleIn);
       }
 
@@ -5432,8 +5429,6 @@
   const exportToPlain = store => {
     return {
       doc: JSON.parse(JSON.stringify(store.doc)),
-      docs: store.docs.children.map(child => child.payload.id),
-      // ^ TODO: I think we don't actually need `docs`
     };
   };
 
@@ -5545,7 +5540,7 @@
 
     buildMessage() {
       const message$$1 = Message$$1.create();
-      message$$1.payload.text = 'Welcome!';
+      message$$1.text = 'Welcome!';
       return message$$1;
     },
 
@@ -6252,7 +6247,7 @@
 
       for (let id of input.data.docIDs) {
         const identNode = Identifier$$1.create();
-        identNode.payload._id = id;
+        identNode._id = id;
         state.docs.append(identNode);
       }
     },
@@ -6273,11 +6268,11 @@
     // MESSAGES
 
     setSavedMessage(state, input) {
-      state.message.payload.text = 'Saved';
+      state.message.text = 'Saved';
     },
 
     wipeMessage(state, input) {
-      state.message.payload.text = '';
+      state.message.text = '';
     },
 
     // EDITOR

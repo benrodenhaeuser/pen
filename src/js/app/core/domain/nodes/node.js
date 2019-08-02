@@ -117,12 +117,8 @@ Object.assign(Node, {
     return this.parent === null;
   },
 
-  // string encoding
-
   toJSON() {
     return {
-      key: this.key, // TODO: this is part of payload, so we should omit it here
-      type: this.type, // TODO: this is part of payload, so we should omit it here
       children: this.children,
       payload: this.payload,
     };

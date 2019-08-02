@@ -132,7 +132,7 @@ const buildSegmentList = commands => {
   // the first command is ALWAYS an `M` command (no handles)
   segments[0] = Segment.create();
   const child = Anchor.create();
-  child.payload.vector = Vector.create(commands[0].x, commands[0].y);
+  child.vector = Vector.create(commands[0].x, commands[0].y);
   segments[0].append(child);
 
   for (let i = 1; i < commands.length; i += 1) {
@@ -141,20 +141,20 @@ const buildSegmentList = commands => {
     const currSeg = Segment.create();
 
     const anchor = Anchor.create();
-    anchor.payload.vector = Vector.create(command.x, command.y);
+    anchor.vector = Vector.create(command.x, command.y);
     currSeg.append(anchor);
 
     if (command.x1 && command.x2) {
       const handleOut = HandleOut.create();
-      handleOut.payload.vector = Vector.create(command.x1, command.y1);
+      handleOut.vector = Vector.create(command.x1, command.y1);
       prevSeg.append(handleOut);
 
       const handleIn = HandleIn.create();
-      handleIn.payload.vector = Vector.create(command.x2, command.y2);
+      handleIn.vector = Vector.create(command.x2, command.y2);
       currSeg.append(handleIn);
     } else if (command.x1) {
       const handleIn = HandleIn.create();
-      handleIn.payload.vector = Vector.create(command.x1, command.y1);
+      handleIn.vector = Vector.create(command.x1, command.y1);
       currSeg.append(handleIn);
     }
 

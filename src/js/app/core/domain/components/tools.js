@@ -92,10 +92,10 @@ const docs = store => {
           'a',
           {
             class: 'pure-menu-link',
-            'data-key': identifier.payload._id,
+            'data-key': identifier._id,
             'data-type': 'doc-identifier',
           },
-          identifier.payload._id
+          identifier._id
         )
         //  TODO: This is where we would need to put the *name* of the document.
       )

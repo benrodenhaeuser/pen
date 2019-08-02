@@ -310,7 +310,7 @@ const updates = {
 
     for (let id of input.data.docIDs) {
       const identNode = Identifier.create();
-      identNode.payload._id = id;
+      identNode._id = id;
       state.docs.append(identNode);
     }
   },
@@ -331,11 +331,11 @@ const updates = {
   // MESSAGES
 
   setSavedMessage(state, input) {
-    state.message.payload.text = 'Saved';
+    state.message.text = 'Saved';
   },
 
   wipeMessage(state, input) {
-    state.message.payload.text = '';
+    state.message.text = '';
   },
 
   // EDITOR

@@ -1,5 +1,5 @@
 const message = store => {
-  return store.message.payload.text;
+  return store.message.text;
 };
 
 export { message };
