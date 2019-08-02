@@ -2,6 +2,7 @@ import { Store, Docs, Doc, Message } from '../../domain/_.js';
 import { Canvas, Shape, Group } from '../../domain/_.js';
 import { Spline, Segment, Anchor } from '../../domain/_.js';
 import { HandleIn, HandleOut } from '../../domain/_.js';
+import { MarkupNode } from '../../domain/_.js';
 import { Matrix } from '../../domain/_.js';
 import { Vector } from '../../domain/_.js';
 import { Rectangle } from '../../domain/_.js';
@@ -50,6 +51,9 @@ const objectToDoc = object => {
       break;
     case 'handleOut':
       node = HandleOut.create();
+      break;
+    case 'markupNode':
+      node = MarkupNode.create();
       break;
   }
 

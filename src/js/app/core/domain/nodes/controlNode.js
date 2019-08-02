@@ -7,7 +7,6 @@ Object.assign(ControlNode, {
     this.canvas.removePenTip();
     this.class = this.class.add('tip');
     this.parent.class = this.parent.class.add('containsTip');
-    // ^ helper class to enhance CSS styling
   },
 });
 

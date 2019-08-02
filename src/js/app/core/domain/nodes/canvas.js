@@ -65,7 +65,6 @@ Object.assign(Canvas, {
     if (penTip) {
       penTip.class.remove('tip');
       penTip.parent.class.remove('containsTip');
-      // ^ helper class to enhance CSS styling
     }
   },
 
