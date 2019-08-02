@@ -221,6 +221,7 @@ const updates = {
         segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
         break;
       case 'handleOut':
+        // TODO: bug, segment.handleIn could be undefined 
         segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
         break;
     }
@@ -272,7 +273,7 @@ const updates = {
     const anchor = segment.appendAnchor();
     const handleIn = segment.appendHandleIn();
     const handleOut = segment.appendHandleOut();
-    
+
     spline.insertChild(segment, insertionIndex);
 
     anchor.vector = splitter;

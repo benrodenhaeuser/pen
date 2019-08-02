@@ -7,7 +7,7 @@ Group.type = 'group';
 
 Object.assign(Group, {
   toVDOMNode() {
-    return {
+    return {    
       tag: 'g',
       children: [],
       props: {

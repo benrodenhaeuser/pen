@@ -15,7 +15,7 @@ rect, circ {
 }
 
 path {
-  stroke-width: 2px;
+  stroke-width: 1px;
   stroke: #d3d3d3;
 }
 
@@ -40,8 +40,8 @@ line {
 /* bezier curve controls */
 
 [data-type="anchor"], [data-type="handleIn"], [data-type="handleOut"] {
-  stroke: black;
-  fill: none;
+  stroke: #d3d3d3;
+  fill: white;
 }
 
 /* 'curve' is the pointer target for bezier curves  */
@@ -63,7 +63,7 @@ line {
 
 /* frame when shape/group in focus */
 .focus ~ [data-type="outerUI"] > [data-type="frame"] {
-  stroke: #5DADE2;
+  stroke: #5d6be2;
   stroke-width: 3px;
 }
 
@@ -79,7 +79,16 @@ line {
   stroke: #5DADE2;
 }
 
-[data-type="anchor"].tip, [data-type="handleIn"].tip, [data-type="handleOut"].tip {
+.containsTip > [data-type="anchor"], .containsTip > [data-type="handleIn"], .containsTip > [data-type="handleOut"] {
+  stroke: black;
+}
+
+.containsTip > [data-type="anchor"].tip, .containsTip > [data-type="handleIn"].tip, .containsTip > [data-type="handleOut"].tip {
+  fill: red;
+  stroke: red;
+}
+
+[data-type="anchor"]:hover, [data-type="handleIn"]:hover, [data-type="handleOut"]:hover {
   fill: red;
   stroke: red;
 }

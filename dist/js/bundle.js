@@ -3966,7 +3966,7 @@
 
   Object.assign(Group$$1, {
     toVDOMNode() {
-      return {
+      return {    
         tag: 'g',
         children: [],
         props: {
@@ -4453,6 +4453,91 @@
         .join('');
     },
   };
+
+  const MarkupNode$$1 = Object.create(Node);
+
+  Object.assign(MarkupNode$$1, {
+    indexify(start = 0) {
+      this.start = start;
+
+      if (this.markup) {
+        this.end = this.start + this.markup.length - 1;
+        return this.end + 1;
+      } else {
+        for (let child of this.children) {
+          start = child.indexify(start);
+        }
+
+        this.end = start - 1;
+
+        return start;
+      }
+    },
+
+    // find node whose start to end range includes given index
+    findNodeByIndex(idx) {
+      if (this.markup) {
+        if (this.start <= idx && idx <= this.end) {
+          return this;
+        } else {
+          return null;
+        }
+      } else {
+        const child = this.children.find(
+          child => child.start <= idx && idx <= child.end
+        );
+
+        if (child) {
+          return child.findNodeByIndex(idx);
+        } else {
+          return null;
+        }
+      }
+    },
+
+    // find node whose class list includes given class name
+    findNodeByClassName(cls) {
+      if (this.markup) {
+        if (this.class && this.class.includes(cls)) {
+          return this;
+        }
+      } else {
+        for (let child of this.children) {
+          const val = child.findNodeByClassName(cls);
+          if (val) {
+            return val;
+          }
+        }
+      }
+    },
+
+    // flatten tree to a list of leaf nodes
+    flatten(list = []) {
+      if (this.markup) {
+        list.push(this);
+      } else {
+        for (let child of this.children) {
+          child.flatten(list);
+        }
+      }
+
+      return list;
+    },
+
+    toMarkup() {
+      return this.flatten()
+        .map(node => node.markup)
+        .join('');
+    },
+  });
+
+  Object.defineProperty(MarkupNode$$1, 'markupRoot', {
+    get() {
+      return this.findAncestor(
+        node => node.type === 'markupRoot'
+      );
+    },
+  });
 
   const objectToDoc = object => {
     let node;
@@ -6155,6 +6240,7 @@
           segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
           break;
         case 'handleOut':
+          // TODO: bug, segment.handleIn could be undefined 
           segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
           break;
       }
@@ -6206,7 +6292,7 @@
       const anchor = segment.appendAnchor();
       const handleIn = segment.appendHandleIn();
       const handleOut = segment.appendHandleOut();
-      
+
       spline.insertChild(segment, insertionIndex);
 
       anchor.vector = splitter;

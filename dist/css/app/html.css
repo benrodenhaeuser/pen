@@ -52,7 +52,7 @@ main {
 #canvas, #editor {
   background-color: white;
   border-radius: 5px;
-  box-shadow: 5px 5px 10px 0px rgba(200, 200, 200, 0.75);
+  /* box-shadow: 5px 5px 10px 0px rgba(200, 200, 200, 0.75); */
 }
 
 #editor {
@@ -88,14 +88,14 @@ textarea:focus {
   position: absolute;
   right: 10px;
   top: 8px;
-  color: #5DADE2;
+  color: red;
   background-color: transparent;
   border: 0px;
 }
 
 .pure-button {
   background-color: transparent;
-  color: #5DADE2;
+  color: black;
   border-radius: 5px;
 }
 
@@ -110,12 +110,12 @@ textarea:focus {
 }
 
 #menuLink1 {
-  color: #5DADE2;
+  color: black;
 }
 
 .doc-list {
   background-color: #eee;
-  box-shadow: 3px 3px 15px 0px rgba(200, 200, 200, 0.75);
+  /* box-shadow: 3px 3px 15px 0px rgba(200, 200, 200, 0.75); */
 }
 
 .doc-list a {

@@ -17,6 +17,7 @@ import { Message } from './message.js';
 import { Identifier } from './identifier.js';
 
 import { SyntaxTree } from './syntaxtree.js';
+import { MarkupNode } from './markupNode.js';
 
 export {
   Node,
@@ -37,4 +38,5 @@ export {
   Message,
   Identifier,
   SyntaxTree,
+  MarkupNode,
 };
