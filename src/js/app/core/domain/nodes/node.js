@@ -8,7 +8,6 @@ const Node = {
       .set(this.nodeDefaults());
   },
 
-  // => set type as an own property of the instance created
   setType() {
     this.type = Object.getPrototypeOf(this).type;
     return this;
@@ -16,10 +15,11 @@ const Node = {
 
   nodeDefaults() {
     return {
-      key: createID(),
       children: [],
       parent: null,
       payload: {
+        type: this.type,
+        key: createID(),
         class: Class.create(),
       },
     };
@@ -144,6 +144,35 @@ const Node = {
 
 // Getters and setters
 
+Object.defineProperty(Node, 'key', {
+  get() {
+    return this.payload.key;
+  },
+
+  set(value) {
+    this.payload.key = value;
+  },
+});
+
+Object.defineProperty(Node, 'class', {
+  get() {
+    return this.payload.class;
+  },
+  set(value) {
+    this.payload.class = value;
+  },
+});
+
+// Object.defineProperty(Node, 'type', {
+//   get() {
+//     return this.payload.type;
+//   },
+//
+//   set(value) {
+//     this.payload.type = value;
+//   },
+// });
+
 Object.defineProperty(Node, 'root', {
   get() {
     return this.findAncestor(node => node.parent === null);
@@ -183,15 +212,6 @@ Object.defineProperty(Node, 'siblings', {
 Object.defineProperty(Node, 'lastChild', {
   get() {
     return this.children[this.children.length - 1];
-  },
-});
-
-Object.defineProperty(Node, 'class', {
-  get() {
-    return this.payload.class;
-  },
-  set(value) {
-    this.payload.class = value;
   },
 });
 

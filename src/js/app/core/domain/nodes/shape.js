@@ -149,4 +149,14 @@ Object.assign(Shape, {
   },
 });
 
+Object.defineProperty(Shape, 'splitter', {
+  get() {
+    return this.payload.splitter;
+  },
+
+  set(value) {
+    this.payload.splitter = value;
+  },
+});
+
 export { Shape };

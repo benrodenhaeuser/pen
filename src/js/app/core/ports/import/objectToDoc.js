@@ -57,9 +57,7 @@ const objectToDoc = object => {
       break;
   }
 
-  node.type = object.type;
-  node.key = object.key;
-  node._id = object._id;
+  node.type = object.type; // put in payload.
 
   setPayload(node, object);
 
@@ -93,6 +91,8 @@ const setPayload = (node, object) => {
       case 'vector':
         node.vector = Vector.createFromObject(value);
         break;
+      default:
+        node[key] = value;
     }
   }
 };

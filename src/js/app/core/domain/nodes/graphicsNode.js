@@ -15,10 +15,8 @@ Object.assign(GraphicsNode, {
 
   graphicsNodeDefaults() {
     return {
-      payload: {
-        transform: Matrix.identity(),
-        class: Class.create(),
-      },
+      transform: Matrix.identity(),
+      class: Class.create(),
     };
   },
 

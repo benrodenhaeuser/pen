@@ -3447,7 +3447,6 @@
         .set(this.nodeDefaults());
     },
 
-    // => set type as an own property of the instance created
     setType() {
       this.type = Object.getPrototypeOf(this).type;
       return this;
@@ -3455,10 +3454,11 @@
 
     nodeDefaults() {
       return {
-        key: createID(),
         children: [],
         parent: null,
         payload: {
+          type: this.type,
+          key: createID(),
           class: Class.create(),
         },
       };
@@ -3583,6 +3583,35 @@
 
   // Getters and setters
 
+  Object.defineProperty(Node, 'key', {
+    get() {
+      return this.payload.key;
+    },
+
+    set(value) {
+      this.payload.key = value;
+    },
+  });
+
+  Object.defineProperty(Node, 'class', {
+    get() {
+      return this.payload.class;
+    },
+    set(value) {
+      this.payload.class = value;
+    },
+  });
+
+  // Object.defineProperty(Node, 'type', {
+  //   get() {
+  //     return this.payload.type;
+  //   },
+  //
+  //   set(value) {
+  //     this.payload.type = value;
+  //   },
+  // });
+
   Object.defineProperty(Node, 'root', {
     get() {
       return this.findAncestor(node => node.parent === null);
@@ -3625,15 +3654,6 @@
     },
   });
 
-  Object.defineProperty(Node, 'class', {
-    get() {
-      return this.payload.class;
-    },
-    set(value) {
-      this.payload.class = value;
-    },
-  });
-
   const SceneNode$$1 = Object.create(Node);
 
   Object.defineProperty(SceneNode$$1, 'canvas', {
@@ -3653,10 +3673,8 @@
 
     graphicsNodeDefaults() {
       return {
-        payload: {
-          transform: Matrix$$1.identity(),
-          class: Class.create(),
-        },
+        transform: Matrix$$1.identity(),
+        class: Class.create(),
       };
     },
 
@@ -4147,6 +4165,16 @@
     },
   });
 
+  Object.defineProperty(Shape$$1, 'splitter', {
+    get() {
+      return this.payload.splitter;
+    },
+
+    set(value) {
+      this.payload.splitter = value;
+    },
+  });
+
   const Spline$$1 = Object.create(SceneNode$$1);
   Spline$$1.type = 'spline';
 
@@ -4305,15 +4333,19 @@
 
   Object.assign(Doc$$1, {
     create() {
-      return Node.create
-        .bind(this)()
-        .set({ _id: createID() }); // TODO: why not in payload?
+      return Node
+        .create.bind(this)()
+        .set({ _id: createID() });
+    },
+  });
+
+  Object.defineProperty(Doc$$1, '_id', {
+    get() {
+      return this.payload._id;
     },
 
-    toJSON() {
-      const obj = Node.toJSON.bind(this)();
-      obj._id = this._id; // TODO: why not in payload?
-      return obj;
+    set(value) {
+      this.payload._id = value;
     },
   });
 
@@ -4358,6 +4390,16 @@
 
   const Identifier$$1 = Object.create(Node);
   Identifier$$1.type = 'identifier';
+
+  Object.defineProperty(Identifier$$1, '_id', {
+    get() {
+      return this.payload._id;
+    },
+
+    set(value) {
+      this.payload._id = value;
+    },
+  });
 
   const MarkupNode$$1 = Object.create(Node);
   MarkupNode$$1.type = 'markupNode';
@@ -4868,9 +4910,7 @@
         break;
     }
 
-    node.type = object.type;
-    node.key = object.key;
-    node._id = object._id;
+    node.type = object.type; // put in payload.
 
     setPayload(node, object);
 
@@ -4904,6 +4944,8 @@
         case 'vector':
           node.vector = Vector$$1.createFromObject(value);
           break;
+        default:
+          node[key] = value;
       }
     }
   };
@@ -6341,7 +6383,7 @@
           });
         });
 
-        request.open('POST', '/docs/' + event.detail._id);
+        request.open('POST', '/docs/' + event.detail.payload._id);
         request.send(JSON.stringify(event.detail));
       });
 

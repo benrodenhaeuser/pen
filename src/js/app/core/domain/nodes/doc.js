@@ -6,15 +6,19 @@ Doc.type = 'doc';
 
 Object.assign(Doc, {
   create() {
-    return Node.create
-      .bind(this)()
-      .set({ _id: createID() }); // TODO: why not in payload?
+    return Node
+      .create.bind(this)()
+      .set({ _id: createID() });
+  },
+});
+
+Object.defineProperty(Doc, '_id', {
+  get() {
+    return this.payload._id;
   },
 
-  toJSON() {
-    const obj = Node.toJSON.bind(this)();
-    obj._id = this._id; // TODO: why not in payload?
-    return obj;
+  set(value) {
+    this.payload._id = value;
   },
 });
 

@@ -16,7 +16,7 @@ const db = {
         });
       });
 
-      request.open('POST', '/docs/' + event.detail._id);
+      request.open('POST', '/docs/' + event.detail.payload._id);
       request.send(JSON.stringify(event.detail));
     });
 
