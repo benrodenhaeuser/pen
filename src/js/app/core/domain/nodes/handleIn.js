@@ -4,8 +4,8 @@ const HandleIn = Object.create(ControlNode);
 
 Object.assign(HandleIn, {
   create() {
-    return ControlNode
-      .create.bind(this)()
+    return ControlNode.create
+      .bind(this)()
       .set({ type: 'handleIn' });
   },
 });

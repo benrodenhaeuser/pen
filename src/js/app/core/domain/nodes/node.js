@@ -3,12 +3,13 @@ import { createID } from '../helpers/_.js';
 
 const Node = {
   create() {
-    return Object
-      .create(this)
+    return Object.create(this)
       .set({
         children: [],
         parent: null,
         payload: {},
+      })
+      .set({
         key: createID(),
         class: Class.create(),
       });

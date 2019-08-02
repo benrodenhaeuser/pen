@@ -7,8 +7,8 @@ const Segment = Object.create(SceneNode);
 
 Object.assign(Segment, {
   create() {
-    return SceneNode
-      .create.bind(this)()
+    return SceneNode.create
+      .bind(this)()
       .set({ type: 'segment' });
   },
 

@@ -4,8 +4,8 @@ const Message = Object.create(Node);
 
 Object.assign(Message, {
   create() {
-    return Node
-      .create.bind(this)()
+    return Node.create
+      .bind(this)()
       .set({ type: 'message' });
   },
 });

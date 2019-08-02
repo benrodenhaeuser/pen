@@ -8,8 +8,8 @@ const Canvas = Object.create(GraphicsNode);
 
 Object.assign(Canvas, {
   create() {
-    return GraphicsNode
-      .create.bind(this)()
+    return GraphicsNode.create
+      .bind(this)()
       .set({ type: 'canvas' });
   },
 

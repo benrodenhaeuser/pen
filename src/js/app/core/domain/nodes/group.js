@@ -6,8 +6,8 @@ const Group = Object.create(GraphicsNode);
 
 Object.assign(Group, {
   create() {
-    return GraphicsNode
-      .create.bind(this)()
+    return GraphicsNode.create
+      .bind(this)()
       .set({ type: 'group' });
   },
 

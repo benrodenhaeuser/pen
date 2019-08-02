@@ -3442,12 +3442,13 @@
 
   const Node = {
     create() {
-      return Object
-        .create(this)
+      return Object.create(this)
         .set({
           children: [],
           parent: null,
           payload: {},
+        })
+        .set({
           key: createID(),
           class: Class.create(),
         });
@@ -3802,8 +3803,8 @@
 
   Object.assign(Canvas$$1, {
     create() {
-      return GraphicsNode$$1
-        .create.bind(this)()
+      return GraphicsNode$$1.create
+        .bind(this)()
         .set({ type: 'canvas' });
     },
 
@@ -3960,8 +3961,8 @@
 
   Object.assign(Group$$1, {
     create() {
-      return GraphicsNode$$1
-        .create.bind(this)()
+      return GraphicsNode$$1.create
+        .bind(this)()
         .set({ type: 'group' });
     },
 
@@ -4026,7 +4027,7 @@
           splitter: Vector$$1.create(-1000, -1000),
         });
     },
-    
+
     appendSpline() {
       const spline = Spline$$1.create();
       this.append(spline);
@@ -4255,8 +4256,8 @@
 
   Object.assign(Segment$$1, {
     create() {
-      return SceneNode$$1
-        .create.bind(this)()
+      return SceneNode$$1.create
+        .bind(this)()
         .set({ type: 'segment' });
     },
 
@@ -4324,8 +4325,8 @@
 
   Object.assign(Anchor$$1, {
     create() {
-      return ControlNode$$1
-        .create.bind(this)()
+      return ControlNode$$1.create
+        .bind(this)()
         .set({ type: 'anchor' });
     },
   });
@@ -4334,8 +4335,8 @@
 
   Object.assign(HandleIn$$1, {
     create() {
-      return ControlNode$$1
-        .create.bind(this)()
+      return ControlNode$$1.create
+        .bind(this)()
         .set({ type: 'handleIn' });
     },
   });
@@ -4344,8 +4345,8 @@
 
   Object.assign(HandleOut$$1, {
     create() {
-      return ControlNode$$1
-        .create.bind(this)()
+      return ControlNode$$1.create
+        .bind(this)()
         .set({ type: 'handleOut' });
     },
   });
@@ -4354,12 +4355,12 @@
 
   Object.assign(Doc$$1, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set({
           type: 'doc',
           _id: createID(),
-         });
+        });
     },
   });
 
@@ -4377,8 +4378,8 @@
 
   Object.assign(Store$$1, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set({ type: 'store' });
     },
   });
@@ -4417,8 +4418,8 @@
 
   Object.assign(Docs$$1, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set({ type: 'docs' });
     },
   });
@@ -4427,8 +4428,8 @@
 
   Object.assign(Message$$1, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set({ type: 'message' });
     },
   });
@@ -4437,8 +4438,8 @@
 
   Object.assign(Identifier$$1, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set({ type: 'identifier' });
     },
   });
@@ -4457,8 +4458,8 @@
 
   Object.assign(MarkupNode$$1, {
     create() {
-      return Node
-        .create.bind(this)()
+      return Node.create
+        .bind(this)()
         .set({ type: 'markupNode' });
     },
 

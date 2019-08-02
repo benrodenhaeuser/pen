@@ -15,7 +15,7 @@ Object.assign(Shape, {
         splitter: Vector.create(-1000, -1000),
       });
   },
-  
+
   appendSpline() {
     const spline = Spline.create();
     this.append(spline);

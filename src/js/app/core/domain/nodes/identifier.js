@@ -4,8 +4,8 @@ const Identifier = Object.create(Node);
 
 Object.assign(Identifier, {
   create() {
-    return Node
-      .create.bind(this)()
+    return Node.create
+      .bind(this)()
       .set({ type: 'identifier' });
   },
 });
