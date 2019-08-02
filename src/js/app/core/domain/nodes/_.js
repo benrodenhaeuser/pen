@@ -1,3 +1,4 @@
+import { ProtoNode } from './protoNode.js';
 import { Node } from './node.js';
 import { SceneNode } from './sceneNode.js';
 import { GraphicsNode } from './graphicsNode.js';
@@ -18,6 +19,7 @@ import { Identifier } from './identifier.js';
 import { MarkupNode } from './markupNode.js';
 
 export {
+  ProtoNode,
   Node,
   SceneNode,
   GraphicsNode,

@@ -5,6 +5,7 @@ import { MarkupNode } from './_.js';
 const xmlns = 'http://www.w3.org/2000/svg';
 
 const Canvas = Object.create(GraphicsNode);
+Canvas.defineProps(['viewBox']);
 
 Object.assign(Canvas, {
   create() {
@@ -150,15 +151,6 @@ Object.assign(Canvas, {
       open: open,
       close: close,
     };
-  },
-});
-
-Object.defineProperty(Canvas, 'viewBox', {
-  get() {
-    return this.payload.viewBox;
-  },
-  set(value) {
-    this.payload.viewBox = value;
   },
 });
 

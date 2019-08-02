@@ -3389,6 +3389,32 @@
     },
   };
 
+  const ProtoNode = {
+    defineProps(propNames) {
+      for (let propName of propNames) {
+        Object.defineProperty(this, propName, {
+          get() {
+            return this.payload[propName];
+          },
+
+          set(value) {
+            this.payload[propName] = value;
+          },
+        });
+      }
+
+      return this;
+    },
+
+    set(opts) {
+      for (let key of Object.keys(opts)) {
+        this[key] = opts[key];
+      }
+
+      return this;
+    },
+  };
+
   const Class = {
     create(classNames = []) {
       return Object.create(Class).init(classNames);
@@ -3440,7 +3466,10 @@
     return randomString + timestamp;
   };
 
-  const Node = {
+  const Node$$1 = Object.create(ProtoNode);
+  Node$$1.defineProps(['type', 'key', 'class']);
+
+  Object.assign(Node$$1, {
     create() {
       return Object.create(this)
         .set({
@@ -3449,17 +3478,10 @@
           payload: {},
         })
         .set({
+          type: null,
           key: createID(),
           class: Class.create(),
         });
-    },
-
-    set(opts) {
-      for (let key of Object.keys(opts)) {
-        this[key] = opts[key];
-      }
-
-      return this;
     },
 
     // search
@@ -3563,88 +3585,57 @@
 
     toJSON() {
       return {
-        key: this.key,
-        type: this.type,
+        key: this.key, // TODO: this is part of payload, so we should omit it here
+        type: this.type, // TODO: this is part of payload, so we should omit it here
         children: this.children,
         payload: this.payload,
       };
     },
-  };
-
-  // Getters and setters
-
-  Object.defineProperty(Node, 'key', {
-    get() {
-      return this.payload.key;
-    },
-
-    set(value) {
-      this.payload.key = value;
-    },
   });
 
-  Object.defineProperty(Node, 'class', {
-    get() {
-      return this.payload.class;
-    },
-    set(value) {
-      this.payload.class = value;
-    },
-  });
-
-  Object.defineProperty(Node, 'type', {
-    get() {
-      return this.payload.type;
-    },
-
-    set(value) {
-      this.payload.type = value;
-    },
-  });
-
-  Object.defineProperty(Node, 'root', {
+  Object.defineProperty(Node$$1, 'root', {
     get() {
       return this.findAncestor(node => node.parent === null);
     },
   });
 
-  Object.defineProperty(Node, 'leaves', {
+  Object.defineProperty(Node$$1, 'leaves', {
     get() {
       return this.findDescendants(node => node.children.length === 0);
     },
   });
 
-  Object.defineProperty(Node, 'ancestors', {
+  Object.defineProperty(Node$$1, 'ancestors', {
     get() {
       return this.findAncestors(node => true);
     },
   });
 
-  Object.defineProperty(Node, 'properAncestors', {
+  Object.defineProperty(Node$$1, 'properAncestors', {
     get() {
       return this.parent.findAncestors(node => true);
     },
   });
 
-  Object.defineProperty(Node, 'descendants', {
+  Object.defineProperty(Node$$1, 'descendants', {
     get() {
       return this.findDescendants(node => true);
     },
   });
 
-  Object.defineProperty(Node, 'siblings', {
+  Object.defineProperty(Node$$1, 'siblings', {
     get() {
       return this.parent.children.filter(node => node !== this);
     },
   });
 
-  Object.defineProperty(Node, 'lastChild', {
+  Object.defineProperty(Node$$1, 'lastChild', {
     get() {
       return this.children[this.children.length - 1];
     },
   });
 
-  const SceneNode$$1 = Object.create(Node);
+  const SceneNode$$1 = Object.create(Node$$1);
 
   Object.defineProperty(SceneNode$$1, 'canvas', {
     get() {
@@ -3653,6 +3644,17 @@
   });
 
   const GraphicsNode$$1 = SceneNode$$1.create();
+  GraphicsNode$$1.defineProps(['transform']);
+
+  Object.defineProperty(GraphicsNode$$1, 'bounds', {
+    get() {
+      return this.payload.bounds || this.computeBounds();
+    },
+
+    set(value) {
+      this.payload.bounds = value;
+    },
+  });
 
   Object.assign(GraphicsNode$$1, {
     create() {
@@ -3758,29 +3760,6 @@
     },
   });
 
-  Object.defineProperty(GraphicsNode$$1, 'bounds', {
-    get() {
-      if (this.payload.bounds) {
-        return this.payload.bounds;
-      }
-
-      return this.computeBounds();
-    },
-
-    set(value) {
-      this.payload.bounds = value;
-    },
-  });
-
-  Object.defineProperty(GraphicsNode$$1, 'transform', {
-    get() {
-      return this.payload.transform;
-    },
-    set(value) {
-      this.payload.transform = value;
-    },
-  });
-
   Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
     get() {
       return this.children.filter(node =>
@@ -3800,6 +3779,7 @@
   const xmlns = 'http://www.w3.org/2000/svg';
 
   const Canvas$$1 = Object.create(GraphicsNode$$1);
+  Canvas$$1.defineProps(['viewBox']);
 
   Object.assign(Canvas$$1, {
     create() {
@@ -3948,15 +3928,6 @@
     },
   });
 
-  Object.defineProperty(Canvas$$1, 'viewBox', {
-    get() {
-      return this.payload.viewBox;
-    },
-    set(value) {
-      this.payload.viewBox = value;
-    },
-  });
-
   const Group$$1 = Object.create(GraphicsNode$$1);
 
   Object.assign(Group$$1, {
@@ -4017,6 +3988,7 @@
   });
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
+  Shape$$1.defineProps(['splitter']);
 
   Object.assign(Shape$$1, {
     create() {
@@ -4157,17 +4129,17 @@
     },
   });
 
-  Object.defineProperty(Shape$$1, 'splitter', {
+  const Spline$$1 = Object.create(SceneNode$$1);
+
+  Object.defineProperty(Spline$$1, 'bounds', {
     get() {
-      return this.payload.splitter;
+      return this.payload.bounds || this.computeBounds();
     },
 
     set(value) {
-      this.payload.splitter = value;
+      this.payload.bounds = value;
     },
   });
-
-  const Spline$$1 = Object.create(SceneNode$$1);
 
   Object.assign(Spline$$1, {
     create() {
@@ -4238,20 +4210,6 @@
     },
   });
 
-  Object.defineProperty(Spline$$1, 'bounds', {
-    get() {
-      if (this.payload.bounds) {
-        return this.payload.bounds;
-      }
-
-      return this.computeBounds();
-    },
-
-    set(value) {
-      this.payload.bounds = value;
-    },
-  });
-
   const Segment$$1 = Object.create(SceneNode$$1);
 
   Object.assign(Segment$$1, {
@@ -4302,22 +4260,13 @@
   });
 
   const ControlNode$$1 = SceneNode$$1.create();
+  ControlNode$$1.defineProps(['vector']);
 
   Object.assign(ControlNode$$1, {
     placePenTip() {
       this.canvas.removePenTip();
       this.class = this.class.add('tip');
       this.parent.class = this.parent.class.add('containsTip');
-    },
-  });
-
-  Object.defineProperty(ControlNode$$1, 'vector', {
-    get() {
-      return this.payload.vector;
-    },
-
-    set(value) {
-      this.payload.vector = value;
     },
   });
 
@@ -4351,11 +4300,12 @@
     },
   });
 
-  const Doc$$1 = Object.create(Node);
+  const Doc$$1 = Object.create(Node$$1);
+  Doc$$1.defineProps(['_id']);
 
   Object.assign(Doc$$1, {
     create() {
-      return Node.create
+      return Node$$1.create
         .bind(this)()
         .set({
           type: 'doc',
@@ -4364,21 +4314,11 @@
     },
   });
 
-  Object.defineProperty(Doc$$1, '_id', {
-    get() {
-      return this.payload._id;
-    },
-
-    set(value) {
-      this.payload._id = value;
-    },
-  });
-
-  const Store$$1 = Object.create(Node);
+  const Store$$1 = Object.create(Node$$1);
 
   Object.assign(Store$$1, {
     create() {
-      return Node.create
+      return Node$$1.create
         .bind(this)()
         .set({ type: 'store' });
     },
@@ -4414,51 +4354,42 @@
     },
   });
 
-  const Docs$$1 = Object.create(Node);
+  const Docs$$1 = Object.create(Node$$1);
 
   Object.assign(Docs$$1, {
     create() {
-      return Node.create
+      return Node$$1.create
         .bind(this)()
         .set({ type: 'docs' });
     },
   });
 
-  const Message$$1 = Object.create(Node);
+  const Message$$1 = Object.create(Node$$1);
 
   Object.assign(Message$$1, {
     create() {
-      return Node.create
+      return Node$$1.create
         .bind(this)()
         .set({ type: 'message' });
     },
   });
 
-  const Identifier$$1 = Object.create(Node);
+  const Identifier$$1 = Object.create(Node$$1);
+  Identifier$$1.defineProps(['_id']);
 
   Object.assign(Identifier$$1, {
     create() {
-      return Node.create
+      return Node$$1.create
         .bind(this)()
         .set({ type: 'identifier' });
     },
   });
 
-  Object.defineProperty(Identifier$$1, '_id', {
-    get() {
-      return this.payload._id;
-    },
-
-    set(value) {
-      this.payload._id = value;
-    },
-  });
-
-  const MarkupNode$$1 = Object.create(Node);
+  const MarkupNode$$1 = Object.create(Node$$1);
 
   Object.assign(MarkupNode$$1, {
     create() {
-      return Node.create
+      return Node$$1.create
         .bind(this)()
         .set({ type: 'markupNode' });
     },

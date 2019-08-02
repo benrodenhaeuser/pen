@@ -5,6 +5,16 @@ import { Curve } from '../geometry/_.js';
 
 const Spline = Object.create(SceneNode);
 
+Object.defineProperty(Spline, 'bounds', {
+  get() {
+    return this.payload.bounds || this.computeBounds();
+  },
+
+  set(value) {
+    this.payload.bounds = value;
+  },
+});
+
 Object.assign(Spline, {
   create() {
     return SceneNode.create
@@ -71,20 +81,6 @@ Object.assign(Spline, {
 
     this.bounds = bounds;
     return bounds;
-  },
-});
-
-Object.defineProperty(Spline, 'bounds', {
-  get() {
-    if (this.payload.bounds) {
-      return this.payload.bounds;
-    }
-
-    return this.computeBounds();
-  },
-
-  set(value) {
-    this.payload.bounds = value;
   },
 });
 

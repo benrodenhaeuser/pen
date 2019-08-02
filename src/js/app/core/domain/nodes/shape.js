@@ -5,6 +5,7 @@ import { Vector } from '../geometry/_.js';
 import { MarkupNode } from './_.js';
 
 const Shape = Object.create(GraphicsNode);
+Shape.defineProps(['splitter']);
 
 Object.assign(Shape, {
   create() {
@@ -142,16 +143,6 @@ Object.assign(Shape, {
     }
 
     return d;
-  },
-});
-
-Object.defineProperty(Shape, 'splitter', {
-  get() {
-    return this.payload.splitter;
-  },
-
-  set(value) {
-    this.payload.splitter = value;
   },
 });
 

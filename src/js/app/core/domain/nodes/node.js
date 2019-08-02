@@ -1,7 +1,11 @@
+import { ProtoNode } from './_.js';
 import { Class } from '../helpers/_.js';
 import { createID } from '../helpers/_.js';
 
-const Node = {
+const Node = Object.create(ProtoNode);
+Node.defineProps(['type', 'key', 'class']);
+
+Object.assign(Node, {
   create() {
     return Object.create(this)
       .set({
@@ -10,17 +14,10 @@ const Node = {
         payload: {},
       })
       .set({
+        type: null,
         key: createID(),
         class: Class.create(),
       });
-  },
-
-  set(opts) {
-    for (let key of Object.keys(opts)) {
-      this[key] = opts[key];
-    }
-
-    return this;
   },
 
   // search
@@ -124,42 +121,11 @@ const Node = {
 
   toJSON() {
     return {
-      key: this.key,
-      type: this.type,
+      key: this.key, // TODO: this is part of payload, so we should omit it here
+      type: this.type, // TODO: this is part of payload, so we should omit it here
       children: this.children,
       payload: this.payload,
     };
-  },
-};
-
-// Getters and setters
-
-Object.defineProperty(Node, 'key', {
-  get() {
-    return this.payload.key;
-  },
-
-  set(value) {
-    this.payload.key = value;
-  },
-});
-
-Object.defineProperty(Node, 'class', {
-  get() {
-    return this.payload.class;
-  },
-  set(value) {
-    this.payload.class = value;
-  },
-});
-
-Object.defineProperty(Node, 'type', {
-  get() {
-    return this.payload.type;
-  },
-
-  set(value) {
-    this.payload.type = value;
   },
 });
 

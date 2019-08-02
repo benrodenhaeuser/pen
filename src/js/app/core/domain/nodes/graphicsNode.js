@@ -5,6 +5,17 @@ import { Matrix } from '../geometry/_.js';
 import { Class } from '../helpers/_.js';
 
 const GraphicsNode = SceneNode.create();
+GraphicsNode.defineProps(['transform']);
+
+Object.defineProperty(GraphicsNode, 'bounds', {
+  get() {
+    return this.payload.bounds || this.computeBounds();
+  },
+
+  set(value) {
+    this.payload.bounds = value;
+  },
+});
 
 Object.assign(GraphicsNode, {
   create() {
@@ -107,29 +118,6 @@ Object.assign(GraphicsNode, {
 
     this.bounds = bounds;
     return bounds;
-  },
-});
-
-Object.defineProperty(GraphicsNode, 'bounds', {
-  get() {
-    if (this.payload.bounds) {
-      return this.payload.bounds;
-    }
-
-    return this.computeBounds();
-  },
-
-  set(value) {
-    this.payload.bounds = value;
-  },
-});
-
-Object.defineProperty(GraphicsNode, 'transform', {
-  get() {
-    return this.payload.transform;
-  },
-  set(value) {
-    this.payload.transform = value;
   },
 });
 
