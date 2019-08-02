@@ -9,9 +9,7 @@ Canvas.type = 'canvas';
 
 Object.assign(Canvas, {
   findFocus() {
-    return this.findDescendant(
-      node => node.class.includes('focus')
-    );
+    return this.findDescendant(node => node.class.includes('focus'));
   },
 
   removeFocus() {
@@ -23,9 +21,7 @@ Object.assign(Canvas, {
   },
 
   findSelection() {
-    return this.findDescendant(
-      node => node.class.includes('selected')
-    );
+    return this.findDescendant(node => node.class.includes('selected'));
   },
 
   removeSelection() {
@@ -39,9 +35,7 @@ Object.assign(Canvas, {
   },
 
   findPen() {
-    return this.findDescendant(
-      node => node.class.includes('pen')
-    );
+    return this.findDescendant(node => node.class.includes('pen'));
   },
 
   removePen() {
@@ -54,9 +48,7 @@ Object.assign(Canvas, {
   },
 
   findPenTip() {
-    return this.findDescendant(
-      node => node.class.includes('tip')
-    );
+    return this.findDescendant(node => node.class.includes('tip'));
   },
 
   removePenTip() {
@@ -69,9 +61,7 @@ Object.assign(Canvas, {
   },
 
   findFrontier() {
-    return this.findDescendants(
-      node => node.class.includes('frontier')
-    );
+    return this.findDescendants(node => node.class.includes('frontier'));
   },
 
   removeFrontier() {

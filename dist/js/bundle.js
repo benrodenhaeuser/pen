@@ -3638,9 +3638,7 @@
 
   Object.defineProperty(SceneNode$$1, 'canvas', {
     get() {
-      return this.findAncestor(
-        node => node.type === 'canvas'
-      );
+      return this.findAncestor(node => node.type === 'canvas');
     },
   });
 
@@ -3648,8 +3646,8 @@
 
   Object.assign(GraphicsNode$$1, {
     create() {
-      return SceneNode$$1
-        .create.bind(this)()
+      return SceneNode$$1.create
+        .bind(this)()
         .set(this.graphicsNodeDefaults());
     },
 
@@ -3802,9 +3800,7 @@
 
   Object.assign(Canvas$$1, {
     findFocus() {
-      return this.findDescendant(
-        node => node.class.includes('focus')
-      );
+      return this.findDescendant(node => node.class.includes('focus'));
     },
 
     removeFocus() {
@@ -3816,9 +3812,7 @@
     },
 
     findSelection() {
-      return this.findDescendant(
-        node => node.class.includes('selected')
-      );
+      return this.findDescendant(node => node.class.includes('selected'));
     },
 
     removeSelection() {
@@ -3832,9 +3826,7 @@
     },
 
     findPen() {
-      return this.findDescendant(
-        node => node.class.includes('pen')
-      );
+      return this.findDescendant(node => node.class.includes('pen'));
     },
 
     removePen() {
@@ -3847,9 +3839,7 @@
     },
 
     findPenTip() {
-      return this.findDescendant(
-        node => node.class.includes('tip')
-      );
+      return this.findDescendant(node => node.class.includes('tip'));
     },
 
     removePenTip() {
@@ -3862,9 +3852,7 @@
     },
 
     findFrontier() {
-      return this.findDescendants(
-        node => node.class.includes('frontier')
-      );
+      return this.findDescendants(node => node.class.includes('frontier'));
     },
 
     removeFrontier() {
@@ -4019,8 +4007,8 @@
 
   Object.assign(Shape$$1, {
     create() {
-      return GraphicsNode$$1
-        .create.bind(this)()
+      return GraphicsNode$$1.create
+        .bind(this)()
         .set(this.shapeDefaults());
     },
 
@@ -4049,7 +4037,6 @@
         },
       };
     },
-
 
     toVDOMCurves() {
       const nodes = [];
@@ -4176,7 +4163,7 @@
       // this conditional creates a degenerate curve if
       // there is exactly 1 segment in the spline
       if (this.children.length === 1) {
-        const start = this.children[0]; 
+        const start = this.children[0];
         const end = Segment$$1.create();
 
         theCurves.push(Curve$$1.createFromSegments(start, end));
@@ -4320,12 +4307,12 @@
     create() {
       return Node.create
         .bind(this)()
-        .set({ _id: createID() });
+        .set({ _id: createID() }); // TODO: why not in payload?
     },
 
     toJSON() {
       const obj = Node.toJSON.bind(this)();
-      obj._id = this._id;
+      obj._id = this._id; // TODO: why not in payload?
       return obj;
     },
   });
@@ -4434,9 +4421,7 @@
 
   Object.defineProperty(MarkupNode$$1, 'markupRoot', {
     get() {
-      return this.findAncestor(
-        node => node.parent.type === 'doc'
-      );
+      return this.findAncestor(node => node.parent.type === 'doc');
     },
   });
 
@@ -4609,7 +4594,6 @@
     return vNode;
   };
 
-  // push curves here
   const wrap = (vNode, node) => {
     const vWrapper = h('g', {
       'data-type': `${node.type}-wrapper`,
@@ -4781,18 +4765,6 @@
       vSegments.children.push(segmentUI(node, segment));
     }
 
-    // const vConnections = connections(node);
-    //
-    // for (let vConnection of vConnections) {
-    //   vInnerUI.children.push(vConnection);
-    // }
-    //
-    // const vControls = controls(node);
-    //
-    // for (let vControl of vControls) {
-    //   vInnerUI.children.push(vControl);
-    // }
-
     return vSegments;
   };
 
@@ -4807,11 +4779,13 @@
 
     for (let handle of ['handleIn', 'handleOut']) {
       if (segment[handle]) {
-        vSegmentUI.children.push(connection(node, segment.anchor, segment[handle]));
+        vSegmentUI.children.push(
+          connection(node, segment.anchor, segment[handle])
+        );
       }
     }
 
-    for (let controlNode of segment.children)  {
+    for (let controlNode of segment.children) {
       vSegmentUI.children.push(control(node, controlNode, diameter));
     }
 
@@ -4837,7 +4811,7 @@
       r: diameter / 2,
       cx: controlNode.vector.x,
       cy: controlNode.vector.y,
-      class: controlNode.class.toString(), // adds 'tip' to node that is being edited
+      class: controlNode.class.toString(),
     });
   };
 
@@ -5817,7 +5791,7 @@
     {
       from: 'penMode',
       type: 'mousedown',
-      target: ['anchor', 'handleIn', 'handleOut'], 
+      target: ['anchor', 'handleIn', 'handleOut'],
       do: 'initAdjustSegment',
       to: 'adjustingSegment',
     },
@@ -6145,11 +6119,17 @@
           }
           break;
         case 'handleIn':
-          segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
+          segment.handleOut.vector = segment.handleIn.vector.rotate(
+            Math.PI,
+            segment.anchor.vector
+          );
           break;
         case 'handleOut':
           // TODO: bug, segment.handleIn could be undefined
-          segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
+          segment.handleIn.vector = segment.handleOut.vector.rotate(
+            Math.PI,
+            segment.anchor.vector
+          );
           break;
       }
 
@@ -6245,7 +6225,7 @@
     },
 
     switchDocument(state, input) {
-      state.canvas.replaceWith(state.objectToDoc(input.data.doc));
+      state.doc.replaceWith(state.objectToDoc(input.data.doc));
       this.cleanup(state, input);
     },
 
@@ -6312,6 +6292,8 @@
 
     compute(input) {
       this.state.input = input;
+
+      console.log(this.state);
 
       const transition = transitions.get(this.state, input);
 

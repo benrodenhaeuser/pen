@@ -62,9 +62,7 @@ Object.assign(MarkupNode, {
 
 Object.defineProperty(MarkupNode, 'markupRoot', {
   get() {
-    return this.findAncestor(
-      node => node.parent.type === 'doc'
-    );
+    return this.findAncestor(node => node.parent.type === 'doc');
   },
 });
 

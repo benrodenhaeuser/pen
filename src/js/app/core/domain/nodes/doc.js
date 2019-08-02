@@ -8,12 +8,12 @@ Object.assign(Doc, {
   create() {
     return Node.create
       .bind(this)()
-      .set({ _id: createID() });
+      .set({ _id: createID() }); // TODO: why not in payload?
   },
 
   toJSON() {
     const obj = Node.toJSON.bind(this)();
-    obj._id = this._id;
+    obj._id = this._id; // TODO: why not in payload?
     return obj;
   },
 });

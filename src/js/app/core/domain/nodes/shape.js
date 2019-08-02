@@ -9,8 +9,8 @@ Shape.type = 'shape';
 
 Object.assign(Shape, {
   create() {
-    return GraphicsNode
-      .create.bind(this)()
+    return GraphicsNode.create
+      .bind(this)()
       .set(this.shapeDefaults());
   },
 
@@ -39,7 +39,6 @@ Object.assign(Shape, {
       },
     };
   },
-
 
   toVDOMCurves() {
     const nodes = [];

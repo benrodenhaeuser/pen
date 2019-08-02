@@ -19,7 +19,7 @@ Object.assign(Spline, {
     // this conditional creates a degenerate curve if
     // there is exactly 1 segment in the spline
     if (this.children.length === 1) {
-      const start = this.children[0]; 
+      const start = this.children[0];
       const end = Segment.create();
 
       theCurves.push(Curve.createFromSegments(start, end));

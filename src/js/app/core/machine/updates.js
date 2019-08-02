@@ -218,11 +218,17 @@ const updates = {
         }
         break;
       case 'handleIn':
-        segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
+        segment.handleOut.vector = segment.handleIn.vector.rotate(
+          Math.PI,
+          segment.anchor.vector
+        );
         break;
       case 'handleOut':
         // TODO: bug, segment.handleIn could be undefined
-        segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
+        segment.handleIn.vector = segment.handleOut.vector.rotate(
+          Math.PI,
+          segment.anchor.vector
+        );
         break;
     }
 
@@ -318,7 +324,7 @@ const updates = {
   },
 
   switchDocument(state, input) {
-    state.canvas.replaceWith(state.objectToDoc(input.data.doc));
+    state.doc.replaceWith(state.objectToDoc(input.data.doc));
     this.cleanup(state, input);
   },
 

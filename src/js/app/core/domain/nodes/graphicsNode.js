@@ -8,8 +8,8 @@ const GraphicsNode = SceneNode.create();
 
 Object.assign(GraphicsNode, {
   create() {
-    return SceneNode
-      .create.bind(this)()
+    return SceneNode.create
+      .bind(this)()
       .set(this.graphicsNodeDefaults());
   },
 

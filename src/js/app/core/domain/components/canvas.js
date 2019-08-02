@@ -33,7 +33,6 @@ const buildTree = (node, vParent = null) => {
   return vNode;
 };
 
-// push curves here
 const wrap = (vNode, node) => {
   const vWrapper = h('g', {
     'data-type': `${node.type}-wrapper`,
@@ -205,18 +204,6 @@ const segments = node => {
     vSegments.children.push(segmentUI(node, segment));
   }
 
-  // const vConnections = connections(node);
-  //
-  // for (let vConnection of vConnections) {
-  //   vInnerUI.children.push(vConnection);
-  // }
-  //
-  // const vControls = controls(node);
-  //
-  // for (let vControl of vControls) {
-  //   vInnerUI.children.push(vControl);
-  // }
-
   return vSegments;
 };
 
@@ -231,11 +218,13 @@ const segmentUI = (node, segment) => {
 
   for (let handle of ['handleIn', 'handleOut']) {
     if (segment[handle]) {
-      vSegmentUI.children.push(connection(node, segment.anchor, segment[handle]));
+      vSegmentUI.children.push(
+        connection(node, segment.anchor, segment[handle])
+      );
     }
   }
 
-  for (let controlNode of segment.children)  {
+  for (let controlNode of segment.children) {
     vSegmentUI.children.push(control(node, controlNode, diameter));
   }
 
@@ -261,44 +250,12 @@ const control = (pathNode, controlNode, diameter) => {
     r: diameter / 2,
     cx: controlNode.vector.x,
     cy: controlNode.vector.y,
-    class: controlNode.class.toString(), // adds 'tip' to node that is being edited
+    class: controlNode.class.toString(),
   });
 };
 
 const scale = (node, length) => {
   return length / node.globalScaleFactor();
 };
-
-// const connections = node => {
-//   const vConnections = [];
-//
-//   for (let spline of node.children) {
-//     for (let segment of spline.children) {
-//       for (let handle of ['handleIn', 'handleOut']) {
-//         if (segment[handle]) {
-//           vConnections.push(connection(node, segment.anchor, segment[handle]));
-//         }
-//       }
-//     }
-//   }
-//
-//   return vConnections;
-// };
-
-// const controls = pathNode => {
-//   const vControls = [];
-//   const diameter = scale(pathNode, LENGTHS_IN_PX.controlDiameter);
-//
-//   for (let spline of pathNode.children) {
-//     for (let segment of spline.children) {
-//       for (let controlNode of segment.children) {
-//         vControls.push(control(pathNode, controlNode, diameter));
-//       }
-//     }
-//   }
-//
-//   return vControls;
-// };
-
 
 export { canvas };
