@@ -2,7 +2,7 @@ import { GraphicsNode } from './_.js';
 import { Spline } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
-import { SyntaxTree } from './_.js';
+import { MarkupNode } from './_.js';
 
 const Shape = Object.create(GraphicsNode);
 Shape.type = 'shape';
@@ -92,8 +92,8 @@ Object.assign(Shape, {
     return svgNode;
   },
 
-  toASTNodes() {
-    const open = SyntaxTree.create();
+  toMarkupNodes() {
+    const open = MarkupNode.create();
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<path d="${this.toPathString()}" transform="${this.transform.toString()}">`;
@@ -104,7 +104,7 @@ Object.assign(Shape, {
     open.key = this.key;
     open.class = this.class;
 
-    const close = SyntaxTree.create();
+    const close = MarkupNode.create();
     close.markup = '</path>';
     close.key = this.key;
 

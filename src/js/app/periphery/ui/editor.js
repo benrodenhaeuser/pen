@@ -78,7 +78,7 @@ const editor = {
     }
 
     // set text marker
-    const node = state.syntaxTree.findNodeByClassName('selected');
+    const node = state.syntaxTree.findDescendantByClass('selected');
     if (node) {
       const from = this.editor.doc.posFromIndex(node.start);
       const to = this.editor.doc.posFromIndex(node.end + 1);

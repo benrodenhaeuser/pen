@@ -1,6 +1,7 @@
 import { Node } from './_.js';
 
 const MarkupNode = Object.create(Node);
+MarkupNode.type = 'markupNode';
 
 Object.assign(MarkupNode, {
   indexify(start = 0) {
@@ -20,7 +21,6 @@ Object.assign(MarkupNode, {
     }
   },
 
-  // find node whose start to end range includes given index
   findNodeByIndex(idx) {
     if (this.markup) {
       if (this.start <= idx && idx <= this.end) {
@@ -41,29 +41,12 @@ Object.assign(MarkupNode, {
     }
   },
 
-  // find node whose class list includes given class name
-  findNodeByClassName(cls) {
-    if (this.markup) {
-      if (this.class && this.class.includes(cls)) {
-        return this;
-      }
-    } else {
-      for (let child of this.children) {
-        const val = child.findNodeByClassName(cls);
-        if (val) {
-          return val;
-        }
-      }
-    }
-  },
-
-  // flatten tree to a list of leaf nodes
-  flatten(list = []) {
+  flattenToList(list = []) {
     if (this.markup) {
       list.push(this);
     } else {
       for (let child of this.children) {
-        child.flatten(list);
+        child.flattenToList(list);
       }
     }
 
@@ -71,7 +54,7 @@ Object.assign(MarkupNode, {
   },
 
   toMarkup() {
-    return this.flatten()
+    return this.flattenToList()
       .map(node => node.markup)
       .join('');
   },
@@ -80,7 +63,7 @@ Object.assign(MarkupNode, {
 Object.defineProperty(MarkupNode, 'markupRoot', {
   get() {
     return this.findAncestor(
-      node => node.parent.type === 'doc';
+      node => node.parent.type === 'doc'
     );
   },
 });

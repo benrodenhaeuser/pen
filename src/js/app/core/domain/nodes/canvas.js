@@ -1,6 +1,6 @@
 import { GraphicsNode } from './_.js';
 import { Shape } from './_.js';
-import { SyntaxTree } from './_.js';
+import { MarkupNode } from './_.js';
 
 const xmlns = 'http://www.w3.org/2000/svg';
 
@@ -143,12 +143,12 @@ Object.assign(Canvas, {
     };
   },
 
-  toASTNodes() {
-    const open = SyntaxTree.create();
+  toMarkupNodes() {
+    const open = MarkupNode.create();
     open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
     open.key = this.key;
 
-    const close = SyntaxTree.create();
+    const close = MarkupNode.create();
     close.markup = '</svg>';
     close.key = this.key;
 

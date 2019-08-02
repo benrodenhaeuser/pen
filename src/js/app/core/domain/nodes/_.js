@@ -15,8 +15,6 @@ import { Store } from './store.js';
 import { Docs } from './docs.js';
 import { Message } from './message.js';
 import { Identifier } from './identifier.js';
-
-import { SyntaxTree } from './syntaxtree.js';
 import { MarkupNode } from './markupNode.js';
 
 export {
@@ -37,6 +35,5 @@ export {
   Docs,
   Message,
   Identifier,
-  SyntaxTree,
   MarkupNode,
 };

@@ -15,7 +15,7 @@ const updates = {
 
   after(state, input) {
     if (input.source === 'canvas') {
-      state.syntaxTree = state.sceneToSyntaxTree();
+      state.syntaxTree.replaceWith(state.sceneToSyntaxTree());
     }
   },
 
@@ -221,7 +221,7 @@ const updates = {
         segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
         break;
       case 'handleOut':
-        // TODO: bug, segment.handleIn could be undefined 
+        // TODO: bug, segment.handleIn could be undefined
         segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
         break;
     }
@@ -361,7 +361,7 @@ const updates = {
       const syntaxTree = state.domToSyntaxTree($svg);
       syntaxTree.indexify();
 
-      state.syntaxTree = syntaxTree;
+      state.syntaxTree.replaceWith(syntaxTree);
       state.canvas.replaceWith(state.domToScene($svg));
     } else {
       console.log('cannot update scenegraph and syntaxtree');

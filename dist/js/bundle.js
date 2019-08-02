@@ -3936,12 +3936,12 @@
       };
     },
 
-    toASTNodes() {
-      const open = SyntaxTree.create();
+    toMarkupNodes() {
+      const open = MarkupNode$$1.create();
       open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
       open.key = this.key;
 
-      const close = SyntaxTree.create();
+      const close = MarkupNode$$1.create();
       close.markup = '</svg>';
       close.key = this.key;
 
@@ -3966,7 +3966,7 @@
 
   Object.assign(Group$$1, {
     toVDOMNode() {
-      return {    
+      return {
         tag: 'g',
         children: [],
         props: {
@@ -3992,8 +3992,8 @@
       return svgNode;
     },
 
-    toASTNodes() {
-      const open = SyntaxTree.create();
+    toMarkupNodes() {
+      const open = MarkupNode$$1.create();
 
       if (!this.transform.equals(Matrix$$1.identity())) {
         open.markup = `<g transform="${this.transform.toString()}">`;
@@ -4004,7 +4004,7 @@
       open.key = this.key;
       open.class = this.class;
 
-      const close = SyntaxTree.create();
+      const close = MarkupNode$$1.create();
       close.markup = '</g>';
       close.key = this.key;
 
@@ -4103,8 +4103,8 @@
       return svgNode;
     },
 
-    toASTNodes() {
-      const open = SyntaxTree.create();
+    toMarkupNodes() {
+      const open = MarkupNode$$1.create();
 
       if (!this.transform.equals(Matrix$$1.identity())) {
         open.markup = `<path d="${this.toPathString()}" transform="${this.transform.toString()}">`;
@@ -4115,7 +4115,7 @@
       open.key = this.key;
       open.class = this.class;
 
-      const close = SyntaxTree.create();
+      const close = MarkupNode$$1.create();
       close.markup = '</path>';
       close.key = this.key;
 
@@ -4359,6 +4359,12 @@
     },
   });
 
+  Object.defineProperty(Store$$1, 'syntaxTree', {
+    get() {
+      return this.root.findDescendant(node => node.type === 'markupNode');
+    },
+  });
+
   const Docs$$1 = Object.create(Node);
   Docs$$1.type = 'docs';
 
@@ -4368,93 +4374,8 @@
   const Identifier$$1 = Object.create(Node);
   Identifier$$1.type = 'identifier';
 
-  const SyntaxTree = {
-    create() {
-      return Object.create(SyntaxTree).init();
-    },
-
-    init() {
-      this.children = [];
-
-      return this;
-    },
-
-    // decorate tree with start and end indices
-    indexify(start = 0) {
-      this.start = start;
-
-      if (this.markup) {
-        this.end = this.start + this.markup.length - 1;
-        return this.end + 1;
-      } else {
-        for (let child of this.children) {
-          start = child.indexify(start);
-        }
-
-        this.end = start - 1;
-
-        return start;
-      }
-    },
-
-    // find node whose start to end range includes given index
-    findNodeByIndex(idx) {
-      if (this.markup) {
-        if (this.start <= idx && idx <= this.end) {
-          return this;
-        } else {
-          return null;
-        }
-      } else {
-        const child = this.children.find(
-          child => child.start <= idx && idx <= child.end
-        );
-
-        if (child) {
-          return child.findNodeByIndex(idx);
-        } else {
-          return null;
-        }
-      }
-    },
-
-    // find node whose class list includes given class name
-    findNodeByClassName(cls) {
-      if (this.markup) {
-        if (this.class && this.class.includes(cls)) {
-          return this;
-        }
-      } else {
-        for (let child of this.children) {
-          const val = child.findNodeByClassName(cls);
-          if (val) {
-            return val;
-          }
-        }
-      }
-    },
-
-    // flatten tree to a list of leaf nodes
-    flatten(list = []) {
-      if (this.markup) {
-        list.push(this);
-      } else {
-        for (let child of this.children) {
-          child.flatten(list);
-        }
-      }
-
-      return list;
-    },
-
-    toMarkup() {
-      return this.flatten()
-        .map(node => node.markup)
-        .join('');
-    },
-  };
-
   const MarkupNode$$1 = Object.create(Node);
+  MarkupNode$$1.type = 'markupNode';
 
   Object.assign(MarkupNode$$1, {
     indexify(start = 0) {
@@ -4474,7 +4395,6 @@
       }
     },
 
-    // find node whose start to end range includes given index
     findNodeByIndex(idx) {
       if (this.markup) {
         if (this.start <= idx && idx <= this.end) {
@@ -4495,29 +4415,12 @@
       }
     },
 
-    // find node whose class list includes given class name
-    findNodeByClassName(cls) {
-      if (this.markup) {
-        if (this.class && this.class.includes(cls)) {
-          return this;
-        }
-      } else {
-        for (let child of this.children) {
-          const val = child.findNodeByClassName(cls);
-          if (val) {
-            return val;
-          }
-        }
-      }
-    },
-
-    // flatten tree to a list of leaf nodes
-    flatten(list = []) {
+    flattenToList(list = []) {
       if (this.markup) {
         list.push(this);
       } else {
         for (let child of this.children) {
-          child.flatten(list);
+          child.flattenToList(list);
         }
       }
 
@@ -4525,7 +4428,7 @@
     },
 
     toMarkup() {
-      return this.flatten()
+      return this.flattenToList()
         .map(node => node.markup)
         .join('');
     },
@@ -4534,7 +4437,7 @@
   Object.defineProperty(MarkupNode$$1, 'markupRoot', {
     get() {
       return this.findAncestor(
-        node => node.type === 'markupRoot'
+        node => node.parent.type === 'doc'
       );
     },
   });
@@ -4991,7 +4894,7 @@
 
   const domToSyntaxTree = $svg => {
     if ($svg instanceof SVGElement) {
-      const node = SyntaxTree.create();
+      const node = MarkupNode$$1.create();
       return buildTree$2($svg, node);
     } else {
       return null;
@@ -5000,9 +4903,9 @@
 
   const buildTree$2 = ($node, node) => {
     if ($node.nodeName === '#text') {
-      const tNode = SyntaxTree.create();
+      const tNode = MarkupNode$$1.create();
       tNode.markup = $node.nodeValue;
-      node.children.push(tNode);
+      node.append(tNode);
     } else {
       let openTag = `<${$node.nodeName}`;
       const attrs = [];
@@ -5014,8 +4917,8 @@
 
       const closeTag = `</${$node.nodeName}>`;
 
-      const openNode = SyntaxTree.create();
-      const closeNode = SyntaxTree.create();
+      const openNode = MarkupNode$$1.create();
+      const closeNode = MarkupNode$$1.create();
 
       openNode.markup = openTag;
       openNode.tag = $node.nodeName;
@@ -5025,75 +4928,75 @@
       openNode.key = $node.key;
       closeNode.key = $node.key;
 
-      node.children.push(openNode);
+      node.append(openNode);
 
       if ($node.childNodes.length > 0) {
-        const innerNode = SyntaxTree.create();
+        const innerNode = MarkupNode$$1.create();
 
         for (let $child of $node.childNodes) {
           buildTree$2($child, innerNode);
         }
 
-        node.children.push(innerNode);
+        node.append(innerNode);
       }
 
-      node.children.push(closeNode);
+      node.append(closeNode);
 
       return node;
     }
 
     for (let $child of $node.childNodes) {
-      node.children.push(buildTree$2($child));
+      node.append(buildTree$2($child));
     }
 
     return node;
   };
 
   const sceneToSyntaxTree = canvas => {
-    const astRoot = SyntaxTree.create();
-    parse(canvas, astRoot, 0);
-    astRoot.indexify();
-    return astRoot;
+    const syntaxTree = MarkupNode$$1.create();
+    parse(canvas, syntaxTree, 0);
+    syntaxTree.indexify();
+    return syntaxTree;
   };
 
-  const parse = (sceneNode, astParent, level) => {
-    const astNodes = sceneNode.toASTNodes();
-    const open = astNodes.open;
-    const close = astNodes.close;
+  const parse = (sceneNode, markupParent, level) => {
+    const markupNodes = sceneNode.toMarkupNodes();
+    const open = markupNodes.open;
+    const close = markupNodes.close;
     open.level = level;
     close.level = level;
 
     // indent
     const pad = indent(level);
-    const indentNode = SyntaxTree.create();
+    const indentNode = MarkupNode$$1.create();
     indentNode.markup = pad;
-    astParent.children.push(indentNode);
+    markupParent.append(indentNode);
 
     // open tag
-    astParent.children.push(open);
+    markupParent.append(open);
 
     // linebreak
-    const tNode = SyntaxTree.create();
+    const tNode = MarkupNode$$1.create();
     tNode.markup = '\n';
-    astParent.children.push(tNode);
+    markupParent.append(tNode);
 
     if (sceneNode.graphicsChildren.length > 0) {
-      const astNode = SyntaxTree.create();
-      astParent.children.push(astNode);
+      const markupNode = MarkupNode$$1.create();
+      markupParent.append(markupNode);
 
       for (let sceneChild of sceneNode.graphicsChildren) {
-        parse(sceneChild, astNode, level + 1);
+        parse(sceneChild, markupNode, level + 1);
       }
     }
 
     // indent
-    astParent.children.push(indentNode);
+    markupParent.append(indentNode);
 
     // close tag
-    astParent.children.push(close);
+    markupParent.append(close);
 
     // linebreak
-    astParent.children.push(tNode);
+    markupParent.append(tNode);
   };
 
   const indent = level => {
@@ -5617,7 +5520,6 @@
       this.input = {};
       this.update = '';
       this.store = this.buildStore();
-      this.syntaxTree = SyntaxTree.create(); // TODO: make a part of buildStore
 
       return this;
     },
@@ -5643,15 +5545,24 @@
 
     buildDoc() {
       const doc = Doc$$1.create();
+
       const canvas = Canvas$$1.create();
       canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 600, 395);
+      // ^ TODO this is not in the right place.
       doc.append(canvas);
+
+      const syntaxTree = MarkupNode$$1.create();
+      doc.append(syntaxTree);
 
       return doc;
     },
 
     get canvas() {
       return this.store.canvas;
+    },
+
+    get syntaxTree() {
+      return this.store.syntaxTree;
     },
 
     get doc() {
@@ -5706,13 +5617,9 @@
       return exportToSVG(this.store);
     },
 
-    // returns a Doc node and a list of ids (for docs)
+    // TODO: weird - returns a Doc node and a list of ids (for docs)
     exportToVDOM() {
       return exportToVDOM$$1(this);
-    },
-
-    exportToAST() {
-      return exportToAST(this);
     },
 
     // returns a plain representation of Doc node and a list of ids (for docs)
@@ -6034,7 +5941,7 @@
 
     after(state, input) {
       if (input.source === 'canvas') {
-        state.syntaxTree = state.sceneToSyntaxTree();
+        state.syntaxTree.replaceWith(state.sceneToSyntaxTree());
       }
     },
 
@@ -6240,7 +6147,7 @@
           segment.handleOut.vector = segment.handleIn.vector.rotate(Math.PI, segment.anchor.vector);
           break;
         case 'handleOut':
-          // TODO: bug, segment.handleIn could be undefined 
+          // TODO: bug, segment.handleIn could be undefined
           segment.handleIn.vector = segment.handleOut.vector.rotate(Math.PI, segment.anchor.vector);
           break;
       }
@@ -6380,7 +6287,7 @@
         const syntaxTree = state.domToSyntaxTree($svg);
         syntaxTree.indexify();
 
-        state.syntaxTree = syntaxTree;
+        state.syntaxTree.replaceWith(syntaxTree);
         state.canvas.replaceWith(state.domToScene($svg));
       } else {
         console.log('cannot update scenegraph and syntaxtree');
@@ -6403,7 +6310,7 @@
     },
 
     compute(input) {
-      // console.log(this.state);
+      console.log(this.state);
 
       this.state.input = input;
 
@@ -16888,7 +16795,7 @@
       }
 
       // set text marker
-      const node = state.syntaxTree.findNodeByClassName('selected');
+      const node = state.syntaxTree.findDescendantByClass('selected');
       if (node) {
         const from = this.editor.doc.posFromIndex(node.start);
         const to = this.editor.doc.posFromIndex(node.end + 1);

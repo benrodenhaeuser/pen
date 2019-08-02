@@ -4,7 +4,7 @@ import { Doc } from '../domain/_.js';
 import { Message } from '../domain/_.js';
 import { Canvas } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
-import { SyntaxTree } from '../domain/_.js';
+import { MarkupNode } from '../domain/_.js';
 
 import { exportToSVG } from '../ports/_.js';
 import { exportToVDOM } from '../ports/_.js';
@@ -26,7 +26,6 @@ const State = {
     this.input = {};
     this.update = '';
     this.store = this.buildStore();
-    this.syntaxTree = SyntaxTree.create(); // TODO: make a part of buildStore
 
     return this;
   },
@@ -52,15 +51,24 @@ const State = {
 
   buildDoc() {
     const doc = Doc.create();
+
     const canvas = Canvas.create();
     canvas.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+    // ^ TODO this is not in the right place.
     doc.append(canvas);
+
+    const syntaxTree = MarkupNode.create();
+    doc.append(syntaxTree);
 
     return doc;
   },
 
   get canvas() {
     return this.store.canvas;
+  },
+
+  get syntaxTree() {
+    return this.store.syntaxTree;
   },
 
   get doc() {
@@ -115,13 +123,9 @@ const State = {
     return exportToSVG(this.store);
   },
 
-  // returns a Doc node and a list of ids (for docs)
+  // TODO: weird - returns a Doc node and a list of ids (for docs)
   exportToVDOM() {
     return exportToVDOM(this);
-  },
-
-  exportToAST() {
-    return exportToAST(this);
   },
 
   // returns a plain representation of Doc node and a list of ids (for docs)

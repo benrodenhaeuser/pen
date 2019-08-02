@@ -1,50 +1,50 @@
-import { SyntaxTree } from '../../domain/nodes/_.js';
+import { MarkupNode } from '../../domain/nodes/_.js';
 
 const sceneToSyntaxTree = canvas => {
-  const astRoot = SyntaxTree.create();
-  parse(canvas, astRoot, 0);
-  astRoot.indexify();
-  return astRoot;
+  const syntaxTree = MarkupNode.create();
+  parse(canvas, syntaxTree, 0);
+  syntaxTree.indexify();
+  return syntaxTree;
 };
 
-const parse = (sceneNode, astParent, level) => {
-  const astNodes = sceneNode.toASTNodes();
-  const open = astNodes.open;
-  const close = astNodes.close;
+const parse = (sceneNode, markupParent, level) => {
+  const markupNodes = sceneNode.toMarkupNodes();
+  const open = markupNodes.open;
+  const close = markupNodes.close;
   open.level = level;
   close.level = level;
 
   // indent
   const pad = indent(level);
-  const indentNode = SyntaxTree.create();
+  const indentNode = MarkupNode.create();
   indentNode.markup = pad;
-  astParent.children.push(indentNode);
+  markupParent.append(indentNode);
 
   // open tag
-  astParent.children.push(open);
+  markupParent.append(open);
 
   // linebreak
-  const tNode = SyntaxTree.create();
+  const tNode = MarkupNode.create();
   tNode.markup = '\n';
-  astParent.children.push(tNode);
+  markupParent.append(tNode);
 
   if (sceneNode.graphicsChildren.length > 0) {
-    const astNode = SyntaxTree.create();
-    astParent.children.push(astNode);
+    const markupNode = MarkupNode.create();
+    markupParent.append(markupNode);
 
     for (let sceneChild of sceneNode.graphicsChildren) {
-      parse(sceneChild, astNode, level + 1);
+      parse(sceneChild, markupNode, level + 1);
     }
   }
 
   // indent
-  astParent.children.push(indentNode);
+  markupParent.append(indentNode);
 
   // close tag
-  astParent.children.push(close);
+  markupParent.append(close);
 
   // linebreak
-  astParent.children.push(tNode);
+  markupParent.append(tNode);
 };
 
 const indent = level => {

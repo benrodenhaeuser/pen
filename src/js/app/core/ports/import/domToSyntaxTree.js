@@ -1,8 +1,8 @@
-import { SyntaxTree } from '../../domain/_.js';
+import { MarkupNode } from '../../domain/_.js';
 
 const domToSyntaxTree = $svg => {
   if ($svg instanceof SVGElement) {
-    const node = SyntaxTree.create();
+    const node = MarkupNode.create();
     return buildTree($svg, node);
   } else {
     return null;
@@ -11,9 +11,9 @@ const domToSyntaxTree = $svg => {
 
 const buildTree = ($node, node) => {
   if ($node.nodeName === '#text') {
-    const tNode = SyntaxTree.create();
+    const tNode = MarkupNode.create();
     tNode.markup = $node.nodeValue;
-    node.children.push(tNode);
+    node.append(tNode);
   } else {
     let openTag = `<${$node.nodeName}`;
     const attrs = [];
@@ -25,8 +25,8 @@ const buildTree = ($node, node) => {
 
     const closeTag = `</${$node.nodeName}>`;
 
-    const openNode = SyntaxTree.create();
-    const closeNode = SyntaxTree.create();
+    const openNode = MarkupNode.create();
+    const closeNode = MarkupNode.create();
 
     openNode.markup = openTag;
     openNode.tag = $node.nodeName;
@@ -36,25 +36,25 @@ const buildTree = ($node, node) => {
     openNode.key = $node.key;
     closeNode.key = $node.key;
 
-    node.children.push(openNode);
+    node.append(openNode);
 
     if ($node.childNodes.length > 0) {
-      const innerNode = SyntaxTree.create();
+      const innerNode = MarkupNode.create();
 
       for (let $child of $node.childNodes) {
         buildTree($child, innerNode);
       }
 
-      node.children.push(innerNode);
+      node.append(innerNode);
     }
 
-    node.children.push(closeNode);
+    node.append(closeNode);
 
     return node;
   }
 
   for (let $child of $node.childNodes) {
-    node.children.push(buildTree($child));
+    node.append(buildTree($child));
   }
 
   return node;

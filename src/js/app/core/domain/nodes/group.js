@@ -1,13 +1,13 @@
 import { GraphicsNode } from './_.js';
 import { Matrix } from '../geometry/_.js';
-import { SyntaxTree } from './_.js';
+import { MarkupNode } from './_.js';
 
 const Group = Object.create(GraphicsNode);
 Group.type = 'group';
 
 Object.assign(Group, {
   toVDOMNode() {
-    return {    
+    return {
       tag: 'g',
       children: [],
       props: {
@@ -33,8 +33,8 @@ Object.assign(Group, {
     return svgNode;
   },
 
-  toASTNodes() {
-    const open = SyntaxTree.create();
+  toMarkupNodes() {
+    const open = MarkupNode.create();
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<g transform="${this.transform.toString()}">`;
@@ -45,7 +45,7 @@ Object.assign(Group, {
     open.key = this.key;
     open.class = this.class;
 
-    const close = SyntaxTree.create();
+    const close = MarkupNode.create();
     close.markup = '</g>';
     close.key = this.key;
 

@@ -27,4 +27,10 @@ Object.defineProperty(Store, 'doc', {
   },
 });
 
+Object.defineProperty(Store, 'syntaxTree', {
+  get() {
+    return this.root.findDescendant(node => node.type === 'markupNode');
+  },
+});
+
 export { Store };
