@@ -1,3 +1,8 @@
+import { Class } from './helpers/_.js';
+import { tools } from './components/_.js';
+import { message } from './components/_.js';
+import { canvas } from './components/_.js';
+
 import {
   Vector,
   Matrix,
@@ -21,14 +26,6 @@ import {
   Identifier,
   MarkupNode,
 } from './nodes/_.js';
-
-import {
-  Class
-} from './helpers/_.js';
-
-import { tools } from './components/_.js';
-import { message } from './components/_.js';
-import { canvas } from './components/_.js';
 
 export {
   Vector,

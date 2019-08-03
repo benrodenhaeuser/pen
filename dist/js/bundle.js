@@ -14,6 +14,449 @@
 (function () {
   'use strict';
 
+  const Class = {
+    create(classNames = []) {
+      return Object.create(Class).init(classNames);
+    },
+
+    init(classNames) {
+      if (classNames instanceof Array) {
+        this.set = new Set(classNames);
+      } else if (classNames instanceof Set) {
+        this.set = classNames;
+      } else {
+        throw new Error('Create Class instances from array or set');
+      }
+
+      return this;
+    },
+
+    // return value: string
+    toString() {
+      return Array.from(this.set).join(' ');
+    },
+
+    toJSON() {
+      return Array.from(this.set);
+    },
+
+    // return value: boolean
+    includes(className) {
+      return this.set.has(className);
+    },
+
+    // return value: new Class instance
+    add(className) {
+      return Class.create(this.set.add(className));
+    },
+
+    // return value: new Class instance
+    remove(className) {
+      this.set.delete(className);
+      return Class.create(this.set);
+    },
+  };
+
+  const createID = () => {
+    const randomString = Math.random()
+      .toString(36)
+      .substring(2);
+    const timestamp = new Date().getTime().toString(36);
+    return randomString + timestamp;
+  };
+
+  const h = (tag, props = {}, ...children) => {
+    return {
+      tag: tag,
+      props: props,
+      children: children || [],
+    };
+  };
+
+  const tools$$1 = store => {
+    return h(
+      'ul',
+      { id: 'buttons' },
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'newDocButton',
+            class: 'pure-button',
+            'data-type': 'newDocButton',
+          },
+          'New'
+        )
+      ),
+      docs(store),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'getPrevious',
+            'data-type': 'getPrevious',
+            class: 'pure-button',
+          },
+          'Undo'
+        )
+      ),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'getNext',
+            'data-type': 'getNext',
+            class: 'pure-button',
+          },
+          'Redo'
+        )
+      ),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'selectButton',
+            'data-type': 'selectButton',
+            class: 'pure-button',
+          },
+          'Select'
+        )
+      ),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'penButton',
+            'data-type': 'penButton',
+            class: 'pure-button',
+          },
+          'Pen'
+        )
+      )
+    );
+  };
+
+  const docs = store => {
+    const vDocs = h('ul', {
+      id: 'docs',
+      class: 'pure-menu-children doc-list',
+    });
+
+    const docs = store.docs;
+
+    for (let identifier of docs.children) {
+      vDocs.children.push(
+        h(
+          'li',
+          {
+            class: 'pure-menu-item',
+          },
+          h(
+            'a',
+            {
+              class: 'pure-menu-link',
+              'data-key': identifier._id,
+              'data-type': 'doc-identifier',
+            },
+            identifier._id
+          )
+          //  TODO: This is where we would need to put the *name* of the document.
+        )
+      );
+    }
+
+    const container = h(
+      'div',
+      { class: 'pure-menu pure-menu-horizontal' },
+      h(
+        'ul',
+        { class: 'pure-menu-list' },
+        h(
+          'li',
+          {
+            class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
+          },
+          h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
+          vDocs
+        )
+      )
+    );
+
+    return container;
+  };
+
+  const message = store => {
+    return store.message.text;
+  };
+
+  const LENGTHS_IN_PX = {
+    cornerSideLength: 8,
+    dotDiameter: 18,
+    controlDiameter: 6,
+  };
+
+  const canvas$$1 = store => {
+    return renderScene(store);
+  };
+
+  const renderScene = store => {
+    if (store.canvas === null) {
+      return '';
+    }
+
+    return buildTree(store.canvas);
+  };
+
+  const buildTree = (node, vParent = null) => {
+    const vNode = node.toVDOMNode();
+
+    if (vParent) {
+      const vWrapper = wrap(vNode, node);
+      vParent.children.push(vWrapper);
+    }
+
+    for (let child of node.graphicsChildren) {
+      buildTree(child, vNode);
+    }
+
+    return vNode;
+  };
+
+  const wrap = (vNode, node) => {
+    const vWrapper = h('g', {
+      'data-type': `${node.type}-wrapper`,
+      'data-key': node.key,
+    });
+
+    vWrapper.children.push(vNode);
+
+    if (node.type === 'shape') {
+      vWrapper.children.push(curves(node));
+      vWrapper.children.push(segments(node));
+    }
+
+    vWrapper.children.push(outerUI(node));
+
+    return vWrapper;
+  };
+
+  const curves = node => {
+    const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
+    const radius = diameter / 2;
+
+    const vParts = node.toVDOMCurves();
+    const splitter = h('circle', {
+      'data-type': 'splitter',
+      r: radius,
+      cx: node.splitter.x,
+      cy: node.splitter.y,
+      transform: node.transform.toString(),
+    });
+
+    return h(
+      'g',
+      {
+        'data-type': 'curves',
+        'data-key': node.key,
+      },
+      ...vParts,
+      splitter
+    );
+  };
+
+  const outerUI = node => {
+    const vOuterUI = h('g', {
+      'data-type': 'outerUI',
+      'data-key': node.key,
+    });
+
+    const vFrame = frame(node);
+    const vDots = dots(node); // for rotation UI
+    const vCorners = corners(node); // for scaling UI
+
+    vOuterUI.children.push(vFrame);
+
+    for (let vDot of vDots) {
+      vOuterUI.children.push(vDot);
+    }
+
+    for (let vCorner of vCorners) {
+      vOuterUI.children.push(vCorner);
+    }
+
+    return vOuterUI;
+  };
+
+  const corners = node => {
+    const vTopLCorner = h('rect');
+    const vBotLCorner = h('rect');
+    const vTopRCorner = h('rect');
+    const vBotRCorner = h('rect');
+    const vCorners = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
+    const length = scale(node, LENGTHS_IN_PX.cornerSideLength);
+
+    for (let vCorner of vCorners) {
+      Object.assign(vCorner.props, {
+        'data-type': 'corner',
+        'data-key': node.key,
+        transform: node.transform.toString(),
+        width: length,
+        height: length,
+      });
+    }
+
+    Object.assign(vTopLCorner.props, {
+      x: node.bounds.x - length / 2,
+      y: node.bounds.y - length / 2,
+    });
+
+    Object.assign(vBotLCorner.props, {
+      x: node.bounds.x - length / 2,
+      y: node.bounds.y + node.bounds.height - length / 2,
+    });
+
+    Object.assign(vTopRCorner.props, {
+      x: node.bounds.x + node.bounds.width - length / 2,
+      y: node.bounds.y - length / 2,
+    });
+
+    Object.assign(vBotRCorner.props, {
+      x: node.bounds.x + node.bounds.width - length / 2,
+      y: node.bounds.y + node.bounds.height - length / 2,
+    });
+
+    return vCorners;
+  };
+
+  const dots = node => {
+    const vTopLDot = h('circle');
+    const vBotLDot = h('circle');
+    const vTopRDot = h('circle');
+    const vBotRDot = h('circle');
+    const vDots = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
+    const diameter = scale(node, LENGTHS_IN_PX.dotDiameter);
+    const radius = diameter / 2;
+
+    for (let vDot of vDots) {
+      Object.assign(vDot.props, {
+        'data-type': 'dot',
+        'data-key': node.key,
+        transform: node.transform.toString(),
+        r: radius,
+      });
+    }
+
+    Object.assign(vTopLDot.props, {
+      cx: node.bounds.x - radius / 2,
+      cy: node.bounds.y - radius / 2,
+    });
+
+    Object.assign(vBotLDot.props, {
+      cx: node.bounds.x - radius / 2,
+      cy: node.bounds.y + node.bounds.height + radius / 2,
+    });
+
+    Object.assign(vTopRDot.props, {
+      cx: node.bounds.x + node.bounds.width + radius / 2,
+      cy: node.bounds.y - radius / 2,
+    });
+
+    Object.assign(vBotRDot.props, {
+      cx: node.bounds.x + node.bounds.width + radius / 2,
+      cy: node.bounds.y + node.bounds.height + radius / 2,
+    });
+
+    return vDots;
+  };
+
+  const frame = node => {
+    return h('rect', {
+      'data-type': 'frame',
+      x: node.bounds.x,
+      y: node.bounds.y,
+      width: node.bounds.width,
+      height: node.bounds.height,
+      transform: node.transform.toString(),
+      'data-key': node.key,
+    });
+  };
+
+  const segments = node => {
+    const spline = node.children[0];
+
+    const vSegments = h('g', {
+      'data-type': 'segments',
+      'data-key': node.key,
+    });
+
+    for (let segment of spline.children) {
+      vSegments.children.push(segmentUI(node, segment));
+    }
+
+    return vSegments;
+  };
+
+  const segmentUI = (node, segment) => {
+    const vSegmentUI = h('g', {
+      'data-type': 'segment',
+      class: segment.class.toString(),
+      'data-key': node.key,
+    });
+
+    const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
+
+    for (let handle of ['handleIn', 'handleOut']) {
+      if (segment[handle]) {
+        vSegmentUI.children.push(
+          connection(node, segment.anchor, segment[handle])
+        );
+      }
+    }
+
+    for (let controlNode of segment.children) {
+      vSegmentUI.children.push(control(node, controlNode, diameter));
+    }
+
+    return vSegmentUI;
+  };
+
+  const connection = (node, anchor, handle) => {
+    return h('line', {
+      'data-type': 'connection',
+      x1: anchor.vector.x,
+      y1: anchor.vector.y,
+      x2: handle.vector.x,
+      y2: handle.vector.y,
+      transform: node.transform.toString(),
+    });
+  };
+
+  const control = (pathNode, controlNode, diameter) => {
+    return h('circle', {
+      'data-type': controlNode.type,
+      'data-key': controlNode.key,
+      transform: pathNode.transform.toString(),
+      r: diameter / 2,
+      cx: controlNode.vector.x,
+      cy: controlNode.vector.y,
+      class: controlNode.class.toString(),
+    });
+  };
+
+  const scale = (node, length) => {
+    return length / node.globalScaleFactor();
+  };
+
   /**
    * Common utilities
    * @module glMatrix
@@ -3415,57 +3858,6 @@
     },
   };
 
-  const Class = {
-    create(classNames = []) {
-      return Object.create(Class).init(classNames);
-    },
-
-    init(classNames) {
-      if (classNames instanceof Array) {
-        this.set = new Set(classNames);
-      } else if (classNames instanceof Set) {
-        this.set = classNames;
-      } else {
-        throw new Error('Create Class instances from array or set');
-      }
-
-      return this;
-    },
-
-    // return value: string
-    toString() {
-      return Array.from(this.set).join(' ');
-    },
-
-    toJSON() {
-      return Array.from(this.set);
-    },
-
-    // return value: boolean
-    includes(className) {
-      return this.set.has(className);
-    },
-
-    // return value: new Class instance
-    add(className) {
-      return Class.create(this.set.add(className));
-    },
-
-    // return value: new Class instance
-    remove(className) {
-      this.set.delete(className);
-      return Class.create(this.set);
-    },
-  };
-
-  const createID = () => {
-    const randomString = Math.random()
-      .toString(36)
-      .substring(2);
-    const timestamp = new Date().getTime().toString(36);
-    return randomString + timestamp;
-  };
-
   const Node$$1 = Object.create(ProtoNode);
   Node$$1.defineProps(['type', 'key', 'class']);
 
@@ -4447,398 +4839,6 @@
       return this.findAncestor(node => node.parent.type === 'doc');
     },
   });
-
-  const h = (tag, props = {}, ...children) => {
-    return {
-      tag: tag,
-      props: props,
-      children: children || [],
-    };
-  };
-
-  const tools$$1 = store => {
-    return h(
-      'ul',
-      { id: 'buttons' },
-      h(
-        'li',
-        {},
-        h(
-          'button',
-          {
-            id: 'newDocButton',
-            class: 'pure-button',
-            'data-type': 'newDocButton',
-          },
-          'New'
-        )
-      ),
-      docs(store),
-      h(
-        'li',
-        {},
-        h(
-          'button',
-          {
-            id: 'getPrevious',
-            'data-type': 'getPrevious',
-            class: 'pure-button',
-          },
-          'Undo'
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'button',
-          {
-            id: 'getNext',
-            'data-type': 'getNext',
-            class: 'pure-button',
-          },
-          'Redo'
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'button',
-          {
-            id: 'selectButton',
-            'data-type': 'selectButton',
-            class: 'pure-button',
-          },
-          'Select'
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'button',
-          {
-            id: 'penButton',
-            'data-type': 'penButton',
-            class: 'pure-button',
-          },
-          'Pen'
-        )
-      )
-    );
-  };
-
-  const docs = store => {
-    const vDocs = h('ul', {
-      id: 'docs',
-      class: 'pure-menu-children doc-list',
-    });
-
-    const docs = store.docs;
-
-    for (let identifier of docs.children) {
-      vDocs.children.push(
-        h(
-          'li',
-          {
-            class: 'pure-menu-item',
-          },
-          h(
-            'a',
-            {
-              class: 'pure-menu-link',
-              'data-key': identifier._id,
-              'data-type': 'doc-identifier',
-            },
-            identifier._id
-          )
-          //  TODO: This is where we would need to put the *name* of the document.
-        )
-      );
-    }
-
-    const container = h(
-      'div',
-      { class: 'pure-menu pure-menu-horizontal' },
-      h(
-        'ul',
-        { class: 'pure-menu-list' },
-        h(
-          'li',
-          {
-            class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
-          },
-          h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
-          vDocs
-        )
-      )
-    );
-
-    return container;
-  };
-
-  const message = store => {
-    return store.message.text;
-  };
-
-  const LENGTHS_IN_PX = {
-    cornerSideLength: 8,
-    dotDiameter: 18,
-    controlDiameter: 6,
-  };
-
-  const canvas$$1 = store => {
-    return renderScene(store);
-  };
-
-  const renderScene = store => {
-    if (store.canvas === null) {
-      return '';
-    }
-
-    return buildTree(store.canvas);
-  };
-
-  const buildTree = (node, vParent = null) => {
-    const vNode = node.toVDOMNode();
-
-    if (vParent) {
-      const vWrapper = wrap(vNode, node);
-      vParent.children.push(vWrapper);
-    }
-
-    for (let child of node.graphicsChildren) {
-      buildTree(child, vNode);
-    }
-
-    return vNode;
-  };
-
-  const wrap = (vNode, node) => {
-    const vWrapper = h('g', {
-      'data-type': `${node.type}-wrapper`,
-      'data-key': node.key,
-    });
-
-    vWrapper.children.push(vNode);
-
-    if (node.type === 'shape') {
-      vWrapper.children.push(curves(node));
-      vWrapper.children.push(segments(node));
-    }
-
-    vWrapper.children.push(outerUI(node));
-
-    return vWrapper;
-  };
-
-  const curves = node => {
-    const diameter = scale$2(node, LENGTHS_IN_PX.controlDiameter);
-    const radius = diameter / 2;
-
-    const vParts = node.toVDOMCurves();
-    const splitter = h('circle', {
-      'data-type': 'splitter',
-      r: radius,
-      cx: node.splitter.x,
-      cy: node.splitter.y,
-      transform: node.transform.toString(),
-    });
-
-    return h(
-      'g',
-      {
-        'data-type': 'curves',
-        'data-key': node.key,
-      },
-      ...vParts,
-      splitter
-    );
-  };
-
-  const outerUI = node => {
-    const vOuterUI = h('g', {
-      'data-type': 'outerUI',
-      'data-key': node.key,
-    });
-
-    const vFrame = frame(node);
-    const vDots = dots(node); // for rotation UI
-    const vCorners = corners(node); // for scaling UI
-
-    vOuterUI.children.push(vFrame);
-
-    for (let vDot of vDots) {
-      vOuterUI.children.push(vDot);
-    }
-
-    for (let vCorner of vCorners) {
-      vOuterUI.children.push(vCorner);
-    }
-
-    return vOuterUI;
-  };
-
-  const corners = node => {
-    const vTopLCorner = h('rect');
-    const vBotLCorner = h('rect');
-    const vTopRCorner = h('rect');
-    const vBotRCorner = h('rect');
-    const vCorners = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
-    const length = scale$2(node, LENGTHS_IN_PX.cornerSideLength);
-
-    for (let vCorner of vCorners) {
-      Object.assign(vCorner.props, {
-        'data-type': 'corner',
-        'data-key': node.key,
-        transform: node.transform.toString(),
-        width: length,
-        height: length,
-      });
-    }
-
-    Object.assign(vTopLCorner.props, {
-      x: node.bounds.x - length / 2,
-      y: node.bounds.y - length / 2,
-    });
-
-    Object.assign(vBotLCorner.props, {
-      x: node.bounds.x - length / 2,
-      y: node.bounds.y + node.bounds.height - length / 2,
-    });
-
-    Object.assign(vTopRCorner.props, {
-      x: node.bounds.x + node.bounds.width - length / 2,
-      y: node.bounds.y - length / 2,
-    });
-
-    Object.assign(vBotRCorner.props, {
-      x: node.bounds.x + node.bounds.width - length / 2,
-      y: node.bounds.y + node.bounds.height - length / 2,
-    });
-
-    return vCorners;
-  };
-
-  const dots = node => {
-    const vTopLDot = h('circle');
-    const vBotLDot = h('circle');
-    const vTopRDot = h('circle');
-    const vBotRDot = h('circle');
-    const vDots = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
-    const diameter = scale$2(node, LENGTHS_IN_PX.dotDiameter);
-    const radius = diameter / 2;
-
-    for (let vDot of vDots) {
-      Object.assign(vDot.props, {
-        'data-type': 'dot',
-        'data-key': node.key,
-        transform: node.transform.toString(),
-        r: radius,
-      });
-    }
-
-    Object.assign(vTopLDot.props, {
-      cx: node.bounds.x - radius / 2,
-      cy: node.bounds.y - radius / 2,
-    });
-
-    Object.assign(vBotLDot.props, {
-      cx: node.bounds.x - radius / 2,
-      cy: node.bounds.y + node.bounds.height + radius / 2,
-    });
-
-    Object.assign(vTopRDot.props, {
-      cx: node.bounds.x + node.bounds.width + radius / 2,
-      cy: node.bounds.y - radius / 2,
-    });
-
-    Object.assign(vBotRDot.props, {
-      cx: node.bounds.x + node.bounds.width + radius / 2,
-      cy: node.bounds.y + node.bounds.height + radius / 2,
-    });
-
-    return vDots;
-  };
-
-  const frame = node => {
-    return h('rect', {
-      'data-type': 'frame',
-      x: node.bounds.x,
-      y: node.bounds.y,
-      width: node.bounds.width,
-      height: node.bounds.height,
-      transform: node.transform.toString(),
-      'data-key': node.key,
-    });
-  };
-
-  const segments = node => {
-    const spline = node.children[0];
-
-    const vSegments = h('g', {
-      'data-type': 'segments',
-      'data-key': node.key,
-    });
-
-    for (let segment of spline.children) {
-      vSegments.children.push(segmentUI(node, segment));
-    }
-
-    return vSegments;
-  };
-
-  const segmentUI = (node, segment) => {
-    const vSegmentUI = h('g', {
-      'data-type': 'segment',
-      class: segment.class.toString(),
-      'data-key': node.key,
-    });
-
-    const diameter = scale$2(node, LENGTHS_IN_PX.controlDiameter);
-
-    for (let handle of ['handleIn', 'handleOut']) {
-      if (segment[handle]) {
-        vSegmentUI.children.push(
-          connection(node, segment.anchor, segment[handle])
-        );
-      }
-    }
-
-    for (let controlNode of segment.children) {
-      vSegmentUI.children.push(control(node, controlNode, diameter));
-    }
-
-    return vSegmentUI;
-  };
-
-  const connection = (node, anchor, handle) => {
-    return h('line', {
-      'data-type': 'connection',
-      x1: anchor.vector.x,
-      y1: anchor.vector.y,
-      x2: handle.vector.x,
-      y2: handle.vector.y,
-      transform: node.transform.toString(),
-    });
-  };
-
-  const control = (pathNode, controlNode, diameter) => {
-    return h('circle', {
-      'data-type': controlNode.type,
-      'data-key': controlNode.key,
-      transform: pathNode.transform.toString(),
-      r: diameter / 2,
-      cx: controlNode.vector.x,
-      cy: controlNode.vector.y,
-      class: controlNode.class.toString(),
-    });
-  };
-
-  const scale$2 = (node, length) => {
-    return length / node.globalScaleFactor();
-  };
 
   const objectToDoc = object => {
     let node;

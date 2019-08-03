@@ -1,4 +1,4 @@
-import { tools, editor, message, canvas } from '../../domain/_.js';
+import { tools, message, canvas } from '../../domain/_.js';
 
 const exportToVDOM = state => {
   return {
