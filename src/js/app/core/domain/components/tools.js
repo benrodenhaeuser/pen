@@ -1,6 +1,6 @@
 import { h } from './_.js';
 
-const tools = store => {
+const tools = editor => {
   return h(
     'ul',
     { id: 'buttons' },
@@ -17,7 +17,7 @@ const tools = store => {
         'New'
       )
     ),
-    docs(store),
+    docs(editor),
     h(
       'li',
       {},
@@ -73,13 +73,13 @@ const tools = store => {
   );
 };
 
-const docs = store => {
+const docs = editor => {
   const vDocs = h('ul', {
     id: 'docs',
     class: 'pure-menu-children doc-list',
   });
 
-  const docs = store.docs;
+  const docs = editor.docs;
 
   for (let identifier of docs.children) {
     vDocs.children.push(

@@ -1,5 +1,5 @@
 const db = {
-  init(state) {
+  init(snapshot) {
     this.name = 'db';
     return this;
   },
@@ -57,22 +57,22 @@ const db = {
     });
   },
 
-  react(state) {
-    if (state.update === 'go') {
+  react(snapshot) {
+    if (snapshot.update === 'go') {
       window.dispatchEvent(new Event('loadDocIDs'));
-    } else if (state.update === 'requestDoc') {
+    } else if (snapshot.update === 'requestDoc') {
       window.dispatchEvent(
-        new CustomEvent('readDoc', { detail: state.input.key })
+        new CustomEvent('readDoc', { detail: snapshot.input.key })
       );
     } else if (
-      ['release', 'releasePen', 'changeMarkup'].includes(state.update)
+      ['release', 'releasePen', 'changeMarkup'].includes(snapshot.update)
     ) {
       window.dispatchEvent(
-        new CustomEvent('upsertDoc', { detail: state.plain.doc })
+        new CustomEvent('upsertDoc', { detail: snapshot.plain.doc })
       );
     }
 
-    this.previous = state;
+    this.previous = snapshot;
   },
 };
 

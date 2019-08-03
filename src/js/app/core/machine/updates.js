@@ -338,9 +338,9 @@ const updates = {
     state.message.text = '';
   },
 
-  // EDITOR
+  // MARKUP
 
-  userChangedEditorSelection(state, input) {
+  userChangedMarkupSelection(state, input) {
     this.cleanup(state, input);
 
     let syntaxTreeNode;

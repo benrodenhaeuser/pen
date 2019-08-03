@@ -16,9 +16,9 @@ const hist = {
     });
   },
 
-  react(state) {
-    if (this.isRelevant(state.update)) {
-      window.history.pushState(state.plain, 'entry');
+  react(snapshot) {
+    if (this.isRelevant(snapshot.update)) {
+      window.history.pushState(snapshot.plain, 'entry');
     }
   },
 

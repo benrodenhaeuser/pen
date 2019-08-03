@@ -1,4 +1,4 @@
-import { Store } from '../domain/_.js';
+import { Editor } from '../domain/_.js';
 import { Docs } from '../domain/_.js';
 import { Doc } from '../domain/_.js';
 import { Message } from '../domain/_.js';
@@ -23,22 +23,22 @@ const State = {
     this.label = 'start';
     this.input = {};
     this.update = '';
-    this.store = this.buildStore();
+    this.editor = this.buildEditor();
 
     return this;
   },
 
-  buildStore() {
-    const store = Store.create();
+  buildEditor() {
+    const editor = Editor.create();
+    const doc = this.buildDoc();
     const docs = Docs.create();
     const message = this.buildMessage();
-    const doc = this.buildDoc();
 
-    store.append(docs);
-    store.append(doc);
-    store.append(message);
+    editor.append(doc);
+    editor.append(docs);
+    editor.append(message);
 
-    return store;
+    return editor;
   },
 
   buildMessage() {
@@ -61,19 +61,8 @@ const State = {
     return doc;
   },
 
-  export() {
-    return {
-      label: this.label,
-      input: this.input,
-      update: this.update,
-      vDOM: this.editorToVDOM(),
-      plain: this.editorToPlain(),
-      syntaxTree: this.syntaxTree,
-    };
-  },
-
   editorToVDOM() {
-    return editorToVDOM(this.store);
+    return editorToVDOM(this.editor);
   },
 
   editorToPlain() {
@@ -99,7 +88,7 @@ const State = {
   },
 
   sceneToSyntaxTree() {
-    return sceneToSyntaxTree(this.store.canvas);
+    return sceneToSyntaxTree(this.editor.canvas);
   },
 
   // returns a Canvas node
@@ -108,33 +97,46 @@ const State = {
   },
 };
 
+Object.defineProperty(State, 'snapshot', {
+  get() {
+    return {
+      label: this.label,
+      input: this.input,
+      update: this.update,
+      vDOM: this.editorToVDOM(),
+      plain: this.editorToPlain(),
+      syntaxTree: this.syntaxTree,
+    };
+  },
+});
+
 Object.defineProperty(State, 'canvas', {
   get() {
-    return this.store.canvas;
+    return this.editor.canvas;
   },
 });
 
 Object.defineProperty(State, 'syntaxTree', {
   get() {
-    return this.store.syntaxTree;
+    return this.editor.syntaxTree;
   },
 });
 
 Object.defineProperty(State, 'doc', {
   get() {
-    return this.store.doc;
+    return this.editor.doc;
   },
 });
 
 Object.defineProperty(State, 'docs', {
   get() {
-    return this.store.docs;
+    return this.editor.docs;
   },
 });
 
 Object.defineProperty(State, 'message', {
   get() {
-    return this.store.message;
+    return this.editor.message;
   },
 });
 

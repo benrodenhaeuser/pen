@@ -40,7 +40,7 @@ const core = {
 
   publish() {
     for (let key of Object.keys(this.modules)) {
-      this.modules[key](this.state.export());
+      this.modules[key](this.state.snapshot);
     }
   },
 

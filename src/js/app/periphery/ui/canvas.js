@@ -4,9 +4,9 @@ const svgns = 'http://www.w3.org/2000/svg';
 const xmlns = 'http://www.w3.org/2000/xmlns/';
 
 const canvas = Object.assign(Object.create(UIModule), {
-  init(state) {
+  init(snapshot) {
     this.name = 'canvas';
-    UIModule.init.bind(this)(state);
+    UIModule.init.bind(this)(snapshot);
     return this;
   },
 

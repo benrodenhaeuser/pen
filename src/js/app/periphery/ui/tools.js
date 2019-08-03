@@ -1,9 +1,9 @@
 import { UIModule } from './uiModule.js';
 
 const tools = Object.assign(Object.create(UIModule), {
-  init(state) {
+  init(snapshot) {
     this.name = 'tools';
-    UIModule.init.bind(this)(state);
+    UIModule.init.bind(this)(snapshot);
     return this;
   },
 

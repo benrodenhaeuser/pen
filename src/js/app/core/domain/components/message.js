@@ -1,5 +1,5 @@
-const message = store => {
-  return store.message.text;
+const message = editor => {
+  return editor.message.text;
 };
 
 export { message };

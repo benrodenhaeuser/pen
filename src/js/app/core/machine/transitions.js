@@ -19,7 +19,7 @@ const transitions = [
     to: 'selectMode',
   },
 
-  // request stored document
+  // request editord document
   {
     type: 'click',
     target: 'doc-identifier',
@@ -236,17 +236,16 @@ const transitions = [
     to: 'adjustingSegment',
   },
 
-  // EDITOR
+  // MARKUP
 
-  // process editor input (=> from editor module)
   {
     type: 'userChangedMarkup',
     do: 'userChangedMarkup',
   },
 
   {
-    type: 'userChangedEditorSelection',
-    do: 'userChangedEditorSelection',
+    type: 'userChangedMarkupSelection',
+    do: 'userChangedMarkupSelection',
   },
 
   // MISCELLANEOUS

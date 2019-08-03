@@ -73,7 +73,7 @@
     };
   };
 
-  const tools$$1 = store => {
+  const tools$$1 = editor => {
     return h(
       'ul',
       { id: 'buttons' },
@@ -90,7 +90,7 @@
           'New'
         )
       ),
-      docs(store),
+      docs(editor),
       h(
         'li',
         {},
@@ -146,13 +146,13 @@
     );
   };
 
-  const docs = store => {
+  const docs = editor => {
     const vDocs = h('ul', {
       id: 'docs',
       class: 'pure-menu-children doc-list',
     });
 
-    const docs = store.docs;
+    const docs = editor.docs;
 
     for (let identifier of docs.children) {
       vDocs.children.push(
@@ -195,8 +195,8 @@
     return container;
   };
 
-  const message = store => {
-    return store.message.text;
+  const message = editor => {
+    return editor.message.text;
   };
 
   const LENGTHS_IN_PX = {
@@ -205,16 +205,16 @@
     controlDiameter: 6,
   };
 
-  const canvas$$1 = store => {
-    return renderScene(store);
+  const canvas$$1 = editor => {
+    return renderScene(editor);
   };
 
-  const renderScene = store => {
-    if (store.canvas === null) {
+  const renderScene = editor => {
+    if (editor.canvas === null) {
       return '';
     }
 
-    return buildTree(store.canvas);
+    return buildTree(editor.canvas);
   };
 
   const buildTree = (node, vParent = null) => {
@@ -4696,41 +4696,41 @@
     },
   });
 
-  const Store$$1 = Object.create(Node$$1);
+  const Editor$$1 = Object.create(Node$$1);
 
-  Object.assign(Store$$1, {
+  Object.assign(Editor$$1, {
     create() {
       return Node$$1.create
         .bind(this)()
-        .set({ type: 'store' });
+        .set({ type: 'editor' });
     },
   });
 
-  Object.defineProperty(Store$$1, 'message', {
+  Object.defineProperty(Editor$$1, 'message', {
     get() {
       return this.root.findDescendant(node => node.type === 'message');
     },
   });
 
-  Object.defineProperty(Store$$1, 'canvas', {
+  Object.defineProperty(Editor$$1, 'canvas', {
     get() {
       return this.root.findDescendant(node => node.type === 'canvas');
     },
   });
 
-  Object.defineProperty(Store$$1, 'docs', {
+  Object.defineProperty(Editor$$1, 'docs', {
     get() {
       return this.root.findDescendant(node => node.type === 'docs');
     },
   });
 
-  Object.defineProperty(Store$$1, 'doc', {
+  Object.defineProperty(Editor$$1, 'doc', {
     get() {
       return this.root.findDescendant(node => node.type === 'doc');
     },
   });
 
-  Object.defineProperty(Store$$1, 'syntaxTree', {
+  Object.defineProperty(Editor$$1, 'syntaxTree', {
     get() {
       return this.root.findDescendant(node => node.type === 'markupNode');
     },
@@ -4844,8 +4844,8 @@
     let node;
 
     switch (object.props.type) {
-      case 'store':
-        node = Store$$1.create();
+      case 'editor':
+        node = Editor$$1.create();
         break;
       case 'doc':
         node = Doc$$1.create();
@@ -5410,11 +5410,11 @@
     return pad;
   };
 
-  const editorToVDOM = store => {
+  const editorToVDOM = editor => {
     return {
-      tools: tools$$1(store),
-      message: message(store),
-      canvas: canvas$$1(store),
+      tools: tools$$1(editor),
+      message: message(editor),
+      canvas: canvas$$1(editor),
     };
   };
 
@@ -5427,22 +5427,22 @@
       this.label = 'start';
       this.input = {};
       this.update = '';
-      this.store = this.buildStore();
+      this.editor = this.buildEditor();
 
       return this;
     },
 
-    buildStore() {
-      const store = Store$$1.create();
+    buildEditor() {
+      const editor = Editor$$1.create();
+      const doc = this.buildDoc();
       const docs = Docs$$1.create();
       const message$$1 = this.buildMessage();
-      const doc = this.buildDoc();
 
-      store.append(docs);
-      store.append(doc);
-      store.append(message$$1);
+      editor.append(doc);
+      editor.append(docs);
+      editor.append(message$$1);
 
-      return store;
+      return editor;
     },
 
     buildMessage() {
@@ -5465,19 +5465,8 @@
       return doc;
     },
 
-    export() {
-      return {
-        label: this.label,
-        input: this.input,
-        update: this.update,
-        vDOM: this.editorToVDOM(),
-        plain: this.editorToPlain(),
-        syntaxTree: this.syntaxTree,
-      };
-    },
-
     editorToVDOM() {
-      return editorToVDOM(this.store);
+      return editorToVDOM(this.editor);
     },
 
     editorToPlain() {
@@ -5503,7 +5492,7 @@
     },
 
     sceneToSyntaxTree() {
-      return sceneToSyntaxTree(this.store.canvas);
+      return sceneToSyntaxTree(this.editor.canvas);
     },
 
     // returns a Canvas node
@@ -5512,33 +5501,46 @@
     },
   };
 
+  Object.defineProperty(State, 'snapshot', {
+    get() {
+      return {
+        label: this.label,
+        input: this.input,
+        update: this.update,
+        vDOM: this.editorToVDOM(),
+        plain: this.editorToPlain(),
+        syntaxTree: this.syntaxTree,
+      };
+    },
+  });
+
   Object.defineProperty(State, 'canvas', {
     get() {
-      return this.store.canvas;
+      return this.editor.canvas;
     },
   });
 
   Object.defineProperty(State, 'syntaxTree', {
     get() {
-      return this.store.syntaxTree;
+      return this.editor.syntaxTree;
     },
   });
 
   Object.defineProperty(State, 'doc', {
     get() {
-      return this.store.doc;
+      return this.editor.doc;
     },
   });
 
   Object.defineProperty(State, 'docs', {
     get() {
-      return this.store.docs;
+      return this.editor.docs;
     },
   });
 
   Object.defineProperty(State, 'message', {
     get() {
-      return this.store.message;
+      return this.editor.message;
     },
   });
 
@@ -5563,7 +5565,7 @@
       to: 'selectMode',
     },
 
-    // request stored document
+    // request editord document
     {
       type: 'click',
       target: 'doc-identifier',
@@ -5780,17 +5782,16 @@
       to: 'adjustingSegment',
     },
 
-    // EDITOR
+    // MARKUP
 
-    // process editor input (=> from editor module)
     {
       type: 'userChangedMarkup',
       do: 'userChangedMarkup',
     },
 
     {
-      type: 'userChangedEditorSelection',
-      do: 'userChangedEditorSelection',
+      type: 'userChangedMarkupSelection',
+      do: 'userChangedMarkupSelection',
     },
 
     // MISCELLANEOUS
@@ -6178,9 +6179,9 @@
       state.message.text = '';
     },
 
-    // EDITOR
+    // MARKUP
 
-    userChangedEditorSelection(state, input) {
+    userChangedMarkupSelection(state, input) {
       this.cleanup(state, input);
 
       let syntaxTreeNode;
@@ -6253,7 +6254,7 @@
 
     publish() {
       for (let key of Object.keys(this.modules)) {
-        this.modules[key](this.state.export());
+        this.modules[key](this.state.snapshot);
       }
     },
 
@@ -6263,7 +6264,7 @@
   };
 
   const db = {
-    init(state) {
+    init(snapshot) {
       this.name = 'db';
       return this;
     },
@@ -6321,22 +6322,22 @@
       });
     },
 
-    react(state) {
-      if (state.update === 'go') {
+    react(snapshot) {
+      if (snapshot.update === 'go') {
         window.dispatchEvent(new Event('loadDocIDs'));
-      } else if (state.update === 'requestDoc') {
+      } else if (snapshot.update === 'requestDoc') {
         window.dispatchEvent(
-          new CustomEvent('readDoc', { detail: state.input.key })
+          new CustomEvent('readDoc', { detail: snapshot.input.key })
         );
       } else if (
-        ['release', 'releasePen', 'changeMarkup'].includes(state.update)
+        ['release', 'releasePen', 'changeMarkup'].includes(snapshot.update)
       ) {
         window.dispatchEvent(
-          new CustomEvent('upsertDoc', { detail: state.plain.doc })
+          new CustomEvent('upsertDoc', { detail: snapshot.plain.doc })
         );
       }
 
-      this.previous = state;
+      this.previous = snapshot;
     },
   };
 
@@ -6358,9 +6359,9 @@
       });
     },
 
-    react(state) {
-      if (this.isRelevant(state.update)) {
-        window.history.pushState(state.plain, 'entry');
+    react(snapshot) {
+      if (this.isRelevant(snapshot.update)) {
+        window.history.pushState(snapshot.plain, 'entry');
       }
     },
 
@@ -6375,10 +6376,10 @@
   };
 
   const UIModule = {
-    init(state) {
+    init(snapshot) {
       this.mountPoint = document.querySelector(`#${this.name}`);
-      this.dom = this.createElement(state.vDOM[this.name]);
-      this.previousVDOM = state.vDOM[this.name];
+      this.dom = this.createElement(snapshot.vDOM[this.name]);
+      this.previousVDOM = snapshot.vDOM[this.name];
 
       this.mount();
     },
@@ -6388,9 +6389,9 @@
       this.mountPoint.appendChild(this.dom);
     },
 
-    react(state) {
-      this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
-      this.previousVDOM = state.vDOM[this.name];
+    react(snapshot) {
+      this.reconcile(this.previousVDOM, snapshot.vDOM[this.name], this.dom);
+      this.previousVDOM = snapshot.vDOM[this.name];
     },
 
     createElement(vNode) {
@@ -6469,9 +6470,9 @@
   const xmlns$1 = 'http://www.w3.org/2000/xmlns/';
 
   const canvas$1 = Object.assign(Object.create(UIModule), {
-    init(state) {
+    init(snapshot) {
       this.name = 'canvas';
-      UIModule.init.bind(this)(state);
+      UIModule.init.bind(this)(snapshot);
       return this;
     },
 
@@ -16637,18 +16638,18 @@
 
   });
 
-  const editor = {
-    init(state) {
-      this.name = 'editor';
-      this.mountPoint = document.querySelector(`#editor`);
-      this.editor = CodeMirror(this.mountPoint, {
+  const markup = {
+    init(snapshot) {
+      this.name = 'markup';
+      this.mountPoint = document.querySelector(`#markup`);
+      this.markupEditor = CodeMirror(this.mountPoint, {
         lineNumbers: true,
         lineWrapping: true,
         mode: 'xml',
-        value: state.syntaxTree.toMarkup(),
+        value: snapshot.syntaxTree.toMarkup(),
       });
-      this.markupDoc = this.editor.getDoc();
-      this.previousSyntaxTree = state.syntaxTree;
+      this.markupDoc = this.markupEditor.getDoc();
+      this.previousSyntaxTree = snapshot.syntaxTree;
 
       return this;
     },
@@ -16659,19 +16660,19 @@
     },
 
     bindCodemirrorEvents() {
-      this.editor.on('change', (instance, changeObj) => {
+      this.markupEditor.on('change', (instance, changeObj) => {
         if (changeObj.origin !== 'setValue') {
           window.dispatchEvent(new CustomEvent('userChangedMarkup'));
         }
       });
 
-      this.editor.on('beforeSelectionChange', (instance, obj) => {
+      this.markupEditor.on('beforeSelectionChange', (instance, obj) => {
         if (obj.origin !== undefined) {
           obj.update(obj.ranges);
           const cursorPosition = obj.ranges[0].anchor;
           const index = this.markupDoc.indexFromPos(cursorPosition);
           window.dispatchEvent(
-            new CustomEvent('userChangedEditorSelection', { detail: index })
+            new CustomEvent('userChangedMarkupSelection', { detail: index })
           );
         }
       });
@@ -16684,49 +16685,49 @@
         func({
           source: this.name,
           type: 'userChangedMarkup',
-          value: this.editor.getValue(),
+          value: this.markupEditor.getValue(),
         });
       });
 
-      window.addEventListener('userChangedEditorSelection', event => {
+      window.addEventListener('userChangedMarkupSelection', event => {
         console.log('user changed selection');
 
         func({
           source: this.name,
-          type: 'userChangedEditorSelection',
+          type: 'userChangedMarkupSelection',
           index: event.detail,
         });
       });
     },
 
-    react(state) {
+    react(snapshot) {
       // clear text marker
       if (this.textMarker) {
         this.textMarker.clear();
       }
 
       // update document value
-      if (this.previousSyntaxTree.toMarkup() !== state.syntaxTree.toMarkup()) {
+      if (this.previousSyntaxTree.toMarkup() !== snapshot.syntaxTree.toMarkup()) {
         this.ignoreCursor = true;
         const cursor = this.markupDoc.getCursor();
-        this.markupDoc.setValue(state.syntaxTree.toMarkup());
+        this.markupDoc.setValue(snapshot.syntaxTree.toMarkup());
         this.markupDoc.setCursor(cursor);
         this.ignoreCursor = false;
       }
 
       // set text marker
-      const node = state.syntaxTree.findDescendantByClass('selected');
+      const node = snapshot.syntaxTree.findDescendantByClass('selected');
       if (node) {
-        const from = this.editor.doc.posFromIndex(node.start);
-        const to = this.editor.doc.posFromIndex(node.end + 1);
+        const from = this.markupEditor.doc.posFromIndex(node.start);
+        const to = this.markupEditor.doc.posFromIndex(node.end + 1);
         const range = [from, to];
         this.textMarker = this.markupDoc.markText(...range, {
           className: 'selected-markup',
         });
       }
 
-      // store syntax tree received
-      this.previousSyntaxTree = state.syntaxTree;
+      // editor syntax tree received
+      this.previousSyntaxTree = snapshot.syntaxTree;
     },
   };
 
@@ -16735,9 +16736,9 @@
   // this.markupDoc.setSelection(anchor, head);
 
   const tools$1 = Object.assign(Object.create(UIModule), {
-    init(state) {
+    init(snapshot) {
       this.name = 'tools';
-      UIModule.init.bind(this)(state);
+      UIModule.init.bind(this)(snapshot);
       return this;
     },
 
@@ -16763,9 +16764,9 @@
   });
 
   const message$1 = Object.assign(Object.create(UIModule), {
-    init(state) {
+    init(snapshot) {
       this.name = 'message';
-      UIModule.init.bind(this)(state);
+      UIModule.init.bind(this)(snapshot);
       return this;
     },
 
@@ -16800,14 +16801,14 @@
     },
   });
 
-  const modules = [canvas$1, editor, tools$1, message$1, hist, db];
+  const modules = [canvas$1, markup, tools$1, message$1, hist, db];
 
   const app = {
     init() {
       core.init();
 
       for (let module of modules) {
-        module.init(core.state.export());
+        module.init(core.state.snapshot);
         module.bindEvents(core.compute.bind(core));
         core.attach(module.name, module.react.bind(module));
       }

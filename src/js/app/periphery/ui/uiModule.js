@@ -1,8 +1,8 @@
 const UIModule = {
-  init(state) {
+  init(snapshot) {
     this.mountPoint = document.querySelector(`#${this.name}`);
-    this.dom = this.createElement(state.vDOM[this.name]);
-    this.previousVDOM = state.vDOM[this.name];
+    this.dom = this.createElement(snapshot.vDOM[this.name]);
+    this.previousVDOM = snapshot.vDOM[this.name];
 
     this.mount();
   },
@@ -12,9 +12,9 @@ const UIModule = {
     this.mountPoint.appendChild(this.dom);
   },
 
-  react(state) {
-    this.reconcile(this.previousVDOM, state.vDOM[this.name], this.dom);
-    this.previousVDOM = state.vDOM[this.name];
+  react(snapshot) {
+    this.reconcile(this.previousVDOM, snapshot.vDOM[this.name], this.dom);
+    this.previousVDOM = snapshot.vDOM[this.name];
   },
 
   createElement(vNode) {

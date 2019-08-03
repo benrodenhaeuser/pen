@@ -1,10 +1,10 @@
 import { tools, message, canvas } from '../domain/_.js';
 
-const editorToVDOM = store => {
+const editorToVDOM = editor => {
   return {
-    tools: tools(store),
-    message: message(store),
-    canvas: canvas(store),
+    tools: tools(editor),
+    message: message(editor),
+    canvas: canvas(editor),
   };
 };
 

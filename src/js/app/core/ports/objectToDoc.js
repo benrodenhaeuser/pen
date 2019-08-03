@@ -1,4 +1,4 @@
-import { Store, Docs, Doc, Message } from '../domain/_.js';
+import { Editor, Docs, Doc, Message } from '../domain/_.js';
 import { Canvas, Shape, Group } from '../domain/_.js';
 import { Spline, Segment, Anchor } from '../domain/_.js';
 import { HandleIn, HandleOut } from '../domain/_.js';
@@ -12,8 +12,8 @@ const objectToDoc = object => {
   let node;
 
   switch (object.props.type) {
-    case 'store':
-      node = Store.create();
+    case 'editor':
+      node = Editor.create();
       break;
     case 'doc':
       node = Doc.create();

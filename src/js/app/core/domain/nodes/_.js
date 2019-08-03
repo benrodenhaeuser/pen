@@ -12,7 +12,7 @@ import { Anchor } from './anchor.js';
 import { HandleIn } from './handleIn.js';
 import { HandleOut } from './handleOut.js';
 import { Doc } from './doc.js';
-import { Store } from './store.js';
+import { Editor } from './editor.js';
 import { Docs } from './docs.js';
 import { Message } from './message.js';
 import { Identifier } from './identifier.js';
@@ -32,7 +32,7 @@ export {
   Anchor,
   HandleIn,
   HandleOut,
-  Store,
+  Editor,
   Doc,
   Docs,
   Message,

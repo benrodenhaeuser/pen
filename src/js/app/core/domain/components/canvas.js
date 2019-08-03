@@ -6,16 +6,16 @@ const LENGTHS_IN_PX = {
   controlDiameter: 6,
 };
 
-const canvas = store => {
-  return renderScene(store);
+const canvas = editor => {
+  return renderScene(editor);
 };
 
-const renderScene = store => {
-  if (store.canvas === null) {
+const renderScene = editor => {
+  if (editor.canvas === null) {
     return '';
   }
 
-  return buildTree(store.canvas);
+  return buildTree(editor.canvas);
 };
 
 const buildTree = (node, vParent = null) => {

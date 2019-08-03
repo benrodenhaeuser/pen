@@ -1,43 +1,43 @@
 import { Node } from './_.js';
 
-const Store = Object.create(Node);
+const Editor = Object.create(Node);
 
-Object.assign(Store, {
+Object.assign(Editor, {
   create() {
     return Node.create
       .bind(this)()
-      .set({ type: 'store' });
+      .set({ type: 'editor' });
   },
 });
 
-Object.defineProperty(Store, 'message', {
+Object.defineProperty(Editor, 'message', {
   get() {
     return this.root.findDescendant(node => node.type === 'message');
   },
 });
 
-Object.defineProperty(Store, 'canvas', {
+Object.defineProperty(Editor, 'canvas', {
   get() {
     return this.root.findDescendant(node => node.type === 'canvas');
   },
 });
 
-Object.defineProperty(Store, 'docs', {
+Object.defineProperty(Editor, 'docs', {
   get() {
     return this.root.findDescendant(node => node.type === 'docs');
   },
 });
 
-Object.defineProperty(Store, 'doc', {
+Object.defineProperty(Editor, 'doc', {
   get() {
     return this.root.findDescendant(node => node.type === 'doc');
   },
 });
 
-Object.defineProperty(Store, 'syntaxTree', {
+Object.defineProperty(Editor, 'syntaxTree', {
   get() {
     return this.root.findDescendant(node => node.type === 'markupNode');
   },
 });
 
-export { Store };
+export { Editor };
