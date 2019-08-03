@@ -6,9 +6,7 @@ import { Canvas } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 import { MarkupNode } from '../domain/_.js';
 
-import { exportToSVG } from '../ports/_.js';
-import { exportToVDOM } from '../ports/_.js';
-import { exportToPlain } from '../ports/_.js';
+import { editorToVDOM } from '../ports/_.js';
 import { markupToScene } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
 import { markupToDOM } from '../ports/_.js';
@@ -68,10 +66,20 @@ const State = {
       label: this.label,
       input: this.input,
       update: this.update,
-      vDOM: this.exportToVDOM(),
-      plain: this.exportToPlain(),
+      vDOM: this.editorToVDOM(),
+      plain: this.editorToPlain(),
       syntaxTree: this.syntaxTree,
     };
+  },
+
+  editorToVDOM() {
+    return editorToVDOM(this.store);
+  },
+
+  editorToPlain() {
+    return {
+      doc: JSON.parse(JSON.stringify(this.doc)),
+    }
   },
 
   objectToDoc(object) {
@@ -97,20 +105,6 @@ const State = {
   // returns a Canvas node
   markupToScene(markup) {
     return markupToScene(markup);
-  },
-
-  exportToSVG() {
-    return exportToSVG(this.store);
-  },
-
-  // TODO: weird - returns a Doc node and a list of ids (for docs)
-  exportToVDOM() {
-    return exportToVDOM(this);
-  },
-
-  // returns a plain representation of Doc node and a list of ids (for docs)
-  exportToPlain() {
-    return exportToPlain(this.store);
   },
 };
 

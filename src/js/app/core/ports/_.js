@@ -1,21 +1,17 @@
-import { markupToScene } from './import/_.js';
-import { markupToDOM } from './import/_.js';
-import { domToScene } from './import/_.js';
-import { domToSyntaxTree } from './import/_.js';
-import { sceneToSyntaxTree } from './import/_.js';
-import { objectToDoc } from './import/_.js';
-import { exportToSVG } from './export/_.js';
-import { exportToVDOM } from './export/_.js';
-import { exportToPlain } from './export/_.js';
+import { objectToDoc } from './objectToDoc.js';
+import { markupToScene } from './markupToScene.js';
+import { markupToDOM } from './markupToDOM.js';
+import { domToScene } from './domToScene.js';
+import { domToSyntaxTree } from './domToSyntaxTree.js';
+import { sceneToSyntaxTree } from './sceneToSyntaxTree.js';
+import { editorToVDOM } from './editorToVDOM.js';
 
 export {
+  objectToDoc,
+  markupToScene,
   markupToDOM,
   domToScene,
   domToSyntaxTree,
   sceneToSyntaxTree,
-  markupToScene,
-  objectToDoc,
-  exportToSVG,
-  exportToVDOM,
-  exportToPlain,
+  editorToVDOM,
 };

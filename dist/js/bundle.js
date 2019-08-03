@@ -5410,97 +5410,12 @@
     return pad;
   };
 
-  const exportToVDOM = state => {
+  const editorToVDOM = store => {
     return {
-      tools: tools$$1(state.store),
-      message: message(state.store),
-      canvas: canvas$$1(state.store),
+      tools: tools$$1(store),
+      message: message(store),
+      canvas: canvas$$1(store),
     };
-  };
-
-  const exportToPlain = store => {
-    return {
-      doc: JSON.parse(JSON.stringify(store.doc)),
-    };
-  };
-
-  const exportToSVG = store => {
-    const markup = [];
-    const vNode = buildSceneNode(store.canvas);
-
-    return convertToMarkup(markup, vNode, 0);
-  };
-
-  const buildSceneNode = (node, svgParent = null) => {
-    const svgNode = node.toSVGNode();
-
-    if (svgParent) {
-      svgParent.children.push(svgNode);
-    }
-
-    for (let child of node.graphicsChildren) {
-      buildSceneNode(child, svgNode);
-    }
-
-    return svgNode;
-  };
-
-  const convertToMarkup = (markup, svgNode, level) => {
-    appendOpenTag(markup, svgNode, level);
-    for (let child of svgNode.children) {
-      convertToMarkup(markup, child, level + 1);
-    }
-    appendCloseTag(markup, svgNode, level);
-
-    return markup.join('');
-  };
-
-  const appendOpenTag = (markup, svgNode, level) => {
-    const tag = [];
-
-    for (let i = 0; i < level; i += 1) {
-      tag.push('  ');
-    }
-
-    tag.push('<');
-    tag.push(svgNode.tag);
-
-    const propsList = [];
-
-    for (let [key, value] of Object.entries(svgNode.props)) {
-      propsList.push(`${key}="${value}"`);
-    }
-
-    if (propsList.length > 0) {
-      tag.push(' ');
-    }
-
-    tag.push(propsList.join(' '));
-
-    tag.push('>');
-
-    // if (svgNode.tag !== 'path') {
-    tag.push('\n');
-    // }
-
-    markup.push(tag.join(''));
-  };
-
-  const appendCloseTag = (markup, svgNode, level) => {
-    const tag = [];
-
-    // if (svgNode.tag !== 'path') {
-    for (let i = 0; i < level; i += 1) {
-      tag.push('  ');
-    }
-    // }
-
-    tag.push('</');
-    tag.push(svgNode.tag);
-    tag.push('>');
-    tag.push('\n');
-
-    markup.push(tag.join(''));
   };
 
   const State = {
@@ -5555,10 +5470,20 @@
         label: this.label,
         input: this.input,
         update: this.update,
-        vDOM: this.exportToVDOM(),
-        plain: this.exportToPlain(),
+        vDOM: this.editorToVDOM(),
+        plain: this.editorToPlain(),
         syntaxTree: this.syntaxTree,
       };
+    },
+
+    editorToVDOM() {
+      return editorToVDOM(this.store);
+    },
+
+    editorToPlain() {
+      return {
+        doc: JSON.parse(JSON.stringify(this.doc)),
+      }
     },
 
     objectToDoc(object) {
@@ -5584,20 +5509,6 @@
     // returns a Canvas node
     markupToScene(markup) {
       return markupToScene(markup);
-    },
-
-    exportToSVG() {
-      return exportToSVG(this.store);
-    },
-
-    // TODO: weird - returns a Doc node and a list of ids (for docs)
-    exportToVDOM() {
-      return exportToVDOM(this);
-    },
-
-    // returns a plain representation of Doc node and a list of ids (for docs)
-    exportToPlain() {
-      return exportToPlain(this.store);
     },
   };
 

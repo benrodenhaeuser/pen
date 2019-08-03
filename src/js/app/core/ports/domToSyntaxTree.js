@@ -1,4 +1,4 @@
-import { MarkupNode } from '../../domain/_.js';
+import { MarkupNode } from '../domain/_.js';
 
 const domToSyntaxTree = $svg => {
   if ($svg instanceof SVGElement) {

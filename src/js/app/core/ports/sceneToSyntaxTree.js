@@ -1,4 +1,4 @@
-import { MarkupNode } from '../../domain/nodes/_.js';
+import { MarkupNode } from '../domain/nodes/_.js';
 
 const sceneToSyntaxTree = canvas => {
   const syntaxTree = MarkupNode.create();
