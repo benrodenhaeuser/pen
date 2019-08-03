@@ -11,7 +11,7 @@ Object.assign(Node, {
       .set({
         children: [],
         parent: null,
-        payload: {},
+        props: {},
       })
       .set({
         type: null,
@@ -19,8 +19,6 @@ Object.assign(Node, {
         class: Class.create(),
       });
   },
-
-  // search
 
   findAncestor(predicate) {
     if (predicate(this)) {
@@ -89,8 +87,6 @@ Object.assign(Node, {
     });
   },
 
-  // hierarchy operations
-
   append(node) {
     this.children = this.children.concat([node]);
     node.parent = this;
@@ -107,8 +103,6 @@ Object.assign(Node, {
     this.children.splice(index, 0, node);
   },
 
-  // hierarchy tests
-
   isLeaf() {
     return this.children.length === 0;
   },
@@ -120,7 +114,7 @@ Object.assign(Node, {
   toJSON() {
     return {
       children: this.children,
-      payload: this.payload,
+      props: this.props,
     };
   },
 });

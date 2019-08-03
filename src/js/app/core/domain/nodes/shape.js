@@ -28,8 +28,8 @@ Object.assign(Shape, {
       tag: 'path',
       children: [],
       props: {
-        'data-type': 'shape',
         'data-key': this.key,
+        'data-type': this.type,
         d: this.toPathString(),
         transform: this.transform.toString(),
         class: this.class.toString(),

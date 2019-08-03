@@ -9,11 +9,11 @@ GraphicsNode.defineProps(['transform']);
 
 Object.defineProperty(GraphicsNode, 'bounds', {
   get() {
-    return this.payload.bounds || this.computeBounds();
+    return this.props.bounds || this.computeBounds();
   },
 
   set(value) {
-    this.payload.bounds = value;
+    this.props.bounds = value;
   },
 });
 

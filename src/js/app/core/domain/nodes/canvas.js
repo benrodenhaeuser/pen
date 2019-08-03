@@ -119,7 +119,7 @@ Object.assign(Canvas, {
       children: [],
       props: {
         'data-key': this.key,
-        'data-type': 'canvas',
+        'data-type': this.type,
         viewBox: this.viewBox.toString(),
         xmlns: 'http://www.w3.org/2000/svg',
         class: this.class.toString(),

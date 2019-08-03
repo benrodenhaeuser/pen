@@ -17,7 +17,7 @@ Object.assign(Group, {
       children: [],
       props: {
         'data-key': this.key,
-        'data-type': 'group',
+        'data-type': this.type,
         transform: this.transform.toString(),
         class: this.class.toString(),
       },

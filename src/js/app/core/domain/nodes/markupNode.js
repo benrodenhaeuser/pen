@@ -1,11 +1,12 @@
 import { Node } from './_.js';
 
 const MarkupNode = Object.create(Node);
+MarkupNode.defineProps(['markup', 'start', 'end', 'level']);
 
 Object.assign(MarkupNode, {
   create() {
-    return Node.create
-      .bind(this)()
+    return Node
+      .create.bind(this)()
       .set({ type: 'markupNode' });
   },
 
@@ -70,7 +71,5 @@ Object.defineProperty(MarkupNode, 'markupRoot', {
     return this.findAncestor(node => node.parent.type === 'doc');
   },
 });
-
-// start, end, markup, level
 
 export { MarkupNode };

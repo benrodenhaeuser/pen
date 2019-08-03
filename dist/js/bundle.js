@@ -3394,11 +3394,11 @@
       for (let propName of propNames) {
         Object.defineProperty(this, propName, {
           get() {
-            return this.payload[propName];
+            return this.props[propName];
           },
 
           set(value) {
-            this.payload[propName] = value;
+            this.props[propName] = value;
           },
         });
       }
@@ -3475,7 +3475,7 @@
         .set({
           children: [],
           parent: null,
-          payload: {},
+          props: {},
         })
         .set({
           type: null,
@@ -3483,8 +3483,6 @@
           class: Class.create(),
         });
     },
-
-    // search
 
     findAncestor(predicate) {
       if (predicate(this)) {
@@ -3553,8 +3551,6 @@
       });
     },
 
-    // hierarchy operations
-
     append(node) {
       this.children = this.children.concat([node]);
       node.parent = this;
@@ -3571,8 +3567,6 @@
       this.children.splice(index, 0, node);
     },
 
-    // hierarchy tests
-
     isLeaf() {
       return this.children.length === 0;
     },
@@ -3584,7 +3578,7 @@
     toJSON() {
       return {
         children: this.children,
-        payload: this.payload,
+        props: this.props,
       };
     },
   });
@@ -3644,11 +3638,11 @@
 
   Object.defineProperty(GraphicsNode$$1, 'bounds', {
     get() {
-      return this.payload.bounds || this.computeBounds();
+      return this.props.bounds || this.computeBounds();
     },
 
     set(value) {
-      this.payload.bounds = value;
+      this.props.bounds = value;
     },
   });
 
@@ -3889,7 +3883,7 @@
         children: [],
         props: {
           'data-key': this.key,
-          'data-type': 'canvas',
+          'data-type': this.type,
           viewBox: this.viewBox.toString(),
           xmlns: 'http://www.w3.org/2000/svg',
           class: this.class.toString(),
@@ -3939,7 +3933,7 @@
         children: [],
         props: {
           'data-key': this.key,
-          'data-type': 'group',
+          'data-type': this.type,
           transform: this.transform.toString(),
           class: this.class.toString(),
         },
@@ -4007,8 +4001,8 @@
         tag: 'path',
         children: [],
         props: {
-          'data-type': 'shape',
           'data-key': this.key,
+          'data-type': this.type,
           d: this.toPathString(),
           transform: this.transform.toString(),
           class: this.class.toString(),
@@ -4129,11 +4123,11 @@
 
   Object.defineProperty(Spline$$1, 'bounds', {
     get() {
-      return this.payload.bounds || this.computeBounds();
+      return this.props.bounds || this.computeBounds();
     },
 
     set(value) {
-      this.payload.bounds = value;
+      this.props.bounds = value;
     },
   });
 
@@ -4383,11 +4377,12 @@
   });
 
   const MarkupNode$$1 = Object.create(Node$$1);
+  MarkupNode$$1.defineProps(['markup', 'start', 'end', 'level']);
 
   Object.assign(MarkupNode$$1, {
     create() {
-      return Node$$1.create
-        .bind(this)()
+      return Node$$1
+        .create.bind(this)()
         .set({ type: 'markupNode' });
     },
 
@@ -4582,8 +4577,6 @@
 
     return container;
   };
-
-  // not needed atm
 
   const message = store => {
     return store.message.text;
@@ -4850,7 +4843,7 @@
   const objectToDoc = object => {
     let node;
 
-    switch (object.payload.type) {
+    switch (object.props.type) {
       case 'store':
         node = Store$$1.create();
         break;
@@ -4896,9 +4889,9 @@
         break;
     }
 
-    node.type = object.payload.type;
+    node.type = object.props.type;
 
-    setPayload(node, object);
+    setprops(node, object);
 
     for (let child of object.children) {
       node.append(objectToDoc(child));
@@ -4907,8 +4900,8 @@
     return node;
   };
 
-  const setPayload = (node, object) => {
-    for (let [key, value] of Object.entries(object.payload)) {
+  const setprops = (node, object) => {
+    for (let [key, value] of Object.entries(object.props)) {
       switch (key) {
         case 'viewBox':
           node.viewBox = Rectangle$$1.createFromObject(value);
@@ -5420,7 +5413,6 @@
   const exportToVDOM = state => {
     return {
       tools: tools$$1(state.store),
-      // editor:   editor(state),     // not needed atm
       message: message(state.store),
       canvas: canvas$$1(state.store),
     };
@@ -6377,7 +6369,7 @@
           });
         });
 
-        request.open('POST', '/docs/' + event.detail.payload._id);
+        request.open('POST', '/docs/' + event.detail.props._id);
         request.send(JSON.stringify(event.detail));
       });
 
@@ -16734,7 +16726,7 @@
 
   });
 
-  const editor$1 = {
+  const editor = {
     init(state) {
       this.name = 'editor';
       this.mountPoint = document.querySelector(`#editor`);
@@ -16897,7 +16889,7 @@
     },
   });
 
-  const modules = [canvas$1, editor$1, tools$1, message$1, hist, db];
+  const modules = [canvas$1, editor, tools$1, message$1, hist, db];
 
   const app = {
     init() {

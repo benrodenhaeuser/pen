@@ -11,7 +11,7 @@ import { Class } from '../../domain/_.js';
 const objectToDoc = object => {
   let node;
 
-  switch (object.payload.type) {
+  switch (object.props.type) {
     case 'store':
       node = Store.create();
       break;
@@ -57,9 +57,9 @@ const objectToDoc = object => {
       break;
   }
 
-  node.type = object.payload.type;
+  node.type = object.props.type;
 
-  setPayload(node, object);
+  setprops(node, object);
 
   for (let child of object.children) {
     node.append(objectToDoc(child));
@@ -68,8 +68,8 @@ const objectToDoc = object => {
   return node;
 };
 
-const setPayload = (node, object) => {
-  for (let [key, value] of Object.entries(object.payload)) {
+const setprops = (node, object) => {
+  for (let [key, value] of Object.entries(object.props)) {
     switch (key) {
       case 'viewBox':
         node.viewBox = Rectangle.createFromObject(value);

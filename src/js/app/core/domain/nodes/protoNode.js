@@ -3,11 +3,11 @@ const ProtoNode = {
     for (let propName of propNames) {
       Object.defineProperty(this, propName, {
         get() {
-          return this.payload[propName];
+          return this.props[propName];
         },
 
         set(value) {
-          this.payload[propName] = value;
+          this.props[propName] = value;
         },
       });
     }

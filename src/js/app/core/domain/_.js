@@ -1,4 +1,9 @@
-import { Vector, Matrix, Rectangle, Curve } from './geometry/_.js';
+import {
+  Vector,
+  Matrix,
+  Rectangle,
+  Curve
+} from './geometry/_.js';
 
 import {
   Canvas,
@@ -17,10 +22,11 @@ import {
   MarkupNode,
 } from './nodes/_.js';
 
-import { Class } from './helpers/_.js';
+import {
+  Class
+} from './helpers/_.js';
 
 import { tools } from './components/_.js';
-import { editor } from './components/_.js';
 import { message } from './components/_.js';
 import { canvas } from './components/_.js';
 
@@ -45,7 +51,6 @@ export {
   MarkupNode,
   Class,
   tools,
-  editor,
   message,
   canvas,
 };
