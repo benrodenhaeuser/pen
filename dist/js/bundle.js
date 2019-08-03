@@ -4773,8 +4773,8 @@
 
   Object.assign(MarkupNode$$1, {
     create() {
-      return Node$$1
-        .create.bind(this)()
+      return Node$$1.create
+        .bind(this)()
         .set({ type: 'markupNode' });
     },
 
@@ -5483,7 +5483,7 @@
     editorToPlain() {
       return {
         doc: JSON.parse(JSON.stringify(this.doc)),
-      }
+      };
     },
 
     objectToDoc(object) {

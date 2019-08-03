@@ -5,8 +5,8 @@ MarkupNode.defineProps(['markup', 'start', 'end', 'level']);
 
 Object.assign(MarkupNode, {
   create() {
-    return Node
-      .create.bind(this)()
+    return Node.create
+      .bind(this)()
       .set({ type: 'markupNode' });
   },
 

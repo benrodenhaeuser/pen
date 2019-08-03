@@ -79,7 +79,7 @@ const State = {
   editorToPlain() {
     return {
       doc: JSON.parse(JSON.stringify(this.doc)),
-    }
+    };
   },
 
   objectToDoc(object) {
