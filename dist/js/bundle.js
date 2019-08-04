@@ -5427,12 +5427,12 @@
       this.label = 'start';
       this.input = {};
       this.update = '';
-      this.editor = this.buildEditor();
+      this.editor = this.buildEditorTree();
 
       return this;
     },
 
-    buildEditor() {
+    buildEditorTree() {
       const editor = Editor$$1.create();
       const doc = this.buildDoc();
       const docs = Docs$$1.create();
@@ -5495,7 +5495,6 @@
       return sceneToSyntaxTree(this.editor.canvas);
     },
 
-    // returns a Canvas node
     markupToScene(markup) {
       return markupToScene(markup);
     },
@@ -6232,8 +6231,6 @@
 
     compute(input) {
       this.state.input = input;
-
-      console.log(this.state);
 
       const transition = transitions.get(this.state, input);
 

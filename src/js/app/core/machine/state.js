@@ -23,12 +23,12 @@ const State = {
     this.label = 'start';
     this.input = {};
     this.update = '';
-    this.editor = this.buildEditor();
+    this.editor = this.buildEditorTree();
 
     return this;
   },
 
-  buildEditor() {
+  buildEditorTree() {
     const editor = Editor.create();
     const doc = this.buildDoc();
     const docs = Docs.create();
@@ -91,7 +91,6 @@ const State = {
     return sceneToSyntaxTree(this.editor.canvas);
   },
 
-  // returns a Canvas node
   markupToScene(markup) {
     return markupToScene(markup);
   },
