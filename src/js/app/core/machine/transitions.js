@@ -244,8 +244,8 @@ const transitions = [
   },
 
   {
-    type: 'userChangedMarkupSelection',
-    do: 'userChangedMarkupSelection',
+    type: 'userMovedMarkupSelection',
+    do: 'userMovedMarkupSelection',
   },
 
   // MISCELLANEOUS

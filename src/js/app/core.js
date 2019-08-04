@@ -37,6 +37,8 @@ const core = {
   },
 
   publish() {
+    // console.log(this.state);
+
     for (let key of Object.keys(this.modules)) {
       this.modules[key](this.state.snapshot);
     }

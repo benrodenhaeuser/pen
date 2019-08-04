@@ -4464,6 +4464,8 @@
 
       open.key = this.key;
       open.class = this.class;
+      // ^ this is how the shape classes end up in the syntaxtree
+      //   it looks like it's a shared object!
 
       const close = MarkupNode$$1.create();
       close.markup = '</path>';
@@ -5381,6 +5383,7 @@
     tNode.markup = '\n';
     markupParent.append(tNode);
 
+    // inner markup
     if (sceneNode.graphicsChildren.length > 0) {
       const markupNode = MarkupNode$$1.create();
       markupParent.append(markupNode);
@@ -5456,7 +5459,6 @@
 
       const canvas = Canvas$$1.create();
       canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 600, 395);
-      // ^ TODO this is not in the right place.
       doc.append(canvas);
 
       const syntaxTree = MarkupNode$$1.create();
@@ -5789,8 +5791,8 @@
     },
 
     {
-      type: 'userChangedMarkupSelection',
-      do: 'userChangedMarkupSelection',
+      type: 'userMovedMarkupSelection',
+      do: 'userMovedMarkupSelection',
     },
 
     // MISCELLANEOUS
@@ -6139,6 +6141,49 @@
       shape.splitter = Vector$$1.create(-1000, -1000);
     },
 
+    // MARKUP
+
+    userMovedMarkupSelection(state, input) {
+      this.cleanup(state, input);
+
+      let syntaxTreeNode;
+      let sceneGraphNode;
+
+      syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
+
+      if (syntaxTreeNode) {
+        sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
+      }
+
+      console.log('same obj', syntaxTreeNode.class.set === sceneGraphNode.class.set);
+      // => true
+
+      console.log(JSON.stringify(syntaxTreeNode)); // markup node is not 'selected'
+
+      if (sceneGraphNode) {
+        sceneGraphNode.select();
+      }
+
+      console.log(JSON.stringify(syntaxTreeNode)); // markup node is 'selected'
+
+      state.label = 'selectMode';
+    },
+
+    // => "syntaxtree to scenegraph"
+    userChangedMarkup(state, input) {
+      const $svg = state.markupToDOM(input.value);
+
+      if ($svg) {
+        const syntaxTree = state.domToSyntaxTree($svg);
+        syntaxTree.indexify();
+
+        state.syntaxTree.replaceWith(syntaxTree);
+        state.canvas.replaceWith(state.domToScene($svg));
+      } else {
+        console.log('cannot update scenegraph and syntaxtree');
+      }
+    },
+
     // DOCUMENT MANAGEMENT
 
     createDoc(state, input) {
@@ -6177,42 +6222,6 @@
     wipeMessage(state, input) {
       state.message.text = '';
     },
-
-    // MARKUP
-
-    userChangedMarkupSelection(state, input) {
-      this.cleanup(state, input);
-
-      let syntaxTreeNode;
-      let sceneGraphNode;
-
-      syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
-
-      if (syntaxTreeNode) {
-        sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
-      }
-
-      if (sceneGraphNode) {
-        sceneGraphNode.select();
-      }
-
-      state.label = 'selectMode';
-    },
-
-    // => "syntaxtree to scenegraph"
-    userChangedMarkup(state, input) {
-      const $svg = state.markupToDOM(input.value);
-
-      if ($svg) {
-        const syntaxTree = state.domToSyntaxTree($svg);
-        syntaxTree.indexify();
-
-        state.syntaxTree.replaceWith(syntaxTree);
-        state.canvas.replaceWith(state.domToScene($svg));
-      } else {
-        console.log('cannot update scenegraph and syntaxtree');
-      }
-    },
   };
 
   const core = {
@@ -6250,6 +6259,8 @@
     },
 
     publish() {
+      // console.log(this.state);
+
       for (let key of Object.keys(this.modules)) {
         this.modules[key](this.state.snapshot);
       }
@@ -16657,19 +16668,21 @@
     },
 
     bindCodemirrorEvents() {
+      // identified "user changed markup" events
       this.markupEditor.on('change', (instance, changeObj) => {
         if (changeObj.origin !== 'setValue') {
           window.dispatchEvent(new CustomEvent('userChangedMarkup'));
         }
       });
 
+      // identify "user moved markup selection"
       this.markupEditor.on('beforeSelectionChange', (instance, obj) => {
         if (obj.origin !== undefined) {
           obj.update(obj.ranges);
           const cursorPosition = obj.ranges[0].anchor;
           const index = this.markupDoc.indexFromPos(cursorPosition);
           window.dispatchEvent(
-            new CustomEvent('userChangedMarkupSelection', { detail: index })
+            new CustomEvent('userMovedMarkupSelection', { detail: index })
           );
         }
       });
@@ -16682,17 +16695,17 @@
         func({
           source: this.name,
           type: 'userChangedMarkup',
-          value: this.markupEditor.getValue(),
+          value: this.markupEditor.getValue(), // current editor value
         });
       });
 
-      window.addEventListener('userChangedMarkupSelection', event => {
+      window.addEventListener('userMovedMarkupSelection', event => {
         console.log('user changed selection');
 
         func({
           source: this.name,
-          type: 'userChangedMarkupSelection',
-          index: event.detail,
+          type: 'userMovedMarkupSelection',
+          index: event.detail, // index of selection
         });
       });
     },
@@ -16719,7 +16732,7 @@
         const to = this.markupEditor.doc.posFromIndex(node.end + 1);
         const range = [from, to];
         this.textMarker = this.markupDoc.markText(...range, {
-          className: 'selected-markup',
+          className: 'selected-markup', // triggers CSS rule
         });
       }
 

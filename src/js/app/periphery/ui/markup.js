@@ -22,19 +22,21 @@ const markup = {
   },
 
   bindCodemirrorEvents() {
+    // identified "user changed markup" events
     this.markupEditor.on('change', (instance, changeObj) => {
       if (changeObj.origin !== 'setValue') {
         window.dispatchEvent(new CustomEvent('userChangedMarkup'));
       }
     });
 
+    // identify "user moved markup selection"
     this.markupEditor.on('beforeSelectionChange', (instance, obj) => {
       if (obj.origin !== undefined) {
         obj.update(obj.ranges);
         const cursorPosition = obj.ranges[0].anchor;
         const index = this.markupDoc.indexFromPos(cursorPosition);
         window.dispatchEvent(
-          new CustomEvent('userChangedMarkupSelection', { detail: index })
+          new CustomEvent('userMovedMarkupSelection', { detail: index })
         );
       }
     });
@@ -47,17 +49,17 @@ const markup = {
       func({
         source: this.name,
         type: 'userChangedMarkup',
-        value: this.markupEditor.getValue(),
+        value: this.markupEditor.getValue(), // current editor value
       });
     });
 
-    window.addEventListener('userChangedMarkupSelection', event => {
+    window.addEventListener('userMovedMarkupSelection', event => {
       console.log('user changed selection');
 
       func({
         source: this.name,
-        type: 'userChangedMarkupSelection',
-        index: event.detail,
+        type: 'userMovedMarkupSelection',
+        index: event.detail, // index of selection
       });
     });
   },
@@ -84,7 +86,7 @@ const markup = {
       const to = this.markupEditor.doc.posFromIndex(node.end + 1);
       const range = [from, to];
       this.textMarker = this.markupDoc.markText(...range, {
-        className: 'selected-markup',
+        className: 'selected-markup', // triggers CSS rule
       });
     }
 

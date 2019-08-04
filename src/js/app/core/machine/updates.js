@@ -299,6 +299,49 @@ const updates = {
     shape.splitter = Vector.create(-1000, -1000);
   },
 
+  // MARKUP
+
+  userMovedMarkupSelection(state, input) {
+    this.cleanup(state, input);
+
+    let syntaxTreeNode;
+    let sceneGraphNode;
+
+    syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
+
+    if (syntaxTreeNode) {
+      sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
+    }
+
+    console.log('same obj', syntaxTreeNode.class.set === sceneGraphNode.class.set);
+    // => true
+
+    console.log(JSON.stringify(syntaxTreeNode)); // markup node is not 'selected'
+
+    if (sceneGraphNode) {
+      sceneGraphNode.select();
+    }
+
+    console.log(JSON.stringify(syntaxTreeNode)); // markup node is 'selected'
+
+    state.label = 'selectMode';
+  },
+
+  // => "syntaxtree to scenegraph"
+  userChangedMarkup(state, input) {
+    const $svg = state.markupToDOM(input.value);
+
+    if ($svg) {
+      const syntaxTree = state.domToSyntaxTree($svg);
+      syntaxTree.indexify();
+
+      state.syntaxTree.replaceWith(syntaxTree);
+      state.canvas.replaceWith(state.domToScene($svg));
+    } else {
+      console.log('cannot update scenegraph and syntaxtree');
+    }
+  },
+
   // DOCUMENT MANAGEMENT
 
   createDoc(state, input) {
@@ -336,42 +379,6 @@ const updates = {
 
   wipeMessage(state, input) {
     state.message.text = '';
-  },
-
-  // MARKUP
-
-  userChangedMarkupSelection(state, input) {
-    this.cleanup(state, input);
-
-    let syntaxTreeNode;
-    let sceneGraphNode;
-
-    syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
-
-    if (syntaxTreeNode) {
-      sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
-    }
-
-    if (sceneGraphNode) {
-      sceneGraphNode.select();
-    }
-
-    state.label = 'selectMode';
-  },
-
-  // => "syntaxtree to scenegraph"
-  userChangedMarkup(state, input) {
-    const $svg = state.markupToDOM(input.value);
-
-    if ($svg) {
-      const syntaxTree = state.domToSyntaxTree($svg);
-      syntaxTree.indexify();
-
-      state.syntaxTree.replaceWith(syntaxTree);
-      state.canvas.replaceWith(state.domToScene($svg));
-    } else {
-      console.log('cannot update scenegraph and syntaxtree');
-    }
   },
 };
 

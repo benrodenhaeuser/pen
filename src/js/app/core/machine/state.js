@@ -52,7 +52,6 @@ const State = {
 
     const canvas = Canvas.create();
     canvas.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
-    // ^ TODO this is not in the right place.
     doc.append(canvas);
 
     const syntaxTree = MarkupNode.create();

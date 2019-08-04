@@ -28,6 +28,7 @@ const parse = (sceneNode, markupParent, level) => {
   tNode.markup = '\n';
   markupParent.append(tNode);
 
+  // inner markup
   if (sceneNode.graphicsChildren.length > 0) {
     const markupNode = MarkupNode.create();
     markupParent.append(markupNode);
