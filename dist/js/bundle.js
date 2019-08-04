@@ -6155,30 +6155,20 @@
         sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
       }
 
-      console.log('same obj', syntaxTreeNode.class.set === sceneGraphNode.class.set);
-      // => true
-
-      console.log(JSON.stringify(syntaxTreeNode)); // markup node is not 'selected'
-
       if (sceneGraphNode) {
         sceneGraphNode.select();
       }
 
-      console.log(JSON.stringify(syntaxTreeNode)); // markup node is 'selected'
-
       state.label = 'selectMode';
     },
 
-    // => "syntaxtree to scenegraph"
+    // TODO: simplify
     userChangedMarkup(state, input) {
       const $svg = state.markupToDOM(input.value);
 
       if ($svg) {
-        const syntaxTree = state.domToSyntaxTree($svg);
-        syntaxTree.indexify();
-
-        state.syntaxTree.replaceWith(syntaxTree);
         state.canvas.replaceWith(state.domToScene($svg));
+        state.syntaxTree.replaceWith(state.sceneToSyntaxTree());
       } else {
         console.log('cannot update scenegraph and syntaxtree');
       }
