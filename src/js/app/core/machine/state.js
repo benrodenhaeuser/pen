@@ -7,11 +7,9 @@ import { Rectangle } from '../domain/_.js';
 import { MarkupNode } from '../domain/_.js';
 
 import { editorToVDOM } from '../ports/_.js';
-import { markupToScene } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
 import { markupToDOM } from '../ports/_.js';
 import { domToScene } from '../ports/_.js';
-import { domToSyntaxTree } from '../ports/_.js';
 import { sceneToSyntaxTree } from '../ports/_.js';
 
 const State = {
@@ -82,16 +80,8 @@ const State = {
     return domToScene($svg);
   },
 
-  domToSyntaxTree($svg) {
-    return domToSyntaxTree($svg);
-  },
-
   sceneToSyntaxTree() {
     return sceneToSyntaxTree(this.editor.canvas);
-  },
-
-  markupToScene(markup) {
-    return markupToScene(markup);
   },
 };
 
