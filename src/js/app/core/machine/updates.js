@@ -301,8 +301,10 @@ const updates = {
   userSelectedNode(state, input) {
     this.cleanup(state, input);
     const node = state.canvas.findDescendantByKey(input.key);
-    if (node) { // TODO: why do we need this condition?
+    if (node) { 
       node.select();
+    } else {
+      console.log('there is no canvas node');
     }
     state.label = 'selectMode';
   },

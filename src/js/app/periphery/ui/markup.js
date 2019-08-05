@@ -60,7 +60,6 @@ const markup = {
 
       const node = this.previousSyntaxTree.findNodeByIndex(event.detail);
 
-
       if (node) {
         func({
           source: this.name,
