@@ -298,10 +298,10 @@ const updates = {
 
   // MARKUP
 
-  userSelectedNode(state, input) {
+  userSelectedMarkupNode(state, input) {
     this.cleanup(state, input);
     const node = state.canvas.findDescendantByKey(input.key);
-    if (node) { 
+    if (node) {
       node.select();
     } else {
       console.log('there is no canvas node');

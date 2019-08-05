@@ -5536,8 +5536,8 @@
     },
 
     {
-      type: 'userSelectedNode',
-      do: 'userSelectedNode',
+      type: 'userSelectedMarkupNode',
+      do: 'userSelectedMarkupNode',
     },
 
     // MISCELLANEOUS
@@ -5885,10 +5885,10 @@
 
     // MARKUP
 
-    userSelectedNode(state, input) {
+    userSelectedMarkupNode(state, input) {
       this.cleanup(state, input);
       const node = state.canvas.findDescendantByKey(input.key);
-      if (node) { 
+      if (node) {
         node.select();
       } else {
         console.log('there is no canvas node');
@@ -16405,7 +16405,7 @@
 
           if (node) {
             window.dispatchEvent(
-              new CustomEvent('userSelectedNode', { detail: index })
+              new CustomEvent('userSelectedMarkupNode', { detail: index })
             );
           }
         }
@@ -16423,7 +16423,7 @@
         });
       });
 
-      window.addEventListener('userSelectedNode', event => {
+      window.addEventListener('userSelectedMarkupNode', event => {
         console.log('user selected markup node');
 
         const node = this.previousSyntaxTree.findNodeByIndex(event.detail);
@@ -16431,7 +16431,7 @@
         if (node) {
           func({
             source: this.name,
-            type: 'userSelectedNode',
+            type: 'userSelectedMarkupNode',
             key: node.key, // key of node selected in markup
           });
         }

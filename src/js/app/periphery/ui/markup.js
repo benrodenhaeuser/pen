@@ -37,7 +37,7 @@ const markup = {
 
         if (node) {
           window.dispatchEvent(
-            new CustomEvent('userSelectedNode', { detail: index })
+            new CustomEvent('userSelectedMarkupNode', { detail: index })
           );
         }
       }
@@ -55,7 +55,7 @@ const markup = {
       });
     });
 
-    window.addEventListener('userSelectedNode', event => {
+    window.addEventListener('userSelectedMarkupNode', event => {
       console.log('user selected markup node');
 
       const node = this.previousSyntaxTree.findNodeByIndex(event.detail);
@@ -63,7 +63,7 @@ const markup = {
       if (node) {
         func({
           source: this.name,
-          type: 'userSelectedNode',
+          type: 'userSelectedMarkupNode',
           key: node.key, // key of node selected in markup
         });
       }
