@@ -5014,8 +5014,7 @@
   };
 
   const markupToDOM = markup => {
-    const $svg = new DOMParser()
-      .parseFromString(markup, 'image/svg+xml')
+    const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
       .documentElement;
 
     if ($svg instanceof SVGElement) {
@@ -5600,8 +5599,7 @@
       this.aux = {};
     },
 
-    after(state, input) {
-    },
+    after(state, input) {},
 
     // SELECTION
 
@@ -5887,12 +5885,15 @@
 
     userSelectedMarkupNode(state, input) {
       this.cleanup(state, input);
+
       const node = state.canvas.findDescendantByKey(input.key);
+
       if (node) {
         node.select();
       } else {
         console.log('there is no canvas node');
       }
+
       state.label = 'selectMode';
     },
 

@@ -19,8 +19,7 @@ const markupToScene = markup => {
 };
 
 const markupToDOM = markup => {
-  const $svg = new DOMParser()
-    .parseFromString(markup, 'image/svg+xml')
+  const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
     .documentElement;
 
   if ($svg instanceof SVGElement) {

@@ -13,8 +13,7 @@ const updates = {
     this.aux = {};
   },
 
-  after(state, input) {
-  },
+  after(state, input) {},
 
   // SELECTION
 
@@ -300,12 +299,15 @@ const updates = {
 
   userSelectedMarkupNode(state, input) {
     this.cleanup(state, input);
+
     const node = state.canvas.findDescendantByKey(input.key);
+
     if (node) {
       node.select();
     } else {
       console.log('there is no canvas node');
     }
+
     state.label = 'selectMode';
   },
 
