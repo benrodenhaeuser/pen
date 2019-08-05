@@ -6,11 +6,11 @@ import { Canvas } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 import { MarkupNode } from '../domain/_.js';
 
-import { editorToVDOM } from '../ports/_.js';
+import { docToObject } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
-import { markupToDOM } from '../ports/_.js';
-import { domToScene } from '../ports/_.js';
+import { markupToScene } from '../ports/_.js';
 import { sceneToSyntaxTree } from '../ports/_.js';
+import { editorToVDOM } from '../ports/_.js';
 
 const State = {
   create() {
@@ -52,9 +52,6 @@ const State = {
     canvas.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
     doc.append(canvas);
 
-    const syntaxTree = MarkupNode.create();
-    doc.append(syntaxTree);
-
     return doc;
   },
 
@@ -62,22 +59,16 @@ const State = {
     return editorToVDOM(this.editor);
   },
 
-  editorToPlain() {
-    return {
-      doc: JSON.parse(JSON.stringify(this.doc)),
-    };
+  docToObject() {
+    return docToObject(this.doc);
   },
 
   objectToDoc(object) {
     return objectToDoc(object);
   },
 
-  markupToDOM(markup) {
-    return markupToDOM(markup);
-  },
-
-  domToScene($svg) {
-    return domToScene($svg);
+  markupToScene(markup) {
+    return markupToScene(markup);
   },
 
   sceneToSyntaxTree() {
@@ -92,8 +83,8 @@ Object.defineProperty(State, 'snapshot', {
       input: this.input,
       update: this.update,
       vDOM: this.editorToVDOM(),
-      plain: this.editorToPlain(),
-      syntaxTree: this.syntaxTree,
+      plain: this.docToObject(),
+      syntaxTree: this.sceneToSyntaxTree(),
     };
   },
 });
@@ -101,12 +92,6 @@ Object.defineProperty(State, 'snapshot', {
 Object.defineProperty(State, 'canvas', {
   get() {
     return this.editor.canvas;
-  },
-});
-
-Object.defineProperty(State, 'syntaxTree', {
-  get() {
-    return this.editor.syntaxTree;
   },
 });
 

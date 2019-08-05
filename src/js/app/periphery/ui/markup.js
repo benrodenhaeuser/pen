@@ -22,22 +22,24 @@ const markup = {
   },
 
   bindCodemirrorEvents() {
-    // identified "user changed markup" events
     this.markupEditor.on('change', (instance, changeObj) => {
       if (changeObj.origin !== 'setValue') {
         window.dispatchEvent(new CustomEvent('userChangedMarkup'));
       }
     });
 
-    // identify "user moved markup selection"
     this.markupEditor.on('beforeSelectionChange', (instance, obj) => {
       if (obj.origin !== undefined) {
         obj.update(obj.ranges);
         const cursorPosition = obj.ranges[0].anchor;
         const index = this.markupDoc.indexFromPos(cursorPosition);
-        window.dispatchEvent(
-          new CustomEvent('userMovedMarkupSelection', { detail: index })
-        );
+        const node = this.previousSyntaxTree.findNodeByIndex(event.detail);
+
+        if (node) {
+          window.dispatchEvent(
+            new CustomEvent('userSelectedNode', { detail: index })
+          );
+        }
       }
     });
   },
@@ -53,14 +55,19 @@ const markup = {
       });
     });
 
-    window.addEventListener('userMovedMarkupSelection', event => {
-      console.log('user changed selection');
+    window.addEventListener('userSelectedNode', event => {
+      console.log('user selected markup node');
 
-      func({
-        source: this.name,
-        type: 'userMovedMarkupSelection',
-        index: event.detail, // index of selection
-      });
+      const node = this.previousSyntaxTree.findNodeByIndex(event.detail);
+
+
+      if (node) {
+        func({
+          source: this.name,
+          type: 'userSelectedNode',
+          key: node.key, // key of node selected in markup
+        });
+      }
     });
   },
 

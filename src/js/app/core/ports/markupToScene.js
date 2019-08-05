@@ -8,16 +8,33 @@ import { Class } from '../domain/_.js';
 import { SVGPathData } from 'svg-pathdata';
 import { SVGPathDataTransformer } from 'svg-pathdata';
 
-const domToScene = $svg => {
-  if ($svg instanceof SVGElement) {
-    const canvas = Canvas.create();
-    canvas.key = $svg.key;
-    buildTree($svg, canvas);
-    canvas.updateFrontier();
-    return canvas;
+const markupToScene = markup => {
+  const $svg = markupToDOM(markup);
+
+  if ($svg) {
+    return domToScene($svg);
   } else {
     return null;
   }
+};
+
+const markupToDOM = markup => {
+  const $svg = new DOMParser()
+    .parseFromString(markup, 'image/svg+xml')
+    .documentElement;
+
+  if ($svg instanceof SVGElement) {
+    return $svg;
+  } else {
+    return null;
+  }
+};
+
+const domToScene = $svg => {
+  const canvas = Canvas.create();
+  buildTree($svg, canvas);
+  canvas.updateFrontier();
+  return canvas;
 };
 
 const copyStyles = ($node, node) => {
@@ -42,7 +59,6 @@ const buildTree = ($node, node) => {
 
     if ($child instanceof SVGGElement) {
       child = Group.create();
-      child.key = $child.key;
       node.append(child);
       buildTree($child, child);
     } else {
@@ -77,7 +93,6 @@ const processAttributes = ($node, node) => {
 
 const buildShapeTree = $geometryNode => {
   const shape = Shape.create();
-  shape.key = $geometryNode.key;
 
   processAttributes($geometryNode, shape);
   // ^ TODO: we are also calling processAttributes further above, duplication!
@@ -187,4 +202,4 @@ const commands = svgPath => {
     .toAbs().commands; // no relative commands
 };
 
-export { domToScene };
+export { markupToScene };

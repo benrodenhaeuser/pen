@@ -99,8 +99,6 @@ Object.assign(Shape, {
 
     open.key = this.key;
     open.class = this.class;
-    // ^ this is how the shape classes end up in the syntaxtree
-    //   it looks like it's a shared object!
 
     const close = MarkupNode.create();
     close.markup = '</path>';

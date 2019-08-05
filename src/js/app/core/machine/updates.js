@@ -14,9 +14,6 @@ const updates = {
   },
 
   after(state, input) {
-    if (input.source === 'canvas') {
-      state.syntaxTree.replaceWith(state.sceneToSyntaxTree());
-    }
   },
 
   // SELECTION
@@ -301,34 +298,22 @@ const updates = {
 
   // MARKUP
 
-  userMovedMarkupSelection(state, input) {
+  userSelectedNode(state, input) {
     this.cleanup(state, input);
-
-    let syntaxTreeNode;
-    let sceneGraphNode;
-
-    syntaxTreeNode = state.syntaxTree.findNodeByIndex(input.index);
-
-    if (syntaxTreeNode) {
-      sceneGraphNode = state.canvas.findDescendantByKey(syntaxTreeNode.key);
+    const node = state.canvas.findDescendantByKey(input.key);
+    if (node) { // TODO: why do we need this condition?
+      node.select();
     }
-
-    if (sceneGraphNode) {
-      sceneGraphNode.select();
-    }
-
     state.label = 'selectMode';
   },
 
-  // TODO: simplify
   userChangedMarkup(state, input) {
-    const $svg = state.markupToDOM(input.value);
+    const canvas = state.markupToScene(input.value);
 
-    if ($svg) {
-      state.canvas.replaceWith(state.domToScene($svg));
-      state.syntaxTree.replaceWith(state.sceneToSyntaxTree());
+    if (canvas) {
+      state.canvas.replaceWith(canvas);
     } else {
-      console.log('cannot update scenegraph and syntaxtree');
+      console.log('cannot parse XML');
     }
   },
 
