@@ -2,6 +2,7 @@ import { SceneNode } from './_.js';
 import { Segment } from './_.js';
 import { Rectangle } from '../geometry/_.js';
 import { Curve } from '../geometry/_.js';
+import { types } from './_.js';
 
 const Spline = Object.create(SceneNode);
 
@@ -19,7 +20,7 @@ Object.assign(Spline, {
   create() {
     return SceneNode.create
       .bind(this)()
-      .set({ type: 'spline' });
+      .set({ type: types.SPLINE });
   },
 
   appendSegment() {

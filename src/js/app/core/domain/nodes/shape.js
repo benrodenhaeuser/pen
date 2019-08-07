@@ -3,6 +3,7 @@ import { Spline } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
 import { MarkupNode } from './_.js';
+import { types } from './_.js';
 
 const Shape = Object.create(GraphicsNode);
 Shape.defineProps(['splitter']);
@@ -12,7 +13,7 @@ Object.assign(Shape, {
     return GraphicsNode.create
       .bind(this)()
       .set({
-        type: 'shape',
+        type: types.SHAPE,
         splitter: Vector.create(-1000, -1000),
       });
   },
@@ -88,8 +89,16 @@ Object.assign(Shape, {
     return svgNode;
   },
 
-  toMarkupNodes() {
+  toTags() {
     const open = MarkupNode.create();
+
+    for (let [key,value] of Object.entries(this.props)) {
+      // console.log(key, value);
+    }
+    // => transform and d attributes go to path string
+    //    (later, others may follow)
+    // => key and class go to props of markup node
+    // => splitter and bounds are not relevant here
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<path d="${this.toPathString()}" transform="${this.transform.toString()}">`;

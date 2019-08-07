@@ -1,3 +1,4 @@
+import { types } from './types.js';
 import { ProtoNode } from './protoNode.js';
 import { Node } from './node.js';
 import { SceneNode } from './sceneNode.js';
@@ -17,8 +18,10 @@ import { Docs } from './docs.js';
 import { Message } from './message.js';
 import { Identifier } from './identifier.js';
 import { MarkupNode } from './markupNode.js';
+import { Text } from './text.js';
 
 export {
+  types,
   ProtoNode,
   Node,
   SceneNode,
@@ -38,4 +41,5 @@ export {
   Message,
   Identifier,
   MarkupNode,
+  Text,
 };

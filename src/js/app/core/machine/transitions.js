@@ -1,3 +1,5 @@
+import { types } from '../_.js';
+
 // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
 const transitions = [
@@ -19,7 +21,7 @@ const transitions = [
     to: 'selectMode',
   },
 
-  // request editord document
+  // request editor document
   {
     type: 'click',
     target: 'doc-identifier',
@@ -79,7 +81,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'dblclick',
-    target: ['shape', 'group', 'canvas'],
+    target: [types.SHAPE, types.GROUP, types.CANVAS],
     do: 'deepSelect',
   },
 
@@ -87,7 +89,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'mousedown',
-    target: ['shape', 'group', 'canvas'],
+    target: [types.SHAPE, types.GROUP, types.CANVAS],
     do: 'select',
     to: 'shifting',
   },
@@ -161,7 +163,7 @@ const transitions = [
   {
     from: 'penMode',
     type: 'mousedown',
-    target: ['shape', 'group', 'canvas'],
+    target: [types.SHAPE, types.GROUP, types.CANVAS],
     do: 'addSegment',
     to: 'settingHandles',
   },
@@ -186,7 +188,7 @@ const transitions = [
   {
     from: 'penMode',
     type: 'mousedown',
-    target: ['anchor', 'handleIn', 'handleOut'],
+    target: [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT],
     do: 'initAdjustSegment',
     to: 'adjustingSegment',
   },

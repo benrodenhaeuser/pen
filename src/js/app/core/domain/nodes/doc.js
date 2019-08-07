@@ -1,5 +1,6 @@
 import { Node } from './_.js';
 import { createID } from '../helpers/_.js';
+import { types } from './_.js';
 
 const Doc = Object.create(Node);
 Doc.defineProps(['_id']);
@@ -9,7 +10,7 @@ Object.assign(Doc, {
     return Node.create
       .bind(this)()
       .set({
-        type: 'doc',
+        type: types.DOC,
         _id: createID(),
       });
   },

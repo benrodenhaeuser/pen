@@ -1,6 +1,7 @@
 import { GraphicsNode } from './_.js';
 import { Shape } from './_.js';
 import { MarkupNode } from './_.js';
+import { types } from './_.js';
 
 const xmlns = 'http://www.w3.org/2000/svg';
 
@@ -11,7 +12,7 @@ Object.assign(Canvas, {
   create() {
     return GraphicsNode.create
       .bind(this)()
-      .set({ type: 'canvas' });
+      .set({ type: types.CANVAS });
   },
 
   findFocus() {
@@ -89,7 +90,7 @@ Object.assign(Canvas, {
           sibling.class = sibling.class.add('frontier');
         }
         node = node.parent;
-      } while (node.parent.type !== 'doc');
+      } while (node.parent.type !== types.DOC);
     } else {
       for (let child of this.children) {
         child.class = child.class.add('frontier');
@@ -138,7 +139,7 @@ Object.assign(Canvas, {
     };
   },
 
-  toMarkupNodes() {
+  toTags() {
     const open = MarkupNode.create();
     open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
     open.key = this.key;

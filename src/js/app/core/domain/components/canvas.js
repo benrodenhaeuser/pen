@@ -1,4 +1,5 @@
 import { h } from './_.js';
+import { types } from '../_.js';
 
 const LENGTHS_IN_PX = {
   cornerSideLength: 8,
@@ -41,7 +42,7 @@ const wrap = (vNode, node) => {
 
   vWrapper.children.push(vNode);
 
-  if (node.type === 'shape') {
+  if (node.type === types.SHAPE) {
     vWrapper.children.push(curves(node));
     vWrapper.children.push(segments(node));
   }

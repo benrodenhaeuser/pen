@@ -20,6 +20,7 @@ import {
   Message,
   Identifier,
   MarkupNode,
+  types,
 } from './nodes/_.js';
 
 export {
@@ -45,4 +46,5 @@ export {
   tools,
   message,
   canvas,
+  types,
 };

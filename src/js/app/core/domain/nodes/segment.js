@@ -2,6 +2,7 @@ import { SceneNode } from './_.js';
 import { Anchor } from './_.js';
 import { HandleIn } from './_.js';
 import { HandleOut } from './_.js';
+import { types } from './_.js';
 
 const Segment = Object.create(SceneNode);
 
@@ -9,7 +10,7 @@ Object.assign(Segment, {
   create() {
     return SceneNode.create
       .bind(this)()
-      .set({ type: 'segment' });
+      .set({ type: types.SEGMENT });
   },
 
   appendAnchor(vector) {
@@ -36,19 +37,19 @@ Object.assign(Segment, {
 
 Object.defineProperty(Segment, 'anchor', {
   get() {
-    return this.children.find(child => child.type === 'anchor');
+    return this.children.find(child => child.type === types.ANCHOR);
   },
 });
 
 Object.defineProperty(Segment, 'handleIn', {
   get() {
-    return this.children.find(child => child.type === 'handleIn');
+    return this.children.find(child => child.type === types.HANDLEIN);
   },
 });
 
 Object.defineProperty(Segment, 'handleOut', {
   get() {
-    return this.children.find(child => child.type === 'handleOut');
+    return this.children.find(child => child.type === types.HANDLEOUT);
   },
 });
 

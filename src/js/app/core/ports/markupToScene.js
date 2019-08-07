@@ -17,7 +17,7 @@ const markupToScene = markup => {
     return null;
   }
 };
-
+ 
 const markupToDOM = markup => {
   const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
     .documentElement;

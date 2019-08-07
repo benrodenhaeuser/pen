@@ -1,4 +1,5 @@
 import { Node } from './_.js';
+import { types } from './_.js';
 
 const MarkupNode = Object.create(Node);
 MarkupNode.defineProps(['markup', 'start', 'end', 'level']);
@@ -7,7 +8,7 @@ Object.assign(MarkupNode, {
   create() {
     return Node.create
       .bind(this)()
-      .set({ type: 'markupNode' });
+      .set({ type: types.MARKUPNODE });
   },
 
   indexify(start = 0) {
@@ -27,6 +28,8 @@ Object.assign(MarkupNode, {
     }
   },
 
+  // it looks like this will return a leaf node, so maybe we should call it
+  // findLeadByIndex
   findNodeByIndex(idx) {
     if (this.markup) {
       if (this.start <= idx && idx <= this.end) {
@@ -68,7 +71,7 @@ Object.assign(MarkupNode, {
 
 Object.defineProperty(MarkupNode, 'markupRoot', {
   get() {
-    return this.findAncestor(node => node.parent.type === 'doc');
+    return this.findAncestor(node => node.parent.type === types.DOC);
   },
 });
 

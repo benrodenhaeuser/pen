@@ -4,7 +4,6 @@ import { Doc } from '../domain/_.js';
 import { Message } from '../domain/_.js';
 import { Canvas } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
-import { MarkupNode } from '../domain/_.js';
 
 import { docToObject } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';

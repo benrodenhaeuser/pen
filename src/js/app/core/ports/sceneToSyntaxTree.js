@@ -1,4 +1,5 @@
 import { MarkupNode } from '../domain/nodes/_.js';
+import { Text } from '../domain/nodes/_.js';
 
 const sceneToSyntaxTree = canvas => {
   const syntaxTree = MarkupNode.create();
@@ -8,7 +9,7 @@ const sceneToSyntaxTree = canvas => {
 };
 
 const parse = (sceneNode, markupParent, level) => {
-  const markupNodes = sceneNode.toMarkupNodes();
+  const markupNodes = sceneNode.toTags();
   const open = markupNodes.open;
   const close = markupNodes.close;
   open.level = level;
@@ -16,7 +17,7 @@ const parse = (sceneNode, markupParent, level) => {
 
   // indent
   const pad = indent(level);
-  const indentNode = MarkupNode.create();
+  const indentNode = Text.create();
   indentNode.markup = pad;
   markupParent.append(indentNode);
 
@@ -24,7 +25,7 @@ const parse = (sceneNode, markupParent, level) => {
   markupParent.append(open);
 
   // linebreak
-  const tNode = MarkupNode.create();
+  const tNode = Text.create(); 
   tNode.markup = '\n';
   markupParent.append(tNode);
 

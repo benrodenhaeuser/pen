@@ -240,7 +240,7 @@
 
     vWrapper.children.push(vNode);
 
-    if (node.type === 'shape') {
+    if (node.type === types.SHAPE) {
       vWrapper.children.push(curves(node));
       vWrapper.children.push(segments(node));
     }
@@ -3832,6 +3832,38 @@
     },
   };
 
+  const types = {
+    DOC: 'doc',
+    EDITOR: 'editor',
+    MESSAGE: 'message',
+    DOCS: 'docs',
+    IDENTIFIER: 'identifier',
+
+    // scenegraph
+    CANVAS: 'canvas',
+    GROUP: 'group',
+    SHAPE: 'shape',
+    SPLINE: 'spline',
+    SEGMENT: 'segment',
+    ANCHOR: 'anchor',
+    HANDLEIN: 'handleIn',
+    HANDLEOUT: 'handleOut',
+
+    // markup
+    MARKUPNODE: 'markupNode',
+    TEXT: 'text',
+    TAG: 'tag',
+    OPENTAG: 'openTag',
+    CLOSETAG: 'closeTag',
+    LANGLE: 'langle',
+    TAGNAME: 'tagName',
+    ATTRIBUTES: 'attributes', // possibly not needed
+    ATTRIBUTE: 'attribute', // possibly not needed
+    ATTRKEY: 'attrKey',
+    ATTRVALUE: 'attrValue',
+    RANGLE: 'rangle',
+  };
+
   const ProtoNode = {
     defineProps(propNames) {
       for (let propName of propNames) {
@@ -4021,7 +4053,7 @@
 
   Object.defineProperty(SceneNode$$1, 'canvas', {
     get() {
-      return this.findAncestor(node => node.type === 'canvas');
+      return this.findAncestor(node => node.type === types.CANVAS);
     },
   });
 
@@ -4119,7 +4151,7 @@
 
       for (let child of this.children) {
         for (let corner of child.bounds.corners) {
-          if (child.type === 'spline') {
+          if (child.type === types.SPLINE) {
             corners.push(corner);
           } else {
             corners.push(corner.transform(child.transform));
@@ -4145,7 +4177,7 @@
   Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
     get() {
       return this.children.filter(node =>
-        ['canvas', 'group', 'shape'].includes(node.type)
+        [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
       );
     },
   });
@@ -4153,7 +4185,7 @@
   Object.defineProperty(GraphicsNode$$1, 'graphicsAncestors', {
     get() {
       return this.ancestors.filter(node =>
-        ['canvas', 'group', 'shape'].includes(node.type)
+        [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
       );
     },
   });
@@ -4167,7 +4199,7 @@
     create() {
       return GraphicsNode$$1.create
         .bind(this)()
-        .set({ type: 'canvas' });
+        .set({ type: types.CANVAS });
     },
 
     findFocus() {
@@ -4245,7 +4277,7 @@
             sibling.class = sibling.class.add('frontier');
           }
           node = node.parent;
-        } while (node.parent.type !== 'doc');
+        } while (node.parent.type !== types.DOC);
       } else {
         for (let child of this.children) {
           child.class = child.class.add('frontier');
@@ -4294,7 +4326,7 @@
       };
     },
 
-    toMarkupNodes() {
+    toTags() {
       const open = MarkupNode$$1.create();
       open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
       open.key = this.key;
@@ -4316,7 +4348,7 @@
     create() {
       return GraphicsNode$$1.create
         .bind(this)()
-        .set({ type: 'group' });
+        .set({ type: types.GROUP });
     },
 
     toVDOMNode() {
@@ -4346,7 +4378,7 @@
       return svgNode;
     },
 
-    toMarkupNodes() {
+    toTags() {
       const open = MarkupNode$$1.create();
 
       if (!this.transform.equals(Matrix$$1.identity())) {
@@ -4377,7 +4409,7 @@
       return GraphicsNode$$1.create
         .bind(this)()
         .set({
-          type: 'shape',
+          type: types.SHAPE,
           splitter: Vector$$1.create(-1000, -1000),
         });
     },
@@ -4453,8 +4485,16 @@
       return svgNode;
     },
 
-    toMarkupNodes() {
+    toTags() {
       const open = MarkupNode$$1.create();
+
+      for (let [key,value] of Object.entries(this.props)) {
+        // console.log(key, value);
+      }
+      // => transform and d attributes go to path string
+      //    (later, others may follow)
+      // => key and class go to props of markup node
+      // => splitter and bounds are not relevant here
 
       if (!this.transform.equals(Matrix$$1.identity())) {
         open.markup = `<path d="${this.toPathString()}" transform="${this.transform.toString()}">`;
@@ -4527,7 +4567,7 @@
     create() {
       return SceneNode$$1.create
         .bind(this)()
-        .set({ type: 'spline' });
+        .set({ type: types.SPLINE });
     },
 
     appendSegment() {
@@ -4598,7 +4638,7 @@
     create() {
       return SceneNode$$1.create
         .bind(this)()
-        .set({ type: 'segment' });
+        .set({ type: types.SEGMENT });
     },
 
     appendAnchor(vector) {
@@ -4625,19 +4665,19 @@
 
   Object.defineProperty(Segment$$1, 'anchor', {
     get() {
-      return this.children.find(child => child.type === 'anchor');
+      return this.children.find(child => child.type === types.ANCHOR);
     },
   });
 
   Object.defineProperty(Segment$$1, 'handleIn', {
     get() {
-      return this.children.find(child => child.type === 'handleIn');
+      return this.children.find(child => child.type === types.HANDLEIN);
     },
   });
 
   Object.defineProperty(Segment$$1, 'handleOut', {
     get() {
-      return this.children.find(child => child.type === 'handleOut');
+      return this.children.find(child => child.type === types.HANDLEOUT);
     },
   });
 
@@ -4658,7 +4698,7 @@
     create() {
       return ControlNode$$1.create
         .bind(this)()
-        .set({ type: 'anchor' });
+        .set({ type: types.ANCHOR });
     },
   });
 
@@ -4668,7 +4708,7 @@
     create() {
       return ControlNode$$1.create
         .bind(this)()
-        .set({ type: 'handleIn' });
+        .set({ type: types.HANDLEIN });
     },
   });
 
@@ -4678,7 +4718,7 @@
     create() {
       return ControlNode$$1.create
         .bind(this)()
-        .set({ type: 'handleOut' });
+        .set({ type: types.HANDLEOUT });
     },
   });
 
@@ -4690,7 +4730,7 @@
       return Node$$1.create
         .bind(this)()
         .set({
-          type: 'doc',
+          type: types.DOC,
           _id: createID(),
         });
     },
@@ -4702,37 +4742,37 @@
     create() {
       return Node$$1.create
         .bind(this)()
-        .set({ type: 'editor' });
+        .set({ type: types.EDITOR });
     },
   });
 
   Object.defineProperty(Editor$$1, 'message', {
     get() {
-      return this.root.findDescendant(node => node.type === 'message');
+      return this.root.findDescendant(node => node.type === types.MESSAGE);
     },
   });
 
   Object.defineProperty(Editor$$1, 'canvas', {
     get() {
-      return this.root.findDescendant(node => node.type === 'canvas');
+      return this.root.findDescendant(node => node.type === types.CANVAS);
     },
   });
 
   Object.defineProperty(Editor$$1, 'docs', {
     get() {
-      return this.root.findDescendant(node => node.type === 'docs');
+      return this.root.findDescendant(node => node.type === types.DOCS);
     },
   });
 
   Object.defineProperty(Editor$$1, 'doc', {
     get() {
-      return this.root.findDescendant(node => node.type === 'doc');
+      return this.root.findDescendant(node => node.type === types.DOC);
     },
   });
 
   Object.defineProperty(Editor$$1, 'syntaxTree', {
     get() {
-      return this.root.findDescendant(node => node.type === 'markupNode');
+      return this.root.findDescendant(node => node.type === types.MARKUPNODE);
     },
   });
 
@@ -4742,7 +4782,7 @@
     create() {
       return Node$$1.create
         .bind(this)()
-        .set({ type: 'docs' });
+        .set({ type: types.DOCS });
     },
   });
 
@@ -4753,7 +4793,7 @@
     create() {
       return Node$$1.create
         .bind(this)()
-        .set({ type: 'message' });
+        .set({ type: types.MESSAGE });
     },
   });
 
@@ -4764,7 +4804,7 @@
     create() {
       return Node$$1.create
         .bind(this)()
-        .set({ type: 'identifier' });
+        .set({ type: types.IDENTIFIER });
     },
   });
 
@@ -4775,7 +4815,7 @@
     create() {
       return Node$$1.create
         .bind(this)()
-        .set({ type: 'markupNode' });
+        .set({ type: types.MARKUPNODE });
     },
 
     indexify(start = 0) {
@@ -4795,6 +4835,8 @@
       }
     },
 
+    // it looks like this will return a leaf node, so maybe we should call it
+    // findLeadByIndex
     findNodeByIndex(idx) {
       if (this.markup) {
         if (this.start <= idx && idx <= this.end) {
@@ -4836,7 +4878,17 @@
 
   Object.defineProperty(MarkupNode$$1, 'markupRoot', {
     get() {
-      return this.findAncestor(node => node.parent.type === 'doc');
+      return this.findAncestor(node => node.parent.type === types.DOC);
+    },
+  });
+
+  const Text$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(Text$$1, {
+    create() {
+      return MarkupNode$$1.create
+        .bind(this)()
+        .set({ type: types.TEXT });
     },
   });
 
@@ -4882,16 +4934,12 @@
         break;
       case 'anchor':
         node = Anchor$$1.create();
-        node.type = 'anchor';
         break;
       case 'handleIn':
         node = HandleIn$$1.create();
         break;
       case 'handleOut':
         node = HandleOut$$1.create();
-        break;
-      case 'markupNode':
-        node = MarkupNode$$1.create();
         break;
     }
 
@@ -4943,7 +4991,7 @@
   };
 
   const parse = (sceneNode, markupParent, level) => {
-    const markupNodes = sceneNode.toMarkupNodes();
+    const markupNodes = sceneNode.toTags();
     const open = markupNodes.open;
     const close = markupNodes.close;
     open.level = level;
@@ -4951,7 +4999,7 @@
 
     // indent
     const pad = indent(level);
-    const indentNode = MarkupNode$$1.create();
+    const indentNode = Text$$1.create();
     indentNode.markup = pad;
     markupParent.append(indentNode);
 
@@ -4959,7 +5007,7 @@
     markupParent.append(open);
 
     // linebreak
-    const tNode = MarkupNode$$1.create();
+    const tNode = Text$$1.create(); 
     tNode.markup = '\n';
     markupParent.append(tNode);
 
@@ -5012,7 +5060,7 @@
       return null;
     }
   };
-
+   
   const markupToDOM = markup => {
     const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
       .documentElement;
@@ -5291,7 +5339,7 @@
 
   // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
-  const transitions = [
+  const transitions$$1 = [
     // KICKOFF
     {
       from: 'start',
@@ -5310,7 +5358,7 @@
       to: 'selectMode',
     },
 
-    // request editord document
+    // request editor document
     {
       type: 'click',
       target: 'doc-identifier',
@@ -5370,7 +5418,7 @@
     {
       from: 'selectMode',
       type: 'dblclick',
-      target: ['shape', 'group', 'canvas'],
+      target: [types.SHAPE, types.GROUP, types.CANVAS],
       do: 'deepSelect',
     },
 
@@ -5378,7 +5426,7 @@
     {
       from: 'selectMode',
       type: 'mousedown',
-      target: ['shape', 'group', 'canvas'],
+      target: [types.SHAPE, types.GROUP, types.CANVAS],
       do: 'select',
       to: 'shifting',
     },
@@ -5452,7 +5500,7 @@
     {
       from: 'penMode',
       type: 'mousedown',
-      target: ['shape', 'group', 'canvas'],
+      target: [types.SHAPE, types.GROUP, types.CANVAS],
       do: 'addSegment',
       to: 'settingHandles',
     },
@@ -5477,7 +5525,7 @@
     {
       from: 'penMode',
       type: 'mousedown',
-      target: ['anchor', 'handleIn', 'handleOut'],
+      target: [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT],
       do: 'initAdjustSegment',
       to: 'adjustingSegment',
     },
@@ -5566,7 +5614,7 @@
     },
   ];
 
-  transitions.get = function(state, input) {
+  transitions$$1.get = function(state, input) {
     const isMatch = row => {
       const from = row.from;
       const type = row.type;
@@ -5584,7 +5632,7 @@
       return stateMatch && typeMatch && targetMatch;
     };
 
-    const match = transitions.find(isMatch);
+    const match = transitions$$1.find(isMatch);
 
     if (match) {
       return {
@@ -5628,6 +5676,7 @@
       }
     },
 
+    // TODO: try to simplify logic
     deepSelect(state, input) {
       const target = state.canvas.findDescendantByKey(input.key);
 
@@ -5635,13 +5684,17 @@
         return;
       }
 
-      if (target.class.includes('frontier')) {
-        // use pen in shape
+      if (target.type === types.SHAPE && target.class.includes('frontier')) {
+        // target is a shape frontier: place pen in shape
         target.placePen();
         state.canvas.removeFocus();
         state.label = 'penMode';
+        // target is a frontier group: select canvas
+      } else if (target.class.includes('frontier')) {
+        state.canvas.select();
+        state.canvas.removeFocus();
       } else {
-        // select in group
+        // target not at frontier: select closest ancestor at frontier
         const toSelect = target.findAncestor(node => {
           return node.parent && node.parent.class.includes('frontier');
         });
@@ -5891,7 +5944,7 @@
       if (node) {
         node.select();
       } else {
-        console.log('there is no canvas node');
+        console.log('no scene node selected');
       }
 
       state.label = 'selectMode';
@@ -5964,7 +6017,7 @@
     compute(input) {
       this.state.input = input;
 
-      const transition = transitions.get(this.state, input);
+      const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
         this.state.update = transition.do;

@@ -1,8 +1,10 @@
 import { SceneNode } from './_.js';
+import { types } from './_.js';
 import { Vector } from '../geometry/_.js';
 import { Rectangle } from '../geometry/_.js';
 import { Matrix } from '../geometry/_.js';
 import { Class } from '../helpers/_.js';
+
 
 const GraphicsNode = SceneNode.create();
 GraphicsNode.defineProps(['transform']);
@@ -98,7 +100,7 @@ Object.assign(GraphicsNode, {
 
     for (let child of this.children) {
       for (let corner of child.bounds.corners) {
-        if (child.type === 'spline') {
+        if (child.type === types.SPLINE) {
           corners.push(corner);
         } else {
           corners.push(corner.transform(child.transform));
@@ -124,7 +126,7 @@ Object.assign(GraphicsNode, {
 Object.defineProperty(GraphicsNode, 'graphicsChildren', {
   get() {
     return this.children.filter(node =>
-      ['canvas', 'group', 'shape'].includes(node.type)
+      [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
     );
   },
 });
@@ -132,7 +134,7 @@ Object.defineProperty(GraphicsNode, 'graphicsChildren', {
 Object.defineProperty(GraphicsNode, 'graphicsAncestors', {
   get() {
     return this.ancestors.filter(node =>
-      ['canvas', 'group', 'shape'].includes(node.type)
+      [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
     );
   },
 });

@@ -1,6 +1,7 @@
 import { GraphicsNode } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { MarkupNode } from './_.js';
+import { types } from './_.js';
 
 const Group = Object.create(GraphicsNode);
 
@@ -8,7 +9,7 @@ Object.assign(Group, {
   create() {
     return GraphicsNode.create
       .bind(this)()
-      .set({ type: 'group' });
+      .set({ type: types.GROUP });
   },
 
   toVDOMNode() {
@@ -38,7 +39,7 @@ Object.assign(Group, {
     return svgNode;
   },
 
-  toMarkupNodes() {
+  toTags() {
     const open = MarkupNode.create();
 
     if (!this.transform.equals(Matrix.identity())) {

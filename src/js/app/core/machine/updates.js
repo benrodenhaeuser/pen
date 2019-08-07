@@ -7,6 +7,7 @@ import { Matrix } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 import { Curve } from '../domain/_.js';
 import { Bezier } from '/vendor/bezier/bezier.js';
+import { types } from '../domain/_.js';
 
 const updates = {
   init() {
@@ -42,6 +43,7 @@ const updates = {
     }
   },
 
+  // TODO: try to simplify logic
   deepSelect(state, input) {
     const target = state.canvas.findDescendantByKey(input.key);
 
@@ -49,13 +51,17 @@ const updates = {
       return;
     }
 
-    if (target.class.includes('frontier')) {
-      // use pen in shape
+    if (target.type === types.SHAPE && target.class.includes('frontier')) {
+      // target is a shape frontier: place pen in shape
       target.placePen();
       state.canvas.removeFocus();
       state.label = 'penMode';
+      // target is a frontier group: select canvas
+    } else if (target.class.includes('frontier')) {
+      state.canvas.select();
+      state.canvas.removeFocus();
     } else {
-      // select in group
+      // target not at frontier: select closest ancestor at frontier
       const toSelect = target.findAncestor(node => {
         return node.parent && node.parent.class.includes('frontier');
       });
@@ -305,7 +311,7 @@ const updates = {
     if (node) {
       node.select();
     } else {
-      console.log('there is no canvas node');
+      console.log('no scene node selected');
     }
 
     state.label = 'selectMode';
