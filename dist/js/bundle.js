@@ -3857,8 +3857,8 @@
     CLOSETAG: 'closeTag',
     LANGLE: 'langle',
     TAGNAME: 'tagName',
-    ATTRIBUTES: 'attributes', // possibly not needed
-    ATTRIBUTE: 'attribute', // possibly not needed
+    ATTRIBUTES: 'attributes',
+    ATTRIBUTE: 'attribute', 
     ATTRKEY: 'attrKey',
     ATTRVALUE: 'attrValue',
     RANGLE: 'rangle',
