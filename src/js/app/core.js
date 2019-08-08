@@ -20,7 +20,7 @@ const core = {
     const transition = transitions.get(this.state, input);
 
     if (transition) {
-      this.state.update = transition.do; // a string, or undefined
+      this.state.update = transition.do; // a string
       this.state.label = transition.to;
 
       const update = updates[transition.do]; // a function, or undefined

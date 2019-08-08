@@ -34,16 +34,11 @@ const parse = (sceneNode, markupParent, level) => {
     for (let sceneChild of sceneNode.graphicsChildren) {
       let markupNode;
 
-      console.log(sceneChild.type);
-
       switch (sceneChild.type) {
         case types.SHAPE:
-          console.log('shape case');
           markupNode = PathElement.create();
-          console.log(markupNode.type);
           break;
         case types.GROUP:
-          console.log('group case');
           markupNode = GElement.create();
           break;
       }

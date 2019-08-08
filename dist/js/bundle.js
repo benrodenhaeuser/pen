@@ -5283,16 +5283,11 @@
       for (let sceneChild of sceneNode.graphicsChildren) {
         let markupNode;
 
-        console.log(sceneChild.type);
-
         switch (sceneChild.type) {
           case types.SHAPE:
-            console.log('shape case');
             markupNode = PathElement$$1.create();
-            console.log(markupNode.type);
             break;
           case types.GROUP:
-            console.log('group case');
             markupNode = GElement$$1.create();
             break;
         }
@@ -5626,7 +5621,7 @@
     },
   });
 
-  // NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
+  // NOTE: 'type' (the event type) and `do` are mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
   const transitions$$1 = [
     // KICKOFF
@@ -6308,7 +6303,7 @@
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
-        this.state.update = transition.do; // a string, or undefined
+        this.state.update = transition.do; // a string
         this.state.label = transition.to;
 
         const update = updates[transition.do]; // a function, or undefined

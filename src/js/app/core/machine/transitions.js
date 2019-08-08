@@ -1,6 +1,6 @@
 import { types } from '../_.js';
 
-// NOTE: 'type' (the event type) is mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
+// NOTE: 'type' (the event type) and `do` are mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
 
 const transitions = [
   // KICKOFF
