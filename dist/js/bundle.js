@@ -5932,12 +5932,6 @@
   };
 
   const updates = {
-    init() {
-      // this.aux = {};
-    },
-
-    after(state, input) {},
-
     // SELECTION
 
     focus(state, input) {
@@ -5959,7 +5953,7 @@
 
       if (node) {
         node.select();
-        this.initTransform(state, input);
+        updates.initTransform(state, input);
       } else {
         state.canvas.removeSelection();
       }
@@ -6024,11 +6018,11 @@
     exitEdit(state, input) {
       if (state.label === 'penMode') {
         const target = state.canvas.findPen();
-        this.cleanup(state, input);
+        updates.cleanup(state, input);
         target.select();
         state.label = 'selectMode';
       } else if (state.label === 'selectMode') {
-        this.cleanup(state, input);
+        updates.cleanup(state, input);
       }
     },
 
@@ -6213,8 +6207,8 @@
       endSegment.handleIn.vector = Vector$$1.createFromObject(right.points[2]); // ?
 
       anchor.placePenTip();
-      this.hideSplitter(state, input);
-      this.adjustSegment(state, input);
+      updates.hideSplitter(state, input);
+      updates.adjustSegment(state, input);
     },
 
     hideSplitter(state, input) {
@@ -6226,7 +6220,7 @@
     // MARKUP
 
     userSelectedMarkupNode(state, input) {
-      this.cleanup(state, input);
+      updates.cleanup(state, input);
 
       const node = state.canvas.findDescendantByKey(input.key);
 
@@ -6282,7 +6276,7 @@
 
     switchDocument(state, input) {
       state.doc.replaceWith(state.objectToDoc(input.data.doc));
-      this.cleanup(state, input);
+      updates.cleanup(state, input);
     },
 
     // MESSAGES
@@ -6298,8 +6292,6 @@
 
   const core = {
     init() {
-      updates.init();
-
       this.state = State.create();
       this.modules = [];
 
@@ -6316,15 +6308,11 @@
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
-        this.state.update = transition.do;
+        this.state.update = transition.do; // a string, or undefined
         this.state.label = transition.to;
 
-        const update = updates[transition.do];
-
-        if (update) {
-          update.bind(updates)(this.state, input);
-          updates.after(this.state, input);
-        }
+        const update = updates[transition.do]; // a function, or undefined
+        update && update(this.state, input);
 
         this.publish();
       }

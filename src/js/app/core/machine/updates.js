@@ -10,12 +10,6 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
-  init() {
-    // this.aux = {};
-  },
-
-  after(state, input) {},
-
   // SELECTION
 
   focus(state, input) {
@@ -37,7 +31,7 @@ const updates = {
 
     if (node) {
       node.select();
-      this.initTransform(state, input);
+      updates.initTransform(state, input);
     } else {
       state.canvas.removeSelection();
     }
@@ -102,11 +96,11 @@ const updates = {
   exitEdit(state, input) {
     if (state.label === 'penMode') {
       const target = state.canvas.findPen();
-      this.cleanup(state, input);
+      updates.cleanup(state, input);
       target.select();
       state.label = 'selectMode';
     } else if (state.label === 'selectMode') {
-      this.cleanup(state, input);
+      updates.cleanup(state, input);
     }
   },
 
@@ -291,8 +285,8 @@ const updates = {
     endSegment.handleIn.vector = Vector.createFromObject(right.points[2]); // ?
 
     anchor.placePenTip();
-    this.hideSplitter(state, input);
-    this.adjustSegment(state, input);
+    updates.hideSplitter(state, input);
+    updates.adjustSegment(state, input);
   },
 
   hideSplitter(state, input) {
@@ -304,7 +298,7 @@ const updates = {
   // MARKUP
 
   userSelectedMarkupNode(state, input) {
-    this.cleanup(state, input);
+    updates.cleanup(state, input);
 
     const node = state.canvas.findDescendantByKey(input.key);
 
@@ -360,7 +354,7 @@ const updates = {
 
   switchDocument(state, input) {
     state.doc.replaceWith(state.objectToDoc(input.data.doc));
-    this.cleanup(state, input);
+    updates.cleanup(state, input);
   },
 
   // MESSAGES
