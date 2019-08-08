@@ -156,52 +156,10 @@ Object.assign(Shape, {
 
     open.class = this.class;
 
-    // const close = CloseTag.create('</path>');
-    // close.markup = '</path>';
-    // close.key = this.key;
-    // open.class = this.class;
-
     return {
       open: open,
       close: null,
     };
-  },
-
-  // could perhaps replace implementation by
-  // return this.toPathTree().toMarkup;
-  toPathString() {
-    let d = '';
-
-    for (let spline of this.children) {
-      const segment = spline.children[0];
-
-      d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
-
-      for (let i = 1; i < spline.children.length; i += 1) {
-        const currSeg = spline.children[i];
-        const prevSeg = spline.children[i - 1];
-
-        if (prevSeg.handleOut && currSeg.handleIn) {
-          d += ' C';
-        } else if (currSeg.handleIn || prevSeg.handleOut) {
-          d += ' Q';
-        } else {
-          d += ' L';
-        }
-
-        if (prevSeg.handleOut) {
-          d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
-        }
-
-        if (currSeg.handleIn) {
-          d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
-        }
-
-        d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
-      }
-    }
-
-    return d;
   },
 
   toPathTree(level) {
@@ -261,8 +219,47 @@ Object.assign(Shape, {
     return d;
 
   },
+
+  // could perhaps replace implementation by
+  // return this.toPathTree().toMarkup;
+  toPathString() {
+    let d = '';
+
+    for (let spline of this.children) {
+      const segment = spline.children[0];
+
+      d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
+
+      for (let i = 1; i < spline.children.length; i += 1) {
+        const currSeg = spline.children[i];
+        const prevSeg = spline.children[i - 1];
+
+        if (prevSeg.handleOut && currSeg.handleIn) {
+          d += ' C';
+        } else if (currSeg.handleIn || prevSeg.handleOut) {
+          d += ' Q';
+        } else {
+          d += ' L';
+        }
+
+        if (prevSeg.handleOut) {
+          d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
+        }
+
+        if (currSeg.handleIn) {
+          d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
+        }
+
+        d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
+      }
+    }
+
+    return d;
+  },
 });
 
+
+// TODO: duplicate
 const indent = level => {
   let pad = '';
 

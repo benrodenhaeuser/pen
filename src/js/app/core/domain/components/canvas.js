@@ -4,7 +4,7 @@ import { types } from '../_.js';
 const LENGTHS_IN_PX = {
   cornerSideLength: 8,
   dotDiameter: 18,
-  controlDiameter: 6,
+  controlDiameter: 5.5,
 };
 
 const canvas = editor => {

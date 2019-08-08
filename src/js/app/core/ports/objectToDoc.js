@@ -10,7 +10,7 @@ import { Class } from '../domain/_.js';
 const objectToDoc = object => {
   let node;
 
-  switch (object.props.type) {
+  switch (object.type) {
     case 'editor':
       node = Editor.create();
       break;
@@ -52,7 +52,7 @@ const objectToDoc = object => {
       break;
   }
 
-  node.type = object.props.type;
+  node.type = object.type;
 
   setprops(node, object);
 

@@ -202,7 +202,7 @@
   const LENGTHS_IN_PX = {
     cornerSideLength: 8,
     dotDiameter: 18,
-    controlDiameter: 6,
+    controlDiameter: 5.5,
   };
 
   const canvas$$1 = editor => {
@@ -3892,6 +3892,14 @@
 
       return this;
     },
+
+    toJSON() {
+      return {
+        type: this.type,
+        children: this.children,
+        props: this.props,
+      };
+    },
   };
 
   const Node$$1 = Object.create(ProtoNode);
@@ -4002,13 +4010,6 @@
 
     isRoot() {
       return this.parent === null;
-    },
-
-    toJSON() {
-      return {
-        children: this.children,
-        props: this.props,
-      };
     },
   });
 
@@ -4546,52 +4547,10 @@
 
       open.class = this.class;
 
-      // const close = CloseTag.create('</path>');
-      // close.markup = '</path>';
-      // close.key = this.key;
-      // open.class = this.class;
-
       return {
         open: open,
         close: null,
       };
-    },
-
-    // could perhaps replace implementation by
-    // return this.toPathTree().toMarkup;
-    toPathString() {
-      let d = '';
-
-      for (let spline of this.children) {
-        const segment = spline.children[0];
-
-        d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
-
-        for (let i = 1; i < spline.children.length; i += 1) {
-          const currSeg = spline.children[i];
-          const prevSeg = spline.children[i - 1];
-
-          if (prevSeg.handleOut && currSeg.handleIn) {
-            d += ' C';
-          } else if (currSeg.handleIn || prevSeg.handleOut) {
-            d += ' Q';
-          } else {
-            d += ' L';
-          }
-
-          if (prevSeg.handleOut) {
-            d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
-          }
-
-          if (currSeg.handleIn) {
-            d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
-          }
-
-          d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
-        }
-      }
-
-      return d;
     },
 
     toPathTree(level) {
@@ -4651,8 +4610,47 @@
       return d;
 
     },
+
+    // could perhaps replace implementation by
+    // return this.toPathTree().toMarkup;
+    toPathString() {
+      let d = '';
+
+      for (let spline of this.children) {
+        const segment = spline.children[0];
+
+        d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
+
+        for (let i = 1; i < spline.children.length; i += 1) {
+          const currSeg = spline.children[i];
+          const prevSeg = spline.children[i - 1];
+
+          if (prevSeg.handleOut && currSeg.handleIn) {
+            d += ' C';
+          } else if (currSeg.handleIn || prevSeg.handleOut) {
+            d += ' Q';
+          } else {
+            d += ' L';
+          }
+
+          if (prevSeg.handleOut) {
+            d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
+          }
+
+          if (currSeg.handleIn) {
+            d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
+          }
+
+          d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
+        }
+      }
+
+      return d;
+    },
   });
 
+
+  // TODO: duplicate
   const indent = level => {
     let pad = '';
 
@@ -5172,7 +5170,7 @@
   const objectToDoc = object => {
     let node;
 
-    switch (object.props.type) {
+    switch (object.type) {
       case 'editor':
         node = Editor$$1.create();
         break;
@@ -5214,7 +5212,7 @@
         break;
     }
 
-    node.type = object.props.type;
+    node.type = object.type;
 
     setprops(node, object);
 
@@ -5553,7 +5551,7 @@
       const doc = Doc$$1.create();
 
       const canvas = Canvas$$1.create();
-      canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 600, 395);
+      canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 700, 700);
       doc.append(canvas);
 
       return doc;
@@ -5592,7 +5590,7 @@
         state: this, // for debugging
       };
 
-      console.log(snapshot); // for debugging
+      // console.log(snapshot); // for debugging
       return snapshot;
     },
   });
@@ -6222,17 +6220,19 @@
       if (node) {
         if (node.type === types.SHAPE || node.type === types.GROUP) {
           node.select();
+          state.label = 'selectMode';
         } else if (node.type === types.SPLINE) {
           node.parent.placePen();
+          state.canvas.removeFocus();
+          state.label = 'penMode';
         } else if ([types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)) {
-          node.parent.parent.parent.placePen(); // TODO: great
+          node.parent.parent.parent.placePen();
           node.placePenTip();
+          state.label = 'penMode';
         }
       } else {
         console.log('no scene node selected');
       }
-
-      state.label = 'selectMode';
     },
 
     userChangedMarkup(state, input) {
@@ -6303,6 +6303,9 @@
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
+        console.log(this.state.label);
+        console.log(transition);
+
         this.state.update = transition.do; // a string
         this.state.label = transition.to;
 
@@ -6314,8 +6317,6 @@
     },
 
     publish() {
-      // console.log(this.state);
-
       for (let key of Object.keys(this.modules)) {
         this.modules[key](this.state.snapshot);
       }

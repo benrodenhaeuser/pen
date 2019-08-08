@@ -1,29 +1,24 @@
-/* HTML */
-
 body {
   background-color: #f1f1f1;
   margin: 10px 10px;
-  /* margin-left: 30px; */
 }
 
 main {
   display: grid;
-  grid-template-columns: 600px auto;
+  grid-template-columns: 700px auto;
   grid-template-areas:
     "tools tools"
     "canvas editor";
   grid-row-gap: 10px;
-  grid-column-gap: 10px;
+  grid-column-gap: 5px;
   position: relative;
   width: 100%;
-  /* height: 707px; */
   font-family: 'Roboto Mono';
   font-weight: 400;
 }
 
 .CodeMirror {
   height: 100%;
-  border-radius: 5px;
   font-family: 'Roboto Mono';
   font-size: 13px;
   color: #333;
@@ -51,12 +46,6 @@ main {
 
 #canvas, #editor {
   background-color: white;
-  border-radius: 5px;
-  /* box-shadow: 5px 5px 10px 0px rgba(200, 200, 200, 0.75); */
-}
-
-#editor {
-  height: 399px;
 }
 
 textarea {
@@ -96,7 +85,6 @@ textarea:focus {
 .pure-button {
   background-color: transparent;
   color: black;
-  border-radius: 5px;
 }
 
 .pure-button:hover, .pure-button:focus, .pure-menu-link:hover {
@@ -115,7 +103,6 @@ textarea:focus {
 
 .doc-list {
   background-color: #eee;
-  /* box-shadow: 3px 3px 15px 0px rgba(200, 200, 200, 0.75); */
 }
 
 .doc-list a {

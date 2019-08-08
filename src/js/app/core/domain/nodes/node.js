@@ -111,13 +111,6 @@ Object.assign(Node, {
   isRoot() {
     return this.parent === null;
   },
-
-  toJSON() {
-    return {
-      children: this.children,
-      props: this.props,
-    };
-  },
 });
 
 Object.defineProperty(Node, 'root', {

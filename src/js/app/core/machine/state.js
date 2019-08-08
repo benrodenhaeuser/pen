@@ -50,7 +50,7 @@ const State = {
     const doc = Doc.create();
 
     const canvas = Canvas.create();
-    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 600, 395);
+    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 700, 700);
     doc.append(canvas);
 
     return doc;
@@ -89,7 +89,7 @@ Object.defineProperty(State, 'snapshot', {
       state: this, // for debugging
     };
 
-    console.log(snapshot); // for debugging
+    // console.log(snapshot); // for debugging
     return snapshot;
   },
 });

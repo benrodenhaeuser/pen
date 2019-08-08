@@ -22,6 +22,14 @@ const ProtoNode = {
 
     return this;
   },
+
+  toJSON() {
+    return {
+      type: this.type,
+      children: this.children,
+      props: this.props,
+    };
+  },
 };
 
 export { ProtoNode };

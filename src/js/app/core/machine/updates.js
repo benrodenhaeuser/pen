@@ -305,17 +305,19 @@ const updates = {
     if (node) {
       if (node.type === types.SHAPE || node.type === types.GROUP) {
         node.select();
+        state.label = 'selectMode';
       } else if (node.type === types.SPLINE) {
         node.parent.placePen();
+        state.canvas.removeFocus();
+        state.label = 'penMode';
       } else if ([types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)) {
-        node.parent.parent.parent.placePen(); // TODO: great
+        node.parent.parent.parent.placePen();
         node.placePenTip();
+        state.label = 'penMode';
       }
     } else {
       console.log('no scene node selected');
     }
-
-    state.label = 'selectMode';
   },
 
   userChangedMarkup(state, input) {

@@ -20,6 +20,9 @@ const core = {
     const transition = transitions.get(this.state, input);
 
     if (transition) {
+      console.log(this.state.label);
+      console.log(transition);
+
       this.state.update = transition.do; // a string
       this.state.label = transition.to;
 
@@ -31,8 +34,6 @@ const core = {
   },
 
   publish() {
-    // console.log(this.state);
-
     for (let key of Object.keys(this.modules)) {
       this.modules[key](this.state.snapshot);
     }
