@@ -1,6 +1,7 @@
 import { GraphicsNode } from './_.js';
 import { Matrix } from '../geometry/_.js';
-import { MarkupNode } from './_.js';
+import { OpenTag } from './_.js';
+import { CloseTag } from './_.js';
 import { types } from './_.js';
 
 const Group = Object.create(GraphicsNode);
@@ -40,7 +41,7 @@ Object.assign(Group, {
   },
 
   toTags() {
-    const open = MarkupNode.create();
+    const open = OpenTag.create();
 
     if (!this.transform.equals(Matrix.identity())) {
       open.markup = `<g transform="${this.transform.toString()}">`;
@@ -51,7 +52,7 @@ Object.assign(Group, {
     open.key = this.key;
     open.class = this.class;
 
-    const close = MarkupNode.create();
+    const close = CloseTag.create();
     close.markup = '</g>';
     close.key = this.key;
 

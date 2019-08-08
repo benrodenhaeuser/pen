@@ -7,7 +7,7 @@ Object.assign(TagName, {
   create(text) {
     return MarkupNode.create
       .bind(this)(text)
-      .set({ type: types.TagName });
+      .set({ type: types.TAGNAME });
   },
 });
 

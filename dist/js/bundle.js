@@ -3855,14 +3855,17 @@
     TAG: 'tag',
     OPENTAG: 'openTag',
     CLOSETAG: 'closeTag',
-    LANGLE: 'langle',
+    LANGLE: 'lAngle',
     TAGNAME: 'tagName',
     ATTRIBUTES: 'attributes',
     ATTRIBUTE: 'attribute',
     ATTRKEY: 'attrKey',
     ATTRVALUE: 'attrValue',
-    RANGLE: 'rangle',
+    RANGLE: 'rAngle',
     COORDS: 'coords',
+    PATHELEMENT: 'path',
+    GELEMENT: 'g',
+    SVGELEMENT: 'svg',
   };
 
   const ProtoNode = {
@@ -3892,7 +3895,8 @@
   };
 
   const Node$$1 = Object.create(ProtoNode);
-  Node$$1.defineProps(['type', 'key', 'class']);
+  // Node.defineProps(['type', 'key', 'class']);
+  Node$$1.defineProps(['key', 'class']);
 
   Object.assign(Node$$1, {
     create() {
@@ -4328,11 +4332,11 @@
     },
 
     toTags() {
-      const open = MarkupNode$$1.create();
+      const open = OpenTag$$1.create();
       open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
       open.key = this.key;
 
-      const close = MarkupNode$$1.create();
+      const close = CloseTag$$1.create();
       close.markup = '</svg>';
       close.key = this.key;
 
@@ -4380,7 +4384,7 @@
     },
 
     toTags() {
-      const open = MarkupNode$$1.create();
+      const open = OpenTag$$1.create();
 
       if (!this.transform.equals(Matrix$$1.identity())) {
         open.markup = `<g transform="${this.transform.toString()}">`;
@@ -4391,7 +4395,7 @@
       open.key = this.key;
       open.class = this.class;
 
-      const close = MarkupNode$$1.create();
+      const close = CloseTag$$1.create();
       close.markup = '</g>';
       close.key = this.key;
 
@@ -5061,7 +5065,7 @@
     create(text) {
       return MarkupNode$$1.create
         .bind(this)(text)
-        .set({ type: types.TagName });
+        .set({ type: types.TAGNAME });
     },
   });
 
@@ -5112,6 +5116,50 @@
       return MarkupNode$$1.create
         .bind(this)(text)
         .set({ type: types.COORDS });
+    },
+  });
+
+  const MarkupElement$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(MarkupElement$$1, {
+    create() {
+      return MarkupNode$$1.create.bind(this)()
+    },
+  });
+
+  const SVGElement$$1 = Object.create(MarkupElement$$1);
+
+  Object.assign(SVGElement$$1, {
+    create() {
+      return MarkupElement$$1.create
+        .bind(this)()
+        .set({
+          type: types.SVGELEMENT,
+        });
+    },
+  });
+
+  const GElement$$1 = Object.create(MarkupElement$$1);
+
+  Object.assign(GElement$$1, {
+    create() {
+      return MarkupElement$$1.create
+        .bind(this)()
+        .set({
+          type: types.GELEMENT,
+        });
+    },
+  });
+
+  const PathElement$$1 = Object.create(MarkupElement$$1);
+
+  Object.assign(PathElement$$1, {
+    create() {
+      return MarkupElement$$1.create
+        .bind(this)()
+        .set({
+          type: types.PATHELEMENT,
+        });
     },
   });
 
@@ -5207,7 +5255,7 @@
   };
 
   const sceneToSyntaxTree = canvas => {
-    const syntaxTree = MarkupNode$$1.create();
+    const syntaxTree = SVGElement$$1.create();
     parse(canvas, syntaxTree, 0);
     syntaxTree.indexify();
     return syntaxTree;
@@ -5232,10 +5280,24 @@
 
     // inner markup
     if (sceneNode.graphicsChildren.length > 0) {
-      const markupNode = MarkupNode$$1.create();
-      markupParent.append(markupNode);
-
       for (let sceneChild of sceneNode.graphicsChildren) {
+        let markupNode;
+
+        console.log(sceneChild.type);
+
+        switch (sceneChild.type) {
+          case types.SHAPE:
+            console.log('shape case');
+            markupNode = PathElement$$1.create();
+            console.log(markupNode.type);
+            break;
+          case types.GROUP:
+            console.log('group case');
+            markupNode = GElement$$1.create();
+            break;
+        }
+
+        markupParent.append(markupNode);
         parse(sceneChild, markupNode, level + 1);
       }
     }
@@ -5466,6 +5528,8 @@
       this.label = 'start';
       this.input = {};
       this.update = '';
+      this.aux = {};
+
       this.editor = this.buildEditorTree();
 
       return this;
@@ -5523,14 +5587,18 @@
 
   Object.defineProperty(State, 'snapshot', {
     get() {
-      return {
+      const snapshot = {
         label: this.label,
         input: this.input,
         update: this.update,
         vDOM: this.editorToVDOM(),
         plain: this.docToObject(),
         syntaxTree: this.sceneToSyntaxTree(),
+        state: this, // for debugging
       };
+
+      console.log(snapshot); // for debugging
+      return snapshot;
     },
   });
 
@@ -5865,7 +5933,7 @@
 
   const updates = {
     init() {
-      this.aux = {};
+      // this.aux = {};
     },
 
     after(state, input) {},
@@ -5936,7 +6004,7 @@
         state.canvas.updateBounds(current);
       }
 
-      this.aux = {};
+      state.aux = {};
     },
 
     cleanup(state, event) {
@@ -5948,7 +6016,7 @@
 
       state.canvas.removeSelection();
       state.canvas.removePen();
-      this.aux = {};
+      state.aux = {};
     },
 
     // TODO
@@ -5968,8 +6036,8 @@
 
     initTransform(state, input) {
       const node = state.canvas.findSelection();
-      this.aux.from = Vector$$1.create(input.x, input.y);
-      this.aux.center = node.bounds.center.transform(node.globalTransform());
+      state.aux.from = Vector$$1.create(input.x, input.y);
+      state.aux.center = node.bounds.center.transform(node.globalTransform());
       // ^ TODO: can we get rid of this? it looks like we can find the selection within the transform, and derive the center using the result.
     },
 
@@ -5981,12 +6049,12 @@
       }
 
       const to = Vector$$1.create(input.x, input.y);
-      const from = this.aux.from;
+      const from = state.aux.from;
       const offset = to.minus(from);
 
       node.translate(offset);
 
-      this.aux.from = to;
+      state.aux.from = to;
     },
 
     rotate(state, input) {
@@ -5997,13 +6065,13 @@
       }
 
       const to = Vector$$1.create(input.x, input.y);
-      const from = this.aux.from;
-      const center = this.aux.center;
+      const from = state.aux.from;
+      const center = state.aux.center;
       const angle = center.angle(from, to);
 
       node.rotate(angle, center);
 
-      this.aux.from = to;
+      state.aux.from = to;
     },
 
     scale(state, input) {
@@ -6014,13 +6082,13 @@
       }
 
       const to = Vector$$1.create(input.x, input.y);
-      const from = this.aux.from;
-      const center = this.aux.center;
+      const from = state.aux.from;
+      const center = state.aux.center;
       const factor = to.minus(center).length() / from.minus(center).length();
 
       node.scale(factor, center);
 
-      this.aux.from = to;
+      state.aux.from = to;
     },
 
     // PEN
@@ -6051,11 +6119,11 @@
       const from = Vector$$1.create(input.x, input.y).transformToLocal(shape);
       control.placePenTip();
 
-      this.aux.from = from;
+      state.aux.from = from;
     },
 
     adjustSegment(state, input) {
-      const from = this.aux.from;
+      const from = state.aux.from;
 
       const control = state.canvas.findPenTip();
       const segment = control.parent;
@@ -6088,7 +6156,7 @@
           break;
       }
 
-      this.aux.from = to;
+      state.aux.from = to;
     },
 
     projectInput(state, input) {
@@ -6106,26 +6174,26 @@
 
       // TODO: do we really need all this stuff?
       // It looks like we can at least condense it!
-      this.aux.spline = spline;
-      this.aux.splitter = shape.splitter;
-      this.aux.startSegment = startSegment;
-      this.aux.endSegment = endSegment;
-      this.aux.insertionIndex = startIndex + 1;
-      this.aux.bCurve = bCurve;
-      this.aux.curveTime = pointOnCurve.t;
-      this.aux.from = from;
+      state.aux.spline = spline;
+      state.aux.splitter = shape.splitter;
+      state.aux.startSegment = startSegment;
+      state.aux.endSegment = endSegment;
+      state.aux.insertionIndex = startIndex + 1;
+      state.aux.bCurve = bCurve;
+      state.aux.curveTime = pointOnCurve.t;
+      state.aux.from = from;
     },
 
     // TODO: refactor
     splitCurve(state, input) {
       // TODO: see preceding comment
-      const spline = this.aux.spline;
-      const splitter = this.aux.splitter;
-      const startSegment = this.aux.startSegment;
-      const endSegment = this.aux.endSegment;
-      const insertionIndex = this.aux.insertionIndex;
-      const bCurve = this.aux.bCurve;
-      const curveTime = this.aux.curveTime;
+      const spline = state.aux.spline;
+      const splitter = state.aux.splitter;
+      const startSegment = state.aux.startSegment;
+      const endSegment = state.aux.endSegment;
+      const insertionIndex = state.aux.insertionIndex;
+      const bCurve = state.aux.bCurve;
+      const curveTime = state.aux.curveTime;
 
       const splitCurves = bCurve.split(curveTime);
       const left = splitCurves.left;

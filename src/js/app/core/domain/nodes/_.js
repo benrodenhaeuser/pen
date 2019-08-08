@@ -30,6 +30,10 @@ import { Attribute } from './attribute.js';
 import { AttrKey } from './attrKey.js';
 import { AttrValue } from './attrValue.js';
 import { Coords } from './coords.js';
+import { MarkupElement } from './markupElement.js';
+import { SVGElement } from './svgElement.js';
+import { GElement } from './gElement.js';
+import { PathElement } from './pathElement.js';
 
 export {
   types,
@@ -64,4 +68,8 @@ export {
   AttrKey,
   AttrValue,
   Coords,
+  MarkupElement,
+  GElement,
+  SVGElement,
+  PathElement,
 };

@@ -1,8 +1,12 @@
-import { MarkupNode } from '../domain/nodes/_.js';
+import { SVGElement } from '../domain/nodes/_.js';
+import { GElement } from '../domain/nodes/_.js';
+import { PathElement } from '../domain/nodes/_.js';
+import { types } from '../domain/nodes/_.js';
+
 import { Text } from '../domain/nodes/_.js';
 
 const sceneToSyntaxTree = canvas => {
-  const syntaxTree = MarkupNode.create();
+  const syntaxTree = SVGElement.create();
   parse(canvas, syntaxTree, 0);
   syntaxTree.indexify();
   return syntaxTree;
@@ -27,10 +31,24 @@ const parse = (sceneNode, markupParent, level) => {
 
   // inner markup
   if (sceneNode.graphicsChildren.length > 0) {
-    const markupNode = MarkupNode.create();
-    markupParent.append(markupNode);
-
     for (let sceneChild of sceneNode.graphicsChildren) {
+      let markupNode;
+
+      console.log(sceneChild.type);
+
+      switch (sceneChild.type) {
+        case types.SHAPE:
+          console.log('shape case');
+          markupNode = PathElement.create();
+          console.log(markupNode.type);
+          break;
+        case types.GROUP:
+          console.log('group case');
+          markupNode = GElement.create();
+          break;
+      }
+
+      markupParent.append(markupNode);
       parse(sceneChild, markupNode, level + 1);
     }
   }

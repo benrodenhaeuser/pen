@@ -3,7 +3,8 @@ import { Class } from '../helpers/_.js';
 import { createID } from '../helpers/_.js';
 
 const Node = Object.create(ProtoNode);
-Node.defineProps(['type', 'key', 'class']);
+// Node.defineProps(['type', 'key', 'class']);
+Node.defineProps(['key', 'class']);
 
 Object.assign(Node, {
   create() {

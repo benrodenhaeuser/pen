@@ -21,14 +21,17 @@ const types = {
   TAG: 'tag',
   OPENTAG: 'openTag',
   CLOSETAG: 'closeTag',
-  LANGLE: 'langle',
+  LANGLE: 'lAngle',
   TAGNAME: 'tagName',
   ATTRIBUTES: 'attributes',
   ATTRIBUTE: 'attribute',
   ATTRKEY: 'attrKey',
   ATTRVALUE: 'attrValue',
-  RANGLE: 'rangle',
+  RANGLE: 'rAngle',
   COORDS: 'coords',
+  PATHELEMENT: 'path',
+  GELEMENT: 'g',
+  SVGELEMENT: 'svg',
 }
 
 export { types };

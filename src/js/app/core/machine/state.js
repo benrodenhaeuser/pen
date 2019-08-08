@@ -20,6 +20,8 @@ const State = {
     this.label = 'start';
     this.input = {};
     this.update = '';
+    this.aux = {};
+
     this.editor = this.buildEditorTree();
 
     return this;
@@ -77,14 +79,18 @@ const State = {
 
 Object.defineProperty(State, 'snapshot', {
   get() {
-    return {
+    const snapshot = {
       label: this.label,
       input: this.input,
       update: this.update,
       vDOM: this.editorToVDOM(),
       plain: this.docToObject(),
       syntaxTree: this.sceneToSyntaxTree(),
+      state: this, // for debugging
     };
+
+    console.log(snapshot); // for debugging
+    return snapshot;
   },
 });
 

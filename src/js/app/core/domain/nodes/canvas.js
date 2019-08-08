@@ -1,6 +1,7 @@
 import { GraphicsNode } from './_.js';
 import { Shape } from './_.js';
-import { MarkupNode } from './_.js';
+import { OpenTag } from './_.js';
+import { CloseTag } from './_.js';
 import { types } from './_.js';
 
 const xmlns = 'http://www.w3.org/2000/svg';
@@ -140,11 +141,11 @@ Object.assign(Canvas, {
   },
 
   toTags() {
-    const open = MarkupNode.create();
+    const open = OpenTag.create();
     open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
     open.key = this.key;
 
-    const close = MarkupNode.create();
+    const close = CloseTag.create();
     close.markup = '</svg>';
     close.key = this.key;
 

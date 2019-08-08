@@ -11,7 +11,7 @@ import { types } from '../domain/_.js';
 
 const updates = {
   init() {
-    this.aux = {};
+    // this.aux = {};
   },
 
   after(state, input) {},
@@ -82,7 +82,7 @@ const updates = {
       state.canvas.updateBounds(current);
     }
 
-    this.aux = {};
+    state.aux = {};
   },
 
   cleanup(state, event) {
@@ -94,7 +94,7 @@ const updates = {
 
     state.canvas.removeSelection();
     state.canvas.removePen();
-    this.aux = {};
+    state.aux = {};
   },
 
   // TODO
@@ -114,8 +114,8 @@ const updates = {
 
   initTransform(state, input) {
     const node = state.canvas.findSelection();
-    this.aux.from = Vector.create(input.x, input.y);
-    this.aux.center = node.bounds.center.transform(node.globalTransform());
+    state.aux.from = Vector.create(input.x, input.y);
+    state.aux.center = node.bounds.center.transform(node.globalTransform());
     // ^ TODO: can we get rid of this? it looks like we can find the selection within the transform, and derive the center using the result.
   },
 
@@ -127,12 +127,12 @@ const updates = {
     }
 
     const to = Vector.create(input.x, input.y);
-    const from = this.aux.from;
+    const from = state.aux.from;
     const offset = to.minus(from);
 
     node.translate(offset);
 
-    this.aux.from = to;
+    state.aux.from = to;
   },
 
   rotate(state, input) {
@@ -143,13 +143,13 @@ const updates = {
     }
 
     const to = Vector.create(input.x, input.y);
-    const from = this.aux.from;
-    const center = this.aux.center;
+    const from = state.aux.from;
+    const center = state.aux.center;
     const angle = center.angle(from, to);
 
     node.rotate(angle, center);
 
-    this.aux.from = to;
+    state.aux.from = to;
   },
 
   scale(state, input) {
@@ -160,13 +160,13 @@ const updates = {
     }
 
     const to = Vector.create(input.x, input.y);
-    const from = this.aux.from;
-    const center = this.aux.center;
+    const from = state.aux.from;
+    const center = state.aux.center;
     const factor = to.minus(center).length() / from.minus(center).length();
 
     node.scale(factor, center);
 
-    this.aux.from = to;
+    state.aux.from = to;
   },
 
   // PEN
@@ -197,11 +197,11 @@ const updates = {
     const from = Vector.create(input.x, input.y).transformToLocal(shape);
     control.placePenTip();
 
-    this.aux.from = from;
+    state.aux.from = from;
   },
 
   adjustSegment(state, input) {
-    const from = this.aux.from;
+    const from = state.aux.from;
 
     const control = state.canvas.findPenTip();
     const segment = control.parent;
@@ -234,7 +234,7 @@ const updates = {
         break;
     }
 
-    this.aux.from = to;
+    state.aux.from = to;
   },
 
   projectInput(state, input) {
@@ -252,26 +252,26 @@ const updates = {
 
     // TODO: do we really need all this stuff?
     // It looks like we can at least condense it!
-    this.aux.spline = spline;
-    this.aux.splitter = shape.splitter;
-    this.aux.startSegment = startSegment;
-    this.aux.endSegment = endSegment;
-    this.aux.insertionIndex = startIndex + 1;
-    this.aux.bCurve = bCurve;
-    this.aux.curveTime = pointOnCurve.t;
-    this.aux.from = from;
+    state.aux.spline = spline;
+    state.aux.splitter = shape.splitter;
+    state.aux.startSegment = startSegment;
+    state.aux.endSegment = endSegment;
+    state.aux.insertionIndex = startIndex + 1;
+    state.aux.bCurve = bCurve;
+    state.aux.curveTime = pointOnCurve.t;
+    state.aux.from = from;
   },
 
   // TODO: refactor
   splitCurve(state, input) {
     // TODO: see preceding comment
-    const spline = this.aux.spline;
-    const splitter = this.aux.splitter;
-    const startSegment = this.aux.startSegment;
-    const endSegment = this.aux.endSegment;
-    const insertionIndex = this.aux.insertionIndex;
-    const bCurve = this.aux.bCurve;
-    const curveTime = this.aux.curveTime;
+    const spline = state.aux.spline;
+    const splitter = state.aux.splitter;
+    const startSegment = state.aux.startSegment;
+    const endSegment = state.aux.endSegment;
+    const insertionIndex = state.aux.insertionIndex;
+    const bCurve = state.aux.bCurve;
+    const curveTime = state.aux.curveTime;
 
     const splitCurves = bCurve.split(curveTime);
     const left = splitCurves.left;
