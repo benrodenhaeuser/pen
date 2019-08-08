@@ -4,9 +4,9 @@ import { types } from './_.js';
 const CloseTag = Object.create(Tag);
 
 Object.assign(CloseTag, {
-  create() {
+  create(text) {
     return Tag
-      .create.bind(this)()
+      .create.bind(this)(text)
       .set({ type: types.CLOSETAG });
   },
 });

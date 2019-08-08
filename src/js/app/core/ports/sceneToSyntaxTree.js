@@ -9,23 +9,19 @@ const sceneToSyntaxTree = canvas => {
 };
 
 const parse = (sceneNode, markupParent, level) => {
-  const markupNodes = sceneNode.toTags();
+  const markupNodes = sceneNode.toTags(level); // pass the level
   const open = markupNodes.open;
   const close = markupNodes.close;
-  open.level = level;
-  close.level = level;
 
   // indent
-  const pad = indent(level);
-  const indentNode = Text.create();
-  indentNode.markup = pad;
+  const indentNode = Text.create(indent(level));
   markupParent.append(indentNode);
 
   // open tag
   markupParent.append(open);
 
   // linebreak
-  const tNode = Text.create(); 
+  const tNode = Text.create();
   tNode.markup = '\n';
   markupParent.append(tNode);
 
@@ -39,14 +35,16 @@ const parse = (sceneNode, markupParent, level) => {
     }
   }
 
-  // indent
-  markupParent.append(indentNode);
+  if (close) {
+    // indent
+    markupParent.append(indentNode);
 
-  // close tag
-  markupParent.append(close);
+    // close tag
+    markupParent.append(close);
 
-  // linebreak
-  markupParent.append(tNode);
+    // linebreak
+    markupParent.append(tNode);
+  }
 };
 
 const indent = level => {

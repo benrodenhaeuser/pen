@@ -3,6 +3,17 @@ import { Spline } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
 import { MarkupNode } from './_.js';
+import { Text } from './_.js';
+import { OpenTag } from './_.js';
+import { CloseTag } from './_.js';
+import { Langle } from './_.js';
+import { Rangle } from './_.js';
+import { TagName } from './_.js';
+import { Attributes } from './_.js';
+import { Attribute } from './_.js';
+import { AttrKey } from './_.js';
+import { AttrValue } from './_.js';
+import { Coords } from './_.js';
 import { types } from './_.js';
 
 const Shape = Object.create(GraphicsNode);
@@ -89,36 +100,75 @@ Object.assign(Shape, {
     return svgNode;
   },
 
-  toTags() {
-    const open = MarkupNode.create();
+  toTags(level) {
+    const open = OpenTag.create();
+    const langle = Langle.create();
+    const tagName = TagName.create('path');
+    const attributes = Attributes.create();
+    const linebreak = Text.create(`\n${indent(level)}`);
+    const close = Text.create('/');
+    const rangle = Rangle.create();
 
-    for (let [key,value] of Object.entries(this.props)) {
-      // console.log(key, value);
+    langle.key = this.key;
+    tagName.key = this.key;
+    rangle.key = this.key;
+
+    open.append(langle);
+    open.append(tagName);
+    open.append(attributes);
+    open.append(linebreak);
+    open.append(close);
+    open.append(rangle);
+
+    const d = Attribute.create();
+    const linebreakPlusPad = Text.create(`\n${indent(level + 1)}`);
+    const dName = AttrKey.create('d=');
+    dName.key = this.lastChild.key;
+
+    const quoteStart = Text.create('"');
+    const quoteEnd = Text.create(`\n${indent(level + 1)}"`);
+
+    quoteStart.key = this.lastChild.key;
+    quoteEnd.key = this.lastChild.key;
+
+    const dValue = AttrValue.create();
+
+    for (let elem of this.toPathTree(level)) {
+      dValue.append(elem);
     }
-    // => transform and d attributes go to path string
-    //    (later, others may follow)
-    // => key and class go to props of markup node
-    // => splitter and bounds are not relevant here
+
+    d.append(linebreakPlusPad);
+    d.append(dName);
+    d.append(quoteStart);
+    d.append(dValue);
+    d.append(quoteEnd);
+    attributes.append(d);
 
     if (!this.transform.equals(Matrix.identity())) {
-      open.markup = `<path d="${this.toPathString()}" transform="${this.transform.toString()}">`;
-    } else {
-      open.markup = `<path d="${this.toPathString()}">`;
+      const linebreak = Text.create(`\n${indent(level + 1)}`);
+
+      const trans = Attribute.create(`transform="${this.transform.toString()}"`);
+      trans.key = this.key;
+
+      attributes.append(linebreak);
+      attributes.append(trans);
     }
 
-    open.key = this.key;
     open.class = this.class;
 
-    const close = MarkupNode.create();
-    close.markup = '</path>';
-    close.key = this.key;
+    // const close = CloseTag.create('</path>');
+    // close.markup = '</path>';
+    // close.key = this.key;
+    // open.class = this.class;
 
     return {
       open: open,
-      close: close,
+      close: null,
     };
   },
 
+  // could perhaps replace implementation by
+  // return this.toPathTree().toMarkup;
   toPathString() {
     let d = '';
 
@@ -153,6 +203,74 @@ Object.assign(Shape, {
 
     return d;
   },
+
+  toPathTree(level) {
+    let d = [];
+
+    for (let spline of this.children) {
+      const segment = spline.children[0];
+
+      const linebreak = Text.create(`\n${indent(level + 2)}`);
+      const M = Text.create("M ");
+
+      d.push(linebreak);
+      d.push(M);
+
+      let coords = Coords.create(`${segment.anchor.vector.x} ${segment.anchor.vector.y}`);
+      coords.key = segment.anchor.key;
+      d.push(coords);
+
+      for (let i = 1; i < spline.children.length; i += 1) {
+        const currSeg = spline.children[i];
+        const prevSeg = spline.children[i - 1];
+
+        const linebreak = Text.create(`\n${indent(level + 2)}`);
+
+        if (prevSeg.handleOut && currSeg.handleIn) {
+          const C = Text.create('C');
+          d.push(linebreak);
+          d.push(C);
+        } else if (currSeg.handleIn || prevSeg.handleOut) {
+          const Q = Text.create('Q');
+          d.push(linebreak);
+          d.push(Q);
+        } else {
+          const L = Text.create('L');
+          d.push(linebreak);
+          d.push(L);
+        }
+
+        if (prevSeg.handleOut) {
+          coords = Coords.create(` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`);
+          coords.key = prevSeg.handleOut.key;
+          d.push(coords);
+        }
+
+        if (currSeg.handleIn) {
+          coords = Coords.create(` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`);
+          coords.key = currSeg.handleIn.key;
+          d.push(coords);
+        }
+
+        coords = Coords.create(` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`);
+        coords.key = currSeg.anchor.key;
+        d.push(coords);
+      }
+    }
+
+    return d;
+
+  },
 });
+
+const indent = level => {
+  let pad = '';
+
+  for (let i = 0; i < level; i += 1) {
+    pad += '  ';
+  }
+
+  return pad;
+};
 
 export { Shape };

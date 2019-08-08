@@ -4,9 +4,9 @@ import { types } from './_.js';
 const Text = Object.create(MarkupNode);
 
 Object.assign(Text, {
-  create() {
+  create(text) {
     return MarkupNode.create
-      .bind(this)()
+      .bind(this)(text)
       .set({ type: types.TEXT });
   },
 });

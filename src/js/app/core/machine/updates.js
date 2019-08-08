@@ -309,7 +309,14 @@ const updates = {
     const node = state.canvas.findDescendantByKey(input.key);
 
     if (node) {
-      node.select();
+      if (node.type === types.SHAPE || node.type === types.GROUP) {
+        node.select();
+      } else if (node.type === types.SPLINE) {
+        node.parent.placePen();
+      } else if ([types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)) {
+        node.parent.parent.parent.placePen(); // TODO: great
+        node.placePenTip();
+      }
     } else {
       console.log('no scene node selected');
     }

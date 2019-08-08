@@ -7,7 +7,10 @@ Object.assign(Rangle, {
   create() {
     return MarkupNode.create
       .bind(this)()
-      .set({ type: types.RANGLE });
+      .set({
+        type: types.RANGLE,
+        markup: '>',
+      });
   },
 });
 

@@ -3858,10 +3858,11 @@
     LANGLE: 'langle',
     TAGNAME: 'tagName',
     ATTRIBUTES: 'attributes',
-    ATTRIBUTE: 'attribute', 
+    ATTRIBUTE: 'attribute',
     ATTRKEY: 'attrKey',
     ATTRVALUE: 'attrValue',
     RANGLE: 'rangle',
+    COORDS: 'coords',
   };
 
   const ProtoNode = {
@@ -4485,36 +4486,75 @@
       return svgNode;
     },
 
-    toTags() {
-      const open = MarkupNode$$1.create();
+    toTags(level) {
+      const open = OpenTag$$1.create();
+      const langle = Langle$$1.create();
+      const tagName = TagName$$1.create('path');
+      const attributes = Attributes$$1.create();
+      const linebreak = Text$$1.create(`\n${indent(level)}`);
+      const close = Text$$1.create('/');
+      const rangle = Rangle$$1.create();
 
-      for (let [key,value] of Object.entries(this.props)) {
-        // console.log(key, value);
+      langle.key = this.key;
+      tagName.key = this.key;
+      rangle.key = this.key;
+
+      open.append(langle);
+      open.append(tagName);
+      open.append(attributes);
+      open.append(linebreak);
+      open.append(close);
+      open.append(rangle);
+
+      const d = Attribute$$1.create();
+      const linebreakPlusPad = Text$$1.create(`\n${indent(level + 1)}`);
+      const dName = AttrKey$$1.create('d=');
+      dName.key = this.lastChild.key;
+
+      const quoteStart = Text$$1.create('"');
+      const quoteEnd = Text$$1.create(`\n${indent(level + 1)}"`);
+
+      quoteStart.key = this.lastChild.key;
+      quoteEnd.key = this.lastChild.key;
+
+      const dValue = AttrValue$$1.create();
+
+      for (let elem of this.toPathTree(level)) {
+        dValue.append(elem);
       }
-      // => transform and d attributes go to path string
-      //    (later, others may follow)
-      // => key and class go to props of markup node
-      // => splitter and bounds are not relevant here
+
+      d.append(linebreakPlusPad);
+      d.append(dName);
+      d.append(quoteStart);
+      d.append(dValue);
+      d.append(quoteEnd);
+      attributes.append(d);
 
       if (!this.transform.equals(Matrix$$1.identity())) {
-        open.markup = `<path d="${this.toPathString()}" transform="${this.transform.toString()}">`;
-      } else {
-        open.markup = `<path d="${this.toPathString()}">`;
+        const linebreak = Text$$1.create(`\n${indent(level + 1)}`);
+
+        const trans = Attribute$$1.create(`transform="${this.transform.toString()}"`);
+        trans.key = this.key;
+
+        attributes.append(linebreak);
+        attributes.append(trans);
       }
 
-      open.key = this.key;
       open.class = this.class;
 
-      const close = MarkupNode$$1.create();
-      close.markup = '</path>';
-      close.key = this.key;
+      // const close = CloseTag.create('</path>');
+      // close.markup = '</path>';
+      // close.key = this.key;
+      // open.class = this.class;
 
       return {
         open: open,
-        close: close,
+        close: null,
       };
     },
 
+    // could perhaps replace implementation by
+    // return this.toPathTree().toMarkup;
     toPathString() {
       let d = '';
 
@@ -4549,7 +4589,75 @@
 
       return d;
     },
+
+    toPathTree(level) {
+      let d = [];
+
+      for (let spline of this.children) {
+        const segment = spline.children[0];
+
+        const linebreak = Text$$1.create(`\n${indent(level + 2)}`);
+        const M = Text$$1.create("M ");
+
+        d.push(linebreak);
+        d.push(M);
+
+        let coords = Coords$$1.create(`${segment.anchor.vector.x} ${segment.anchor.vector.y}`);
+        coords.key = segment.anchor.key;
+        d.push(coords);
+
+        for (let i = 1; i < spline.children.length; i += 1) {
+          const currSeg = spline.children[i];
+          const prevSeg = spline.children[i - 1];
+
+          const linebreak = Text$$1.create(`\n${indent(level + 2)}`);
+
+          if (prevSeg.handleOut && currSeg.handleIn) {
+            const C = Text$$1.create('C');
+            d.push(linebreak);
+            d.push(C);
+          } else if (currSeg.handleIn || prevSeg.handleOut) {
+            const Q = Text$$1.create('Q');
+            d.push(linebreak);
+            d.push(Q);
+          } else {
+            const L = Text$$1.create('L');
+            d.push(linebreak);
+            d.push(L);
+          }
+
+          if (prevSeg.handleOut) {
+            coords = Coords$$1.create(` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`);
+            coords.key = prevSeg.handleOut.key;
+            d.push(coords);
+          }
+
+          if (currSeg.handleIn) {
+            coords = Coords$$1.create(` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`);
+            coords.key = currSeg.handleIn.key;
+            d.push(coords);
+          }
+
+          coords = Coords$$1.create(` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`);
+          coords.key = currSeg.anchor.key;
+          d.push(coords);
+        }
+      }
+
+      return d;
+
+    },
   });
+
+  const indent = level => {
+    let pad = '';
+
+    for (let i = 0; i < level; i += 1) {
+      pad += '  ';
+    }
+
+    return pad;
+  };
 
   const Spline$$1 = Object.create(SceneNode$$1);
 
@@ -4812,10 +4920,11 @@
   MarkupNode$$1.defineProps(['markup', 'start', 'end', 'level']);
 
   Object.assign(MarkupNode$$1, {
-    create() {
+    create(text) {
       return Node$$1.create
         .bind(this)()
-        .set({ type: types.MARKUPNODE });
+        .set({ type: types.MARKUPNODE })
+        .set({ markup: text });
     },
 
     indexify(start = 0) {
@@ -4885,10 +4994,124 @@
   const Text$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Text$$1, {
+    create(text) {
+      return MarkupNode$$1.create
+        .bind(this)(text)
+        .set({ type: types.TEXT });
+    },
+  });
+
+  const Tag$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(Tag$$1, {
+    create(text) {
+      return MarkupNode$$1.create.bind(this)(text);
+    },
+  });
+
+  const OpenTag$$1 = Object.create(Tag$$1);
+
+  Object.assign(OpenTag$$1, {
+    create(text) {
+      return Tag$$1
+        .create.bind(this)(text)
+        .set({ type: types.OPENTAG });
+    },
+  });
+
+  const CloseTag$$1 = Object.create(Tag$$1);
+
+  Object.assign(CloseTag$$1, {
+    create(text) {
+      return Tag$$1
+        .create.bind(this)(text)
+        .set({ type: types.CLOSETAG });
+    },
+  });
+
+  const Langle$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(Langle$$1, {
     create() {
       return MarkupNode$$1.create
         .bind(this)()
-        .set({ type: types.TEXT });
+        .set({
+          type: types.LANGLE,
+          markup: '<', 
+        });
+    },
+  });
+
+  const Rangle$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(Rangle$$1, {
+    create() {
+      return MarkupNode$$1.create
+        .bind(this)()
+        .set({
+          type: types.RANGLE,
+          markup: '>',
+        });
+    },
+  });
+
+  const TagName$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(TagName$$1, {
+    create(text) {
+      return MarkupNode$$1.create
+        .bind(this)(text)
+        .set({ type: types.TagName });
+    },
+  });
+
+  const Attributes$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(Attributes$$1, {
+    create(text) {
+      return MarkupNode$$1.create
+        .bind(this)(text)
+        .set({ type: types.ATTRIBUTES });
+    },
+  });
+
+  const Attribute$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(Attribute$$1, {
+    create(text) {
+      return MarkupNode$$1.create
+        .bind(this)(text)
+        .set({ type: types.ATTRIBUTE });
+    },
+  });
+
+  const AttrKey$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(AttrKey$$1, {
+    create(text) {
+      return MarkupNode$$1.create
+        .bind(this)(text)
+        .set({ type: types.ATTRKEY });
+    },
+  });
+
+  const AttrValue$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(AttrValue$$1, {
+    create(text) {
+      return MarkupNode$$1.create
+        .bind(this)(text)
+        .set({ type: types.ATTRVALUE });
+    },
+  });
+
+  const Coords$$1 = Object.create(MarkupNode$$1);
+
+  Object.assign(Coords$$1, {
+    create(text) {
+      return MarkupNode$$1.create
+        .bind(this)(text)
+        .set({ type: types.COORDS });
     },
   });
 
@@ -4991,23 +5214,19 @@
   };
 
   const parse = (sceneNode, markupParent, level) => {
-    const markupNodes = sceneNode.toTags();
+    const markupNodes = sceneNode.toTags(level); // pass the level
     const open = markupNodes.open;
     const close = markupNodes.close;
-    open.level = level;
-    close.level = level;
 
     // indent
-    const pad = indent(level);
-    const indentNode = Text$$1.create();
-    indentNode.markup = pad;
+    const indentNode = Text$$1.create(indent$1(level));
     markupParent.append(indentNode);
 
     // open tag
     markupParent.append(open);
 
     // linebreak
-    const tNode = Text$$1.create(); 
+    const tNode = Text$$1.create();
     tNode.markup = '\n';
     markupParent.append(tNode);
 
@@ -5021,17 +5240,19 @@
       }
     }
 
-    // indent
-    markupParent.append(indentNode);
+    if (close) {
+      // indent
+      markupParent.append(indentNode);
 
-    // close tag
-    markupParent.append(close);
+      // close tag
+      markupParent.append(close);
 
-    // linebreak
-    markupParent.append(tNode);
+      // linebreak
+      markupParent.append(tNode);
+    }
   };
 
-  const indent = level => {
+  const indent$1 = level => {
     let pad = '';
 
     for (let i = 0; i < level; i += 1) {
@@ -5942,7 +6163,14 @@
       const node = state.canvas.findDescendantByKey(input.key);
 
       if (node) {
-        node.select();
+        if (node.type === types.SHAPE || node.type === types.GROUP) {
+          node.select();
+        } else if (node.type === types.SPLINE) {
+          node.parent.placePen();
+        } else if ([types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)) {
+          node.parent.parent.parent.placePen(); // TODO: great
+          node.placePenTip();
+        }
       } else {
         console.log('no scene node selected');
       }
@@ -16508,15 +16736,16 @@
       }
 
       // set text marker
-      const node = snapshot.syntaxTree.findDescendantByClass('selected');
-      if (node) {
-        const from = this.markupEditor.doc.posFromIndex(node.start);
-        const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-        const range = [from, to];
-        this.textMarker = this.markupDoc.markText(...range, {
-          className: 'selected-markup', // triggers CSS rule
-        });
-      }
+      // TODO
+      // const node = snapshot.syntaxTree.findDescendantByClass('selected');
+      // if (node) {
+      //   const from = this.markupEditor.doc.posFromIndex(node.start);
+      //   const to = this.markupEditor.doc.posFromIndex(node.end + 1);
+      //   const range = [from, to];
+      //   this.textMarker = this.markupDoc.markText(...range, {
+      //     className: 'selected-markup', // triggers CSS rule
+      //   });
+      // }
 
       // editor syntax tree received
       this.previousSyntaxTree = snapshot.syntaxTree;

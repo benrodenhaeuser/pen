@@ -86,15 +86,16 @@ const markup = {
     }
 
     // set text marker
-    const node = snapshot.syntaxTree.findDescendantByClass('selected');
-    if (node) {
-      const from = this.markupEditor.doc.posFromIndex(node.start);
-      const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-      const range = [from, to];
-      this.textMarker = this.markupDoc.markText(...range, {
-        className: 'selected-markup', // triggers CSS rule
-      });
-    }
+    // TODO
+    // const node = snapshot.syntaxTree.findDescendantByClass('selected');
+    // if (node) {
+    //   const from = this.markupEditor.doc.posFromIndex(node.start);
+    //   const to = this.markupEditor.doc.posFromIndex(node.end + 1);
+    //   const range = [from, to];
+    //   this.textMarker = this.markupDoc.markText(...range, {
+    //     className: 'selected-markup', // triggers CSS rule
+    //   });
+    // }
 
     // editor syntax tree received
     this.previousSyntaxTree = snapshot.syntaxTree;

@@ -5,10 +5,11 @@ const MarkupNode = Object.create(Node);
 MarkupNode.defineProps(['markup', 'start', 'end', 'level']);
 
 Object.assign(MarkupNode, {
-  create() {
+  create(text) {
     return Node.create
       .bind(this)()
-      .set({ type: types.MARKUPNODE });
+      .set({ type: types.MARKUPNODE })
+      .set({ markup: text });
   },
 
   indexify(start = 0) {

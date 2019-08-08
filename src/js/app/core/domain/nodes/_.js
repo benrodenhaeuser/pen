@@ -19,6 +19,17 @@ import { Message } from './message.js';
 import { Identifier } from './identifier.js';
 import { MarkupNode } from './markupNode.js';
 import { Text } from './text.js';
+import { Tag } from './tag.js';
+import { OpenTag } from './openTag.js';
+import { CloseTag } from './closeTag.js';
+import { Langle } from './langle.js';
+import { Rangle } from './rangle.js';
+import { TagName } from './tagName.js';
+import { Attributes } from './attributes.js';
+import { Attribute } from './attribute.js';
+import { AttrKey } from './attrKey.js';
+import { AttrValue } from './attrValue.js';
+import { Coords } from './coords.js';
 
 export {
   types,
@@ -42,4 +53,15 @@ export {
   Identifier,
   MarkupNode,
   Text,
+  Tag,
+  OpenTag,
+  CloseTag,
+  Langle,
+  Rangle,
+  TagName,
+  Attributes,
+  Attribute,
+  AttrKey,
+  AttrValue,
+  Coords,
 };

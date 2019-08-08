@@ -24,10 +24,11 @@ const types = {
   LANGLE: 'langle',
   TAGNAME: 'tagName',
   ATTRIBUTES: 'attributes',
-  ATTRIBUTE: 'attribute', 
+  ATTRIBUTE: 'attribute',
   ATTRKEY: 'attrKey',
   ATTRVALUE: 'attrValue',
   RANGLE: 'rangle',
+  COORDS: 'coords',
 }
 
 export { types };
