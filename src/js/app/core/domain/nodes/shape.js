@@ -117,8 +117,8 @@ Object.assign(Shape, {
 
       attributes,
 
-      Text.create({ markup: `\n${indent(level)}` }),
-      Text.create({ markup: '/' }),
+      Text.create({ markup: linebreak + indent(level) }),
+      Text.create({ markup: slash }),
       Rangle.create({ key: this.key })
     );
 
@@ -128,31 +128,31 @@ Object.assign(Shape, {
     attributes.append(d);
 
     d.append(
-      Text.create({ markup: `\n${indent(level + 1)}` }),
+      Text.create({ markup: linebreak + indent(level + 1) }),
       AttrKey.create({
         markup: 'd=',
         key: this.lastChild.key,
       }),
       Text.create({
-        markup: '"',
+        markup: quote,
         key: this.lastChild.key,
       }),
 
-      dValue,
+      this.toPathTree(dValue, level),
 
       Text.create({
-        markup: `\n${indent(level + 1)}"`,
+        markup: linebreak + indent(level + 1) + quote,
         key: this.lastChild.key,
       })
     );
 
-    for (let elem of this.toPathTree(level)) {
-      dValue.append(elem);
-    }
+    // for (let elem of this.toPathTree(level)) {
+    //   dValue.append(elem);
+    // }
 
     if (!this.transform.equals(Matrix.identity())) {
       attributes.append(
-        Text.create({ markup: `\n${indent(level + 1)}` }),
+        Text.create({ markup: linebreak + indent(level + 1) }),
         Attribute.create({
           markup: `transform="${this.transform.toString()}"`,
           key: this.key,
@@ -166,26 +166,18 @@ Object.assign(Shape, {
     };
   },
 
-  toPathTree(level) {
-    let d = [];
-
+  toPathTree(d, level) {
     for (let spline of this.children) {
       const segment = spline.children[0];
 
-      d.push(
+      d.append(
         Text.create({
-          markup: `\n${indent(level + 2)}`,
-        })
-      );
-
-      d.push(
+          markup: linebreak + indent(level + 2),
+        }),
         Text.create({
           markup: 'M ',
           key: spline.key,
-        })
-      );
-
-      d.push(
+        }),
         Coords.create({
           markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y} `,
           key: segment.anchor.key,
@@ -196,27 +188,31 @@ Object.assign(Shape, {
         const currSeg = spline.children[i];
         const prevSeg = spline.children[i - 1];
 
-        const linebreak = Text.create({ markup: `\n${indent(level + 2)}` });
-
         if (prevSeg.handleOut && currSeg.handleIn) {
-          d.push(linebreak);
-          d.push(
+          d.append(
+            Text.create({
+              markup: linebreak + indent(level + 2)
+            }),
             Text.create({
               markup: 'C',
               key: spline.key,
             })
           );
         } else if (currSeg.handleIn || prevSeg.handleOut) {
-          d.push(linebreak);
-          d.push(
+          d.append(
+            Text.create({
+              markup: linebreak + indent(level + 2)
+            }),
             Text.create({
               markup: 'Q',
               key: spline.key,
             })
           );
         } else {
-          d.push(linebreak);
-          d.push(
+          d.append(
+            Text.create({
+              markup: linebreak + indent(level + 2)
+            }),
             Text.create({
               markup: 'L',
               key: spline.key,
@@ -225,7 +221,7 @@ Object.assign(Shape, {
         }
 
         if (prevSeg.handleOut) {
-          d.push(
+          d.append(
             Coords.create({
               markup: ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
               key: prevSeg.handleOut.key,
@@ -234,7 +230,7 @@ Object.assign(Shape, {
         }
 
         if (currSeg.handleIn) {
-          d.push(
+          d.append(
             Coords.create({
               markup: ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
               key: currSeg.handleIn.key,
@@ -242,7 +238,7 @@ Object.assign(Shape, {
           );
         }
 
-        d.push(
+        d.append(
           Coords.create({
             markup: ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
             key: currSeg.anchor.key,
@@ -300,5 +296,9 @@ const indent = level => {
 
   return pad;
 };
+
+const linebreak = '\n';
+const slash = '/';
+const quote = '"';
 
 export { Shape };

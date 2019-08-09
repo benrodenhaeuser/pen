@@ -4528,8 +4528,8 @@
 
         attributes,
 
-        Text$$1.create({ markup: `\n${indent$1(level)}` }),
-        Text$$1.create({ markup: '/' }),
+        Text$$1.create({ markup: linebreak + indent$1(level) }),
+        Text$$1.create({ markup: slash }),
         Rangle$$1.create({ key: this.key })
       );
 
@@ -4539,31 +4539,31 @@
       attributes.append(d);
 
       d.append(
-        Text$$1.create({ markup: `\n${indent$1(level + 1)}` }),
+        Text$$1.create({ markup: linebreak + indent$1(level + 1) }),
         AttrKey$$1.create({
           markup: 'd=',
           key: this.lastChild.key,
         }),
         Text$$1.create({
-          markup: '"',
+          markup: quote,
           key: this.lastChild.key,
         }),
 
-        dValue,
+        this.toPathTree(dValue, level),
 
         Text$$1.create({
-          markup: `\n${indent$1(level + 1)}"`,
+          markup: linebreak + indent$1(level + 1) + quote,
           key: this.lastChild.key,
         })
       );
 
-      for (let elem of this.toPathTree(level)) {
-        dValue.append(elem);
-      }
+      // for (let elem of this.toPathTree(level)) {
+      //   dValue.append(elem);
+      // }
 
       if (!this.transform.equals(Matrix$$1.identity())) {
         attributes.append(
-          Text$$1.create({ markup: `\n${indent$1(level + 1)}` }),
+          Text$$1.create({ markup: linebreak + indent$1(level + 1) }),
           Attribute$$1.create({
             markup: `transform="${this.transform.toString()}"`,
             key: this.key,
@@ -4577,26 +4577,18 @@
       };
     },
 
-    toPathTree(level) {
-      let d = [];
-
+    toPathTree(d, level) {
       for (let spline of this.children) {
         const segment = spline.children[0];
 
-        d.push(
+        d.append(
           Text$$1.create({
-            markup: `\n${indent$1(level + 2)}`,
-          })
-        );
-
-        d.push(
+            markup: linebreak + indent$1(level + 2),
+          }),
           Text$$1.create({
             markup: 'M ',
             key: spline.key,
-          })
-        );
-
-        d.push(
+          }),
           Coords$$1.create({
             markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y} `,
             key: segment.anchor.key,
@@ -4607,27 +4599,31 @@
           const currSeg = spline.children[i];
           const prevSeg = spline.children[i - 1];
 
-          const linebreak = Text$$1.create({ markup: `\n${indent$1(level + 2)}` });
-
           if (prevSeg.handleOut && currSeg.handleIn) {
-            d.push(linebreak);
-            d.push(
+            d.append(
+              Text$$1.create({
+                markup: linebreak + indent$1(level + 2)
+              }),
               Text$$1.create({
                 markup: 'C',
                 key: spline.key,
               })
             );
           } else if (currSeg.handleIn || prevSeg.handleOut) {
-            d.push(linebreak);
-            d.push(
+            d.append(
+              Text$$1.create({
+                markup: linebreak + indent$1(level + 2)
+              }),
               Text$$1.create({
                 markup: 'Q',
                 key: spline.key,
               })
             );
           } else {
-            d.push(linebreak);
-            d.push(
+            d.append(
+              Text$$1.create({
+                markup: linebreak + indent$1(level + 2)
+              }),
               Text$$1.create({
                 markup: 'L',
                 key: spline.key,
@@ -4636,7 +4632,7 @@
           }
 
           if (prevSeg.handleOut) {
-            d.push(
+            d.append(
               Coords$$1.create({
                 markup: ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
                 key: prevSeg.handleOut.key,
@@ -4645,7 +4641,7 @@
           }
 
           if (currSeg.handleIn) {
-            d.push(
+            d.append(
               Coords$$1.create({
                 markup: ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
                 key: currSeg.handleIn.key,
@@ -4653,7 +4649,7 @@
             );
           }
 
-          d.push(
+          d.append(
             Coords$$1.create({
               markup: ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
               key: currSeg.anchor.key,
@@ -4711,6 +4707,10 @@
 
     return pad;
   };
+
+  const linebreak = '\n';
+  const slash = '/';
+  const quote = '"';
 
   const Spline$$1 = Object.create(SceneNode$$1);
 
