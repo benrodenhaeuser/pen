@@ -5,10 +5,11 @@ const Identifier = Object.create(Node);
 Identifier.defineProps(['_id']);
 
 Object.assign(Identifier, {
-  create() {
+  create(opts = {}) {
     return Node.create
       .bind(this)()
-      .set({ type: types.IDENTIFIER });
+      .set({ type: types.IDENTIFIER })
+      .set(opts);
   },
 });
 

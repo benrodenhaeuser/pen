@@ -4,10 +4,11 @@ import { types } from './_.js';
 const TagName = Object.create(MarkupNode);
 
 Object.assign(TagName, {
-  create(text) {
+  create(opts = {}) {
     return MarkupNode.create
-      .bind(this)(text)
-      .set({ type: types.TAGNAME });
+      .bind(this)()
+      .set({ type: types.TAGNAME })
+      .set(opts);
   },
 });
 

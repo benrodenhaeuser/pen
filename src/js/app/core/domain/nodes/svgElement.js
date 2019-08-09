@@ -4,12 +4,13 @@ import { types } from './_.js';
 const SVGElement = Object.create(MarkupElement);
 
 Object.assign(SVGElement, {
-  create() {
+  create(opts = {}) {
     return MarkupElement.create
       .bind(this)()
       .set({
         type: types.SVGELEMENT,
-      });
+      })
+      .set(opts);
   },
 });
 

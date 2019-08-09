@@ -4,10 +4,11 @@ import { types } from './_.js';
 const AttrKey = Object.create(MarkupNode);
 
 Object.assign(AttrKey, {
-  create(text) {
+  create(opts = {}) {
     return MarkupNode.create
-      .bind(this)(text)
-      .set({ type: types.ATTRKEY });
+      .bind(this)()
+      .set({ type: types.ATTRKEY })
+      .set(opts);
   },
 });
 

@@ -4,10 +4,11 @@ import { types } from './_.js';
 const Editor = Object.create(Node);
 
 Object.assign(Editor, {
-  create() {
+  create(opts = {}) {
     return Node.create
       .bind(this)()
-      .set({ type: types.EDITOR });
+      .set({ type: types.EDITOR })
+      .set(opts);
   },
 });
 

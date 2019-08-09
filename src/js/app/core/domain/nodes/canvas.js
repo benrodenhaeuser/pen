@@ -10,10 +10,11 @@ const Canvas = Object.create(GraphicsNode);
 Canvas.defineProps(['viewBox']);
 
 Object.assign(Canvas, {
-  create() {
+  create(opts = {}) {
     return GraphicsNode.create
       .bind(this)()
-      .set({ type: types.CANVAS });
+      .set({ type: types.CANVAS })
+      .set(opts);
   },
 
   findFocus() {

@@ -7,10 +7,11 @@ import { types } from './_.js';
 const Segment = Object.create(SceneNode);
 
 Object.assign(Segment, {
-  create() {
+  create(opts = {}) {
     return SceneNode.create
       .bind(this)()
-      .set({ type: types.SEGMENT });
+      .set({ type: types.SEGMENT })
+      .set(opts);
   },
 
   appendAnchor(vector) {

@@ -5,10 +5,11 @@ const Message = Object.create(Node);
 Message.defineProps(['text']);
 
 Object.assign(Message, {
-  create() {
+  create(opts = {}) {
     return Node.create
       .bind(this)()
-      .set({ type: types.MESSAGE });
+      .set({ type: types.MESSAGE })
+      .set(opts);
   },
 });
 

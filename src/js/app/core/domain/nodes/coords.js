@@ -4,10 +4,11 @@ import { types } from './_.js';
 const Coords = Object.create(MarkupNode);
 
 Object.assign(Coords, {
-  create(text) {
+  create(opts = {}) {
     return MarkupNode.create
-      .bind(this)(text)
-      .set({ type: types.COORDS });
+      .bind(this)()
+      .set({ type: types.COORDS })
+      .set(opts);
   },
 });
 

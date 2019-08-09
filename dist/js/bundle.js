@@ -3907,7 +3907,7 @@
   Node$$1.defineProps(['key', 'class']);
 
   Object.assign(Node$$1, {
-    create() {
+    create(opts = {}) {
       return Object.create(this)
         .set({
           children: [],
@@ -3918,7 +3918,8 @@
           type: null,
           key: createID(),
           class: Class.create(),
-        });
+        })
+        .set(opts);
     },
 
     findAncestor(predicate) {
@@ -3988,9 +3989,11 @@
       });
     },
 
-    append(node) {
-      this.children = this.children.concat([node]);
-      node.parent = this;
+    append(...nodes) {
+      for (let node of nodes) {
+        this.children = this.children.concat([node]);
+        node.parent = this;
+      }
     },
 
     replaceWith(node) {
@@ -4202,10 +4205,11 @@
   Canvas$$1.defineProps(['viewBox']);
 
   Object.assign(Canvas$$1, {
-    create() {
+    create(opts = {}) {
       return GraphicsNode$$1.create
         .bind(this)()
-        .set({ type: types.CANVAS });
+        .set({ type: types.CANVAS })
+        .set(opts);
     },
 
     findFocus() {
@@ -4351,10 +4355,11 @@
   const Group$$1 = Object.create(GraphicsNode$$1);
 
   Object.assign(Group$$1, {
-    create() {
+    create(opts = {}) {
       return GraphicsNode$$1.create
         .bind(this)()
-        .set({ type: types.GROUP });
+        .set({ type: types.GROUP })
+        .set(opts);
     },
 
     toVDOMNode() {
@@ -4384,21 +4389,25 @@
       return svgNode;
     },
 
-    toTags() {
-      const open = OpenTag$$1.create();
+    toTags(level) {
+      const open = OpenTag$$1.create({
+        key: this.key,
+        class: this.class,
+      });
+
+      const pad = indent(level);
 
       if (!this.transform.equals(Matrix$$1.identity())) {
-        open.markup = `<g transform="${this.transform.toString()}">`;
+        open.markup = `${pad}<g transform="${this.transform.toString()}">`;
       } else {
-        open.markup = '<g>';
+        open.markup = `${pad}<g>`;
       }
 
-      open.key = this.key;
-      open.class = this.class;
-
-      const close = CloseTag$$1.create();
-      close.markup = '</g>';
-      close.key = this.key;
+      const close = CloseTag$$1.create({
+        key: this.key,
+        class: this.class,
+        markup: `${pad}</g>`,
+      });
 
       return {
         open: open,
@@ -4407,17 +4416,29 @@
     },
   });
 
+  // TODO: duplicate
+  const indent = level => {
+    let pad = '';
+
+    for (let i = 0; i < level; i += 1) {
+      pad += '  ';
+    }
+
+    return pad;
+  };
+
   const Shape$$1 = Object.create(GraphicsNode$$1);
   Shape$$1.defineProps(['splitter']);
 
   Object.assign(Shape$$1, {
-    create() {
+    create(opts = {}) {
       return GraphicsNode$$1.create
         .bind(this)()
         .set({
           type: types.SHAPE,
           splitter: Vector$$1.create(-1000, -1000),
-        });
+        })
+        .set(opts);
     },
 
     appendSpline() {
@@ -4492,60 +4513,63 @@
     },
 
     toTags(level) {
-      const open = OpenTag$$1.create();
-      const langle = Langle$$1.create();
-      const tagName = TagName$$1.create('path');
+      const open = OpenTag$$1.create({
+        class: this.class,
+      });
       const attributes = Attributes$$1.create();
-      const linebreak = Text$$1.create(`\n${indent(level)}`);
-      const close = Text$$1.create('/');
-      const rangle = Rangle$$1.create();
 
-      langle.key = this.key;
-      tagName.key = this.key;
-      rangle.key = this.key;
+      open.append(
+        Text$$1.create({ markup: indent$1(level) }),
+        Langle$$1.create({ key: this.key }),
+        TagName$$1.create({
+          markup: 'path',
+          key: this.key,
+        }),
 
-      open.append(langle);
-      open.append(tagName);
-      open.append(attributes);
-      open.append(linebreak);
-      open.append(close);
-      open.append(rangle);
+        attributes,
+
+        Text$$1.create({ markup: `\n${indent$1(level)}` }),
+        Text$$1.create({ markup: '/' }),
+        Rangle$$1.create({ key: this.key })
+      );
 
       const d = Attribute$$1.create();
-      const linebreakPlusPad = Text$$1.create(`\n${indent(level + 1)}`);
-      const dName = AttrKey$$1.create('d=');
-      dName.key = this.lastChild.key;
-
-      const quoteStart = Text$$1.create('"');
-      const quoteEnd = Text$$1.create(`\n${indent(level + 1)}"`);
-
-      quoteStart.key = this.lastChild.key;
-      quoteEnd.key = this.lastChild.key;
-
       const dValue = AttrValue$$1.create();
+
+      attributes.append(d);
+
+      d.append(
+        Text$$1.create({ markup: `\n${indent$1(level + 1)}` }),
+        AttrKey$$1.create({
+          markup: 'd=',
+          key: this.lastChild.key,
+        }),
+        Text$$1.create({
+          markup: '"',
+          key: this.lastChild.key,
+        }),
+
+        dValue,
+
+        Text$$1.create({
+          markup: `\n${indent$1(level + 1)}"`,
+          key: this.lastChild.key,
+        })
+      );
 
       for (let elem of this.toPathTree(level)) {
         dValue.append(elem);
       }
 
-      d.append(linebreakPlusPad);
-      d.append(dName);
-      d.append(quoteStart);
-      d.append(dValue);
-      d.append(quoteEnd);
-      attributes.append(d);
-
       if (!this.transform.equals(Matrix$$1.identity())) {
-        const linebreak = Text$$1.create(`\n${indent(level + 1)}`);
-
-        const trans = Attribute$$1.create(`transform="${this.transform.toString()}"`);
-        trans.key = this.key;
-
-        attributes.append(linebreak);
-        attributes.append(trans);
+        attributes.append(
+          Text$$1.create({ markup: `\n${indent$1(level + 1)}` }),
+          Attribute$$1.create({
+            markup: `transform="${this.transform.toString()}"`,
+            key: this.key,
+          })
+        );
       }
-
-      open.class = this.class;
 
       return {
         open: open,
@@ -4559,60 +4583,88 @@
       for (let spline of this.children) {
         const segment = spline.children[0];
 
-        const linebreak = Text$$1.create(`\n${indent(level + 2)}`);
-        const M = Text$$1.create("M ");
+        d.push(
+          Text$$1.create({
+            markup: `\n${indent$1(level + 2)}`,
+          })
+        );
 
-        d.push(linebreak);
-        d.push(M);
+        d.push(
+          Text$$1.create({
+            markup: 'M ',
+            key: spline.key,
+          })
+        );
 
-        let coords = Coords$$1.create(`${segment.anchor.vector.x} ${segment.anchor.vector.y}`);
-        coords.key = segment.anchor.key;
-        d.push(coords);
+        d.push(
+          Coords$$1.create({
+            markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y} `,
+            key: segment.anchor.key,
+          })
+        );
 
         for (let i = 1; i < spline.children.length; i += 1) {
           const currSeg = spline.children[i];
           const prevSeg = spline.children[i - 1];
 
-          const linebreak = Text$$1.create(`\n${indent(level + 2)}`);
+          const linebreak = Text$$1.create({ markup: `\n${indent$1(level + 2)}` });
 
           if (prevSeg.handleOut && currSeg.handleIn) {
-            const C = Text$$1.create('C');
             d.push(linebreak);
-            d.push(C);
+            d.push(
+              Text$$1.create({
+                markup: 'C',
+                key: spline.key,
+              })
+            );
           } else if (currSeg.handleIn || prevSeg.handleOut) {
-            const Q = Text$$1.create('Q');
             d.push(linebreak);
-            d.push(Q);
+            d.push(
+              Text$$1.create({
+                markup: 'Q',
+                key: spline.key,
+              })
+            );
           } else {
-            const L = Text$$1.create('L');
             d.push(linebreak);
-            d.push(L);
+            d.push(
+              Text$$1.create({
+                markup: 'L',
+                key: spline.key,
+              })
+            );
           }
 
           if (prevSeg.handleOut) {
-            coords = Coords$$1.create(` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`);
-            coords.key = prevSeg.handleOut.key;
-            d.push(coords);
+            d.push(
+              Coords$$1.create({
+                markup: ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
+                key: prevSeg.handleOut.key,
+              })
+            );
           }
 
           if (currSeg.handleIn) {
-            coords = Coords$$1.create(` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`);
-            coords.key = currSeg.handleIn.key;
-            d.push(coords);
+            d.push(
+              Coords$$1.create({
+                markup: ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
+                key: currSeg.handleIn.key,
+              })
+            );
           }
 
-          coords = Coords$$1.create(` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`);
-          coords.key = currSeg.anchor.key;
-          d.push(coords);
+          d.push(
+            Coords$$1.create({
+              markup: ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
+              key: currSeg.anchor.key,
+            })
+          );
         }
       }
 
       return d;
-
     },
 
-    // could perhaps replace implementation by
-    // return this.toPathTree().toMarkup;
     toPathString() {
       let d = '';
 
@@ -4649,9 +4701,8 @@
     },
   });
 
-
   // TODO: duplicate
-  const indent = level => {
+  const indent$1 = level => {
     let pad = '';
 
     for (let i = 0; i < level; i += 1) {
@@ -4674,10 +4725,11 @@
   });
 
   Object.assign(Spline$$1, {
-    create() {
+    create(opts = {}) {
       return SceneNode$$1.create
         .bind(this)()
-        .set({ type: types.SPLINE });
+        .set({ type: types.SPLINE })
+        .set(opts);
     },
 
     appendSegment() {
@@ -4745,10 +4797,11 @@
   const Segment$$1 = Object.create(SceneNode$$1);
 
   Object.assign(Segment$$1, {
-    create() {
+    create(opts = {}) {
       return SceneNode$$1.create
         .bind(this)()
-        .set({ type: types.SEGMENT });
+        .set({ type: types.SEGMENT })
+        .set(opts);
     },
 
     appendAnchor(vector) {
@@ -4805,30 +4858,33 @@
   const Anchor$$1 = Object.create(ControlNode$$1);
 
   Object.assign(Anchor$$1, {
-    create() {
+    create(opts = {}) {
       return ControlNode$$1.create
         .bind(this)()
-        .set({ type: types.ANCHOR });
+        .set({ type: types.ANCHOR })
+        .set(opts);
     },
   });
 
   const HandleIn$$1 = Object.create(ControlNode$$1);
 
   Object.assign(HandleIn$$1, {
-    create() {
+    create(opts = {}) {
       return ControlNode$$1.create
         .bind(this)()
-        .set({ type: types.HANDLEIN });
+        .set({ type: types.HANDLEIN })
+        .set(opts);
     },
   });
 
   const HandleOut$$1 = Object.create(ControlNode$$1);
 
   Object.assign(HandleOut$$1, {
-    create() {
+    create(opts = {}) {
       return ControlNode$$1.create
         .bind(this)()
-        .set({ type: types.HANDLEOUT });
+        .set({ type: types.HANDLEOUT })
+        .set(opts);
     },
   });
 
@@ -4836,23 +4892,25 @@
   Doc$$1.defineProps(['_id']);
 
   Object.assign(Doc$$1, {
-    create() {
+    create(opts = {}) {
       return Node$$1.create
         .bind(this)()
         .set({
           type: types.DOC,
           _id: createID(),
-        });
+        })
+        .set(opts);
     },
   });
 
   const Editor$$1 = Object.create(Node$$1);
 
   Object.assign(Editor$$1, {
-    create() {
+    create(opts = {}) {
       return Node$$1.create
         .bind(this)()
-        .set({ type: types.EDITOR });
+        .set({ type: types.EDITOR })
+        .set(opts);
     },
   });
 
@@ -4889,10 +4947,11 @@
   const Docs$$1 = Object.create(Node$$1);
 
   Object.assign(Docs$$1, {
-    create() {
+    create(opts = {}) {
       return Node$$1.create
         .bind(this)()
-        .set({ type: types.DOCS });
+        .set({ type: types.DOCS })
+        .set(opts);
     },
   });
 
@@ -4900,10 +4959,11 @@
   Message$$1.defineProps(['text']);
 
   Object.assign(Message$$1, {
-    create() {
+    create(opts = {}) {
       return Node$$1.create
         .bind(this)()
-        .set({ type: types.MESSAGE });
+        .set({ type: types.MESSAGE })
+        .set(opts);
     },
   });
 
@@ -4911,10 +4971,11 @@
   Identifier$$1.defineProps(['_id']);
 
   Object.assign(Identifier$$1, {
-    create() {
+    create(opts = {}) {
       return Node$$1.create
         .bind(this)()
-        .set({ type: types.IDENTIFIER });
+        .set({ type: types.IDENTIFIER })
+        .set(opts);
     },
   });
 
@@ -4922,11 +4983,11 @@
   MarkupNode$$1.defineProps(['markup', 'start', 'end', 'level']);
 
   Object.assign(MarkupNode$$1, {
-    create(text) {
+    create(opts = {}) {
       return Node$$1.create
         .bind(this)()
         .set({ type: types.MARKUPNODE })
-        .set({ markup: text });
+        .set(opts);
     },
 
     indexify(start = 0) {
@@ -4996,113 +5057,124 @@
   const Text$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Text$$1, {
-    create(text) {
+    create(opts = {}) {
       return MarkupNode$$1.create
-        .bind(this)(text)
-        .set({ type: types.TEXT });
+        .bind(this)()
+        .set({ type: types.TEXT })
+        .set(opts);
     },
   });
 
   const Tag$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Tag$$1, {
-    create(text) {
-      return MarkupNode$$1.create.bind(this)(text);
+    create(opts = {}) {
+      return MarkupNode$$1.create
+        .bind(this)()
+        .set(opts);
     },
   });
 
   const OpenTag$$1 = Object.create(Tag$$1);
 
   Object.assign(OpenTag$$1, {
-    create(text) {
-      return Tag$$1
-        .create.bind(this)(text)
-        .set({ type: types.OPENTAG });
+    create(opts = {}) {
+      return Tag$$1.create
+        .bind(this)()
+        .set({ type: types.OPENTAG })
+        .set(opts);
     },
   });
 
   const CloseTag$$1 = Object.create(Tag$$1);
 
   Object.assign(CloseTag$$1, {
-    create(text) {
-      return Tag$$1
-        .create.bind(this)(text)
-        .set({ type: types.CLOSETAG });
+    create(opts = {}) {
+      return Tag$$1.create
+        .bind(this)()
+        .set({ type: types.CLOSETAG })
+        .set(opts);
     },
   });
 
   const Langle$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Langle$$1, {
-    create() {
+    create(opts = {}) {
       return MarkupNode$$1.create
         .bind(this)()
         .set({
           type: types.LANGLE,
-          markup: '<', 
-        });
+          markup: '<',
+        })
+        .set(opts);
     },
   });
 
   const Rangle$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Rangle$$1, {
-    create() {
+    create(opts = {}) {
       return MarkupNode$$1.create
         .bind(this)()
         .set({
           type: types.RANGLE,
           markup: '>',
-        });
+        })
+        .set(opts);
     },
   });
 
   const TagName$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(TagName$$1, {
-    create(text) {
+    create(opts = {}) {
       return MarkupNode$$1.create
-        .bind(this)(text)
-        .set({ type: types.TAGNAME });
+        .bind(this)()
+        .set({ type: types.TAGNAME })
+        .set(opts);
     },
   });
 
   const Attributes$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Attributes$$1, {
-    create(text) {
+    create(opts = {}) {
       return MarkupNode$$1.create
-        .bind(this)(text)
-        .set({ type: types.ATTRIBUTES });
+        .bind(this)()
+        .set({ type: types.ATTRIBUTES })
+        .set(opts);
     },
   });
 
   const Attribute$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Attribute$$1, {
-    create(text) {
+    create(opts = {}) {
       return MarkupNode$$1.create
-        .bind(this)(text)
-        .set({ type: types.ATTRIBUTE });
+        .bind(this)()
+        .set({ type: types.ATTRIBUTE })
+        .set(opts);
     },
   });
 
   const AttrKey$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(AttrKey$$1, {
-    create(text) {
+    create(opts = {}) {
       return MarkupNode$$1.create
-        .bind(this)(text)
-        .set({ type: types.ATTRKEY });
+        .bind(this)()
+        .set({ type: types.ATTRKEY })
+        .set(opts);
     },
   });
 
   const AttrValue$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(AttrValue$$1, {
-    create(text) {
+    create(opts = {}) {
       return MarkupNode$$1.create
-        .bind(this)(text)
+        .bind(this)()
         .set({ type: types.ATTRVALUE });
     },
   });
@@ -5110,54 +5182,60 @@
   const Coords$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(Coords$$1, {
-    create(text) {
+    create(opts = {}) {
       return MarkupNode$$1.create
-        .bind(this)(text)
-        .set({ type: types.COORDS });
+        .bind(this)()
+        .set({ type: types.COORDS })
+        .set(opts);
     },
   });
 
   const MarkupElement$$1 = Object.create(MarkupNode$$1);
 
   Object.assign(MarkupElement$$1, {
-    create() {
-      return MarkupNode$$1.create.bind(this)()
+    create(opts = {}) {
+      return MarkupNode$$1.create
+        .bind(this)()
+        .set(opts);
     },
   });
 
   const SVGElement$$1 = Object.create(MarkupElement$$1);
 
   Object.assign(SVGElement$$1, {
-    create() {
+    create(opts = {}) {
       return MarkupElement$$1.create
         .bind(this)()
         .set({
           type: types.SVGELEMENT,
-        });
+        })
+        .set(opts);
     },
   });
 
   const GElement$$1 = Object.create(MarkupElement$$1);
 
   Object.assign(GElement$$1, {
-    create() {
+    create(opts = {}) {
       return MarkupElement$$1.create
         .bind(this)()
         .set({
           type: types.GELEMENT,
-        });
+        })
+        .set(opts);
     },
   });
 
   const PathElement$$1 = Object.create(MarkupElement$$1);
 
   Object.assign(PathElement$$1, {
-    create() {
+    create(opts = {}) {
       return MarkupElement$$1.create
         .bind(this)()
         .set({
           type: types.PATHELEMENT,
-        });
+        })
+        .set(opts);
     },
   });
 
@@ -5167,54 +5245,25 @@
     };
   };
 
+  const nodeProtos = {
+    Editor: Editor$$1,
+    Docs: Docs$$1,
+    Doc: Doc$$1,
+    Message: Message$$1,
+    Canvas: Canvas$$1,
+    Shape: Shape$$1,
+    Group: Group$$1,
+    Spline: Spline$$1,
+    Segment: Segment$$1,
+    Anchor: Anchor$$1,
+    HandleIn: HandleIn$$1,
+    HandleOut: HandleOut$$1,
+  };
+
   const objectToDoc = object => {
-    let node;
-
-    switch (object.type) {
-      case 'editor':
-        node = Editor$$1.create();
-        break;
-      case 'doc':
-        node = Doc$$1.create();
-        break;
-      case 'docs':
-        node = Docs$$1.create();
-        break;
-      case 'identifier':
-        node = Identifier.create();
-        break;
-      case 'message':
-        node = Message$$1.create();
-        break;
-      case 'canvas':
-        node = Canvas$$1.create();
-        break;
-      case 'group':
-        node = Group$$1.create();
-        break;
-      case 'shape':
-        node = Shape$$1.create();
-        break;
-      case 'spline':
-        node = Spline$$1.create();
-        break;
-      case 'segment':
-        node = Segment$$1.create();
-        break;
-      case 'anchor':
-        node = Anchor$$1.create();
-        break;
-      case 'handleIn':
-        node = HandleIn$$1.create();
-        break;
-      case 'handleOut':
-        node = HandleOut$$1.create();
-        break;
-    }
-
+    const node = nodeProtos[capitalize(object.type)].create();
     node.type = object.type;
-
-    setprops(node, object);
+    setProps(node, object);
 
     for (let child of object.children) {
       node.append(objectToDoc(child));
@@ -5223,7 +5272,7 @@
     return node;
   };
 
-  const setprops = (node, object) => {
+  const setProps = (node, object) => {
     for (let [key, value] of Object.entries(object.props)) {
       switch (key) {
         case 'viewBox':
@@ -5252,6 +5301,10 @@
     }
   };
 
+  const capitalize = string => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
   const sceneToSyntaxTree = canvas => {
     const syntaxTree = SVGElement$$1.create();
     parse(canvas, syntaxTree, 0);
@@ -5265,7 +5318,7 @@
     const close = markupNodes.close;
 
     // indent
-    const indentNode = Text$$1.create(indent$1(level));
+    const indentNode = Text$$1.create(indent$2(level));
     markupParent.append(indentNode);
 
     // open tag
@@ -5307,7 +5360,7 @@
     }
   };
 
-  const indent$1 = level => {
+  const indent$2 = level => {
     let pad = '';
 
     for (let i = 0; i < level; i += 1) {
@@ -5336,7 +5389,7 @@
       return null;
     }
   };
-   
+
   const markupToDOM = markup => {
     const $svg = new DOMParser().parseFromString(markup, 'image/svg+xml')
       .documentElement;
@@ -5587,10 +5640,8 @@
         vDOM: this.editorToVDOM(),
         plain: this.docToObject(),
         syntaxTree: this.sceneToSyntaxTree(),
-        state: this, // for debugging
       };
 
-      // console.log(snapshot); // for debugging
       return snapshot;
     },
   });
@@ -6225,7 +6276,9 @@
           node.parent.placePen();
           state.canvas.removeFocus();
           state.label = 'penMode';
-        } else if ([types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)) {
+        } else if (
+          [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)
+        ) {
           node.parent.parent.parent.placePen();
           node.placePenTip();
           state.label = 'penMode';
@@ -6303,9 +6356,6 @@
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
-        console.log(this.state.label);
-        console.log(transition);
-
         this.state.update = transition.do; // a string
         this.state.label = transition.to;
 

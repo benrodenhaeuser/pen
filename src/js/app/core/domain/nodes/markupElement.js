@@ -4,8 +4,10 @@ import { types } from './_.js';
 const MarkupElement = Object.create(MarkupNode);
 
 Object.assign(MarkupElement, {
-  create() {
-    return MarkupNode.create.bind(this)()
+  create(opts = {}) {
+    return MarkupNode.create
+      .bind(this)()
+      .set(opts);
   },
 });
 

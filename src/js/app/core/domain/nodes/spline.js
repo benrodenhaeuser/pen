@@ -17,10 +17,11 @@ Object.defineProperty(Spline, 'bounds', {
 });
 
 Object.assign(Spline, {
-  create() {
+  create(opts = {}) {
     return SceneNode.create
       .bind(this)()
-      .set({ type: types.SPLINE });
+      .set({ type: types.SPLINE })
+      .set(opts);
   },
 
   appendSegment() {

@@ -7,10 +7,11 @@ import { types } from './_.js';
 const Group = Object.create(GraphicsNode);
 
 Object.assign(Group, {
-  create() {
+  create(opts = {}) {
     return GraphicsNode.create
       .bind(this)()
-      .set({ type: types.GROUP });
+      .set({ type: types.GROUP })
+      .set(opts);
   },
 
   toVDOMNode() {
@@ -40,21 +41,25 @@ Object.assign(Group, {
     return svgNode;
   },
 
-  toTags() {
-    const open = OpenTag.create();
+  toTags(level) {
+    const open = OpenTag.create({
+      key: this.key,
+      class: this.class,
+    });
+
+    const pad = indent(level);
 
     if (!this.transform.equals(Matrix.identity())) {
-      open.markup = `<g transform="${this.transform.toString()}">`;
+      open.markup = `${pad}<g transform="${this.transform.toString()}">`;
     } else {
-      open.markup = '<g>';
+      open.markup = `${pad}<g>`;
     }
 
-    open.key = this.key;
-    open.class = this.class;
-
-    const close = CloseTag.create();
-    close.markup = '</g>';
-    close.key = this.key;
+    const close = CloseTag.create({
+      key: this.key,
+      class: this.class,
+      markup: `${pad}</g>`,
+    });
 
     return {
       open: open,
@@ -62,5 +67,16 @@ Object.assign(Group, {
     };
   },
 });
+
+// TODO: duplicate
+const indent = level => {
+  let pad = '';
+
+  for (let i = 0; i < level; i += 1) {
+    pad += '  ';
+  }
+
+  return pad;
+};
 
 export { Group };

@@ -32,6 +32,6 @@ const types = {
   PATHELEMENT: 'path',
   GELEMENT: 'g',
   SVGELEMENT: 'svg',
-}
+};
 
 export { types };

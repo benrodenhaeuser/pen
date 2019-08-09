@@ -7,54 +7,25 @@ import { Vector } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 import { Class } from '../domain/_.js';
 
+const nodeProtos = {
+  Editor,
+  Docs,
+  Doc,
+  Message,
+  Canvas,
+  Shape,
+  Group,
+  Spline,
+  Segment,
+  Anchor,
+  HandleIn,
+  HandleOut,
+};
+
 const objectToDoc = object => {
-  let node;
-
-  switch (object.type) {
-    case 'editor':
-      node = Editor.create();
-      break;
-    case 'doc':
-      node = Doc.create();
-      break;
-    case 'docs':
-      node = Docs.create();
-      break;
-    case 'identifier':
-      node = Identifier.create();
-      break;
-    case 'message':
-      node = Message.create();
-      break;
-    case 'canvas':
-      node = Canvas.create();
-      break;
-    case 'group':
-      node = Group.create();
-      break;
-    case 'shape':
-      node = Shape.create();
-      break;
-    case 'spline':
-      node = Spline.create();
-      break;
-    case 'segment':
-      node = Segment.create();
-      break;
-    case 'anchor':
-      node = Anchor.create();
-      break;
-    case 'handleIn':
-      node = HandleIn.create();
-      break;
-    case 'handleOut':
-      node = HandleOut.create();
-      break;
-  }
-
+  const node = nodeProtos[capitalize(object.type)].create();
   node.type = object.type;
-
-  setprops(node, object);
+  setProps(node, object);
 
   for (let child of object.children) {
     node.append(objectToDoc(child));
@@ -63,7 +34,7 @@ const objectToDoc = object => {
   return node;
 };
 
-const setprops = (node, object) => {
+const setProps = (node, object) => {
   for (let [key, value] of Object.entries(object.props)) {
     switch (key) {
       case 'viewBox':
@@ -90,6 +61,10 @@ const setprops = (node, object) => {
         node[key] = value;
     }
   }
+};
+
+const capitalize = string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
 export { objectToDoc };

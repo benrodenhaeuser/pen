@@ -7,7 +7,7 @@ const Node = Object.create(ProtoNode);
 Node.defineProps(['key', 'class']);
 
 Object.assign(Node, {
-  create() {
+  create(opts = {}) {
     return Object.create(this)
       .set({
         children: [],
@@ -18,7 +18,8 @@ Object.assign(Node, {
         type: null,
         key: createID(),
         class: Class.create(),
-      });
+      })
+      .set(opts);
   },
 
   findAncestor(predicate) {
@@ -88,9 +89,11 @@ Object.assign(Node, {
     });
   },
 
-  append(node) {
-    this.children = this.children.concat([node]);
-    node.parent = this;
+  append(...nodes) {
+    for (let node of nodes) {
+      this.children = this.children.concat([node]);
+      node.parent = this;
+    }
   },
 
   replaceWith(node) {

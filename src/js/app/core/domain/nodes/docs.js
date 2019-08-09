@@ -4,10 +4,11 @@ import { types } from './_.js';
 const Docs = Object.create(Node);
 
 Object.assign(Docs, {
-  create() {
+  create(opts = {}) {
     return Node.create
       .bind(this)()
-      .set({ type: types.DOCS });
+      .set({ type: types.DOCS })
+      .set(opts);
   },
 });
 

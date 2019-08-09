@@ -4,10 +4,11 @@ import { types } from './_.js';
 const HandleOut = Object.create(ControlNode);
 
 Object.assign(HandleOut, {
-  create() {
+  create(opts = {}) {
     return ControlNode.create
       .bind(this)()
-      .set({ type: types.HANDLEOUT });
+      .set({ type: types.HANDLEOUT })
+      .set(opts);
   },
 });
 

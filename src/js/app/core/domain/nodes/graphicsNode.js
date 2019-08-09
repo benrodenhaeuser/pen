@@ -5,7 +5,6 @@ import { Rectangle } from '../geometry/_.js';
 import { Matrix } from '../geometry/_.js';
 import { Class } from '../helpers/_.js';
 
-
 const GraphicsNode = SceneNode.create();
 GraphicsNode.defineProps(['transform']);
 

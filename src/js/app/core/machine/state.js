@@ -86,10 +86,8 @@ Object.defineProperty(State, 'snapshot', {
       vDOM: this.editorToVDOM(),
       plain: this.docToObject(),
       syntaxTree: this.sceneToSyntaxTree(),
-      state: this, // for debugging
     };
 
-    // console.log(snapshot); // for debugging
     return snapshot;
   },
 });

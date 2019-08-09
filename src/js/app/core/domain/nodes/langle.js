@@ -4,13 +4,14 @@ import { types } from './_.js';
 const Langle = Object.create(MarkupNode);
 
 Object.assign(Langle, {
-  create() {
+  create(opts = {}) {
     return MarkupNode.create
       .bind(this)()
       .set({
         type: types.LANGLE,
-        markup: '<', 
-      });
+        markup: '<',
+      })
+      .set(opts);
   },
 });
 

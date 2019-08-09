@@ -4,9 +4,9 @@ import { types } from './_.js';
 const AttrValue = Object.create(MarkupNode);
 
 Object.assign(AttrValue, {
-  create(text) {
+  create(opts = {}) {
     return MarkupNode.create
-      .bind(this)(text)
+      .bind(this)()
       .set({ type: types.ATTRVALUE });
   },
 });

@@ -310,7 +310,9 @@ const updates = {
         node.parent.placePen();
         state.canvas.removeFocus();
         state.label = 'penMode';
-      } else if ([types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)) {
+      } else if (
+        [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)
+      ) {
         node.parent.parent.parent.placePen();
         node.placePenTip();
         state.label = 'penMode';

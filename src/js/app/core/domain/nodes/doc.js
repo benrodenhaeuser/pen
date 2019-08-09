@@ -6,13 +6,14 @@ const Doc = Object.create(Node);
 Doc.defineProps(['_id']);
 
 Object.assign(Doc, {
-  create() {
+  create(opts = {}) {
     return Node.create
       .bind(this)()
       .set({
         type: types.DOC,
         _id: createID(),
-      });
+      })
+      .set(opts);
   },
 });
 
