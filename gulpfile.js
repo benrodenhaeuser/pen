@@ -32,6 +32,9 @@ gulp.task('rollup', () => {
 // - gl-matrix is copyright (c) Brandon Jones, Colin MacKenzie IV
 //   Distributed under an MIT License
 //   https://github.com/toji/gl-matrix
+// - diff-match-patch is copyright (c) by the authors
+     Distributed under an Apache License
+     https://github.com/google/diff-match-patch
     `,
       file: './dist/js/bundle.js',
       format: 'iife',

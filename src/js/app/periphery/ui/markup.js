@@ -1,4 +1,5 @@
 import { CodeMirror } from '/vendor/codemirror/codemirror.js';
+import { DiffMatchPatch } from '/vendor/diff-match-patch/diff-match-patch.js';
 
 const markup = {
   init(snapshot) {
@@ -23,7 +24,7 @@ const markup = {
 
   bindCodemirrorEvents() {
     this.markupEditor.on('change', (instance, changeObj) => {
-      if (changeObj.origin !== 'setValue') {
+      if (!this.updating) {
         window.dispatchEvent(new CustomEvent('userChangedMarkup'));
       }
     });
@@ -76,17 +77,28 @@ const markup = {
       this.textMarker.clear();
     }
 
-    // update document value
+    // patch document
     if (this.previousSyntaxTree.toMarkup() !== snapshot.syntaxTree.toMarkup()) {
-      this.ignoreCursor = true;
-      const cursor = this.markupDoc.getCursor();
-      this.markupDoc.setValue(snapshot.syntaxTree.toMarkup());
-      this.markupDoc.setCursor(cursor);
-      this.ignoreCursor = false;
+      this.updating = true;
+
+      this.patchLines(
+        this.diffLines(
+          this.previousSyntaxTree.toMarkup(),
+          snapshot.syntaxTree.toMarkup()
+        )
+      );
+
+      this.updating = false;
+
+      // presumably, we will not need this anymore?
+      // this.ignoreCursor = true;
+      // const cursor = this.markupDoc.getCursor();
+      // this.markupDoc.setValue(snapshot.syntaxTree.toMarkup());
+      // this.markupDoc.setCursor(cursor);
+      // this.ignoreCursor = false;
     }
 
-    // set text marker
-    // TODO
+    // set text marker --> TODO need to update this code:
     // const node = snapshot.syntaxTree.findDescendantByClass('selected');
     // if (node) {
     //   const from = this.markupEditor.doc.posFromIndex(node.start);
@@ -97,13 +109,59 @@ const markup = {
     //   });
     // }
 
-    // editor syntax tree received
     this.previousSyntaxTree = snapshot.syntaxTree;
+  },
+
+  diffLines(text1, text2) {
+    const dmp = new DiffMatchPatch();
+    const a = dmp.diff_linesToChars_(text1, text2);
+    const lineText1 = a.chars1;
+    const lineText2 = a.chars2;
+    const lineArray = a.lineArray;
+    const diffs = dmp.diff_main(lineText1, lineText2, false);
+    dmp.diff_charsToLines_(diffs, lineArray);
+    return diffs;
+  },
+
+  patchLines(diffs) {
+    let currentLine = 0;
+
+    for (let diff of diffs) {
+      const instruction = diff[0];
+      const text = diff[1];
+
+      if (instruction === 0) {
+        currentLine += this.countLines(diff);
+      } else if (instruction === -1) {
+        this.deleteLines(currentLine, this.countLines(diff));
+      } else if (instruction === 1) {
+        this.insertLines(currentLine, text);
+        currentLine += this.countLines(diff);
+      }
+    }
+  },
+
+  countLines(diff) {
+    return diff[1].match(/\n/g).length;
+  },
+
+  deleteLines(lineNumber, linesCount) {
+    const startLine = lineNumber;
+    const endLine = lineNumber + linesCount;
+
+    this.markupDoc.replaceRange(
+      '',
+      { line: startLine, ch: 0 },
+      { line: endLine, ch: 0 }
+    );
+  },
+
+  insertLines(lineNumber, text) {
+    this.markupDoc.replaceRange(
+      text,
+      { line: lineNumber, ch: 0 }
+    );
   },
 };
 
 export { markup };
-
-// const anchor = this.markupDoc.getCursor('anchor');
-// const head = this.markupDoc.getCursor('head');
-// this.markupDoc.setSelection(anchor, head);
