@@ -44,7 +44,6 @@ Object.assign(Group, {
 
     const close = CloseTag.create({
       key: this.key,
-      class: this.class,
       markup: `${pad}</g>`,
     });
 

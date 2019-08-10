@@ -4393,7 +4393,6 @@
 
       const close = CloseTag$$1.create({
         key: this.key,
-        class: this.class,
         markup: `${pad}</g>`,
       });
 
@@ -4407,6 +4406,7 @@
   const linebreak = '\n';
   const slash = '/';
   const quote = '"';
+  const blank = ' ';
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
   Shape$$1.defineProps(['splitter']);
@@ -4480,9 +4480,7 @@
     },
 
     toTags(level) {
-      const open = OpenTag$$1.create({
-        class: this.class,
-      });
+      const open = OpenTag$$1.create();
       const attributes = Attributes$$1.create();
 
       open.append(
@@ -4491,6 +4489,7 @@
         TagName$$1.create({
           markup: 'path',
           key: this.key,
+          class: this.class,
         }),
 
         attributes,
@@ -4557,9 +4556,13 @@
             key: spline.key,
           }),
           Coords$$1.create({
-            markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y} `,
+            markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
             key: segment.anchor.key,
-          })
+            class: segment.anchor.class,
+          }),
+          Text$$1.create({
+            markup: blank,
+          }),
         );
 
         for (let i = 1; i < spline.children.length; i += 1) {
@@ -4600,26 +4603,38 @@
 
           if (prevSeg.handleOut) {
             d.append(
+              Text$$1.create({
+                markup: blank,
+              }),
               Coords$$1.create({
-                markup: ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
+                markup: `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
                 key: prevSeg.handleOut.key,
+                class: prevSeg.handleOut.class,
               })
             );
           }
 
           if (currSeg.handleIn) {
             d.append(
+              Text$$1.create({
+                markup: blank,
+              }),
               Coords$$1.create({
-                markup: ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
+                markup: `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
                 key: currSeg.handleIn.key,
+                class: currSeg.handleIn.class,
               })
             );
           }
 
           d.append(
+            Text$$1.create({
+              markup: blank,
+            }),
             Coords$$1.create({
-              markup: ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
+              markup: `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
               key: currSeg.anchor.key,
+              class: currSeg.anchor.class,
             })
           );
         }
@@ -18977,33 +18992,48 @@
     },
 
     react(snapshot) {
-      // TODO: clear text marker(s) (?)
-      // if (this.textMarker) {
-      //   this.textMarker.clear();
-      // }
+      this.clearTextMarker();
 
       if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
-        // patch document
         this.reconcile(snapshot);
 
         // TODO: manage cursor position
       }
 
-      // TODO: set text markers
-
-      // // old text marker code:
-      // const node = snapshot.markupTree.findDescendantByClass('selected');
-      // if (node) {
-      //   const from = this.markupEditor.doc.posFromIndex(node.start);
-      //   const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-      //   const range = [from, to];
-      //   this.textMarker = this.markupDoc.markText(...range, {
-      //     className: 'selected-markup', // triggers CSS rule
-      //   });
-      // }
-
-      // store fresh markup tree
+      this.placeTextMarker(snapshot);
       this.previousMarkupTree = snapshot.markupTree;
+    },
+
+    placeTextMarker(snapshot) {
+      let cssClass;
+
+      let node = snapshot.markupTree.findDescendantByClass('selected');
+      if (node) {
+        cssClass = 'selected-markup';
+        this.setMarker(node, cssClass);
+      } else {
+        node = snapshot.markupTree.findDescendantByClass('tip');
+        if (node) {
+          cssClass = 'tip-markup';
+          this.setMarker(node, cssClass);
+        }
+      }
+    },
+
+    setMarker(node, cssClass) {
+      const from = this.markupEditor.doc.posFromIndex(node.start);
+      const to = this.markupEditor.doc.posFromIndex(node.end + 1);
+      const range = [from, to];
+      this.textMarker =
+        this.markupDoc.markText(...range, {
+          className: cssClass,
+        });
+    },
+
+    clearTextMarker() {
+      if (this.textMarker) {
+        this.textMarker.clear();
+      }
     },
 
     reconcile(snapshot) {
@@ -19064,7 +19094,7 @@
       this.markupDoc.replaceRange(
         text,
         { line: lineNumber, ch: 0 },
-        { line: lineNumber, ch: 0 },
+        { line: lineNumber, ch: 0 }, // "to = from" means "insert"
         'reconcile'
       );
     },

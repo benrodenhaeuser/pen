@@ -20,6 +20,7 @@ import { indent } from '../helpers/_.js';
 const linebreak = '\n';
 const slash = '/';
 const quote = '"';
+const blank = ' ';
 
 const Shape = Object.create(GraphicsNode);
 Shape.defineProps(['splitter']);
@@ -93,9 +94,7 @@ Object.assign(Shape, {
   },
 
   toTags(level) {
-    const open = OpenTag.create({
-      class: this.class,
-    });
+    const open = OpenTag.create();
     const attributes = Attributes.create();
 
     open.append(
@@ -104,6 +103,7 @@ Object.assign(Shape, {
       TagName.create({
         markup: 'path',
         key: this.key,
+        class: this.class,
       }),
 
       attributes,
@@ -170,9 +170,13 @@ Object.assign(Shape, {
           key: spline.key,
         }),
         Coords.create({
-          markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y} `,
+          markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
           key: segment.anchor.key,
-        })
+          class: segment.anchor.class,
+        }),
+        Text.create({
+          markup: blank,
+        }),
       );
 
       for (let i = 1; i < spline.children.length; i += 1) {
@@ -213,26 +217,38 @@ Object.assign(Shape, {
 
         if (prevSeg.handleOut) {
           d.append(
+            Text.create({
+              markup: blank,
+            }),
             Coords.create({
-              markup: ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
+              markup: `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
               key: prevSeg.handleOut.key,
+              class: prevSeg.handleOut.class,
             })
           );
         }
 
         if (currSeg.handleIn) {
           d.append(
+            Text.create({
+              markup: blank,
+            }),
             Coords.create({
-              markup: ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
+              markup: `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
               key: currSeg.handleIn.key,
+              class: currSeg.handleIn.class,
             })
           );
         }
 
         d.append(
+          Text.create({
+            markup: blank,
+          }),
           Coords.create({
-            markup: ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
+            markup: `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
             key: currSeg.anchor.key,
+            class: currSeg.anchor.class,
           })
         );
       }

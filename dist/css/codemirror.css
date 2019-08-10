@@ -140,13 +140,20 @@
 /* .cm-s-default .cm-link {color: #00c;} */
 
 .selected-markup {
-  text-decoration: underline;
-  text-decoration-color: #919191;
+  /* light tint of red: */
+  background-color: #ffb2b2;
+  /* text-decoration: underline; */
+  /* text-decoration-color: #919191; */
   /* text-decoration-color: #F0774B; */
   /* text-decoration-style: dashed; */
   /* text-underline-position: under; */
   /* text-decoration-color: gray; */
   /* font-weight: 500; */
+}
+
+.tip-markup {
+  /* light tint of red: */
+  background-color: #ffb2b2;
 }
 
 

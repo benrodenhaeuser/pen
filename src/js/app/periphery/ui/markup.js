@@ -71,33 +71,48 @@ const markup = {
   },
 
   react(snapshot) {
-    // TODO: clear text marker(s) (?)
-    // if (this.textMarker) {
-    //   this.textMarker.clear();
-    // }
+    this.clearTextMarker();
 
     if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
-      // patch document
       this.reconcile(snapshot);
 
       // TODO: manage cursor position
     }
 
-    // TODO: set text markers
-
-    // // old text marker code:
-    // const node = snapshot.markupTree.findDescendantByClass('selected');
-    // if (node) {
-    //   const from = this.markupEditor.doc.posFromIndex(node.start);
-    //   const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-    //   const range = [from, to];
-    //   this.textMarker = this.markupDoc.markText(...range, {
-    //     className: 'selected-markup', // triggers CSS rule
-    //   });
-    // }
-
-    // store fresh markup tree
+    this.placeTextMarker(snapshot);
     this.previousMarkupTree = snapshot.markupTree;
+  },
+
+  placeTextMarker(snapshot) {
+    let cssClass;
+
+    let node = snapshot.markupTree.findDescendantByClass('selected');
+    if (node) {
+      cssClass = 'selected-markup';
+      this.setMarker(node, cssClass);
+    } else {
+      node = snapshot.markupTree.findDescendantByClass('tip');
+      if (node) {
+        cssClass = 'tip-markup';
+        this.setMarker(node, cssClass);
+      }
+    }
+  },
+
+  setMarker(node, cssClass) {
+    const from = this.markupEditor.doc.posFromIndex(node.start);
+    const to = this.markupEditor.doc.posFromIndex(node.end + 1);
+    const range = [from, to];
+    this.textMarker =
+      this.markupDoc.markText(...range, {
+        className: cssClass,
+      });
+  },
+
+  clearTextMarker() {
+    if (this.textMarker) {
+      this.textMarker.clear();
+    }
   },
 
   reconcile(snapshot) {
@@ -158,7 +173,7 @@ const markup = {
     this.markupDoc.replaceRange(
       text,
       { line: lineNumber, ch: 0 },
-      { line: lineNumber, ch: 0 },
+      { line: lineNumber, ch: 0 }, // "to = from" means "insert"
       'reconcile'
     );
   },
