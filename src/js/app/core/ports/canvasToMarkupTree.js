@@ -2,14 +2,14 @@ import { SVGElement } from '../domain/nodes/_.js';
 import { GElement } from '../domain/nodes/_.js';
 import { PathElement } from '../domain/nodes/_.js';
 import { types } from '../domain/nodes/_.js';
-
+import { indent } from '../domain/helpers/_.js';
 import { Text } from '../domain/nodes/_.js';
 
-const sceneToSyntaxTree = canvas => {
-  const syntaxTree = SVGElement.create();
-  parse(canvas, syntaxTree, 0);
-  syntaxTree.indexify();
-  return syntaxTree;
+const canvasToMarkupTree = canvas => {
+  const markupTree = SVGElement.create();
+  parse(canvas, markupTree, 0);
+  markupTree.indexify();
+  return markupTree;
 };
 
 const parse = (sceneNode, markupParent, level) => {
@@ -60,14 +60,4 @@ const parse = (sceneNode, markupParent, level) => {
   }
 };
 
-const indent = level => {
-  let pad = '';
-
-  for (let i = 0; i < level; i += 1) {
-    pad += '  ';
-  }
-
-  return pad;
-};
-
-export { sceneToSyntaxTree };
+export { canvasToMarkupTree };

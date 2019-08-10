@@ -36,10 +36,4 @@ Object.defineProperty(Editor, 'doc', {
   },
 });
 
-Object.defineProperty(Editor, 'syntaxTree', {
-  get() {
-    return this.root.findDescendant(node => node.type === types.MARKUPNODE);
-  },
-});
-
 export { Editor };

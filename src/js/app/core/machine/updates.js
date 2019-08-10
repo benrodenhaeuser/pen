@@ -323,7 +323,7 @@ const updates = {
   },
 
   userChangedMarkup(state, input) {
-    const canvas = state.markupToScene(input.value);
+    const canvas = state.markupToCanvas(input.value);
 
     if (canvas) {
       state.canvas.replaceWith(canvas);

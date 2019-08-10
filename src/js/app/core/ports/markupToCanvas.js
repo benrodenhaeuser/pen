@@ -8,7 +8,7 @@ import { Class } from '../domain/_.js';
 import { SVGPathData } from 'svg-pathdata';
 import { SVGPathDataTransformer } from 'svg-pathdata';
 
-const markupToScene = markup => {
+const markupToCanvas = markup => {
   const $svg = markupToDOM(markup);
 
   if ($svg) {
@@ -201,4 +201,4 @@ const commands = svgPath => {
     .toAbs().commands; // no relative commands
 };
 
-export { markupToScene };
+export { markupToCanvas };

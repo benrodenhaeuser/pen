@@ -9,10 +9,10 @@ const markup = {
       lineNumbers: true,
       lineWrapping: true,
       mode: 'xml',
-      value: snapshot.syntaxTree.toMarkup(),
+      value: snapshot.markupTree.toMarkup(),
     });
     this.markupDoc = this.markupEditor.getDoc();
-    this.previousSyntaxTree = snapshot.syntaxTree;
+    this.previousMarkupTree = snapshot.markupTree;
 
     return this;
   },
@@ -23,8 +23,8 @@ const markup = {
   },
 
   bindCodemirrorEvents() {
-    this.markupEditor.on('change', (instance, changeObj) => {
-      if (!this.updating) {
+    this.markupEditor.on('change', (instance, obj) => {
+      if (obj.origin !== 'reconcile') {
         window.dispatchEvent(new CustomEvent('userChangedMarkup'));
       }
     });
@@ -34,11 +34,10 @@ const markup = {
         obj.update(obj.ranges);
         const cursorPosition = obj.ranges[0].anchor;
         const index = this.markupDoc.indexFromPos(cursorPosition);
-        const node = this.previousSyntaxTree.findNodeByIndex(event.detail);
 
-        if (node) {
+        if (index) {
           window.dispatchEvent(
-            new CustomEvent('userSelectedMarkupNode', { detail: index })
+            new CustomEvent('userSelectedIndex', { detail: index })
           );
         }
       }
@@ -52,54 +51,42 @@ const markup = {
       func({
         source: this.name,
         type: 'userChangedMarkup',
-        value: this.markupEditor.getValue(), // current editor value
+        value: this.markupEditor.getValue(),
       });
     });
 
-    window.addEventListener('userSelectedMarkupNode', event => {
+    window.addEventListener('userSelectedIndex', event => {
       console.log('user selected markup node');
 
-      const node = this.previousSyntaxTree.findNodeByIndex(event.detail);
+      const node = this.previousMarkupTree.findLeafByIndex(event.detail);
 
       if (node) {
         func({
           source: this.name,
           type: 'userSelectedMarkupNode',
-          key: node.key, // key of node selected in markup
+          key: node.key,
         });
       }
     });
   },
 
   react(snapshot) {
-    // clear text marker
-    if (this.textMarker) {
-      this.textMarker.clear();
+    // TODO: clear text marker(s) (?)
+    // if (this.textMarker) {
+    //   this.textMarker.clear();
+    // }
+
+    if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
+      // patch document
+      this.reconcile(snapshot);
+
+      // TODO: manage cursor position
     }
 
-    // patch document
-    if (this.previousSyntaxTree.toMarkup() !== snapshot.syntaxTree.toMarkup()) {
-      this.updating = true;
+    // TODO: set text markers
 
-      this.patchLines(
-        this.diffLines(
-          this.previousSyntaxTree.toMarkup(),
-          snapshot.syntaxTree.toMarkup()
-        )
-      );
-
-      this.updating = false;
-
-      // presumably, we will not need this anymore?
-      // this.ignoreCursor = true;
-      // const cursor = this.markupDoc.getCursor();
-      // this.markupDoc.setValue(snapshot.syntaxTree.toMarkup());
-      // this.markupDoc.setCursor(cursor);
-      // this.ignoreCursor = false;
-    }
-
-    // set text marker --> TODO need to update this code:
-    // const node = snapshot.syntaxTree.findDescendantByClass('selected');
+    // // old text marker code:
+    // const node = snapshot.markupTree.findDescendantByClass('selected');
     // if (node) {
     //   const from = this.markupEditor.doc.posFromIndex(node.start);
     //   const to = this.markupEditor.doc.posFromIndex(node.end + 1);
@@ -109,7 +96,17 @@ const markup = {
     //   });
     // }
 
-    this.previousSyntaxTree = snapshot.syntaxTree;
+    // store fresh markup tree
+    this.previousMarkupTree = snapshot.markupTree;
+  },
+
+  reconcile(snapshot) {
+    this.patchLines(
+      this.diffLines(
+        this.markupDoc.getValue(),
+        snapshot.markupTree.toMarkup()
+      )
+    );
   },
 
   diffLines(text1, text2) {
@@ -152,14 +149,17 @@ const markup = {
     this.markupDoc.replaceRange(
       '',
       { line: startLine, ch: 0 },
-      { line: endLine, ch: 0 }
+      { line: endLine, ch: 0 },
+      'reconcile'
     );
   },
 
   insertLines(lineNumber, text) {
     this.markupDoc.replaceRange(
       text,
-      { line: lineNumber, ch: 0 }
+      { line: lineNumber, ch: 0 },
+      { line: lineNumber, ch: 0 },
+      'reconcile'
     );
   },
 };

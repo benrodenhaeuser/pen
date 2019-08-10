@@ -26,15 +26,15 @@ gulp.task('rollup', () => {
 // - CodeMirror is copyright (c) by Marijn Haverbeke and others
 //   Distributed under an MIT license
 //   https://codemirror.net/LICENSE
-// - svg-pathdata library is copyright (c) by Nicolas Froidure
+// - svg-pathdata is copyright (c) by Nicolas Froidure
 //   Distributed under an MIT license
 //   https://github.com/nfroidure/svg-pathdata
 // - gl-matrix is copyright (c) Brandon Jones, Colin MacKenzie IV
 //   Distributed under an MIT License
 //   https://github.com/toji/gl-matrix
 // - diff-match-patch is copyright (c) by the authors
-     Distributed under an Apache License
-     https://github.com/google/diff-match-patch
+//   Distributed under an Apache License
+//   https://github.com/google/diff-match-patch
     `,
       file: './dist/js/bundle.js',
       format: 'iife',

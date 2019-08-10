@@ -1,13 +1,13 @@
 import { docToObject } from './docToObject.js';
 import { objectToDoc } from './objectToDoc.js';
-import { sceneToSyntaxTree } from './sceneToSyntaxTree.js';
+import { canvasToMarkupTree } from './canvasToMarkupTree.js';
 import { editorToVDOM } from './editorToVDOM.js';
-import { markupToScene } from './markupToScene.js';
+import { markupToCanvas } from './markupToCanvas.js';
 
 export {
   docToObject,
   objectToDoc,
-  sceneToSyntaxTree,
+  canvasToMarkupTree,
   editorToVDOM,
-  markupToScene,
+  markupToCanvas,
 };

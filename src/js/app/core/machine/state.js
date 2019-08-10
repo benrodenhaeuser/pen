@@ -7,8 +7,8 @@ import { Rectangle } from '../domain/_.js';
 
 import { docToObject } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
-import { markupToScene } from '../ports/_.js';
-import { sceneToSyntaxTree } from '../ports/_.js';
+import { markupToCanvas } from '../ports/_.js';
+import { canvasToMarkupTree } from '../ports/_.js';
 import { editorToVDOM } from '../ports/_.js';
 
 const State = {
@@ -68,12 +68,12 @@ const State = {
     return objectToDoc(object);
   },
 
-  markupToScene(markup) {
-    return markupToScene(markup);
+  markupToCanvas(markup) {
+    return markupToCanvas(markup);
   },
 
-  sceneToSyntaxTree() {
-    return sceneToSyntaxTree(this.editor.canvas);
+  canvasToMarkupTree() {
+    return canvasToMarkupTree(this.editor.canvas);
   },
 };
 
@@ -85,7 +85,7 @@ Object.defineProperty(State, 'snapshot', {
       update: this.update,
       vDOM: this.editorToVDOM(),
       plain: this.docToObject(),
-      syntaxTree: this.sceneToSyntaxTree(),
+      markupTree: this.canvasToMarkupTree(),
     };
 
     return snapshot;

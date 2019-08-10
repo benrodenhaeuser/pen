@@ -130,17 +130,6 @@ Object.assign(Canvas, {
     };
   },
 
-  toSVGNode() {
-    return {
-      tag: 'svg',
-      children: [],
-      props: {
-        viewBox: this.viewBox.toString(),
-        xmlns: xmlns,
-      },
-    };
-  },
-
   toTags() {
     const open = OpenTag.create();
     open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;

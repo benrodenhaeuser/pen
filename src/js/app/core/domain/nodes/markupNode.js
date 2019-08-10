@@ -29,9 +29,7 @@ Object.assign(MarkupNode, {
     }
   },
 
-  // it looks like this will return a leaf node, so maybe we should call it
-  // findLeadByIndex
-  findNodeByIndex(idx) {
+  findLeafByIndex(idx) {
     if (this.markup) {
       if (this.start <= idx && idx <= this.end) {
         return this;
@@ -44,7 +42,7 @@ Object.assign(MarkupNode, {
       );
 
       if (child) {
-        return child.findNodeByIndex(idx);
+        return child.findLeafByIndex(idx);
       } else {
         return null;
       }

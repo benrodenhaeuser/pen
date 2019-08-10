@@ -1,7 +1,5 @@
 import { GraphicsNode } from './_.js';
 import { Spline } from './_.js';
-import { Matrix } from '../geometry/_.js';
-import { Vector } from '../geometry/_.js';
 import { MarkupNode } from './_.js';
 import { Text } from './_.js';
 import { OpenTag } from './_.js';
@@ -15,6 +13,13 @@ import { AttrKey } from './_.js';
 import { AttrValue } from './_.js';
 import { Coords } from './_.js';
 import { types } from './_.js';
+import { Matrix } from '../geometry/_.js';
+import { Vector } from '../geometry/_.js';
+import { indent } from '../helpers/_.js';
+
+const linebreak = '\n';
+const slash = '/';
+const quote = '"';
 
 const Shape = Object.create(GraphicsNode);
 Shape.defineProps(['splitter']);
@@ -85,20 +90,6 @@ Object.assign(Shape, {
     }
 
     return nodes;
-  },
-
-  toSVGNode() {
-    const svgNode = {
-      tag: 'path',
-      children: [],
-      props: { d: this.toPathString() },
-    };
-
-    if (!this.transform.equals(Matrix.identity())) {
-      svgNode.props.transform = this.transform.toString();
-    }
-
-    return svgNode;
   },
 
   toTags(level) {
@@ -285,20 +276,5 @@ Object.assign(Shape, {
     return d;
   },
 });
-
-// TODO: duplicate
-const indent = level => {
-  let pad = '';
-
-  for (let i = 0; i < level; i += 1) {
-    pad += '  ';
-  }
-
-  return pad;
-};
-
-const linebreak = '\n';
-const slash = '/';
-const quote = '"';
 
 export { Shape };
