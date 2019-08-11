@@ -56,5 +56,4 @@ Object.assign(Group, {
 
 // TODO: duplicate
 
-
 export { Group };

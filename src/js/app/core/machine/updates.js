@@ -105,11 +105,18 @@ const updates = {
   },
 
   deleteNode(state, input) {
-    const target = state.canvas.findSelection();
+    let target = state.canvas.findSelection() || state.canvas.findPenTip();
 
     if (target) {
-      console.log('have a target');
-      target.remove();
+      if (target.type === types.ANCHOR) {
+        target.parent.remove();
+      } else if (
+        [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
+          target.type
+        )
+      ) {
+        target.remove();
+      }
     }
   },
 

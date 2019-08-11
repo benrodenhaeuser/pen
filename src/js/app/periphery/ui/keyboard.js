@@ -29,9 +29,7 @@ const keyboard = {
     });
   },
 
-  react(snapshot) {
-
-  },
+  react(snapshot) {},
 };
 
 export { keyboard };

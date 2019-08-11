@@ -84,10 +84,7 @@ const markup = {
 
   reconcile(snapshot) {
     this.patchLines(
-      this.diffLines(
-        this.markupDoc.getValue(),
-        snapshot.markupTree.toMarkup()
-      )
+      this.diffLines(this.markupDoc.getValue(), snapshot.markupTree.toMarkup())
     );
   },
 
@@ -165,10 +162,9 @@ const markup = {
     const from = this.markupEditor.doc.posFromIndex(node.start);
     const to = this.markupEditor.doc.posFromIndex(node.end + 1);
     const range = [from, to];
-    this.textMarker =
-      this.markupDoc.markText(...range, {
-        className: cssClass,
-      });
+    this.textMarker = this.markupDoc.markText(...range, {
+      className: cssClass,
+    });
   },
 
   clearTextMarker() {

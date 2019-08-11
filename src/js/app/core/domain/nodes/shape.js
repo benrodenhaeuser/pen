@@ -176,7 +176,7 @@ Object.assign(Shape, {
         }),
         Text.create({
           markup: blank,
-        }),
+        })
       );
 
       for (let i = 1; i < spline.children.length; i += 1) {
@@ -186,7 +186,7 @@ Object.assign(Shape, {
         if (prevSeg.handleOut && currSeg.handleIn) {
           d.append(
             Text.create({
-              markup: linebreak + indent(level + 2)
+              markup: linebreak + indent(level + 2),
             }),
             Text.create({
               markup: 'C',
@@ -196,7 +196,7 @@ Object.assign(Shape, {
         } else if (currSeg.handleIn || prevSeg.handleOut) {
           d.append(
             Text.create({
-              markup: linebreak + indent(level + 2)
+              markup: linebreak + indent(level + 2),
             }),
             Text.create({
               markup: 'Q',
@@ -206,7 +206,7 @@ Object.assign(Shape, {
         } else {
           d.append(
             Text.create({
-              markup: linebreak + indent(level + 2)
+              markup: linebreak + indent(level + 2),
             }),
             Text.create({
               markup: 'L',

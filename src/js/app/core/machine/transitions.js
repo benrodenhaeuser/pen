@@ -246,7 +246,6 @@ const transitions = [
     do: 'deleteNode',
   },
 
-
   // MARKUP
 
   {

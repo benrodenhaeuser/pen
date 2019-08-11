@@ -4576,7 +4576,7 @@
           }),
           Text$$1.create({
             markup: blank,
-          }),
+          })
         );
 
         for (let i = 1; i < spline.children.length; i += 1) {
@@ -4586,7 +4586,7 @@
           if (prevSeg.handleOut && currSeg.handleIn) {
             d.append(
               Text$$1.create({
-                markup: linebreak + indent(level + 2)
+                markup: linebreak + indent(level + 2),
               }),
               Text$$1.create({
                 markup: 'C',
@@ -4596,7 +4596,7 @@
           } else if (currSeg.handleIn || prevSeg.handleOut) {
             d.append(
               Text$$1.create({
-                markup: linebreak + indent(level + 2)
+                markup: linebreak + indent(level + 2),
               }),
               Text$$1.create({
                 markup: 'Q',
@@ -4606,7 +4606,7 @@
           } else {
             d.append(
               Text$$1.create({
-                markup: linebreak + indent(level + 2)
+                markup: linebreak + indent(level + 2),
               }),
               Text$$1.create({
                 markup: 'L',
@@ -5879,7 +5879,6 @@
       do: 'deleteNode',
     },
 
-
     // MARKUP
 
     {
@@ -6043,11 +6042,18 @@
     },
 
     deleteNode(state, input) {
-      const target = state.canvas.findSelection();
+      let target = state.canvas.findSelection() || state.canvas.findPenTip();
 
       if (target) {
-        console.log('have a target');
-        target.remove();
+        if (target.type === types.ANCHOR) {
+          target.parent.remove();
+        } else if (
+          [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
+            target.type
+          )
+        ) {
+          target.remove();
+        }
       }
     },
 
@@ -6332,8 +6338,6 @@
     },
 
     compute(input) {
-      console.log(input);
-
       this.state.input = input;
 
       const transition = transitions$$1.get(this.state, input);
@@ -19029,10 +19033,7 @@
 
     reconcile(snapshot) {
       this.patchLines(
-        this.diffLines(
-          this.markupDoc.getValue(),
-          snapshot.markupTree.toMarkup()
-        )
+        this.diffLines(this.markupDoc.getValue(), snapshot.markupTree.toMarkup())
       );
     },
 
@@ -19110,10 +19111,9 @@
       const from = this.markupEditor.doc.posFromIndex(node.start);
       const to = this.markupEditor.doc.posFromIndex(node.end + 1);
       const range = [from, to];
-      this.textMarker =
-        this.markupDoc.markText(...range, {
-          className: cssClass,
-        });
+      this.textMarker = this.markupDoc.markText(...range, {
+        className: cssClass,
+      });
     },
 
     clearTextMarker() {
@@ -19220,9 +19220,7 @@
       });
     },
 
-    react(snapshot) {
-
-    },
+    react(snapshot) {},
   };
 
   const modules = [canvas$1, markup, keyboard, tools$1, message$1, hist, db];

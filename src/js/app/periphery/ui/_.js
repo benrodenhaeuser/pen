@@ -4,10 +4,4 @@ import { tools } from './tools.js';
 import { message } from './message.js';
 import { keyboard } from './keyboard.js';
 
-export {
-  canvas,
-  markup,
-  tools,
-  message,
-  keyboard
-};
+export { canvas, markup, tools, message, keyboard };
