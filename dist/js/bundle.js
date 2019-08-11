@@ -6028,7 +6028,7 @@
       state.aux = {};
     },
 
-    // TODO
+    // TODO: weird name
     // triggered by escape key
     exitEdit(state, input) {
       if (state.label === 'penMode') {

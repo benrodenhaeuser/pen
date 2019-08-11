@@ -1,4 +1,2 @@
-import { State, transitions, updates } from './machine/_.js';
-import { types } from './domain/_.js';
-
-export { State, transitions, updates, types };
+export * from './machine/_.js';
+export { types } from './domain/_.js';

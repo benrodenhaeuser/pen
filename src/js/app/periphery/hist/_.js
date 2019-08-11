@@ -1,3 +1,1 @@
-import { hist } from './hist.js';
-
-export { hist };
+export { hist } from './hist.js';

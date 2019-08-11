@@ -1,5 +1,3 @@
-import { State } from './state.js';
-import { transitions } from './transitions.js';
-import { updates } from './updates.js';
-
-export { State, transitions, updates };
+export { State } from './state.js';
+export { transitions } from './transitions.js';
+export { updates } from './updates.js';

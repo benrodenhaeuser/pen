@@ -1,3 +1,1 @@
-import { db } from './db.js';
-
-export { db };
+export { db } from './db.js';
