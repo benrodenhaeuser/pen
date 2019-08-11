@@ -4,5 +4,14 @@ import { canvas } from './ui/_.js';
 import { markup } from './ui/_.js';
 import { tools } from './ui/_.js';
 import { message } from './ui/_.js';
+import { keyboard } from './ui/_.js';
 
-export { db, hist, canvas, markup, tools, message };
+export {
+  db,
+  hist,
+  canvas,
+  markup,
+  keyboard,
+  tools,
+  message
+};

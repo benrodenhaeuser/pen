@@ -104,6 +104,15 @@ const updates = {
     }
   },
 
+  deleteNode(state, input) {
+    const target = state.canvas.findSelection();
+
+    if (target) {
+      console.log('have a target');
+      target.remove();
+    }
+  },
+
   // TRANSFORMS
 
   initTransform(state, input) {

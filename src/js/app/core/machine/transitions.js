@@ -238,6 +238,15 @@ const transitions = [
     to: 'adjustingSegment',
   },
 
+  // DELETE
+
+  {
+    type: 'keydown',
+    target: 'delete',
+    do: 'deleteNode',
+  },
+
+
   // MARKUP
 
   {

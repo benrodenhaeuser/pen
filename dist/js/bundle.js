@@ -4015,6 +4015,20 @@
       this.parent.children.splice(index, 1, node);
     },
 
+    remove() {
+      console.log('calling remove');
+      this.parent.removeChild(this);
+    },
+
+    removeChild(node) {
+      const index = this.children.indexOf(node);
+
+      if (index !== -1) {
+        this.children.splice(index, 1);
+        node.parent = null;
+      }
+    },
+
     insertChild(node, index) {
       node.parent = this;
       this.children.splice(index, 0, node);
@@ -5857,6 +5871,15 @@
       to: 'adjustingSegment',
     },
 
+    // DELETE
+
+    {
+      type: 'keydown',
+      target: 'delete',
+      do: 'deleteNode',
+    },
+
+
     // MARKUP
 
     {
@@ -6016,6 +6039,15 @@
         state.label = 'selectMode';
       } else if (state.label === 'selectMode') {
         updates.cleanup(state, input);
+      }
+    },
+
+    deleteNode(state, input) {
+      const target = state.canvas.findSelection();
+
+      if (target) {
+        console.log('have a target');
+        target.remove();
       }
     },
 
@@ -6300,6 +6332,8 @@
     },
 
     compute(input) {
+      console.log(input);
+
       this.state.input = input;
 
       const transition = transitions$$1.get(this.state, input);
@@ -6576,16 +6610,6 @@
           });
         });
       }
-
-      window.addEventListener('keydown', event => {
-        if (event.keyCode === 27) {
-          func({
-            source: this.name,
-            type: event.type,
-            target: 'esc',
-          });
-        }
-      });
     },
 
     createElement(vNode) {
@@ -18996,44 +19020,11 @@
 
       if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
         this.reconcile(snapshot);
-
         // TODO: manage cursor position
       }
 
       this.placeTextMarker(snapshot);
       this.previousMarkupTree = snapshot.markupTree;
-    },
-
-    placeTextMarker(snapshot) {
-      let cssClass;
-
-      let node = snapshot.markupTree.findDescendantByClass('selected');
-      if (node) {
-        cssClass = 'selected-markup';
-        this.setMarker(node, cssClass);
-      } else {
-        node = snapshot.markupTree.findDescendantByClass('tip');
-        if (node) {
-          cssClass = 'tip-markup';
-          this.setMarker(node, cssClass);
-        }
-      }
-    },
-
-    setMarker(node, cssClass) {
-      const from = this.markupEditor.doc.posFromIndex(node.start);
-      const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-      const range = [from, to];
-      this.textMarker =
-        this.markupDoc.markText(...range, {
-          className: cssClass,
-        });
-    },
-
-    clearTextMarker() {
-      if (this.textMarker) {
-        this.textMarker.clear();
-      }
     },
 
     reconcile(snapshot) {
@@ -19097,6 +19088,38 @@
         { line: lineNumber, ch: 0 }, // "to = from" means "insert"
         'reconcile'
       );
+    },
+
+    placeTextMarker(snapshot) {
+      let cssClass;
+
+      let node = snapshot.markupTree.findDescendantByClass('selected');
+      if (node) {
+        cssClass = 'selected-markup';
+        this.setMarker(node, cssClass);
+      } else {
+        node = snapshot.markupTree.findDescendantByClass('tip');
+        if (node) {
+          cssClass = 'tip-markup';
+          this.setMarker(node, cssClass);
+        }
+      }
+    },
+
+    setMarker(node, cssClass) {
+      const from = this.markupEditor.doc.posFromIndex(node.start);
+      const to = this.markupEditor.doc.posFromIndex(node.end + 1);
+      const range = [from, to];
+      this.textMarker =
+        this.markupDoc.markText(...range, {
+          className: cssClass,
+        });
+    },
+
+    clearTextMarker() {
+      if (this.textMarker) {
+        this.textMarker.clear();
+      }
     },
   };
 
@@ -19166,7 +19189,43 @@
     },
   });
 
-  const modules = [canvas$1, markup, tools$1, message$1, hist, db];
+  const ESCAPE_CODE = 27;
+  const BACKSPACE_CODE = 8;
+
+  const keyboard = {
+    init(snapshot) {
+      this.name = 'keyboard';
+      return this;
+    },
+
+    bindEvents(func) {
+      window.addEventListener('keydown', event => {
+        if (event.keyCode === ESCAPE_CODE) {
+          func({
+            source: this.name,
+            type: event.type,
+            target: 'esc',
+          });
+        }
+      });
+
+      window.addEventListener('keydown', event => {
+        if (event.keyCode === BACKSPACE_CODE) {
+          func({
+            source: this.name,
+            type: event.type,
+            target: 'delete',
+          });
+        }
+      });
+    },
+
+    react(snapshot) {
+
+    },
+  };
+
+  const modules = [canvas$1, markup, keyboard, tools$1, message$1, hist, db];
 
   const app = {
     init() {

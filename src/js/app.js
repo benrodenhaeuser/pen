@@ -5,8 +5,9 @@ import { canvas } from './app/periphery/_.js';
 import { markup } from './app/periphery/_.js';
 import { tools } from './app/periphery/_.js';
 import { message } from './app/periphery/_.js';
+import { keyboard } from './app/periphery/_.js';
 
-const modules = [canvas, markup, tools, message, hist, db];
+const modules = [canvas, markup, keyboard, tools, message, hist, db];
 
 const app = {
   init() {

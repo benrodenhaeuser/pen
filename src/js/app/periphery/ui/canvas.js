@@ -47,16 +47,6 @@ const canvas = Object.assign(Object.create(UIModule), {
         });
       });
     }
-
-    window.addEventListener('keydown', event => {
-      if (event.keyCode === 27) {
-        func({
-          source: this.name,
-          type: event.type,
-          target: 'esc',
-        });
-      }
-    });
   },
 
   createElement(vNode) {

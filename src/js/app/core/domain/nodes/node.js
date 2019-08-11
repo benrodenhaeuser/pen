@@ -102,6 +102,20 @@ Object.assign(Node, {
     this.parent.children.splice(index, 1, node);
   },
 
+  remove() {
+    console.log('calling remove');
+    this.parent.removeChild(this);
+  },
+
+  removeChild(node) {
+    const index = this.children.indexOf(node);
+
+    if (index !== -1) {
+      this.children.splice(index, 1);
+      node.parent = null;
+    }
+  },
+
   insertChild(node, index) {
     node.parent = this;
     this.children.splice(index, 0, node);

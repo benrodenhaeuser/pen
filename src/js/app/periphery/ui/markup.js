@@ -75,44 +75,11 @@ const markup = {
 
     if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
       this.reconcile(snapshot);
-
       // TODO: manage cursor position
     }
 
     this.placeTextMarker(snapshot);
     this.previousMarkupTree = snapshot.markupTree;
-  },
-
-  placeTextMarker(snapshot) {
-    let cssClass;
-
-    let node = snapshot.markupTree.findDescendantByClass('selected');
-    if (node) {
-      cssClass = 'selected-markup';
-      this.setMarker(node, cssClass);
-    } else {
-      node = snapshot.markupTree.findDescendantByClass('tip');
-      if (node) {
-        cssClass = 'tip-markup';
-        this.setMarker(node, cssClass);
-      }
-    }
-  },
-
-  setMarker(node, cssClass) {
-    const from = this.markupEditor.doc.posFromIndex(node.start);
-    const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-    const range = [from, to];
-    this.textMarker =
-      this.markupDoc.markText(...range, {
-        className: cssClass,
-      });
-  },
-
-  clearTextMarker() {
-    if (this.textMarker) {
-      this.textMarker.clear();
-    }
   },
 
   reconcile(snapshot) {
@@ -176,6 +143,38 @@ const markup = {
       { line: lineNumber, ch: 0 }, // "to = from" means "insert"
       'reconcile'
     );
+  },
+
+  placeTextMarker(snapshot) {
+    let cssClass;
+
+    let node = snapshot.markupTree.findDescendantByClass('selected');
+    if (node) {
+      cssClass = 'selected-markup';
+      this.setMarker(node, cssClass);
+    } else {
+      node = snapshot.markupTree.findDescendantByClass('tip');
+      if (node) {
+        cssClass = 'tip-markup';
+        this.setMarker(node, cssClass);
+      }
+    }
+  },
+
+  setMarker(node, cssClass) {
+    const from = this.markupEditor.doc.posFromIndex(node.start);
+    const to = this.markupEditor.doc.posFromIndex(node.end + 1);
+    const range = [from, to];
+    this.textMarker =
+      this.markupDoc.markText(...range, {
+        className: cssClass,
+      });
+  },
+
+  clearTextMarker() {
+    if (this.textMarker) {
+      this.textMarker.clear();
+    }
   },
 };
 
