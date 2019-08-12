@@ -81,11 +81,8 @@ Object.assign(GraphicsNode, {
   },
 
   globalScaleFactor() {
-    const total = this.globalTransform();
-    const a = total.m[0][0];
-    const b = total.m[1][0];
-
-    return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+    const m = this.globalTransform().m;
+    return Math.sqrt(Math.pow(m[0], 2) + Math.pow(m[1], 2));
   },
 
   contains(globalPoint) {

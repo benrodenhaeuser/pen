@@ -1,6 +1,16 @@
 import { Vector } from './_.js';
 import * as mat2d from '/vendor/glmatrix/mat2d.js';
 
+// mat2d format:
+// this.m[0][0],
+// this.m[1][0],
+// this.m[0][1],
+// this.m[1][1],
+// this.m[0][2],
+// this.m[1][2],
+
+// a mat2d matrix is flat, it's just an array
+
 const Matrix = {
   create(m) {
     return Object.create(Matrix).init(m);
@@ -13,20 +23,17 @@ const Matrix = {
 
   createFromDOMMatrix($matrix) {
     const m = [
-      [$matrix.a, $matrix.c, $matrix.e],
-      [$matrix.b, $matrix.d, $matrix.f],
-      [0, 0, 1],
+      $matrix.a, $matrix.b, $matrix.c,
+      $matrix.d, $matrix.e, $matrix.f
     ];
 
     return Matrix.create(m);
   },
 
   equals(other) {
-    for (let i = 0; i <= 2; i += 1) {
-      for (let j = 0; j <= 2; j += 1) {
-        if (this.m[i][j] !== other.m[i][j]) {
-          return false;
-        }
+    for (let i = 0; i <= 5; i += 1) {
+      if (this.m[i] !== other.m[i]) {
+        return false
       }
     }
 
@@ -37,111 +44,58 @@ const Matrix = {
     return this.m;
   },
 
-  // return value: string
   toString() {
-    const sixValueMatrix = [
-      this.m[0][0],
-      this.m[1][0],
-      this.m[0][1],
-      this.m[1][1],
-      this.m[0][2],
-      this.m[1][2],
-    ];
-
-    return `matrix(${sixValueMatrix.join(', ')})`;
+    return `matrix(${this.m.join(', ')})`;
   },
 
-  // return value: Array
   toArray() {
     return this.m;
   },
 
-  // return value: new Matrix instance
   multiply(other) {
-    const m1 = [
-      this.m[0][0],
-      this.m[1][0],
-      this.m[0][1],
-      this.m[1][1],
-      this.m[0][2],
-      this.m[1][2],
-    ];
-    const m2 = [
-      other.m[0][0],
-      other.m[1][0],
-      other.m[0][1],
-      other.m[1][1],
-      other.m[0][2],
-      other.m[1][2],
-    ];
-
-    const out = mat2d.create();
-
-    mat2d.multiply(out, m1, m2);
-
-    return Matrix.create([
-      [out[0], out[2], out[4]],
-      [out[1], out[3], out[5]],
-      [0, 0, 1],
-    ]);
-  },
-
-  // return value: new Matrix instance
-  invert() {
-    const inp = [
-      this.m[0][0],
-      this.m[1][0],
-      this.m[0][1],
-      this.m[1][1],
-      this.m[0][2],
-      this.m[1][2],
-    ];
-
-    const out = mat2d.create();
-
-    mat2d.invert(out, inp);
-
-    return Matrix.create([
-      [out[0], out[2], out[4]],
-      [out[1], out[3], out[5]],
-      [0, 0, 1],
-    ]);
-  },
-
-  // return value: new Matrix instance
-  identity() {
-    const m = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
-
+    const m = mat2d.create();
+    mat2d.multiply(m, this.m, other.m);
     return Matrix.create(m);
   },
 
-  // return value: new Matrix instance
+  invert() {
+    const m = mat2d.create();
+    mat2d.invert(m, this.m);
+    return Matrix.create(m);
+  },
+
+  identity() {
+    const m = [1, 0, 0, 1, 0, 0];
+    return Matrix.create(m);
+  },
+
   rotation(angle, origin) {
     const sin = Math.sin(angle);
     const cos = Math.cos(angle);
 
     const m = [
-      [cos, -sin, -origin.x * cos + origin.y * sin + origin.x],
-      [sin, cos, -origin.x * sin - origin.y * cos + origin.y],
-      [0, 0, 1],
+      cos, sin, -sin, cos,
+      -origin.x * cos + origin.y * sin + origin.x,
+      -origin.x * sin - origin.y * cos + origin.y
     ];
 
     return Matrix.create(m);
   },
 
-  // return value: new Matrix instance
   translation(vector) {
-    const m = [[1, 0, vector.x], [0, 1, vector.y], [0, 0, 1]];
+    const m = [
+      1, 0, 0, 1,
+      vector.x, vector.y
+    ];
 
     return Matrix.create(m);
   },
 
-  // return value: new Matrix instance
   scale(factor, origin = Vector.create(0, 0)) {
     const m = [
-      [factor, 0, origin.x - factor * origin.x],
-      [0, factor, origin.y - factor * origin.y],
-      [0, 0, 1],
+      factor, 0, 0 , factor,
+      origin.x - factor * origin.x,
+      origin.y - factor * origin.y
     ];
 
     return Matrix.create(m);

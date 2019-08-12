@@ -103,7 +103,6 @@ Object.assign(Node, {
   },
 
   remove() {
-    console.log('calling remove');
     this.parent.removeChild(this);
   },
 

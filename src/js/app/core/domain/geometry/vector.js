@@ -22,16 +22,8 @@ const Vector = {
 
   // return value: new Vector instance
   transform(matrix) {
-    const m = [
-      matrix.m[0][0],
-      matrix.m[1][0],
-      matrix.m[0][1],
-      matrix.m[1][1],
-      matrix.m[0][2],
-      matrix.m[1][2],
-    ];
     const out = vec2.create();
-    vec2.transformMat2d(out, this.toArray(), m);
+    vec2.transformMat2d(out, this.toArray(), matrix.m);
     return Vector.create(...out);
   },
 
