@@ -1,16 +1,6 @@
 import { Vector } from './_.js';
 import * as mat2d from '/vendor/glmatrix/mat2d.js';
 
-// mat2d format:
-// this.m[0][0],
-// this.m[1][0],
-// this.m[0][1],
-// this.m[1][1],
-// this.m[0][2],
-// this.m[1][2],
-
-// a mat2d matrix is flat, it's just an array
-
 const Matrix = {
   create(m) {
     return Object.create(Matrix).init(m);

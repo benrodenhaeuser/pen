@@ -726,16 +726,6 @@
     return out;
   }
 
-  // mat2d format:
-  // this.m[0][0],
-  // this.m[1][0],
-  // this.m[0][1],
-  // this.m[1][1],
-  // this.m[0][2],
-  // this.m[1][2],
-
-  // a mat2d matrix is flat, it's just an array
-
   const Matrix$$1 = {
     create(m) {
       return Object.create(Matrix$$1).init(m);
