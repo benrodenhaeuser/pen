@@ -18869,22 +18869,6 @@
     },
 
     patchLines(diffs) {
-      // OLD VERSION:
-      // let currentLine = 0;
-      // for (let diff of diffs) {
-      //   const instruction = diff[0];
-      //   const text = diff[1];
-      //
-      //   if (instruction === 0) {
-      //     currentLine += this.countLines(diff);
-      //   } else if (instruction === -1) {
-      //     this.deleteLines(currentLine, this.countLines(diff));
-      //   } else if (instruction === 1) {
-      //     this.insertLines(currentLine, text);
-      //     currentLine += this.countLines(diff);
-      //   }
-      // }
-
       let currentLine = 0;
       let i = 0;
 
@@ -18893,27 +18877,31 @@
         const instruction = diff[0];
         const text = diff[1];
 
-        if (instruction === 0) {
-          currentLine += this.countLines(diff);
-          i += 1;
-        } else if (instruction === -1) {
-          const nextDiff = diffs[i + 1];
-          const nextInstruction = nextDiff[0];
-          const nextText = nextDiff[1];
-
-          if (nextInstruction === 1) {
-            // optimization: replace line instead of delete and insert where possible
-            this.replaceLines(currentLine, this.countLines(diff), nextText);
-            currentLine += this.countLines(nextDiff);
-            i += 2;
-          } else {
-            this.deleteLines(currentLine, this.countLines(diff));
+        switch (instruction) {
+          case 0:
+            currentLine += this.countLines(diff);
             i += 1;
-          }
-        } else if (instruction === 1) {
-          this.insertLines(currentLine, text);
-          currentLine += this.countLines(diff);
-          i += 1;
+            break;
+          case -1:
+            const nextDiff = diffs[i + 1];
+            const nextInstruction = nextDiff[0];
+            const nextText = nextDiff[1];
+
+            if (nextInstruction === 1) {
+              // optimization: replace line instead of delete and insert where possible
+              this.replaceLines(currentLine, this.countLines(diff), nextText);
+              currentLine += this.countLines(nextDiff);
+              i += 2;
+            } else {
+              this.deleteLines(currentLine, this.countLines(diff));
+              i += 1;
+            }
+
+            break;
+          case 1:
+            this.insertLines(currentLine, text);
+            currentLine += this.countLines(diff);
+            i += 1;
         }
       }
     },
