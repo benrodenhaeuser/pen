@@ -343,7 +343,7 @@ const updates = {
 
     if (canvas) {
       state.canvas.replaceWith(canvas);
-      }
+    }
   },
 
   // DOCUMENT MANAGEMENT

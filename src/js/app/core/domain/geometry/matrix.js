@@ -13,8 +13,12 @@ const Matrix = {
 
   createFromDOMMatrix($matrix) {
     const m = [
-      $matrix.a, $matrix.b, $matrix.c,
-      $matrix.d, $matrix.e, $matrix.f
+      $matrix.a,
+      $matrix.b,
+      $matrix.c,
+      $matrix.d,
+      $matrix.e,
+      $matrix.f,
     ];
 
     return Matrix.create(m);
@@ -23,7 +27,7 @@ const Matrix = {
   equals(other) {
     for (let i = 0; i <= 5; i += 1) {
       if (this.m[i] !== other.m[i]) {
-        return false
+        return false;
       }
     }
 
@@ -64,28 +68,31 @@ const Matrix = {
     const cos = Math.cos(angle);
 
     const m = [
-      cos, sin, -sin, cos,
+      cos,
+      sin,
+      -sin,
+      cos,
       -origin.x * cos + origin.y * sin + origin.x,
-      -origin.x * sin - origin.y * cos + origin.y
+      -origin.x * sin - origin.y * cos + origin.y,
     ];
 
     return Matrix.create(m);
   },
 
   translation(vector) {
-    const m = [
-      1, 0, 0, 1,
-      vector.x, vector.y
-    ];
+    const m = [1, 0, 0, 1, vector.x, vector.y];
 
     return Matrix.create(m);
   },
 
   scale(factor, origin = Vector.create(0, 0)) {
     const m = [
-      factor, 0, 0 , factor,
+      factor,
+      0,
+      0,
+      factor,
       origin.x - factor * origin.x,
-      origin.y - factor * origin.y
+      origin.y - factor * origin.y,
     ];
 
     return Matrix.create(m);
