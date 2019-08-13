@@ -6069,8 +6069,6 @@
 
     setHandles(state, input) {
       const pen = state.canvas.findPen();
-      console.log(pen); // why would this be null?
-      console.log(pen.lastChild);
       const segment = pen.lastChild.lastChild;
       const handleIn = segment.handleIn || segment.appendHandleIn();
       handleIn.vector = Vector$$1.create(input.x, input.y).transformToLocal(pen);
@@ -6405,16 +6403,21 @@
     bindEvents(func) {
       const mouseEvents = [
         'mousedown',
-        'mousemove',
         'mouseup',
         'mouseout',
         'click',
         'dblclick',
       ];
 
+      const clickLike = [
+        'click',
+        'mousedown',
+        'mouseup'
+      ];
+
       for (let eventType of mouseEvents) {
         this.mountPoint.addEventListener(eventType, event => {
-          if (this.clickLike(event) && event.detail > 1) {
+          if (clickLike.includes(event.type) && event.detail > 1) {
             event.stopPropagation();
             return;
           }
@@ -6439,6 +6442,30 @@
           });
         });
       }
+
+      let lastUpdateCall; // TODO: naming
+
+      this.mountPoint.addEventListener('mousemove', event => {
+        event.preventDefault();
+
+        if (lastUpdateCall) {
+          cancelAnimationFrame(lastUpdateCall);
+        }
+
+        lastUpdateCall = requestAnimationFrame(() => {
+          func({
+            source: this.name,
+            type: event.type,
+            target: event.target.dataset.type,
+            key: event.target.dataset.key,
+            x: this.coordinates(event).x,
+            y: this.coordinates(event).y,
+          });
+          lastUpdateCall = null;
+        });
+      });
+
+
     },
 
     createElement(vNode) {
@@ -6461,14 +6488,6 @@
       }
 
       return $node;
-    },
-
-    clickLike(event) {
-      return (
-        event.type === 'click' ||
-        event.type === 'mousedown' ||
-        event.type === 'mouseup'
-      );
     },
 
     coordinates(event) {
@@ -18891,14 +18910,17 @@
             break;
           case -1:
             const nextDiff = diffs[i + 1];
-            const nextInstruction = nextDiff[0];
-            const nextText = nextDiff[1];
 
-            if (nextInstruction === 1) {
-              // optimization: replace line instead of delete and insert where possible
-              this.replaceLines(currentLine, this.countLines(diff), nextText);
-              currentLine += this.countLines(nextDiff);
-              i += 2;
+            if (nextDiff) {
+              const nextInstruction = nextDiff[0];
+              const nextText = nextDiff[1];
+
+              if (nextInstruction === 1) {
+                // optimization: replace line instead of delete and insert where possible
+                this.replaceLines(currentLine, this.countLines(diff), nextText);
+                currentLine += this.countLines(nextDiff);
+                i += 2;
+              }
             } else {
               this.deleteLines(currentLine, this.countLines(diff));
               i += 1;

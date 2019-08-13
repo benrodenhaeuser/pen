@@ -193,8 +193,6 @@ const updates = {
 
   setHandles(state, input) {
     const pen = state.canvas.findPen();
-    console.log(pen); // why would this be null?
-    console.log(pen.lastChild);
     const segment = pen.lastChild.lastChild;
     const handleIn = segment.handleIn || segment.appendHandleIn();
     handleIn.vector = Vector.create(input.x, input.y).transformToLocal(pen);

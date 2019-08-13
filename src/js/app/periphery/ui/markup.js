@@ -117,14 +117,17 @@ const markup = {
           break;
         case -1:
           const nextDiff = diffs[i + 1];
-          const nextInstruction = nextDiff[0];
-          const nextText = nextDiff[1];
 
-          if (nextInstruction === 1) {
-            // optimization: replace line instead of delete and insert where possible
-            this.replaceLines(currentLine, this.countLines(diff), nextText);
-            currentLine += this.countLines(nextDiff);
-            i += 2;
+          if (nextDiff) {
+            const nextInstruction = nextDiff[0];
+            const nextText = nextDiff[1];
+
+            if (nextInstruction === 1) {
+              // optimization: replace line instead of delete and insert where possible
+              this.replaceLines(currentLine, this.countLines(diff), nextText);
+              currentLine += this.countLines(nextDiff);
+              i += 2;
+            }
           } else {
             this.deleteLines(currentLine, this.countLines(diff));
             i += 1;
