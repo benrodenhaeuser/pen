@@ -756,7 +756,7 @@
     },
 
     toJSON() {
-      return this.m;
+      return this.toArray();
     },
 
     toString() {
@@ -764,7 +764,7 @@
     },
 
     toArray() {
-      return this.m;
+      return Array.from(this.m);
     },
 
     multiply(other) {
@@ -5533,8 +5533,8 @@
         input: this.input,
         update: this.update,
         vDOM: this.editorToVDOM(),
-        plain: this.docToObject(),
-        markupTree: this.canvasToMarkupTree(),
+        // plain: this.docToObject(), // TODO: should be requested by db
+        markupTree: this.canvasToMarkupTree(), // TODO: avoid
       };
 
       return snapshot;
@@ -6062,6 +6062,8 @@
 
     setHandles(state, input) {
       const pen = state.canvas.findPen();
+      console.log(pen); // why would this be null?
+      console.log(pen.lastChild);
       const segment = pen.lastChild.lastChild;
       const handleIn = segment.handleIn || segment.appendHandleIn();
       handleIn.vector = Vector$$1.create(input.x, input.y).transformToLocal(pen);
@@ -6202,8 +6204,6 @@
           node.placePenTip();
           state.label = 'penMode';
         }
-      } else {
-        console.log('no scene node selected');
       }
     },
 
@@ -6212,9 +6212,7 @@
 
       if (canvas) {
         state.canvas.replaceWith(canvas);
-      } else {
-        console.log('cannot parse XML');
-      }
+        }
     },
 
     // DOCUMENT MANAGEMENT
@@ -6293,118 +6291,6 @@
 
     kickoff() {
       this.compute({ type: 'go' });
-    },
-  };
-
-  const db = {
-    init(snapshot) {
-      this.name = 'db';
-      return this;
-    },
-
-    bindEvents(func) {
-      window.addEventListener('upsertDoc', event => {
-        const request = new XMLHttpRequest();
-
-        request.addEventListener('load', () => {
-          func({
-            source: this.name,
-            type: 'docSaved',
-            data: {},
-          });
-        });
-
-        request.open('POST', '/docs/' + event.detail.props._id);
-        request.send(JSON.stringify(event.detail));
-      });
-
-      window.addEventListener('readDoc', event => {
-        const request = new XMLHttpRequest();
-
-        request.addEventListener('load', () => {
-          func({
-            source: this.name,
-            type: 'switchDocument',
-            data: {
-              doc: request.response,
-            },
-          });
-        });
-
-        request.open('GET', '/docs/' + event.detail);
-        request.responseType = 'json';
-        request.send();
-      });
-
-      window.addEventListener('loadDocIDs', event => {
-        const request = new XMLHttpRequest();
-
-        request.addEventListener('load', () => {
-          func({
-            source: this.name,
-            type: 'updateDocList',
-            data: {
-              docIDs: request.response,
-            },
-          });
-        });
-
-        request.open('GET', '/ids');
-        request.responseType = 'json';
-        request.send();
-      });
-    },
-
-    react(snapshot) {
-      if (snapshot.update === 'go') {
-        window.dispatchEvent(new Event('loadDocIDs'));
-      } else if (snapshot.update === 'requestDoc') {
-        window.dispatchEvent(
-          new CustomEvent('readDoc', { detail: snapshot.input.key })
-        );
-      } else if (
-        ['release', 'releasePen', 'changeMarkup'].includes(snapshot.update)
-      ) {
-        window.dispatchEvent(
-          new CustomEvent('upsertDoc', { detail: snapshot.plain.doc })
-        );
-      }
-
-      this.previous = snapshot;
-    },
-  };
-
-  const hist = {
-    init() {
-      this.name = 'hist';
-      return this;
-    },
-
-    bindEvents(func) {
-      window.addEventListener('popstate', event => {
-        if (event.state) {
-          func({
-            source: this.name,
-            type: 'switchDocument',
-            data: event.state,
-          });
-        }
-      });
-    },
-
-    react(snapshot) {
-      if (this.isRelevant(snapshot.update)) {
-        window.history.pushState(snapshot.plain, 'entry');
-      }
-    },
-
-    isRelevant(update) {
-      const release = update === 'release';
-      const releasePen = update === 'releasePen';
-      const go = update === 'go';
-      const changeMarkup = update === 'changeMarkup';
-
-      return release || releasePen || go || changeMarkup;
     },
   };
 
@@ -18927,8 +18813,6 @@
 
     bindCustomEvents(func) {
       window.addEventListener('userChangedMarkup', event => {
-        console.log('user changed markup');
-
         func({
           source: this.name,
           type: 'userChangedMarkup',
@@ -18937,29 +18821,33 @@
       });
 
       window.addEventListener('userSelectedIndex', event => {
-        console.log('user selected markup node');
-
         const node = this.previousMarkupTree.findLeafByIndex(event.detail);
 
         if (node) {
           func({
             source: this.name,
             type: 'userSelectedMarkupNode',
-            key: node.key,
+            key: node.key, // note that we are only interested in the key
           });
         }
       });
     },
 
     react(snapshot) {
-      this.clearTextMarker();
+      // optimization: don't handle text markers during animation
+      if (snapshot.input.type !== 'mousemove') {
+        this.clearTextMarker();
+      }
 
       if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
         this.reconcile(snapshot);
-        // TODO: manage cursor position
       }
 
-      this.placeTextMarker(snapshot);
+      // optimization: don't handle text markers during animation
+      if (snapshot.input.type !== 'mousemove') {
+        this.placeTextMarker(snapshot);
+      }
+
       this.previousMarkupTree = snapshot.markupTree;
     },
 
@@ -18981,19 +18869,51 @@
     },
 
     patchLines(diffs) {
-      let currentLine = 0;
+      // OLD VERSION:
+      // let currentLine = 0;
+      // for (let diff of diffs) {
+      //   const instruction = diff[0];
+      //   const text = diff[1];
+      //
+      //   if (instruction === 0) {
+      //     currentLine += this.countLines(diff);
+      //   } else if (instruction === -1) {
+      //     this.deleteLines(currentLine, this.countLines(diff));
+      //   } else if (instruction === 1) {
+      //     this.insertLines(currentLine, text);
+      //     currentLine += this.countLines(diff);
+      //   }
+      // }
 
-      for (let diff of diffs) {
+      let currentLine = 0;
+      let i = 0;
+
+      while (i < diffs.length) {
+        const diff = diffs[i];
         const instruction = diff[0];
         const text = diff[1];
 
         if (instruction === 0) {
           currentLine += this.countLines(diff);
+          i += 1;
         } else if (instruction === -1) {
-          this.deleteLines(currentLine, this.countLines(diff));
+          const nextDiff = diffs[i + 1];
+          const nextInstruction = nextDiff[0];
+          const nextText = nextDiff[1];
+
+          if (nextInstruction === 1) {
+            // optimization: replace line instead of delete and insert where possible
+            this.replaceLines(currentLine, this.countLines(diff), nextText);
+            currentLine += this.countLines(nextDiff);
+            i += 2;
+          } else {
+            this.deleteLines(currentLine, this.countLines(diff));
+            i += 1;
+          }
         } else if (instruction === 1) {
           this.insertLines(currentLine, text);
           currentLine += this.countLines(diff);
+          i += 1;
         }
       }
     },
@@ -19019,6 +18939,21 @@
         text,
         { line: lineNumber, ch: 0 },
         { line: lineNumber, ch: 0 }, // "to = from" means "insert"
+        'reconcile'
+      );
+    },
+
+    replaceLines(lineNumber, linesCount, text) {
+      const startLine = lineNumber;
+      const endLine = lineNumber + linesCount;
+
+      // TODO: we could run another diff to replace in a more targeted manner
+      // (rather than replacing the whole line, replace only the part that has changed)
+
+      this.markupDoc.replaceRange(
+        text,
+        { line: startLine, ch: 0 },
+        { line: endLine, ch: 0 },
         'reconcile'
       );
     },
@@ -19155,7 +19090,11 @@
     react(snapshot) {},
   };
 
-  const modules = [canvas$1, markup, keyboard, tools$1, message$1, hist, db];
+  // message
+  // db
+  // hist
+
+  const modules = [canvas$1, markup, keyboard, tools$1];
 
   const app = {
     init() {

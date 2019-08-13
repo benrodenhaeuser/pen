@@ -31,7 +31,7 @@ const Matrix = {
   },
 
   toJSON() {
-    return this.m;
+    return this.toArray();
   },
 
   toString() {
@@ -39,7 +39,7 @@ const Matrix = {
   },
 
   toArray() {
-    return this.m;
+    return Array.from(this.m);
   },
 
   multiply(other) {

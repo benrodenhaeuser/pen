@@ -46,8 +46,6 @@ const markup = {
 
   bindCustomEvents(func) {
     window.addEventListener('userChangedMarkup', event => {
-      console.log('user changed markup');
-
       func({
         source: this.name,
         type: 'userChangedMarkup',
@@ -56,29 +54,33 @@ const markup = {
     });
 
     window.addEventListener('userSelectedIndex', event => {
-      console.log('user selected markup node');
-
       const node = this.previousMarkupTree.findLeafByIndex(event.detail);
 
       if (node) {
         func({
           source: this.name,
           type: 'userSelectedMarkupNode',
-          key: node.key,
+          key: node.key, // note that we are only interested in the key
         });
       }
     });
   },
 
   react(snapshot) {
-    this.clearTextMarker();
+    // optimization: don't handle text markers during animation
+    if (snapshot.input.type !== 'mousemove') {
+      this.clearTextMarker();
+    }
 
     if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
       this.reconcile(snapshot);
-      // TODO: manage cursor position
     }
 
-    this.placeTextMarker(snapshot);
+    // optimization: don't handle text markers during animation
+    if (snapshot.input.type !== 'mousemove') {
+      this.placeTextMarker(snapshot);
+    }
+
     this.previousMarkupTree = snapshot.markupTree;
   },
 
@@ -100,19 +102,51 @@ const markup = {
   },
 
   patchLines(diffs) {
-    let currentLine = 0;
+    // OLD VERSION:
+    // let currentLine = 0;
+    // for (let diff of diffs) {
+    //   const instruction = diff[0];
+    //   const text = diff[1];
+    //
+    //   if (instruction === 0) {
+    //     currentLine += this.countLines(diff);
+    //   } else if (instruction === -1) {
+    //     this.deleteLines(currentLine, this.countLines(diff));
+    //   } else if (instruction === 1) {
+    //     this.insertLines(currentLine, text);
+    //     currentLine += this.countLines(diff);
+    //   }
+    // }
 
-    for (let diff of diffs) {
+    let currentLine = 0;
+    let i = 0;
+
+    while (i < diffs.length) {
+      const diff = diffs[i];
       const instruction = diff[0];
       const text = diff[1];
 
       if (instruction === 0) {
         currentLine += this.countLines(diff);
+        i += 1;
       } else if (instruction === -1) {
-        this.deleteLines(currentLine, this.countLines(diff));
+        const nextDiff = diffs[i + 1];
+        const nextInstruction = nextDiff[0];
+        const nextText = nextDiff[1];
+
+        if (nextInstruction === 1) {
+          // optimization: replace line instead of delete and insert where possible
+          this.replaceLines(currentLine, this.countLines(diff), nextText);
+          currentLine += this.countLines(nextDiff);
+          i += 2;
+        } else {
+          this.deleteLines(currentLine, this.countLines(diff));
+          i += 1;
+        }
       } else if (instruction === 1) {
         this.insertLines(currentLine, text);
         currentLine += this.countLines(diff);
+        i += 1;
       }
     }
   },
@@ -138,6 +172,21 @@ const markup = {
       text,
       { line: lineNumber, ch: 0 },
       { line: lineNumber, ch: 0 }, // "to = from" means "insert"
+      'reconcile'
+    );
+  },
+
+  replaceLines(lineNumber, linesCount, text) {
+    const startLine = lineNumber;
+    const endLine = lineNumber + linesCount;
+
+    // TODO: we could run another diff to replace in a more targeted manner
+    // (rather than replacing the whole line, replace only the part that has changed)
+
+    this.markupDoc.replaceRange(
+      text,
+      { line: startLine, ch: 0 },
+      { line: endLine, ch: 0 },
       'reconcile'
     );
   },

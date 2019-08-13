@@ -84,8 +84,8 @@ Object.defineProperty(State, 'snapshot', {
       input: this.input,
       update: this.update,
       vDOM: this.editorToVDOM(),
-      plain: this.docToObject(),
-      markupTree: this.canvasToMarkupTree(),
+      // plain: this.docToObject(), // TODO: should be requested by db
+      markupTree: this.canvasToMarkupTree(), // TODO: avoid
     };
 
     return snapshot;

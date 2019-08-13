@@ -193,6 +193,8 @@ const updates = {
 
   setHandles(state, input) {
     const pen = state.canvas.findPen();
+    console.log(pen); // why would this be null?
+    console.log(pen.lastChild);
     const segment = pen.lastChild.lastChild;
     const handleIn = segment.handleIn || segment.appendHandleIn();
     handleIn.vector = Vector.create(input.x, input.y).transformToLocal(pen);
@@ -333,8 +335,6 @@ const updates = {
         node.placePenTip();
         state.label = 'penMode';
       }
-    } else {
-      console.log('no scene node selected');
     }
   },
 
@@ -343,9 +343,7 @@ const updates = {
 
     if (canvas) {
       state.canvas.replaceWith(canvas);
-    } else {
-      console.log('cannot parse XML');
-    }
+      }
   },
 
   // DOCUMENT MANAGEMENT

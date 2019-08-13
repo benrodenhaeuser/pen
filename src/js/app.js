@@ -7,7 +7,11 @@ import { tools } from './app/periphery/_.js';
 import { message } from './app/periphery/_.js';
 import { keyboard } from './app/periphery/_.js';
 
-const modules = [canvas, markup, keyboard, tools, message, hist, db];
+// message
+// db
+// hist
+
+const modules = [canvas, markup, keyboard, tools];
 
 const app = {
   init() {
