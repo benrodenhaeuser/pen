@@ -49,8 +49,6 @@ const markup = {
 
   bindCustomEvents(func) {
     window.addEventListener('userChangedMarkup', event => {
-      console.log('firing userChangedMarkup');
-
       func({
         source: this.name,
         type: 'userChangedMarkup',
@@ -59,8 +57,6 @@ const markup = {
     });
 
     window.addEventListener('userSelectedIndex', event => {
-      console.log('firing userSelectedIndex');
-
       const node = this.previousMarkupTree.findLeafByIndex(event.detail);
 
       if (node) {
@@ -123,20 +119,18 @@ const markup = {
         case 0:
           currentLine += this.countLines(diff);
           i += 1;
+
           break;
         case -1:
           const nextDiff = diffs[i + 1];
+          const nextInstruction = nextDiff && nextDiff[0];
+          const nextText = nextDiff && nextDiff[1];
 
-          if (nextDiff) {
-            const nextInstruction = nextDiff[0];
-            const nextText = nextDiff[1];
-
-            if (nextInstruction === 1) {
-              // optimization: replace line instead of delete + insert where possible
-              this.replaceLines(currentLine, this.countLines(diff), nextText);
-              currentLine += this.countLines(nextDiff);
-              i += 2;
-            }
+          if (nextInstruction === 1) {
+            // optimization: replace line instead of delete + insert whwnever possible
+            this.replaceLines(currentLine, this.countLines(diff), nextText);
+            currentLine += this.countLines(nextDiff);
+            i += 2;
           } else {
             this.deleteLines(currentLine, this.countLines(diff));
             i += 1;
@@ -147,6 +141,8 @@ const markup = {
           this.insertLines(currentLine, text);
           currentLine += this.countLines(diff);
           i += 1;
+
+          break;
       }
     }
   },
@@ -171,7 +167,7 @@ const markup = {
     this.markupDoc.replaceRange(
       text,
       { line: lineNumber, ch: 0 },
-      { line: lineNumber, ch: 0 }, // "to = from" means "insert"
+      { line: lineNumber, ch: 0 },
       'reconcile'
     );
   },
@@ -179,9 +175,6 @@ const markup = {
   replaceLines(lineNumber, linesCount, text) {
     const startLine = lineNumber;
     const endLine = lineNumber + linesCount;
-
-    // TODO: we could run another diff to replace in a more targeted manner
-    // (rather than replacing the whole line, replace only the part that has changed)
 
     this.markupDoc.replaceRange(
       text,

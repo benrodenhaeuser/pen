@@ -15,7 +15,7 @@ const modules = [
   db,
   hist,
   markup,
-];
+];  
 
 const app = {
   init() {
