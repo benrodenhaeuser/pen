@@ -6401,23 +6401,24 @@
     },
 
     bindEvents(func) {
-      const mouseEvents = [
-        'mousedown',
-        'mouseup',
-        'mouseout',
-        'click',
-        'dblclick',
-      ];
+      let requestID;
 
-      const clickLike = [
-        'click',
-        'mousedown',
-        'mouseup'
-      ];
+      this.mountPoint.addEventListener('mousemove', event => {
+        event.preventDefault();
 
-      for (let eventType of mouseEvents) {
+        if (requestID) {
+          cancelAnimationFrame(requestID);
+        }
+
+        requestID = requestAnimationFrame(() => {
+          this.makeInput(func, event);
+          requestID = null;
+        });
+      });
+
+      for (let eventType of ['click', 'mousedown', 'mouseup']) {
         this.mountPoint.addEventListener(eventType, event => {
-          if (clickLike.includes(event.type) && event.detail > 1) {
+          if (event.detail > 1) {
             event.stopPropagation();
             return;
           }
@@ -6431,41 +6432,27 @@
           }
 
           event.preventDefault();
-
-          func({
-            source: this.name,
-            type: event.type,
-            target: event.target.dataset.type,
-            key: event.target.dataset.key,
-            x: this.coordinates(event).x,
-            y: this.coordinates(event).y,
-          });
+          this.makeInput(func, event);
         });
       }
 
-      let lastUpdateCall; // TODO: naming
-
-      this.mountPoint.addEventListener('mousemove', event => {
-        event.preventDefault();
-
-        if (lastUpdateCall) {
-          cancelAnimationFrame(lastUpdateCall);
-        }
-
-        lastUpdateCall = requestAnimationFrame(() => {
-          func({
-            source: this.name,
-            type: event.type,
-            target: event.target.dataset.type,
-            key: event.target.dataset.key,
-            x: this.coordinates(event).x,
-            y: this.coordinates(event).y,
-          });
-          lastUpdateCall = null;
+      for (let eventType of ['dblclick', 'mouseout']) {
+        this.mountPoint.addEventListener(eventType, event => {
+          event.preventDefault();
+          this.makeInput(func, event);
         });
+      }
+    },
+
+    makeInput(func, event) {
+      func({
+        source: this.name,
+        type: event.type,
+        target: event.target.dataset.type,
+        key: event.target.dataset.key,
+        x: this.coordinates(event).x,
+        y: this.coordinates(event).y,
       });
-
-
     },
 
     createElement(vNode) {
@@ -19031,8 +19018,6 @@
         });
       });
     },
-
-    // TODO: custom react function? only need to update documents (Open menu item)
   });
 
   const message$1 = Object.assign(Object.create(UIModule), {

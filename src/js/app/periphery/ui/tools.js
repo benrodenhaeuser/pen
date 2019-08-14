@@ -24,8 +24,6 @@ const tools = Object.assign(Object.create(UIModule), {
       });
     });
   },
-
-  // TODO: custom react function? only need to update documents (Open menu item)
 });
 
 export { tools };
