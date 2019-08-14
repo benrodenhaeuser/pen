@@ -2,7 +2,7 @@ const ESCAPE_CODE = 27;
 const BACKSPACE_CODE = 8;
 
 const keyboard = {
-  init(snapshot) {
+  init() {
     this.name = 'keyboard';
     return this;
   },
@@ -29,7 +29,7 @@ const keyboard = {
     });
   },
 
-  react(snapshot) {},
+  react(info) {},
 };
 
 export { keyboard };

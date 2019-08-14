@@ -7,18 +7,23 @@ import { tools } from './app/periphery/_.js';
 import { message } from './app/periphery/_.js';
 import { keyboard } from './app/periphery/_.js';
 
-// message
-// db
-// hist
-
-const modules = [canvas, markup, keyboard, tools];
+const modules = [
+  canvas,
+  tools,
+  message,
+  keyboard,
+  db,
+  hist,
+  markup,
+];
 
 const app = {
   init() {
     core.init();
 
     for (let module of modules) {
-      module.init(core.state.snapshot);
+      module.requestSnapshot = label => core.state.snapshot(label);
+      module.init();
       module.bindEvents(core.compute.bind(core));
       core.attach(module.name, module.react.bind(module));
     }

@@ -21,6 +21,7 @@ const State = {
     this.input = {};
     this.update = '';
     this.aux = {};
+    this.snapshots = {};
 
     this.editor = this.buildEditorTree();
 
@@ -75,20 +76,30 @@ const State = {
   canvasToMarkupTree() {
     return canvasToMarkupTree(this.editor.canvas);
   },
+
+  snapshot(label) {
+    if (this.snapshots[label]) {
+      return this.snapshots[label];
+    }
+
+    switch (label) {
+      case 'vDOM':
+        return this.snapshots['vDOM'] = this.editorToVDOM();
+      case 'plain':
+        return this.snapshots['plain'] = this.docToObject();
+      case 'markupTree':
+        return this.snapshots['markupTree'] = this.canvasToMarkupTree();
+    }
+  },
 };
 
-Object.defineProperty(State, 'snapshot', {
+Object.defineProperty(State, 'info', {
   get() {
-    const snapshot = {
+    return {
       label: this.label,
       input: this.input,
       update: this.update,
-      vDOM: this.editorToVDOM(),
-      // plain: this.docToObject(), // TODO: should be requested by db
-      markupTree: this.canvasToMarkupTree(), // TODO: avoid
     };
-
-    return snapshot;
   },
 });
 

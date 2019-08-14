@@ -32,8 +32,10 @@ const core = {
 
   publish() {
     for (let key of Object.keys(this.modules)) {
-      this.modules[key](this.state.snapshot);
+      this.modules[key](this.state.info);
     }
+
+    this.state.snapshots = {};
   },
 
   kickoff() {

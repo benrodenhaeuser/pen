@@ -2,17 +2,20 @@ import { CodeMirror } from '/vendor/codemirror/codemirror.js';
 import { DiffMatchPatch } from '/vendor/diff-match-patch/diff-match-patch.js';
 
 const markup = {
-  init(snapshot) {
+  init() {
     this.name = 'markup';
     this.mountPoint = document.querySelector(`#markup`);
+
+    const markupTree = this.requestSnapshot('markupTree');
+
     this.markupEditor = CodeMirror(this.mountPoint, {
       lineNumbers: true,
       lineWrapping: true,
       mode: 'xml',
-      value: snapshot.markupTree.toMarkup(),
+      value: markupTree.toMarkup(),
     });
     this.markupDoc = this.markupEditor.getDoc();
-    this.previousMarkupTree = snapshot.markupTree;
+    this.previousMarkupTree = markupTree;
 
     return this;
   },
@@ -46,6 +49,8 @@ const markup = {
 
   bindCustomEvents(func) {
     window.addEventListener('userChangedMarkup', event => {
+      console.log('firing userChangedMarkup');
+
       func({
         source: this.name,
         type: 'userChangedMarkup',
@@ -54,6 +59,8 @@ const markup = {
     });
 
     window.addEventListener('userSelectedIndex', event => {
+      console.log('firing userSelectedIndex');
+
       const node = this.previousMarkupTree.findLeafByIndex(event.detail);
 
       if (node) {
@@ -66,27 +73,29 @@ const markup = {
     });
   },
 
-  react(snapshot) {
+  react(info) {
+    const markupTree = this.requestSnapshot('markupTree');
+
     // optimization: don't handle text markers during animation
-    if (snapshot.input.type !== 'mousemove') {
+    if (info.input.type !== 'mousemove') {
       this.clearTextMarker();
     }
 
-    if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
-      this.reconcile(snapshot);
+    if (this.previousMarkupTree.toMarkup() !== markupTree.toMarkup()) {
+      this.reconcile(markupTree);
     }
 
     // optimization: don't handle text markers during animation
-    if (snapshot.input.type !== 'mousemove') {
-      this.placeTextMarker(snapshot);
+    if (info.input.type !== 'mousemove') {
+      this.placeTextMarker(markupTree);
     }
 
-    this.previousMarkupTree = snapshot.markupTree;
+    this.previousMarkupTree = markupTree;
   },
 
-  reconcile(snapshot) {
+  reconcile(markupTree) {
     this.patchLines(
-      this.diffLines(this.markupDoc.getValue(), snapshot.markupTree.toMarkup())
+      this.diffLines(this.markupDoc.getValue(), markupTree.toMarkup())
     );
   },
 
@@ -123,7 +132,7 @@ const markup = {
             const nextText = nextDiff[1];
 
             if (nextInstruction === 1) {
-              // optimization: replace line instead of delete and insert where possible
+              // optimization: replace line instead of delete + insert where possible
               this.replaceLines(currentLine, this.countLines(diff), nextText);
               currentLine += this.countLines(nextDiff);
               i += 2;
@@ -182,15 +191,15 @@ const markup = {
     );
   },
 
-  placeTextMarker(snapshot) {
+  placeTextMarker(markupTree) {
     let cssClass;
 
-    let node = snapshot.markupTree.findDescendantByClass('selected');
+    let node = markupTree.findDescendantByClass('selected');
     if (node) {
       cssClass = 'selected-markup';
       this.setMarker(node, cssClass);
     } else {
-      node = snapshot.markupTree.findDescendantByClass('tip');
+      node = markupTree.findDescendantByClass('tip');
       if (node) {
         cssClass = 'tip-markup';
         this.setMarker(node, cssClass);

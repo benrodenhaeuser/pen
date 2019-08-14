@@ -1,9 +1,9 @@
 import { UIModule } from './uiModule.js';
 
 const message = Object.assign(Object.create(UIModule), {
-  init(snapshot) {
+  init() {
     this.name = 'message';
-    UIModule.init.bind(this)(snapshot);
+    UIModule.init.bind(this)();
     return this;
   },
 

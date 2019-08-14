@@ -16,9 +16,10 @@ const hist = {
     });
   },
 
-  react(snapshot) {
-    if (this.isRelevant(snapshot.update)) {
-      window.history.pushState(snapshot.plain, 'entry');
+  react(info) {
+    if (this.isRelevant(info.update)) {
+      const plain = this.requestSnapshot('plain');
+      window.history.pushState(plain, 'entry');
     }
   },
 

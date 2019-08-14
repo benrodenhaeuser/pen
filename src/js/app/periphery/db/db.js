@@ -57,22 +57,22 @@ const db = {
     });
   },
 
-  react(snapshot) {
-    if (snapshot.update === 'go') {
+  react(info) {
+    if (info.update === 'go') {
       window.dispatchEvent(new Event('loadDocIDs'));
-    } else if (snapshot.update === 'requestDoc') {
+    } else if (info.update === 'requestDoc') {
       window.dispatchEvent(
-        new CustomEvent('readDoc', { detail: snapshot.input.key })
+        new CustomEvent('readDoc', { detail: info.input.key })
       );
     } else if (
-      ['release', 'releasePen', 'changeMarkup'].includes(snapshot.update)
+      ['release', 'releasePen', 'changeMarkup'].includes(info.update)
     ) {
+      const plain = this.requestSnapshot('plain');
+
       window.dispatchEvent(
-        new CustomEvent('upsertDoc', { detail: snapshot.plain.doc })
+        new CustomEvent('upsertDoc', { detail: plain.doc })
       );
     }
-
-    this.previous = snapshot;
   },
 };
 

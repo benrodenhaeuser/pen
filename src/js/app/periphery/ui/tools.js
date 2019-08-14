@@ -1,9 +1,9 @@
 import { UIModule } from './uiModule.js';
 
 const tools = Object.assign(Object.create(UIModule), {
-  init(snapshot) {
+  init() {
     this.name = 'tools';
-    UIModule.init.bind(this)(snapshot);
+    UIModule.init.bind(this)();
     return this;
   },
 
@@ -23,6 +23,15 @@ const tools = Object.assign(Object.create(UIModule), {
         key: event.target.dataset.key,
       });
     });
+  },
+
+  // TODO: check if this works once db is hooked up
+  react(info) {
+    if (info.input.type === 'updateDocList') {
+      const vDOM = this.requestSnapshot('vDOM')[this.name];
+      this.reconcile(this.previousVDOM, vDOM, this.dom);
+      this.previousVDOM = vDOM;
+    }
   },
 });
 

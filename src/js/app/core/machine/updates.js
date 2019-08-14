@@ -369,7 +369,12 @@ const updates = {
   },
 
   switchDocument(state, input) {
+    console.log(JSON.stringify(input.data.doc));
+
     state.doc.replaceWith(state.objectToDoc(input.data.doc));
+
+    console.log('document supposed to be replaced'); // this statement is logged
+
     updates.cleanup(state, input);
   },
 

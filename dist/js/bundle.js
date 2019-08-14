@@ -5477,6 +5477,7 @@
       this.input = {};
       this.update = '';
       this.aux = {};
+      this.snapshots = {};
 
       this.editor = this.buildEditorTree();
 
@@ -5531,20 +5532,30 @@
     canvasToMarkupTree() {
       return canvasToMarkupTree(this.editor.canvas);
     },
+
+    snapshot(label) {
+      if (this.snapshots[label]) {
+        return this.snapshots[label];
+      }
+
+      switch (label) {
+        case 'vDOM':
+          return this.snapshots['vDOM'] = this.editorToVDOM();
+        case 'plain':
+          return this.snapshots['plain'] = this.docToObject();
+        case 'markupTree':
+          return this.snapshots['markupTree'] = this.canvasToMarkupTree();
+      }
+    },
   };
 
-  Object.defineProperty(State, 'snapshot', {
+  Object.defineProperty(State, 'info', {
     get() {
-      const snapshot = {
+      return {
         label: this.label,
         input: this.input,
         update: this.update,
-        vDOM: this.editorToVDOM(),
-        // plain: this.docToObject(), // TODO: should be requested by db
-        markupTree: this.canvasToMarkupTree(), // TODO: avoid
       };
-
-      return snapshot;
     },
   });
 
@@ -6245,7 +6256,12 @@
     },
 
     switchDocument(state, input) {
+      console.log(JSON.stringify(input.data.doc));
+
       state.doc.replaceWith(state.objectToDoc(input.data.doc));
+
+      console.log('document supposed to be replaced'); // this statement is logged
+
       updates.cleanup(state, input);
     },
 
@@ -6290,8 +6306,10 @@
 
     publish() {
       for (let key of Object.keys(this.modules)) {
-        this.modules[key](this.state.snapshot);
+        this.modules[key](this.state.info);
       }
+
+      this.state.snapshots = {};
     },
 
     kickoff() {
@@ -6299,11 +6317,125 @@
     },
   };
 
-  const UIModule = {
+  const db = {
     init(snapshot) {
+      this.name = 'db';
+      return this;
+    },
+
+    bindEvents(func) {
+      window.addEventListener('upsertDoc', event => {
+        const request = new XMLHttpRequest();
+
+        request.addEventListener('load', () => {
+          func({
+            source: this.name,
+            type: 'docSaved',
+            data: {},
+          });
+        });
+
+        request.open('POST', '/docs/' + event.detail.props._id);
+        request.send(JSON.stringify(event.detail));
+      });
+
+      window.addEventListener('readDoc', event => {
+        const request = new XMLHttpRequest();
+
+        request.addEventListener('load', () => {
+          func({
+            source: this.name,
+            type: 'switchDocument',
+            data: {
+              doc: request.response,
+            },
+          });
+        });
+
+        request.open('GET', '/docs/' + event.detail);
+        request.responseType = 'json';
+        request.send();
+      });
+
+      window.addEventListener('loadDocIDs', event => {
+        const request = new XMLHttpRequest();
+
+        request.addEventListener('load', () => {
+          func({
+            source: this.name,
+            type: 'updateDocList',
+            data: {
+              docIDs: request.response,
+            },
+          });
+        });
+
+        request.open('GET', '/ids');
+        request.responseType = 'json';
+        request.send();
+      });
+    },
+
+    react(info) {
+      if (info.update === 'go') {
+        window.dispatchEvent(new Event('loadDocIDs'));
+      } else if (info.update === 'requestDoc') {
+        window.dispatchEvent(
+          new CustomEvent('readDoc', { detail: info.input.key })
+        );
+      } else if (
+        ['release', 'releasePen', 'changeMarkup'].includes(info.update)
+      ) {
+        const plain = this.requestSnapshot('plain');
+
+        window.dispatchEvent(
+          new CustomEvent('upsertDoc', { detail: plain.doc })
+        );
+      }
+    },
+  };
+
+  const hist = {
+    init() {
+      this.name = 'hist';
+      return this;
+    },
+
+    bindEvents(func) {
+      window.addEventListener('popstate', event => {
+        if (event.state) {
+          func({
+            source: this.name,
+            type: 'switchDocument',
+            data: event.state,
+          });
+        }
+      });
+    },
+
+    react(info) {
+      if (this.isRelevant(info.update)) {
+        const plain = this.requestSnapshot('plain');
+        window.history.pushState(plain, 'entry');
+      }
+    },
+
+    isRelevant(update) {
+      const release = update === 'release';
+      const releasePen = update === 'releasePen';
+      const go = update === 'go';
+      const changeMarkup = update === 'changeMarkup';
+
+      return release || releasePen || go || changeMarkup;
+    },
+  };
+
+  const UIModule = {
+    init() {
       this.mountPoint = document.querySelector(`#${this.name}`);
-      this.dom = this.createElement(snapshot.vDOM[this.name]);
-      this.previousVDOM = snapshot.vDOM[this.name];
+      const vDOM = this.requestSnapshot('vDOM')[this.name];
+      this.dom = this.createElement(vDOM);
+      this.previousVDOM = vDOM;
 
       this.mount();
     },
@@ -6313,9 +6445,10 @@
       this.mountPoint.appendChild(this.dom);
     },
 
-    react(snapshot) {
-      this.reconcile(this.previousVDOM, snapshot.vDOM[this.name], this.dom);
-      this.previousVDOM = snapshot.vDOM[this.name];
+    react(info) {
+      const vDOM = this.requestSnapshot('vDOM')[this.name];
+      this.reconcile(this.previousVDOM, vDOM, this.dom);
+      this.previousVDOM = vDOM;
     },
 
     createElement(vNode) {
@@ -6394,9 +6527,9 @@
   const xmlns$1 = 'http://www.w3.org/2000/xmlns/';
 
   const canvas$1 = Object.assign(Object.create(UIModule), {
-    init(snapshot) {
+    init() {
       this.name = 'canvas';
-      UIModule.init.bind(this)(snapshot);
+      UIModule.init.bind(this)();
       return this;
     },
 
@@ -18782,17 +18915,20 @@
   const DiffMatchPatch = diff_match_patch;
 
   const markup = {
-    init(snapshot) {
+    init() {
       this.name = 'markup';
       this.mountPoint = document.querySelector(`#markup`);
+
+      const markupTree = this.requestSnapshot('markupTree');
+
       this.markupEditor = CodeMirror(this.mountPoint, {
         lineNumbers: true,
         lineWrapping: true,
         mode: 'xml',
-        value: snapshot.markupTree.toMarkup(),
+        value: markupTree.toMarkup(),
       });
       this.markupDoc = this.markupEditor.getDoc();
-      this.previousMarkupTree = snapshot.markupTree;
+      this.previousMarkupTree = markupTree;
 
       return this;
     },
@@ -18826,6 +18962,8 @@
 
     bindCustomEvents(func) {
       window.addEventListener('userChangedMarkup', event => {
+        console.log('firing userChangedMarkup');
+
         func({
           source: this.name,
           type: 'userChangedMarkup',
@@ -18834,6 +18972,8 @@
       });
 
       window.addEventListener('userSelectedIndex', event => {
+        console.log('firing userSelectedIndex');
+
         const node = this.previousMarkupTree.findLeafByIndex(event.detail);
 
         if (node) {
@@ -18846,27 +18986,29 @@
       });
     },
 
-    react(snapshot) {
+    react(info) {
+      const markupTree = this.requestSnapshot('markupTree');
+
       // optimization: don't handle text markers during animation
-      if (snapshot.input.type !== 'mousemove') {
+      if (info.input.type !== 'mousemove') {
         this.clearTextMarker();
       }
 
-      if (this.previousMarkupTree.toMarkup() !== snapshot.markupTree.toMarkup()) {
-        this.reconcile(snapshot);
+      if (this.previousMarkupTree.toMarkup() !== markupTree.toMarkup()) {
+        this.reconcile(markupTree);
       }
 
       // optimization: don't handle text markers during animation
-      if (snapshot.input.type !== 'mousemove') {
-        this.placeTextMarker(snapshot);
+      if (info.input.type !== 'mousemove') {
+        this.placeTextMarker(markupTree);
       }
 
-      this.previousMarkupTree = snapshot.markupTree;
+      this.previousMarkupTree = markupTree;
     },
 
-    reconcile(snapshot) {
+    reconcile(markupTree) {
       this.patchLines(
-        this.diffLines(this.markupDoc.getValue(), snapshot.markupTree.toMarkup())
+        this.diffLines(this.markupDoc.getValue(), markupTree.toMarkup())
       );
     },
 
@@ -18903,7 +19045,7 @@
               const nextText = nextDiff[1];
 
               if (nextInstruction === 1) {
-                // optimization: replace line instead of delete and insert where possible
+                // optimization: replace line instead of delete + insert where possible
                 this.replaceLines(currentLine, this.countLines(diff), nextText);
                 currentLine += this.countLines(nextDiff);
                 i += 2;
@@ -18962,15 +19104,15 @@
       );
     },
 
-    placeTextMarker(snapshot) {
+    placeTextMarker(markupTree) {
       let cssClass;
 
-      let node = snapshot.markupTree.findDescendantByClass('selected');
+      let node = markupTree.findDescendantByClass('selected');
       if (node) {
         cssClass = 'selected-markup';
         this.setMarker(node, cssClass);
       } else {
-        node = snapshot.markupTree.findDescendantByClass('tip');
+        node = markupTree.findDescendantByClass('tip');
         if (node) {
           cssClass = 'tip-markup';
           this.setMarker(node, cssClass);
@@ -18995,9 +19137,9 @@
   };
 
   const tools$1 = Object.assign(Object.create(UIModule), {
-    init(snapshot) {
+    init() {
       this.name = 'tools';
-      UIModule.init.bind(this)(snapshot);
+      UIModule.init.bind(this)();
       return this;
     },
 
@@ -19018,12 +19160,21 @@
         });
       });
     },
+
+    // TODO: check if this works once db is hooked up
+    react(info) {
+      if (info.input.type === 'updateDocList') {
+        const vDOM = this.requestSnapshot('vDOM')[this.name];
+        this.reconcile(this.previousVDOM, vDOM, this.dom);
+        this.previousVDOM = vDOM;
+      }
+    },
   });
 
   const message$1 = Object.assign(Object.create(UIModule), {
-    init(snapshot) {
+    init() {
       this.name = 'message';
-      UIModule.init.bind(this)(snapshot);
+      UIModule.init.bind(this)();
       return this;
     },
 
@@ -19062,7 +19213,7 @@
   const BACKSPACE_CODE = 8;
 
   const keyboard = {
-    init(snapshot) {
+    init() {
       this.name = 'keyboard';
       return this;
     },
@@ -19089,21 +19240,26 @@
       });
     },
 
-    react(snapshot) {},
+    react(info) {},
   };
 
-  // message
-  // db
-  // hist
-
-  const modules = [canvas$1, markup, keyboard, tools$1];
+  const modules = [
+    canvas$1,
+    tools$1,
+    message$1,
+    keyboard,
+    db,
+    hist,
+    markup,
+  ];
 
   const app = {
     init() {
       core.init();
 
       for (let module of modules) {
-        module.init(core.state.snapshot);
+        module.requestSnapshot = label => core.state.snapshot(label);
+        module.init();
         module.bindEvents(core.compute.bind(core));
         core.attach(module.name, module.react.bind(module));
       }
