@@ -15,7 +15,7 @@ const State = {
   create() {
     return Object.create(State).init();
   },
-
+  
   init() {
     this.label = 'start';
     this.input = {};

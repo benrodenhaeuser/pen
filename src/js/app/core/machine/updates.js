@@ -69,6 +69,7 @@ const updates = {
   },
 
   // TODO: cleanup and release are very similar
+  // release is the do action for various mouseup events
   release(state, input) {
     const current = state.canvas.findSelection() || state.canvas.findPen();
 
@@ -79,6 +80,7 @@ const updates = {
     state.aux = {};
   },
 
+  // cleanup is called internally from other updates
   cleanup(state, event) {
     const current = state.canvas.findPen();
 
@@ -262,6 +264,7 @@ const updates = {
 
     // TODO: do we really need all this stuff?
     // It looks like we can at least condense it!
+    // maybe we can extract this into a function that is called both from projectInput and splitCurve, because both seem to do similar stuff.
     state.aux.spline = spline;
     state.aux.splitter = shape.splitter;
     state.aux.startSegment = startSegment;

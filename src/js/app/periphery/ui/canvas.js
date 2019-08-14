@@ -11,58 +11,72 @@ const canvas = Object.assign(Object.create(UIModule), {
   },
 
   bindEvents(func) {
-    let requestID;
+    this.bindMouseButtonEvents(func);
+    this.bindMouseMoveEvents(func);
+  },
 
-    this.mountPoint.addEventListener('mousemove', event => {
-      event.preventDefault();
+  bindMouseButtonEvents(func) {
+    const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseout'];
 
-      if (requestID) {
-        cancelAnimationFrame(requestID);
-      }
+    for (let eventType of eventTypes) {
+      const input = {
+        source: this.name,
+        type: eventType,
+      };
 
-      requestID = requestAnimationFrame(() => {
-        this.makeInput(func, event);
-        requestID = null;
-      })
-    });
-
-    for (let eventType of ['click', 'mousedown', 'mouseup']) {
       this.mountPoint.addEventListener(eventType, event => {
-        if (event.detail > 1) {
+        if (['click', 'mousedown', 'mouseup'].includes(eventType) && event.detail > 1) {
           event.stopPropagation();
           return;
         }
 
-        // TODO: ugly
-        if (event.type === 'mousedown') {
-          const textarea = document.querySelector('textarea');
-          if (textarea) {
-            textarea.blur();
-          }
-        }
-
+        const textarea = document.querySelector('textarea');
+        textarea && textarea.blur();
         event.preventDefault();
-        this.makeInput(func, event);
-      });
-    }
 
-    for (let eventType of ['dblclick', 'mouseout']) {
-      this.mountPoint.addEventListener(eventType, event => {
-        event.preventDefault();
-        this.makeInput(func, event);
+        Object.assign(input, {
+          target: event.target.dataset.type,
+          key: event.target.dataset.key,
+          x: this.coordinates(event).x,
+          y: this.coordinates(event).y,
+        });
+
+        func(input);
       });
     }
   },
 
-  makeInput(func, event) {
-    func({
+  bindMouseMoveEvents(func) {
+    const input = {
       source: this.name,
-      type: event.type,
-      target: event.target.dataset.type,
-      key: event.target.dataset.key,
-      x: this.coordinates(event).x,
-      y: this.coordinates(event).y,
+      type: 'mousemove',
+    };
+
+    const old = {};
+
+    this.mountPoint.addEventListener('mousemove', event => {
+      event.preventDefault();
+
+      Object.assign(input, {
+        target: event.target.dataset.type,
+        key: event.target.dataset.key,
+        x: this.coordinates(event).x,
+        y: this.coordinates(event).y,
+      });
     });
+
+    const mouseMove = () => {
+      requestAnimationFrame(mouseMove);
+
+      if (input.x !== old.x || input.y !== old.y) {
+        func(input);
+      }
+
+      old.x = input.x;
+      old.y = input.y;
+    }
+
+    requestAnimationFrame(mouseMove);
   },
 
   createElement(vNode) {
