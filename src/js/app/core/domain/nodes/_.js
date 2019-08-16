@@ -1,4 +1,5 @@
 export { types } from './types.js';
+export { attributeList } from './attributeList';
 export { ProtoNode } from './protoNode.js';
 export { Node } from './node.js';
 export { SceneNode } from './sceneNode.js';

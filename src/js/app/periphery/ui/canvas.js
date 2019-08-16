@@ -89,7 +89,7 @@ const canvas = Object.assign(Object.create(UIModule), {
     for (let [key, value] of Object.entries(vNode.props)) {
       if (key === 'xmlns') {
         $node.setAttributeNS(xmlns, key, value);
-      } else {
+      } else if (value) {
         $node.setAttributeNS(null, key, value);
       }
     }

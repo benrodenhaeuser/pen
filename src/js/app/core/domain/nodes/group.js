@@ -22,7 +22,7 @@ Object.assign(Group, {
       props: {
         'data-key': this.key,
         'data-type': this.type,
-        transform: this.transform.toString(),
+        transform: this.transform && this.transform.toString(),
         class: this.class.toString(),
       },
     };
@@ -36,7 +36,7 @@ Object.assign(Group, {
 
     const pad = indent(level);
 
-    if (!this.transform.equals(Matrix.identity())) {
+    if (this.transform) {
       open.markup = `${pad}<g transform="${this.transform.toString()}">`;
     } else {
       open.markup = `${pad}<g>`;

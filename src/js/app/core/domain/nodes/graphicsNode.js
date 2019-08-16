@@ -1,5 +1,6 @@
 import { SceneNode } from './_.js';
 import { types } from './_.js';
+import { attributeList } from './_.js';
 import { Vector } from '../geometry/_.js';
 import { Rectangle } from '../geometry/_.js';
 import { Matrix } from '../geometry/_.js';
@@ -23,7 +24,7 @@ Object.assign(GraphicsNode, {
     return SceneNode.create
       .bind(this)()
       .set({
-        transform: Matrix.identity(),
+        // transform: Matrix.identity(),
         class: Class.create(),
       });
   },
@@ -48,12 +49,12 @@ Object.assign(GraphicsNode, {
 
   rotate(angle, center) {
     center = center.transform(this.properAncestorTransform().invert());
-    this.transform = Matrix.rotation(angle, center).multiply(this.transform);
+    this.transform = Matrix.rotation(angle, center).multiply(this.transform || Matrix.identity());
   },
 
   scale(factor, center) {
     center = center.transform(this.properAncestorTransform().invert());
-    this.transform = Matrix.scale(factor, center).multiply(this.transform);
+    this.transform = Matrix.scale(factor, center).multiply(this.transform || Matrix.identity());
   },
 
   translate(offset) {
@@ -64,7 +65,7 @@ Object.assign(GraphicsNode, {
   },
 
   globalTransform() {
-    return this.properAncestorTransform().multiply(this.transform);
+    return this.properAncestorTransform().multiply(this.transform || Matrix.identity());
   },
 
   properAncestorTransform() {
@@ -99,7 +100,7 @@ Object.assign(GraphicsNode, {
         if (child.type === types.SPLINE) {
           corners.push(corner);
         } else {
-          corners.push(corner.transform(child.transform));
+          corners.push(corner.transform(child.transform || Matrix.identity()));
         }
       }
     }
@@ -117,6 +118,20 @@ Object.assign(GraphicsNode, {
     this.bounds = bounds;
     return bounds;
   },
+});
+
+Object.defineProperty(GraphicsNode, 'attributes', {
+  get() {
+    const attrs = {};
+
+    for (let [key, value] of Object.entries(this.props)) {
+      if (attributeList.includes(key) && value) {
+        attrs[key] = value;
+      }
+    }
+
+    return attrs;
+  }
 });
 
 Object.defineProperty(GraphicsNode, 'graphicsChildren', {

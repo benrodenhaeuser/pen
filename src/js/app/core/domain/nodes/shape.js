@@ -42,6 +42,7 @@ Object.assign(Shape, {
     return spline;
   },
 
+  // to virtualDOMNode
   toVDOMNode() {
     return {
       tag: 'path',
@@ -49,13 +50,14 @@ Object.assign(Shape, {
       props: {
         'data-key': this.key,
         'data-type': this.type,
-        d: this.toPathString(),
-        transform: this.transform.toString(),
+        d: this.toPathString(), // FINE
+        transform: this.transform && this.transform.toString(),
         class: this.class.toString(),
       },
     };
   },
 
+  // toCurves
   toVDOMCurves() {
     const nodes = [];
     const splines = this.children;
@@ -73,7 +75,7 @@ Object.assign(Shape, {
             'data-type': 'curve',
             'data-key': segments[i].key,
             d: curves[i].toPathString(),
-            transform: this.transform.toString(),
+            transform: this.transform && this.transform.toString(),
           },
         });
 
@@ -84,7 +86,7 @@ Object.assign(Shape, {
           props: {
             'data-type': 'curve-stroke',
             d: curves[i].toPathString(),
-            transform: this.transform.toString(),
+            transform: this.transform && this.transform.toString(),
           },
         });
       }
@@ -113,6 +115,7 @@ Object.assign(Shape, {
       Rangle.create({ key: this.key })
     );
 
+    // TODO: confusing naming ('d')!
     const d = Attribute.create();
     const dValue = AttrValue.create();
 
@@ -137,11 +140,7 @@ Object.assign(Shape, {
       })
     );
 
-    // for (let elem of this.toPathTree(level)) {
-    //   dValue.append(elem);
-    // }
-
-    if (!this.transform.equals(Matrix.identity())) {
+    if (this.transform) {
       attributes.append(
         Text.create({ markup: linebreak + indent(level + 1) }),
         Attribute.create({
@@ -157,6 +156,7 @@ Object.assign(Shape, {
     };
   },
 
+  // TODO: confusing naming ('d')!
   toPathTree(d, level) {
     for (let spline of this.children) {
       const segment = spline.children[0];
@@ -258,38 +258,38 @@ Object.assign(Shape, {
   },
 
   toPathString() {
-    let d = '';
+    let commandString = '';
 
     for (let spline of this.children) {
       const segment = spline.children[0];
 
-      d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
+      commandString += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
 
       for (let i = 1; i < spline.children.length; i += 1) {
         const currSeg = spline.children[i];
         const prevSeg = spline.children[i - 1];
 
         if (prevSeg.handleOut && currSeg.handleIn) {
-          d += ' C';
+          commandString += ' C';
         } else if (currSeg.handleIn || prevSeg.handleOut) {
-          d += ' Q';
+          commandString += ' Q';
         } else {
-          d += ' L';
+          commandString += ' L';
         }
 
         if (prevSeg.handleOut) {
-          d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
+          commandString += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
         }
 
         if (currSeg.handleIn) {
-          d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
+          commandString += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
         }
 
-        d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
+        commandString += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
       }
     }
 
-    return d;
+    return commandString;
   },
 });
 

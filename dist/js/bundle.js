@@ -231,6 +231,7 @@
   };
 
   const buildTree = (node, vParent = null) => {
+    console.log(node.attributes); // TODO testing here
     const vNode = node.toVDOMNode();
 
     if (vParent) {
@@ -273,7 +274,7 @@
       r: radius,
       cx: node.splitter.x,
       cy: node.splitter.y,
-      transform: node.transform.toString(),
+      transform: node.transform && node.transform.toString(),
     });
 
     return h(
@@ -322,7 +323,7 @@
       Object.assign(vCorner.props, {
         'data-type': 'corner',
         'data-key': node.key,
-        transform: node.transform.toString(),
+        transform: node.transform && node.transform.toString(),
         width: length,
         height: length,
       });
@@ -364,7 +365,7 @@
       Object.assign(vDot.props, {
         'data-type': 'dot',
         'data-key': node.key,
-        transform: node.transform.toString(),
+        transform: node.transform && node.transform.toString(),
         r: radius,
       });
     }
@@ -399,7 +400,7 @@
       y: node.bounds.y,
       width: node.bounds.width,
       height: node.bounds.height,
-      transform: node.transform.toString(),
+      transform: node.transform && node.transform.toString(),
       'data-key': node.key,
     });
   };
@@ -450,7 +451,7 @@
       y1: anchor.vector.y,
       x2: handle.vector.x,
       y2: handle.vector.y,
-      transform: node.transform.toString(),
+      transform: node.transform && node.transform.toString(),
     });
   };
 
@@ -458,7 +459,7 @@
     return h('circle', {
       'data-type': controlNode.type,
       'data-key': controlNode.key,
-      transform: pathNode.transform.toString(),
+      transform: pathNode.transform && pathNode.transform.toString(),
       r: diameter / 2,
       cx: controlNode.vector.x,
       cy: controlNode.vector.y,
@@ -3824,6 +3825,12 @@
     SVGELEMENT: 'svg',
   };
 
+  const attributeList = [
+    'viewBox',
+    'xmlns',
+    'transform',
+  ];
+
   const ProtoNode = {
     defineProps(propNames) {
       for (let propName of propNames) {
@@ -4053,7 +4060,7 @@
       return SceneNode$$1.create
         .bind(this)()
         .set({
-          transform: Matrix$$1.identity(),
+          // transform: Matrix.identity(),
           class: Class.create(),
         });
     },
@@ -4078,12 +4085,12 @@
 
     rotate(angle, center) {
       center = center.transform(this.properAncestorTransform().invert());
-      this.transform = Matrix$$1.rotation(angle, center).multiply(this.transform);
+      this.transform = Matrix$$1.rotation(angle, center).multiply(this.transform || Matrix$$1.identity());
     },
 
     scale(factor, center) {
       center = center.transform(this.properAncestorTransform().invert());
-      this.transform = Matrix$$1.scale(factor, center).multiply(this.transform);
+      this.transform = Matrix$$1.scale(factor, center).multiply(this.transform || Matrix$$1.identity());
     },
 
     translate(offset) {
@@ -4094,7 +4101,7 @@
     },
 
     globalTransform() {
-      return this.properAncestorTransform().multiply(this.transform);
+      return this.properAncestorTransform().multiply(this.transform || Matrix$$1.identity());
     },
 
     properAncestorTransform() {
@@ -4129,7 +4136,7 @@
           if (child.type === types.SPLINE) {
             corners.push(corner);
           } else {
-            corners.push(corner.transform(child.transform));
+            corners.push(corner.transform(child.transform || Matrix$$1.identity()));
           }
         }
       }
@@ -4149,6 +4156,20 @@
     },
   });
 
+  Object.defineProperty(GraphicsNode$$1, 'attributes', {
+    get() {
+      const attrs = {};
+
+      for (let [key, value] of Object.entries(this.props)) {
+        if (attributeList.includes(key) && value) {
+          attrs[key] = value;
+        }
+      }
+
+      return attrs;
+    }
+  });
+
   Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
     get() {
       return this.children.filter(node =>
@@ -4165,16 +4186,17 @@
     },
   });
 
-  const xmlns = 'http://www.w3.org/2000/svg';
-
   const Canvas$$1 = Object.create(GraphicsNode$$1);
-  Canvas$$1.defineProps(['viewBox']);
+  Canvas$$1.defineProps(['viewBox', 'xmlns']);
 
   Object.assign(Canvas$$1, {
     create(opts = {}) {
       return GraphicsNode$$1.create
         .bind(this)()
-        .set({ type: types.CANVAS })
+        .set({
+          type: types.CANVAS,
+          xmlns: 'http://www.w3.org/2000/svg',
+        })
         .set(opts);
     },
 
@@ -4285,7 +4307,7 @@
           'data-key': this.key,
           'data-type': this.type,
           viewBox: this.viewBox.toString(),
-          xmlns: 'http://www.w3.org/2000/svg',
+          xmlns: this.xmlns,
           class: this.class.toString(),
         },
       };
@@ -4293,7 +4315,7 @@
 
     toTags() {
       const open = OpenTag$$1.create();
-      open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
+      open.markup = `<svg xmlns="${this.xmlns}" viewBox="${this.viewBox.toString()}">`;
       open.key = this.key;
 
       const close = CloseTag$$1.create();
@@ -4324,7 +4346,7 @@
         props: {
           'data-key': this.key,
           'data-type': this.type,
-          transform: this.transform.toString(),
+          transform: this.transform && this.transform.toString(),
           class: this.class.toString(),
         },
       };
@@ -4338,7 +4360,7 @@
 
       const pad = indent(level);
 
-      if (!this.transform.equals(Matrix$$1.identity())) {
+      if (this.transform) {
         open.markup = `${pad}<g transform="${this.transform.toString()}">`;
       } else {
         open.markup = `${pad}<g>`;
@@ -4381,6 +4403,7 @@
       return spline;
     },
 
+    // to virtualDOMNode
     toVDOMNode() {
       return {
         tag: 'path',
@@ -4388,13 +4411,14 @@
         props: {
           'data-key': this.key,
           'data-type': this.type,
-          d: this.toPathString(),
-          transform: this.transform.toString(),
+          d: this.toPathString(), // FINE
+          transform: this.transform && this.transform.toString(),
           class: this.class.toString(),
         },
       };
     },
 
+    // toCurves
     toVDOMCurves() {
       const nodes = [];
       const splines = this.children;
@@ -4412,7 +4436,7 @@
               'data-type': 'curve',
               'data-key': segments[i].key,
               d: curves[i].toPathString(),
-              transform: this.transform.toString(),
+              transform: this.transform && this.transform.toString(),
             },
           });
 
@@ -4423,7 +4447,7 @@
             props: {
               'data-type': 'curve-stroke',
               d: curves[i].toPathString(),
-              transform: this.transform.toString(),
+              transform: this.transform && this.transform.toString(),
             },
           });
         }
@@ -4452,6 +4476,7 @@
         Rangle$$1.create({ key: this.key })
       );
 
+      // TODO: confusing naming ('d')!
       const d = Attribute$$1.create();
       const dValue = AttrValue$$1.create();
 
@@ -4476,11 +4501,7 @@
         })
       );
 
-      // for (let elem of this.toPathTree(level)) {
-      //   dValue.append(elem);
-      // }
-
-      if (!this.transform.equals(Matrix$$1.identity())) {
+      if (this.transform) {
         attributes.append(
           Text$$1.create({ markup: linebreak + indent(level + 1) }),
           Attribute$$1.create({
@@ -4496,6 +4517,7 @@
       };
     },
 
+    // TODO: confusing naming ('d')!
     toPathTree(d, level) {
       for (let spline of this.children) {
         const segment = spline.children[0];
@@ -4597,38 +4619,38 @@
     },
 
     toPathString() {
-      let d = '';
+      let commandString = '';
 
       for (let spline of this.children) {
         const segment = spline.children[0];
 
-        d += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
+        commandString += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
 
         for (let i = 1; i < spline.children.length; i += 1) {
           const currSeg = spline.children[i];
           const prevSeg = spline.children[i - 1];
 
           if (prevSeg.handleOut && currSeg.handleIn) {
-            d += ' C';
+            commandString += ' C';
           } else if (currSeg.handleIn || prevSeg.handleOut) {
-            d += ' Q';
+            commandString += ' Q';
           } else {
-            d += ' L';
+            commandString += ' L';
           }
 
           if (prevSeg.handleOut) {
-            d += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
+            commandString += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
           }
 
           if (currSeg.handleIn) {
-            d += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
+            commandString += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
           }
 
-          d += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
+          commandString += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
         }
       }
 
-      return d;
+      return commandString;
     },
   });
 
@@ -6522,7 +6544,7 @@
   };
 
   const svgns = 'http://www.w3.org/2000/svg';
-  const xmlns$1 = 'http://www.w3.org/2000/xmlns/';
+  const xmlns = 'http://www.w3.org/2000/xmlns/';
 
   const canvas$1 = Object.assign(Object.create(UIModule), {
     init() {
@@ -6609,8 +6631,8 @@
 
       for (let [key, value] of Object.entries(vNode.props)) {
         if (key === 'xmlns') {
-          $node.setAttributeNS(xmlns$1, key, value);
-        } else {
+          $node.setAttributeNS(xmlns, key, value);
+        } else if (value) {
           $node.setAttributeNS(null, key, value);
         }
       }

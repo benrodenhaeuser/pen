@@ -20,6 +20,7 @@ const renderScene = editor => {
 };
 
 const buildTree = (node, vParent = null) => {
+  console.log(node.attributes); // TODO testing here
   const vNode = node.toVDOMNode();
 
   if (vParent) {
@@ -62,7 +63,7 @@ const curves = node => {
     r: radius,
     cx: node.splitter.x,
     cy: node.splitter.y,
-    transform: node.transform.toString(),
+    transform: node.transform && node.transform.toString(),
   });
 
   return h(
@@ -111,7 +112,7 @@ const corners = node => {
     Object.assign(vCorner.props, {
       'data-type': 'corner',
       'data-key': node.key,
-      transform: node.transform.toString(),
+      transform: node.transform && node.transform.toString(),
       width: length,
       height: length,
     });
@@ -153,7 +154,7 @@ const dots = node => {
     Object.assign(vDot.props, {
       'data-type': 'dot',
       'data-key': node.key,
-      transform: node.transform.toString(),
+      transform: node.transform && node.transform.toString(),
       r: radius,
     });
   }
@@ -188,7 +189,7 @@ const frame = node => {
     y: node.bounds.y,
     width: node.bounds.width,
     height: node.bounds.height,
-    transform: node.transform.toString(),
+    transform: node.transform && node.transform.toString(),
     'data-key': node.key,
   });
 };
@@ -239,7 +240,7 @@ const connection = (node, anchor, handle) => {
     y1: anchor.vector.y,
     x2: handle.vector.x,
     y2: handle.vector.y,
-    transform: node.transform.toString(),
+    transform: node.transform && node.transform.toString(),
   });
 };
 
@@ -247,7 +248,7 @@ const control = (pathNode, controlNode, diameter) => {
   return h('circle', {
     'data-type': controlNode.type,
     'data-key': controlNode.key,
-    transform: pathNode.transform.toString(),
+    transform: pathNode.transform && pathNode.transform.toString(),
     r: diameter / 2,
     cx: controlNode.vector.x,
     cy: controlNode.vector.y,

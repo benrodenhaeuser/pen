@@ -4,16 +4,17 @@ import { OpenTag } from './_.js';
 import { CloseTag } from './_.js';
 import { types } from './_.js';
 
-const xmlns = 'http://www.w3.org/2000/svg';
-
 const Canvas = Object.create(GraphicsNode);
-Canvas.defineProps(['viewBox']);
+Canvas.defineProps(['viewBox', 'xmlns']);
 
 Object.assign(Canvas, {
   create(opts = {}) {
     return GraphicsNode.create
       .bind(this)()
-      .set({ type: types.CANVAS })
+      .set({
+        type: types.CANVAS,
+        xmlns: 'http://www.w3.org/2000/svg',
+      })
       .set(opts);
   },
 
@@ -124,7 +125,7 @@ Object.assign(Canvas, {
         'data-key': this.key,
         'data-type': this.type,
         viewBox: this.viewBox.toString(),
-        xmlns: 'http://www.w3.org/2000/svg',
+        xmlns: this.xmlns,
         class: this.class.toString(),
       },
     };
@@ -132,7 +133,7 @@ Object.assign(Canvas, {
 
   toTags() {
     const open = OpenTag.create();
-    open.markup = `<svg xmlns="${xmlns}" viewBox="${this.viewBox.toString()}">`;
+    open.markup = `<svg xmlns="${this.xmlns}" viewBox="${this.viewBox.toString()}">`;
     open.key = this.key;
 
     const close = CloseTag.create();
