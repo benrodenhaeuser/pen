@@ -2,7 +2,6 @@ import { Node } from './_.js';
 import { types } from './_.js';
 
 const MarkupNode = Object.create(Node);
-MarkupNode.defineProps(['markup', 'start', 'end', 'level']);
 
 Object.assign(MarkupNode, {
   create(opts = {}) {
@@ -12,6 +11,7 @@ Object.assign(MarkupNode, {
       .set(opts);
   },
 
+  // TODO
   indexify(start = 0) {
     this.start = start;
 
@@ -29,6 +29,7 @@ Object.assign(MarkupNode, {
     }
   },
 
+  // TODO
   findLeafByIndex(idx) {
     if (this.markup) {
       if (this.start <= idx && idx <= this.end) {
@@ -49,6 +50,7 @@ Object.assign(MarkupNode, {
     }
   },
 
+  // TODO
   flattenToList(list = []) {
     if (this.markup) {
       list.push(this);
@@ -61,16 +63,11 @@ Object.assign(MarkupNode, {
     return list;
   },
 
+  // TODO
   toMarkup() {
     return this.flattenToList()
       .map(node => node.markup)
       .join('');
-  },
-});
-
-Object.defineProperty(MarkupNode, 'markupRoot', {
-  get() {
-    return this.findAncestor(node => node.parent.type === types.DOC);
   },
 });
 

@@ -1,17 +1,9 @@
 import { GraphicsNode } from './_.js';
 import { Spline } from './_.js';
 import { MarkupNode } from './_.js';
-import { Text } from './_.js';
-import { OpenTag } from './_.js';
-import { CloseTag } from './_.js';
-import { Langle } from './_.js';
-import { Rangle } from './_.js';
-import { TagName } from './_.js';
-import { Attributes } from './_.js';
-import { Attribute } from './_.js';
-import { AttrKey } from './_.js';
-import { AttrValue } from './_.js';
-import { Coords } from './_.js';
+import { Tag } from './_.js';
+import { Line } from './_.js';
+import { Token } from './_.js';
 import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
@@ -96,69 +88,151 @@ Object.assign(Shape, {
   },
 
   toTags(level) {
-    const open = OpenTag.create();
-    const attributes = Attributes.create();
+    const open = Tag.create();
+
+    console.log(open);
 
     open.append(
-      Text.create({ markup: indent(level) }),
-      Langle.create({ key: this.key }),
-      TagName.create({
-        markup: 'path',
-        key: this.key,
-        class: this.class,
-      }),
-
-      attributes,
-
-      Text.create({ markup: linebreak + indent(level) }),
-      Text.create({ markup: slash }),
-      Rangle.create({ key: this.key })
-    );
-
-    // TODO: confusing naming ('d')!
-
-    // spline.commands() is an array with elements of the form
-    // [commandName, coords, coords, coords]
-    // we can use this here.
-
-    const d = Attribute.create();
-    const dValue = AttrValue.create();
-
-    attributes.append(d);
-
-    d.append(
-      Text.create({ markup: linebreak + indent(level + 1) }),
-      AttrKey.create({
-        markup: 'd=',
-        key: this.lastChild.key,
-      }),
-      Text.create({
-        markup: quote,
-        key: this.lastChild.key,
-      }),
-
-      this.toPathTree(dValue, level),
-
-      Text.create({
-        markup: linebreak + indent(level + 1) + quote,
-        key: this.lastChild.key,
-      })
-    );
-
-    if (this.transform) {
-      attributes.append(
-        Text.create({ markup: linebreak + indent(level + 1) }),
-        Attribute.create({
-          markup: `transform="${this.transform.toString()}"`,
-          key: this.key,
-        })
+      Line
+        .create({ indent: 1 })
+        .append(
+          Token.create({
+            markup: '<'
+          }),
+          Token.create({
+            markup: 'path',
+            key: this.key,
+            class: this.class,
+          }),
+        ),
+      Line
+        .create({ indent: 1 })
+        .append(
+          Token.create({
+            markup: 'd="',
+          })
+        )
       );
+
+    for (let spline of this.children) {
+      const commands = spline.commands();
+
+      const lines = commands.map(command => {
+        let indent;
+        command[0] === 'M' ? indent = 1 : indent = 0;
+
+        const line = Line
+          .create({ indent: indent })
+          .append(
+            Token.create({
+              markup: command[0],
+            })
+          );
+
+        for (let i = 1; i < command.length; i += 1) {
+          line.append(
+            Token.create({
+              markup: command[i][0],
+              key: command[i][1]
+            })
+          )
+        }
+
+        return line;
+      });
+
+      open.append(...lines);
     }
 
-    return {
-      open: open,
-      close: null,
-    };
+    // TODO: append further properties (one line each)
+    // for (let attribute of attributes)
+    //
+
+    open.append(
+      Line
+        .create({ indent: -1 })
+        .append(
+          Token.create({
+            markup: '"',
+          })
+        ),
+
+      Line
+        .create({ indent: -1 })
+        .append(
+          Token.create({ markup: '/>'})
+        ),
+    );
+
+    console.log(open); // looks fine at first glance
+
+    return [open]; // ... just the one tag, for this case
+
+    // OLD CODE:
+
+    // const open = OpenTag.create();
+    // const attributes = Attributes.create();
+    //
+    // open.append(
+    //   Text.create({ markup: indent(level) }),
+    //   Langle.create({ key: this.key }),
+    //   TagName.create({
+    //     markup: 'path',
+    //     key: this.key,
+    //     class: this.class,
+    //   }),
+    //
+    //   attributes,
+    //
+    //   Text.create({ markup: linebreak + indent(level) }),
+    //   Text.create({ markup: slash }),
+    //   Rangle.create({ key: this.key })
+    // );
+    //
+    // // TODO: confusing naming ('d')!
+    //
+    // // spline.commands() is an array with elements of the form
+    // // [commandName, coords, coords, coords]
+    // // we can use this here.
+    //
+    // const d = Attribute.create();
+    // const dValue = AttrValue.create();
+    //
+    // attributes.append(d);
+    //
+    // d.append(
+    //   Text.create({ markup: linebreak + indent(level + 1) }),
+    //   AttrKey.create({
+    //     markup: 'd=',
+    //     key: this.lastChild.key,
+    //   }),
+    //   Text.create({
+    //     markup: quote,
+    //     key: this.lastChild.key,
+    //   }),
+    //
+    //   this.toPathTree(dValue, level),
+    //
+    //   Text.create({
+    //     markup: linebreak + indent(level + 1) + quote,
+    //     key: this.lastChild.key,
+    //   })
+    // );
+    //
+    // if (this.transform) {
+    //   attributes.append(
+    //     Text.create({ markup: linebreak + indent(level + 1) }),
+    //     Attribute.create({
+    //       markup: `transform="${this.transform.toString()}"`,
+    //       key: this.key,
+    //     })
+    //   );
+    // }
+    //
+    // return {
+    //   open: open,
+    //   close: null,
+    // };
   },
 
   // TODO: confusing naming ('d')!
@@ -266,8 +340,12 @@ Object.assign(Shape, {
     let commands = [];
 
     for (let spline of this.children) {
-      console.log(spline.commands());
-      commands.push(spline.commands().map(command => command.join(' ')));
+      commands.push(
+        spline
+          .commands()
+          .map(command => command
+            .map(part => Array.isArray(part) ? part[0] : part)
+            .join(' ')));
     }
 
     const pathString = commands.map(command => command.join(' ')).join(' ');

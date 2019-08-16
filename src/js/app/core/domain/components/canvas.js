@@ -20,7 +20,6 @@ const renderScene = editor => {
 };
 
 const buildTree = (node, vParent = null) => {
-  console.log(node.attributes); // TODO testing here
   const vNode = node.toVDOMNode();
 
   if (vParent) {

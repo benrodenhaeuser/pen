@@ -1,18 +1,16 @@
 import { MarkupNode } from './_.js';
 import { types } from './_.js';
 
-const Langle = Object.create(MarkupNode);
+const Line = Object.create(MarkupNode);
+Line.defineProps(['indent']);
 
-Object.assign(Langle, {
+Object.assign(Line, {
   create(opts = {}) {
     return MarkupNode.create
       .bind(this)()
-      .set({
-        type: types.LANGLE,
-        markup: '<',
-      })
+      .set({ type: types.LINE })
       .set(opts);
   },
 });
 
-export { Langle };
+export { Line };

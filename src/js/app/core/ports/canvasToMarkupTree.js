@@ -1,9 +1,8 @@
-import { SVGElement } from '../domain/nodes/_.js';
-import { GElement } from '../domain/nodes/_.js';
-import { PathElement } from '../domain/nodes/_.js';
+// TODO: this code is NOT functional
+// ... and it will not be needed once the new solution is ready!
+
 import { types } from '../domain/nodes/_.js';
 import { indent } from '../domain/helpers/_.js';
-import { Text } from '../domain/nodes/_.js';
 
 const canvasToMarkupTree = canvas => {
   const markupTree = SVGElement.create();

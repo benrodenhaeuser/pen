@@ -1,6 +1,6 @@
 const attributeList = [
-  'viewBox',
   'xmlns',
+  'viewBox',
   'transform',
 ];
 

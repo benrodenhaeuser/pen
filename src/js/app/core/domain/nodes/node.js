@@ -94,6 +94,8 @@ Object.assign(Node, {
       this.children = this.children.concat([node]);
       node.parent = this;
     }
+
+    return this;
   },
 
   replaceWith(node) {

@@ -17,21 +17,9 @@ const types = {
 
   // markup
   MARKUPNODE: 'markupNode',
-  TEXT: 'text',
   TAG: 'tag',
-  OPENTAG: 'openTag',
-  CLOSETAG: 'closeTag',
-  LANGLE: 'lAngle',
-  TAGNAME: 'tagName',
-  ATTRIBUTES: 'attributes',
-  ATTRIBUTE: 'attribute',
-  ATTRKEY: 'attrKey',
-  ATTRVALUE: 'attrValue',
-  RANGLE: 'rAngle',
-  COORDS: 'coords',
-  PATHELEMENT: 'path',
-  GELEMENT: 'g',
-  SVGELEMENT: 'svg',
+  LINE: 'line',
+  TOKEN: 'token',
 };
 
 export { types };

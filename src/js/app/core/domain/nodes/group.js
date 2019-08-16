@@ -1,6 +1,4 @@
 import { GraphicsNode } from './_.js';
-import { OpenTag } from './_.js';
-import { CloseTag } from './_.js';
 import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { indent } from '../helpers/_.js';

@@ -1,7 +1,5 @@
 import { GraphicsNode } from './_.js';
 import { Shape } from './_.js';
-import { OpenTag } from './_.js';
-import { CloseTag } from './_.js';
 import { types } from './_.js';
 
 const Canvas = Object.create(GraphicsNode);

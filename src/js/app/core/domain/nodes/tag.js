@@ -7,6 +7,7 @@ Object.assign(Tag, {
   create(opts = {}) {
     return MarkupNode.create
       .bind(this)()
+      .set({ type: types.TAG })
       .set(opts);
   },
 });
