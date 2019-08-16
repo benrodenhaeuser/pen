@@ -54,6 +54,42 @@ Object.assign(Spline, {
     return theCurves;
   },
 
+  commands() {
+    const commands = [];
+
+    const segment = this.children[0];
+    commands.push(['M', `${segment.anchor.vector.x} ${segment.anchor.vector.y}`]);
+
+    for (let i = 1; i < this.children.length; i += 1) {
+      let command = [];
+
+      const currSeg = this.children[i];
+      const prevSeg = this.children[i - 1];
+
+      if (prevSeg.handleOut && currSeg.handleIn) {
+        command.push('C');
+      } else if (currSeg.handleIn || prevSeg.handleOut) {
+        command.push('Q');
+      } else {
+        command.push('L');
+      }
+
+      if (prevSeg.handleOut) {
+        command.push(`${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`);
+      }
+
+      if (currSeg.handleIn) {
+        command.push(`${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`);
+      }
+
+      command.push(`${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`);
+
+      commands.push(command);
+    }
+
+    return commands;
+  },
+
   computeBounds() {
     const curves = this.curves();
     let bounds;

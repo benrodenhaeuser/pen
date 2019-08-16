@@ -4477,6 +4477,11 @@
       );
 
       // TODO: confusing naming ('d')!
+
+      // spline.commands() is an array with elements of the form
+      // [commandName, coords, coords, coords]
+      // we can use this here.
+
       const d = Attribute$$1.create();
       const dValue = AttrValue$$1.create();
 
@@ -4619,38 +4624,18 @@
     },
 
     toPathString() {
-      let commandString = '';
+      let commands = [];
 
       for (let spline of this.children) {
-        const segment = spline.children[0];
-
-        commandString += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
-
-        for (let i = 1; i < spline.children.length; i += 1) {
-          const currSeg = spline.children[i];
-          const prevSeg = spline.children[i - 1];
-
-          if (prevSeg.handleOut && currSeg.handleIn) {
-            commandString += ' C';
-          } else if (currSeg.handleIn || prevSeg.handleOut) {
-            commandString += ' Q';
-          } else {
-            commandString += ' L';
-          }
-
-          if (prevSeg.handleOut) {
-            commandString += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
-          }
-
-          if (currSeg.handleIn) {
-            commandString += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
-          }
-
-          commandString += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
-        }
+        console.log(spline.commands());
+        commands.push(spline.commands().map(command => command.join(' ')));
       }
 
-      return commandString;
+      const pathString = commands.map(command => command.join(' ')).join(' ');
+
+      console.log(pathString);
+
+      return pathString;
     },
   });
 
@@ -4702,6 +4687,42 @@
       }
 
       return theCurves;
+    },
+
+    commands() {
+      const commands = [];
+
+      const segment = this.children[0];
+      commands.push(['M', `${segment.anchor.vector.x} ${segment.anchor.vector.y}`]);
+
+      for (let i = 1; i < this.children.length; i += 1) {
+        let command = [];
+
+        const currSeg = this.children[i];
+        const prevSeg = this.children[i - 1];
+
+        if (prevSeg.handleOut && currSeg.handleIn) {
+          command.push('C');
+        } else if (currSeg.handleIn || prevSeg.handleOut) {
+          command.push('Q');
+        } else {
+          command.push('L');
+        }
+
+        if (prevSeg.handleOut) {
+          command.push(`${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`);
+        }
+
+        if (currSeg.handleIn) {
+          command.push(`${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`);
+        }
+
+        command.push(`${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`);
+
+        commands.push(command);
+      }
+
+      return commands;
     },
 
     computeBounds() {

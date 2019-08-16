@@ -116,6 +116,11 @@ Object.assign(Shape, {
     );
 
     // TODO: confusing naming ('d')!
+
+    // spline.commands() is an array with elements of the form
+    // [commandName, coords, coords, coords]
+    // we can use this here.
+
     const d = Attribute.create();
     const dValue = AttrValue.create();
 
@@ -258,38 +263,18 @@ Object.assign(Shape, {
   },
 
   toPathString() {
-    let commandString = '';
+    let commands = [];
 
     for (let spline of this.children) {
-      const segment = spline.children[0];
-
-      commandString += `M ${segment.anchor.vector.x} ${segment.anchor.vector.y}`;
-
-      for (let i = 1; i < spline.children.length; i += 1) {
-        const currSeg = spline.children[i];
-        const prevSeg = spline.children[i - 1];
-
-        if (prevSeg.handleOut && currSeg.handleIn) {
-          commandString += ' C';
-        } else if (currSeg.handleIn || prevSeg.handleOut) {
-          commandString += ' Q';
-        } else {
-          commandString += ' L';
-        }
-
-        if (prevSeg.handleOut) {
-          commandString += ` ${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`;
-        }
-
-        if (currSeg.handleIn) {
-          commandString += ` ${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`;
-        }
-
-        commandString += ` ${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`;
-      }
+      console.log(spline.commands());
+      commands.push(spline.commands().map(command => command.join(' ')));
     }
 
-    return commandString;
+    const pathString = commands.map(command => command.join(' ')).join(' ');
+
+    console.log(pathString);
+
+    return pathString;
   },
 });
 
