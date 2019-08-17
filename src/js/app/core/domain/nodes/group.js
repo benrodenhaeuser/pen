@@ -27,31 +27,44 @@ Object.assign(Group, {
   },
 
   toTags(level) {
-    const open = OpenTag.create({
-      key: this.key,
-      class: this.class,
-    });
-
-    const pad = indent(level);
-
-    if (this.transform) {
-      open.markup = `${pad}<g transform="${this.transform.toString()}">`;
-    } else {
-      open.markup = `${pad}<g>`;
+    const tags = {
+      open: [],
+      close: [],
     }
 
-    const close = CloseTag.create({
-      key: this.key,
-      markup: `${pad}</g>`,
-    });
+    let openMarkup;
+    if (this.transform) {
+      openMarkup = `${pad}<g transform="${this.transform.toString()}">`;
+    } else {
+      openMarkup = `${pad}<g>`;
+    }
 
-    return {
-      open: open,
-      close: close,
-    };
+    tags.open.push(
+      Line
+        .create({ indent: 1 })
+        .append(
+          Token.create({
+            markup: openMarkup,
+            key: this.key,
+            class: this.class,
+          })
+        )
+    );
+
+    tags.close.push(
+      Line
+        .create({ indent: -1 })
+        .append(
+          Token.create({
+            markup: '</g>',
+            key: this.key,
+            class: this.class,
+          })
+        )
+    );
+
+    return tags;
   },
 });
-
-// TODO: duplicate
 
 export { Group };

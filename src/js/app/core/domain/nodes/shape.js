@@ -49,7 +49,7 @@ Object.assign(Shape, {
     };
   },
 
-  // toCurves
+  // toCurves()? toCurveNodes()?
   toVDOMCurves() {
     const nodes = [];
     const splines = this.children;
@@ -87,12 +87,13 @@ Object.assign(Shape, {
     return nodes;
   },
 
+  // toMarkupComponent?
   toTags(level) {
-    const open = Tag.create();
+    const tags = {
+      open: [],
+    };
 
-    console.log(open);
-
-    open.append(
+    tags.open.push(
       Line
         .create({ indent: 1 })
         .append(
@@ -104,7 +105,10 @@ Object.assign(Shape, {
             key: this.key,
             class: this.class,
           }),
-        ),
+        )
+    );
+
+    tags.open.push(
       Line
         .create({ indent: 1 })
         .append(
@@ -112,12 +116,12 @@ Object.assign(Shape, {
             markup: 'd="',
           })
         )
-      );
+    );
 
     for (let spline of this.children) {
       const commands = spline.commands();
 
-      const lines = commands.map(command => {
+      for (let command of commands) {
         let indent;
         command[0] === 'M' ? indent = 1 : indent = 0;
 
@@ -138,101 +142,35 @@ Object.assign(Shape, {
           )
         }
 
-        return line;
-      });
-
-      open.append(...lines);
+        tags.open.push(line);
+      }
     }
 
     // TODO: append further properties (one line each)
     // for (let attribute of attributes)
-    //
+    // ...
 
-    open.append(
+    tags.open.push(
       Line
         .create({ indent: -1 })
         .append(
           Token.create({
             markup: '"',
           })
-        ),
+        )
+    );
 
+    tags.open.push(
       Line
         .create({ indent: -1 })
         .append(
           Token.create({ markup: '/>'})
-        ),
+        )
     );
 
     console.log(open); // looks fine at first glance
 
-    return [open]; // ... just the one tag, for this case
-
-    // OLD CODE:
-
-    // const open = OpenTag.create();
-    // const attributes = Attributes.create();
-    //
-    // open.append(
-    //   Text.create({ markup: indent(level) }),
-    //   Langle.create({ key: this.key }),
-    //   TagName.create({
-    //     markup: 'path',
-    //     key: this.key,
-    //     class: this.class,
-    //   }),
-    //
-    //   attributes,
-    //
-    //   Text.create({ markup: linebreak + indent(level) }),
-    //   Text.create({ markup: slash }),
-    //   Rangle.create({ key: this.key })
-    // );
-    //
-    // // TODO: confusing naming ('d')!
-    //
-    // // spline.commands() is an array with elements of the form
-    // // [commandName, coords, coords, coords]
-    // // we can use this here.
-    //
-    // const d = Attribute.create();
-    // const dValue = AttrValue.create();
-    //
-    // attributes.append(d);
-    //
-    // d.append(
-    //   Text.create({ markup: linebreak + indent(level + 1) }),
-    //   AttrKey.create({
-    //     markup: 'd=',
-    //     key: this.lastChild.key,
-    //   }),
-    //   Text.create({
-    //     markup: quote,
-    //     key: this.lastChild.key,
-    //   }),
-    //
-    //   this.toPathTree(dValue, level),
-    //
-    //   Text.create({
-    //     markup: linebreak + indent(level + 1) + quote,
-    //     key: this.lastChild.key,
-    //   })
-    // );
-    //
-    // if (this.transform) {
-    //   attributes.append(
-    //     Text.create({ markup: linebreak + indent(level + 1) }),
-    //     Attribute.create({
-    //       markup: `transform="${this.transform.toString()}"`,
-    //       key: this.key,
-    //     })
-    //   );
-    // }
-    //
-    // return {
-    //   open: open,
-    //   close: null,
-    // };
+    return tags;
   },
 
   // TODO: confusing naming ('d')!

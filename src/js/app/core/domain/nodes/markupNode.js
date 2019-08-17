@@ -11,7 +11,9 @@ Object.assign(MarkupNode, {
       .set(opts);
   },
 
-  // TODO
+  // these methods will belong to Canvas rather than to MarkupNode
+
+  // TODO - we won't need this
   indexify(start = 0) {
     this.start = start;
 
@@ -29,7 +31,7 @@ Object.assign(MarkupNode, {
     }
   },
 
-  // TODO
+  // TODO -- will have to find a different solution
   findLeafByIndex(idx) {
     if (this.markup) {
       if (this.start <= idx && idx <= this.end) {
@@ -50,7 +52,7 @@ Object.assign(MarkupNode, {
     }
   },
 
-  // TODO
+  // TODO -- change implementation
   flattenToList(list = []) {
     if (this.markup) {
       list.push(this);
@@ -63,7 +65,7 @@ Object.assign(MarkupNode, {
     return list;
   },
 
-  // TODO
+  // TODO -- will have to find a different solution
   toMarkup() {
     return this.flattenToList()
       .map(node => node.markup)
