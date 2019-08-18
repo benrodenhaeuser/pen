@@ -11,6 +11,21 @@ Object.assign(Line, {
       .set({ type: types.LINE })
       .set(opts);
   },
+
+  findTokenByCharIndex(ch) {
+    let index = 0;
+
+    for (let token of this.children) {
+      const start = index;
+      const end = index + token.markup.length;
+
+      if (start <= ch && ch <= end) {
+        return token;
+      }
+
+      index = end + 1;
+    }
+  },
 });
 
 export { Line };

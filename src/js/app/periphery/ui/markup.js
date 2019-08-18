@@ -36,11 +36,10 @@ const markup = {
       if (obj.origin !== undefined) {
         obj.update(obj.ranges);
         const cursorPosition = obj.ranges[0].anchor;
-        const index = this.markupDoc.indexFromPos(cursorPosition);
 
-        if (index) {
+        if (cursorPosition) {
           window.dispatchEvent(
-            new CustomEvent('userSelectedIndex', { detail: index })
+            new CustomEvent('userSelectedPosition', { detail: cursorPosition })
           );
         }
       }
@@ -55,18 +54,18 @@ const markup = {
     //     value: this.markupEditor.getValue(),
     //   });
     // });
-    //
-    // window.addEventListener('userSelectedIndex', event => {
-    //   const node = this.previousMarkupTree.findLeafByIndex(event.detail);
-    //
-    //   if (node) {
-    //     func({
-    //       source: this.name,
-    //       type: 'userSelectedMarkupNode',
-    //       key: node.key, // note that we are only interested in the key
-    //     });
-    //   }
-    // });
+
+    window.addEventListener('userSelectedPosition', event => {
+      const node = this.previousMarkupTree.findTokenByPosition(event.detail);
+
+      if (node) {
+        func({
+          source: this.name,
+          type: 'userSelectedMarkupNode',
+          key: node.key, // note that we are only interested in the key!
+        });
+      }
+    });
   },
 
   react(info) {
@@ -85,8 +84,8 @@ const markup = {
     // if (info.input.type !== 'mousemove') {
     //   this.placeTextMarker(markupTree);
     // }
-    //
-    // this.previousMarkupTree = markupTree;
+    
+    this.previousMarkupTree = markupTree;
   },
 
   reconcile(markupTree) {

@@ -10,27 +10,6 @@ Object.assign(MarkupNode, {
       .set(opts);
   },
 
-  // TODO -- will have to find a different solution
-  findLeafByIndex(idx) {
-    if (this.markup) {
-      if (this.start <= idx && idx <= this.end) {
-        return this;
-      } else {
-        return null;
-      }
-    } else {
-      const child = this.children.find(
-        child => child.start <= idx && idx <= child.end
-      );
-
-      if (child) {
-        return child.findLeafByIndex(idx);
-      } else {
-        return null;
-      }
-    }
-  },
-
   toMarkupString() {
     switch (this.type) {
       case types.TOKEN:

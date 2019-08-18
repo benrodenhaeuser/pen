@@ -4910,27 +4910,6 @@
         .set(opts);
     },
 
-    // TODO -- will have to find a different solution
-    findLeafByIndex(idx) {
-      if (this.markup) {
-        if (this.start <= idx && idx <= this.end) {
-          return this;
-        } else {
-          return null;
-        }
-      } else {
-        const child = this.children.find(
-          child => child.start <= idx && idx <= child.end
-        );
-
-        if (child) {
-          return child.findLeafByIndex(idx);
-        } else {
-          return null;
-        }
-      }
-    },
-
     toMarkupString() {
       switch (this.type) {
         case types.TOKEN:
@@ -4960,6 +4939,22 @@
         .set({ type: types.MARKUPROOT })
         .set(opts);
     },
+
+    findTokenByPosition(position) {
+      console.log(position);
+      console.log(this.children.length);
+
+      const lineNode = this.children[position.line];
+
+      console.log(lineNode);
+
+      const token = lineNode.findTokenByCharIndex(position.ch);
+
+      console.log(token);
+
+      return token;
+    },
+
   });
 
   const Line$$1 = Object.create(MarkupNode$$1);
@@ -4971,6 +4966,21 @@
         .bind(this)()
         .set({ type: types.LINE })
         .set(opts);
+    },
+
+    findTokenByCharIndex(ch) {
+      let index = 0;
+
+      for (let token of this.children) {
+        const start = index;
+        const end = index + token.markup.length;
+
+        if (start <= ch && ch <= end) {
+          return token;
+        }
+
+        index = end + 1;
+      }
     },
   });
 
@@ -18798,11 +18808,10 @@
         if (obj.origin !== undefined) {
           obj.update(obj.ranges);
           const cursorPosition = obj.ranges[0].anchor;
-          const index = this.markupDoc.indexFromPos(cursorPosition);
 
-          if (index) {
+          if (cursorPosition) {
             window.dispatchEvent(
-              new CustomEvent('userSelectedIndex', { detail: index })
+              new CustomEvent('userSelectedPosition', { detail: cursorPosition })
             );
           }
         }
@@ -18817,18 +18826,18 @@
       //     value: this.markupEditor.getValue(),
       //   });
       // });
-      //
-      // window.addEventListener('userSelectedIndex', event => {
-      //   const node = this.previousMarkupTree.findLeafByIndex(event.detail);
-      //
-      //   if (node) {
-      //     func({
-      //       source: this.name,
-      //       type: 'userSelectedMarkupNode',
-      //       key: node.key, // note that we are only interested in the key
-      //     });
-      //   }
-      // });
+
+      window.addEventListener('userSelectedPosition', event => {
+        const node = this.previousMarkupTree.findTokenByPosition(event.detail);
+
+        if (node) {
+          func({
+            source: this.name,
+            type: 'userSelectedMarkupNode',
+            key: node.key, // note that we are only interested in the key!
+          });
+        }
+      });
     },
 
     react(info) {
@@ -18847,8 +18856,8 @@
       // if (info.input.type !== 'mousemove') {
       //   this.placeTextMarker(markupTree);
       // }
-      //
-      // this.previousMarkupTree = markupTree;
+      
+      this.previousMarkupTree = markupTree;
     },
 
     reconcile(markupTree) {
