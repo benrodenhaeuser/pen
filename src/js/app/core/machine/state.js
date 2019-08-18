@@ -8,7 +8,6 @@ import { Rectangle } from '../domain/_.js';
 import { docToObject } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
 import { markupToCanvas } from '../ports/_.js';
-import { canvasToMarkupTree } from '../ports/_.js';
 import { editorToVDOM } from '../ports/_.js';
 
 const State = {
@@ -71,10 +70,6 @@ const State = {
 
   markupToCanvas(markup) {
     return markupToCanvas(markup);
-  },
-
-  canvasToMarkupTree() {
-    return canvasToMarkupTree(this.editor.canvas);
   },
 
   snapshot(label) {
