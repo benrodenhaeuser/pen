@@ -15,17 +15,11 @@ Object.assign(MarkupNode, {
       case types.TOKEN:
         return this.markup;
       case types.LINE:
-        return this.children
-          .map(
-            node => node.toMarkupString()
-          )
-          .join(' ');
+        return this.children.map(node => node.toMarkupString()).join(' ');
       case types.MARKUPROOT:
-        return this.children
-          .map(
-            node => node.toMarkupString()
-          )
-          .join('\n') + '\n'; // <= need trailing newline!
+        return (
+          this.children.map(node => node.toMarkupString()).join('\n') + '\n'
+        ); // <= need trailing newline!
     }
   },
 });

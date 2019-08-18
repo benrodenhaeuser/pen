@@ -54,7 +54,6 @@ Object.assign(Spline, {
     return theCurves;
   },
 
-  // TODO: commands need to store keys of controls
   commands() {
     const commands = [];
 
@@ -63,10 +62,10 @@ Object.assign(Spline, {
       'M',
       [
         `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
-        segment.anchor.key
-      ]
+        segment.anchor.key,
+        segment.anchor.class
+      ],
     ]);
-
 
     for (let i = 1; i < this.children.length; i += 1) {
       let command = [];
@@ -85,21 +84,23 @@ Object.assign(Spline, {
       if (prevSeg.handleOut) {
         command.push([
           `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
-          prevSeg.handleOut.key
+          prevSeg.handleOut.key,
+          prevSeg.handleOut.class
         ]);
-
       }
 
       if (currSeg.handleIn) {
         command.push([
           `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
-          currSeg.handleIn.key
+          currSeg.handleIn.key,
+          currSeg.handleIn.class
         ]);
       }
 
       command.push([
         `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
-        currSeg.anchor.key
+        currSeg.anchor.key,
+        currSeg.anchor.class
       ]);
 
       commands.push(command);

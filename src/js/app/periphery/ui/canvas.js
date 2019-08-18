@@ -16,7 +16,13 @@ const canvas = Object.assign(Object.create(UIModule), {
   },
 
   bindMouseButtonEvents(func) {
-    const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseout'];
+    const eventTypes = [
+      'click',
+      'dblclick',
+      'mousedown',
+      'mouseup',
+      'mouseout',
+    ];
 
     for (let eventType of eventTypes) {
       const input = {
@@ -25,7 +31,10 @@ const canvas = Object.assign(Object.create(UIModule), {
       };
 
       this.mountPoint.addEventListener(eventType, event => {
-        if (['click', 'mousedown', 'mouseup'].includes(eventType) && event.detail > 1) {
+        if (
+          ['click', 'mousedown', 'mouseup'].includes(eventType) &&
+          event.detail > 1
+        ) {
           event.stopPropagation();
           return;
         }
@@ -74,7 +83,7 @@ const canvas = Object.assign(Object.create(UIModule), {
 
       old.x = input.x;
       old.y = input.y;
-    }
+    };
 
     requestAnimationFrame(mouseMove);
   },

@@ -84,11 +84,11 @@ const State = {
 
     switch (label) {
       case 'vDOM':
-        return this.snapshots['vDOM'] = this.editorToVDOM();
+        return (this.snapshots['vDOM'] = this.editorToVDOM());
       case 'plain':
-        return this.snapshots['plain'] = this.docToObject();
+        return (this.snapshots['plain'] = this.docToObject());
       case 'markupTree':
-        return this.snapshots['markupTree'] = this.canvas.renderTags();
+        return (this.snapshots['markupTree'] = this.canvas.renderTags());
     }
   },
 };

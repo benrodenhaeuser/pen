@@ -69,9 +69,7 @@ const db = {
     ) {
       const plain = this.requestSnapshot('plain');
 
-      window.dispatchEvent(
-        new CustomEvent('upsertDoc', { detail: plain.doc })
-      );
+      window.dispatchEvent(new CustomEvent('upsertDoc', { detail: plain.doc }));
     }
   },
 };

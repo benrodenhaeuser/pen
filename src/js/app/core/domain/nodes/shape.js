@@ -87,25 +87,21 @@ Object.assign(Shape, {
     };
 
     tags.open.push(
-      Line
-        .create({ indent: 1 })
-        .append(
-          Token.create({
-            markup: '<path',
-            key: this.key,
-            class: this.class,
-          })
-        )
+      Line.create({ indent: 1 }).append(
+        Token.create({
+          markup: '<path',
+          key: this.key,
+          class: this.class,
+        })
+      )
     );
 
     tags.open.push(
-      Line
-        .create({ indent: 1 })
-        .append(
-          Token.create({
-            markup: 'd="',
-          })
-        )
+      Line.create({ indent: 1 }).append(
+        Token.create({
+          markup: 'd="',
+        })
+      )
     );
 
     for (let spline of this.children) {
@@ -113,52 +109,44 @@ Object.assign(Shape, {
 
       for (let command of commands) {
         let indent;
-        command[0] === 'M' ? indent = 1 : indent = 0;
+        command[0] === 'M' ? (indent = 1) : (indent = 0);
 
-        const line = Line
-          .create({ indent: indent })
-          .append(
-            Token.create({
-              markup: command[0],
-            })
-          );
+        const line = Line.create({ indent: indent }).append(
+          Token.create({
+            markup: command[0],
+          })
+        );
 
         for (let i = 1; i < command.length; i += 1) {
           line.append(
             Token.create({
-              markup: command[i][0],
-              key: command[i][1]
+              markup: command[i][0], // TODO: ugly
+              key: command[i][1],
+              class: command[i][2]
             })
-          )
+          );
         }
 
         tags.open.push(line);
       }
     }
 
-    // TODO: append further properties (one line each)
+    // TODO: append further properties
+    // currently, there's only transform
     // for (let attribute of attributes)
     // Currently, we only have `transform` to take care of.
 
     tags.open.push(
-      Line
-        .create({ indent: -1 })
-        .append(
-          Token.create({
-            markup: '"',
-          })
-        )
+      Line.create({ indent: -1 }).append(
+        Token.create({
+          markup: '"',
+        })
+      )
     );
 
     tags.open.push(
-      Line
-        .create({ indent: -1 })
-        .append(
-          Token.create({ markup: '/>'})
-        )
+      Line.create({ indent: -1 }).append(Token.create({ markup: '/>' }))
     );
-
-    // console.log(tags.open); // looks fine at first glance
 
     return tags;
   },
@@ -170,9 +158,12 @@ Object.assign(Shape, {
       commands.push(
         spline
           .commands()
-          .map(command => command
-            .map(part => Array.isArray(part) ? part[0] : part)
-            .join(' ')));
+          .map(command =>
+            command
+              .map(part => (Array.isArray(part) ? part[0] : part))
+              .join(' ')
+          )
+      );
     }
 
     const pathString = commands.map(command => command.join(' ')).join(' ');

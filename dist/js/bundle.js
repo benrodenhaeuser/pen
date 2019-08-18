@@ -3812,11 +3812,7 @@
     TOKEN: 'token',
   };
 
-  const attributeList = [
-    'xmlns',
-    'viewBox',
-    'transform',
-  ];
+  const attributeList = ['xmlns', 'viewBox', 'transform'];
 
   const ProtoNode = {
     defineProps(propNames) {
@@ -4074,12 +4070,16 @@
 
     rotate(angle, center) {
       center = center.transform(this.properAncestorTransform().invert());
-      this.transform = Matrix$$1.rotation(angle, center).multiply(this.transform || Matrix$$1.identity());
+      this.transform = Matrix$$1.rotation(angle, center).multiply(
+        this.transform || Matrix$$1.identity()
+      );
     },
 
     scale(factor, center) {
       center = center.transform(this.properAncestorTransform().invert());
-      this.transform = Matrix$$1.scale(factor, center).multiply(this.transform || Matrix$$1.identity());
+      this.transform = Matrix$$1.scale(factor, center).multiply(
+        this.transform || Matrix$$1.identity()
+      );
     },
 
     translate(offset) {
@@ -4090,7 +4090,9 @@
     },
 
     globalTransform() {
-      return this.properAncestorTransform().multiply(this.transform || Matrix$$1.identity());
+      return this.properAncestorTransform().multiply(
+        this.transform || Matrix$$1.identity()
+      );
     },
 
     properAncestorTransform() {
@@ -4145,16 +4147,14 @@
     },
 
     renderTags() {
-      return MarkupRoot$$1
-        .create()
-        .append(...this.tagList());
+      return MarkupRoot$$1.create().append(...this.tagList());
     },
 
     tagList() {
       return [
         ...this.toTags().open,
         ...this.graphicsChildren.flatMap(node => node.tagList()),
-        ...this.toTags().close
+        ...this.toTags().close,
       ];
     },
   });
@@ -4170,7 +4170,7 @@
       }
 
       return attrs;
-    }
+    },
   });
 
   Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
@@ -4319,29 +4319,27 @@
     toTags() {
       const tags = {
         open: [],
-        close: []
+        close: [],
       };
 
       tags.open.push(
-        Line$$1
-          .create({ indent: 0 })
-          .append(
-            Token$$1.create({
-              markup: `<svg xmlns="${this.xmlns}" viewBox="${this.viewBox.toString()}">`,
-              key: this.key,
-            })
-          )
+        Line$$1.create({ indent: 0 }).append(
+          Token$$1.create({
+            markup: `<svg xmlns="${
+            this.xmlns
+          }" viewBox="${this.viewBox.toString()}">`,
+            key: this.key,
+          })
+        )
       );
 
       tags.close.push(
-        Line$$1
-          .create({ indent: -1 })
-          .append(
-            Token$$1.create({
-              markup: '</svg>',
-              key: this.key,
-            })
-          )
+        Line$$1.create({ indent: -1 }).append(
+          Token$$1.create({
+            markup: '</svg>',
+            key: this.key,
+          })
+        )
       );
 
       return tags;
@@ -4379,33 +4377,29 @@
 
       let openMarkup;
       if (this.transform) {
-        openMarkup = `${pad}<g transform="${this.transform.toString()}">`;
+        openMarkup = `<g transform="${this.transform.toString()}">`;
       } else {
-        openMarkup = `${pad}<g>`;
+        openMarkup = `<g>`;
       }
 
       tags.open.push(
-        Line$$1
-          .create({ indent: 1 })
-          .append(
-            Token$$1.create({
-              markup: openMarkup,
-              key: this.key,
-              class: this.class,
-            })
-          )
+        Line$$1.create({ indent: 1 }).append(
+          Token$$1.create({
+            markup: openMarkup,
+            key: this.key,
+            class: this.class,
+          })
+        )
       );
 
       tags.close.push(
-        Line$$1
-          .create({ indent: -1 })
-          .append(
-            Token$$1.create({
-              markup: '</g>',
-              key: this.key,
-              class: this.class,
-            })
-          )
+        Line$$1.create({ indent: -1 }).append(
+          Token$$1.create({
+            markup: '</g>',
+            key: this.key,
+            class: this.class,
+          })
+        )
       );
 
       return tags;
@@ -4492,25 +4486,21 @@
       };
 
       tags.open.push(
-        Line$$1
-          .create({ indent: 1 })
-          .append(
-            Token$$1.create({
-              markup: '<path',
-              key: this.key,
-              class: this.class,
-            })
-          )
+        Line$$1.create({ indent: 1 }).append(
+          Token$$1.create({
+            markup: '<path',
+            key: this.key,
+            class: this.class,
+          })
+        )
       );
 
       tags.open.push(
-        Line$$1
-          .create({ indent: 1 })
-          .append(
-            Token$$1.create({
-              markup: 'd="',
-            })
-          )
+        Line$$1.create({ indent: 1 }).append(
+          Token$$1.create({
+            markup: 'd="',
+          })
+        )
       );
 
       for (let spline of this.children) {
@@ -4518,21 +4508,20 @@
 
         for (let command of commands) {
           let indent;
-          command[0] === 'M' ? indent = 1 : indent = 0;
+          command[0] === 'M' ? (indent = 1) : (indent = 0);
 
-          const line = Line$$1
-            .create({ indent: indent })
-            .append(
-              Token$$1.create({
-                markup: command[0],
-              })
-            );
+          const line = Line$$1.create({ indent: indent }).append(
+            Token$$1.create({
+              markup: command[0],
+            })
+          );
 
           for (let i = 1; i < command.length; i += 1) {
             line.append(
               Token$$1.create({
-                markup: command[i][0],
-                key: command[i][1]
+                markup: command[i][0], // TODO: ugly
+                key: command[i][1],
+                class: command[i][2]
               })
             );
           }
@@ -4541,29 +4530,22 @@
         }
       }
 
-      // TODO: append further properties (one line each)
+      // TODO: append further properties
+      // currently, there's only transform
       // for (let attribute of attributes)
       // Currently, we only have `transform` to take care of.
 
       tags.open.push(
-        Line$$1
-          .create({ indent: -1 })
-          .append(
-            Token$$1.create({
-              markup: '"',
-            })
-          )
+        Line$$1.create({ indent: -1 }).append(
+          Token$$1.create({
+            markup: '"',
+          })
+        )
       );
 
       tags.open.push(
-        Line$$1
-          .create({ indent: -1 })
-          .append(
-            Token$$1.create({ markup: '/>'})
-          )
+        Line$$1.create({ indent: -1 }).append(Token$$1.create({ markup: '/>' }))
       );
-
-      // console.log(tags.open); // looks fine at first glance
 
       return tags;
     },
@@ -4575,9 +4557,12 @@
         commands.push(
           spline
             .commands()
-            .map(command => command
-              .map(part => Array.isArray(part) ? part[0] : part)
-              .join(' ')));
+            .map(command =>
+              command
+                .map(part => (Array.isArray(part) ? part[0] : part))
+                .join(' ')
+            )
+        );
       }
 
       const pathString = commands.map(command => command.join(' ')).join(' ');
@@ -4636,7 +4621,6 @@
       return theCurves;
     },
 
-    // TODO: commands need to store keys of controls
     commands() {
       const commands = [];
 
@@ -4645,10 +4629,10 @@
         'M',
         [
           `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
-          segment.anchor.key
-        ]
+          segment.anchor.key,
+          segment.anchor.class
+        ],
       ]);
-
 
       for (let i = 1; i < this.children.length; i += 1) {
         let command = [];
@@ -4667,21 +4651,23 @@
         if (prevSeg.handleOut) {
           command.push([
             `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
-            prevSeg.handleOut.key
+            prevSeg.handleOut.key,
+            prevSeg.handleOut.class
           ]);
-
         }
 
         if (currSeg.handleIn) {
           command.push([
             `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
-            currSeg.handleIn.key
+            currSeg.handleIn.key,
+            currSeg.handleIn.class
           ]);
         }
 
         command.push([
           `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
-          currSeg.anchor.key
+          currSeg.anchor.key,
+          currSeg.anchor.class
         ]);
 
         commands.push(command);
@@ -4915,17 +4901,11 @@
         case types.TOKEN:
           return this.markup;
         case types.LINE:
-          return this.children
-            .map(
-              node => node.toMarkupString()
-            )
-            .join(' ');
+          return this.children.map(node => node.toMarkupString()).join(' ');
         case types.MARKUPROOT:
-          return this.children
-            .map(
-              node => node.toMarkupString()
-            )
-            .join('\n') + '\n'; // <= need trailing newline!
+          return (
+            this.children.map(node => node.toMarkupString()).join('\n') + '\n'
+          ); // <= need trailing newline!
       }
     },
   });
@@ -4941,20 +4921,9 @@
     },
 
     findTokenByPosition(position) {
-      console.log(position);
-      console.log(this.children.length);
-
       const lineNode = this.children[position.line];
-
-      console.log(lineNode);
-
-      const token = lineNode.findTokenByCharIndex(position.ch);
-
-      console.log(token);
-
-      return token;
+      return lineNode.findTokenByCharIndex(position.ch);
     },
-
   });
 
   const Line$$1 = Object.create(MarkupNode$$1);
@@ -4993,6 +4962,30 @@
         .bind(this)()
         .set({ type: types.TOKEN })
         .set(opts);
+    },
+
+    getRange() {
+      const lineNode = this.parent;
+      const rootNode = lineNode.parent;
+
+      const line = rootNode.children.indexOf(lineNode);
+      const tokenIndex = lineNode.children.indexOf(this);
+
+      const before = lineNode.children
+        .slice(0, tokenIndex)
+        .reduce((sum, node) => sum + node.markup.length, 0) + tokenIndex;
+
+      const from = {
+        line: line,
+        ch: before
+      };
+
+      const to = {
+        line: line,
+        ch: before + this.markup.length
+      };
+
+      return [from, to];
     },
   });
 
@@ -5387,11 +5380,11 @@
 
       switch (label) {
         case 'vDOM':
-          return this.snapshots['vDOM'] = this.editorToVDOM();
+          return (this.snapshots['vDOM'] = this.editorToVDOM());
         case 'plain':
-          return this.snapshots['plain'] = this.docToObject();
+          return (this.snapshots['plain'] = this.docToObject());
         case 'markupTree':
-          return this.snapshots['markupTree'] = this.canvas.renderTags();
+          return (this.snapshots['markupTree'] = this.canvas.renderTags());
       }
     },
   };
@@ -6233,9 +6226,7 @@
       ) {
         const plain = this.requestSnapshot('plain');
 
-        window.dispatchEvent(
-          new CustomEvent('upsertDoc', { detail: plain.doc })
-        );
+        window.dispatchEvent(new CustomEvent('upsertDoc', { detail: plain.doc }));
       }
     },
   };
@@ -6384,7 +6375,13 @@
     },
 
     bindMouseButtonEvents(func) {
-      const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseout'];
+      const eventTypes = [
+        'click',
+        'dblclick',
+        'mousedown',
+        'mouseup',
+        'mouseout',
+      ];
 
       for (let eventType of eventTypes) {
         const input = {
@@ -6393,7 +6390,10 @@
         };
 
         this.mountPoint.addEventListener(eventType, event => {
-          if (['click', 'mousedown', 'mouseup'].includes(eventType) && event.detail > 1) {
+          if (
+            ['click', 'mousedown', 'mouseup'].includes(eventType) &&
+            event.detail > 1
+          ) {
             event.stopPropagation();
             return;
           }
@@ -18819,13 +18819,13 @@
     },
 
     bindCustomEvents(func) {
-      // window.addEventListener('userChangedMarkup', event => {
-      //   func({
-      //     source: this.name,
-      //     type: 'userChangedMarkup',
-      //     value: this.markupEditor.getValue(),
-      //   });
-      // });
+      window.addEventListener('userChangedMarkup', event => {
+        func({
+          source: this.name,
+          type: 'userChangedMarkup',
+          value: this.markupEditor.getValue(),
+        });
+      });
 
       window.addEventListener('userSelectedPosition', event => {
         const node = this.previousMarkupTree.findTokenByPosition(event.detail);
@@ -18843,20 +18843,22 @@
     react(info) {
       const markupTree = this.requestSnapshot('markupTree');
 
-      // // optimization: don't handle text markers during animation
-      // if (info.input.type !== 'mousemove') {
-      //   this.clearTextMarker();
-      // }
+      // optimization: don't handle text markers during animation
+      if (info.input.type !== 'mousemove') {
+        this.clearTextMarker();
+      }
 
-      if (this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()) {
+      if (
+        this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
+      ) {
         this.reconcile(markupTree);
       }
 
-      // // optimization: don't handle text markers during animation
-      // if (info.input.type !== 'mousemove') {
-      //   this.placeTextMarker(markupTree);
-      // }
-      
+      // optimization: don't handle text markers during animation
+      if (info.input.type !== 'mousemove') {
+        this.placeTextMarker(markupTree);
+      }
+
       this.previousMarkupTree = markupTree;
     },
 
@@ -18959,6 +18961,7 @@
       let cssClass;
 
       let node = markupTree.findDescendantByClass('selected');
+
       if (node) {
         cssClass = 'selected-markup';
         this.setMarker(node, cssClass);
@@ -18972,9 +18975,7 @@
     },
 
     setMarker(node, cssClass) {
-      const from = this.markupEditor.doc.posFromIndex(node.start);
-      const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-      const range = [from, to];
+      const range = node.getRange();
       this.textMarker = this.markupDoc.markText(...range, {
         className: cssClass,
       });

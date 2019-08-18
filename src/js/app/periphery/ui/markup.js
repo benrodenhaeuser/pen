@@ -47,13 +47,13 @@ const markup = {
   },
 
   bindCustomEvents(func) {
-    // window.addEventListener('userChangedMarkup', event => {
-    //   func({
-    //     source: this.name,
-    //     type: 'userChangedMarkup',
-    //     value: this.markupEditor.getValue(),
-    //   });
-    // });
+    window.addEventListener('userChangedMarkup', event => {
+      func({
+        source: this.name,
+        type: 'userChangedMarkup',
+        value: this.markupEditor.getValue(),
+      });
+    });
 
     window.addEventListener('userSelectedPosition', event => {
       const node = this.previousMarkupTree.findTokenByPosition(event.detail);
@@ -71,20 +71,22 @@ const markup = {
   react(info) {
     const markupTree = this.requestSnapshot('markupTree');
 
-    // // optimization: don't handle text markers during animation
-    // if (info.input.type !== 'mousemove') {
-    //   this.clearTextMarker();
-    // }
+    // optimization: don't handle text markers during animation
+    if (info.input.type !== 'mousemove') {
+      this.clearTextMarker();
+    }
 
-    if (this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()) {
+    if (
+      this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
+    ) {
       this.reconcile(markupTree);
     }
 
-    // // optimization: don't handle text markers during animation
-    // if (info.input.type !== 'mousemove') {
-    //   this.placeTextMarker(markupTree);
-    // }
-    
+    // optimization: don't handle text markers during animation
+    if (info.input.type !== 'mousemove') {
+      this.placeTextMarker(markupTree);
+    }
+
     this.previousMarkupTree = markupTree;
   },
 
@@ -187,6 +189,7 @@ const markup = {
     let cssClass;
 
     let node = markupTree.findDescendantByClass('selected');
+
     if (node) {
       cssClass = 'selected-markup';
       this.setMarker(node, cssClass);
@@ -200,9 +203,7 @@ const markup = {
   },
 
   setMarker(node, cssClass) {
-    const from = this.markupEditor.doc.posFromIndex(node.start);
-    const to = this.markupEditor.doc.posFromIndex(node.end + 1);
-    const range = [from, to];
+    const range = node.getRange();
     this.textMarker = this.markupDoc.markText(...range, {
       className: cssClass,
     });

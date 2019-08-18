@@ -50,12 +50,16 @@ Object.assign(GraphicsNode, {
 
   rotate(angle, center) {
     center = center.transform(this.properAncestorTransform().invert());
-    this.transform = Matrix.rotation(angle, center).multiply(this.transform || Matrix.identity());
+    this.transform = Matrix.rotation(angle, center).multiply(
+      this.transform || Matrix.identity()
+    );
   },
 
   scale(factor, center) {
     center = center.transform(this.properAncestorTransform().invert());
-    this.transform = Matrix.scale(factor, center).multiply(this.transform || Matrix.identity());
+    this.transform = Matrix.scale(factor, center).multiply(
+      this.transform || Matrix.identity()
+    );
   },
 
   translate(offset) {
@@ -66,7 +70,9 @@ Object.assign(GraphicsNode, {
   },
 
   globalTransform() {
-    return this.properAncestorTransform().multiply(this.transform || Matrix.identity());
+    return this.properAncestorTransform().multiply(
+      this.transform || Matrix.identity()
+    );
   },
 
   properAncestorTransform() {
@@ -121,16 +127,14 @@ Object.assign(GraphicsNode, {
   },
 
   renderTags() {
-    return MarkupRoot
-      .create()
-      .append(...this.tagList());
+    return MarkupRoot.create().append(...this.tagList());
   },
 
   tagList() {
     return [
       ...this.toTags().open,
       ...this.graphicsChildren.flatMap(node => node.tagList()),
-      ...this.toTags().close
+      ...this.toTags().close,
     ];
   },
 });
@@ -146,7 +150,7 @@ Object.defineProperty(GraphicsNode, 'attributes', {
     }
 
     return attrs;
-  }
+  },
 });
 
 Object.defineProperty(GraphicsNode, 'graphicsChildren', {

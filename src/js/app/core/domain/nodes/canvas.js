@@ -134,29 +134,27 @@ Object.assign(Canvas, {
   toTags() {
     const tags = {
       open: [],
-      close: []
-    }
+      close: [],
+    };
 
     tags.open.push(
-      Line
-        .create({ indent: 0 })
-        .append(
-          Token.create({
-            markup: `<svg xmlns="${this.xmlns}" viewBox="${this.viewBox.toString()}">`,
-            key: this.key,
-          })
-        )
+      Line.create({ indent: 0 }).append(
+        Token.create({
+          markup: `<svg xmlns="${
+            this.xmlns
+          }" viewBox="${this.viewBox.toString()}">`,
+          key: this.key,
+        })
+      )
     );
 
     tags.close.push(
-      Line
-        .create({ indent: -1 })
-        .append(
-          Token.create({
-            markup: '</svg>',
-            key: this.key,
-          })
-        )
+      Line.create({ indent: -1 }).append(
+        Token.create({
+          markup: '</svg>',
+          key: this.key,
+        })
+      )
     );
 
     return tags;

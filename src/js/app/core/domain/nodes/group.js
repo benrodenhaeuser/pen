@@ -4,7 +4,6 @@ import { Matrix } from '../geometry/_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
 
-
 const Group = Object.create(GraphicsNode);
 
 Object.assign(Group, {
@@ -32,37 +31,33 @@ Object.assign(Group, {
     const tags = {
       open: [],
       close: [],
-    }
+    };
 
     let openMarkup;
     if (this.transform) {
-      openMarkup = `${pad}<g transform="${this.transform.toString()}">`;
+      openMarkup = `<g transform="${this.transform.toString()}">`;
     } else {
-      openMarkup = `${pad}<g>`;
+      openMarkup = `<g>`;
     }
 
     tags.open.push(
-      Line
-        .create({ indent: 1 })
-        .append(
-          Token.create({
-            markup: openMarkup,
-            key: this.key,
-            class: this.class,
-          })
-        )
+      Line.create({ indent: 1 }).append(
+        Token.create({
+          markup: openMarkup,
+          key: this.key,
+          class: this.class,
+        })
+      )
     );
 
     tags.close.push(
-      Line
-        .create({ indent: -1 })
-        .append(
-          Token.create({
-            markup: '</g>',
-            key: this.key,
-            class: this.class,
-          })
-        )
+      Line.create({ indent: -1 }).append(
+        Token.create({
+          markup: '</g>',
+          key: this.key,
+          class: this.class,
+        })
+      )
     );
 
     return tags;

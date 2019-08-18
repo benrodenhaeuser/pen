@@ -12,20 +12,9 @@ Object.assign(MarkupRoot, {
   },
 
   findTokenByPosition(position) {
-    console.log(position);
-    console.log(this.children.length);
-
     const lineNode = this.children[position.line];
-
-    console.log(lineNode);
-
-    const token = lineNode.findTokenByCharIndex(position.ch);
-
-    console.log(token);
-
-    return token;
+    return lineNode.findTokenByCharIndex(position.ch);
   },
-
 });
 
 export { MarkupRoot };
