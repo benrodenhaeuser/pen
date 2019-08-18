@@ -15,7 +15,7 @@ const State = {
   create() {
     return Object.create(State).init();
   },
-  
+
   init() {
     this.label = 'start';
     this.input = {};
@@ -88,7 +88,7 @@ const State = {
       case 'plain':
         return this.snapshots['plain'] = this.docToObject();
       case 'markupTree':
-        return this.snapshots['markupTree'] = this.canvasToMarkupTree();
+        return this.snapshots['markupTree'] = this.canvas.renderTags();
     }
   },
 };

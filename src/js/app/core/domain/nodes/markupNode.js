@@ -7,28 +7,7 @@ Object.assign(MarkupNode, {
   create(opts = {}) {
     return Node.create
       .bind(this)()
-      .set({ type: types.MARKUPNODE })
       .set(opts);
-  },
-
-  // these methods will belong to Canvas rather than to MarkupNode
-
-  // TODO - we won't need this
-  indexify(start = 0) {
-    this.start = start;
-
-    if (this.markup) {
-      this.end = this.start + this.markup.length - 1;
-      return this.end + 1;
-    } else {
-      for (let child of this.children) {
-        start = child.indexify(start);
-      }
-
-      this.end = start - 1;
-
-      return start;
-    }
   },
 
   // TODO -- will have to find a different solution
@@ -52,24 +31,23 @@ Object.assign(MarkupNode, {
     }
   },
 
-  // TODO -- change implementation
-  flattenToList(list = []) {
-    if (this.markup) {
-      list.push(this);
-    } else {
-      for (let child of this.children) {
-        child.flattenToList(list);
-      }
+  toMarkupString() {
+    switch (this.type) {
+      case types.TOKEN:
+        return this.markup;
+      case types.LINE:
+        return this.children
+          .map(
+            node => node.toMarkupString()
+          )
+          .join(' ');
+      case types.MARKUPROOT:
+        return this.children
+          .map(
+            node => node.toMarkupString()
+          )
+          .join('\n') + '\n'; // <= need trailing newline!
     }
-
-    return list;
-  },
-
-  // TODO -- will have to find a different solution
-  toMarkup() {
-    return this.flattenToList()
-      .map(node => node.markup)
-      .join('');
   },
 });
 

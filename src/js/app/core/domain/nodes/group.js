@@ -1,7 +1,9 @@
 import { GraphicsNode } from './_.js';
 import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
-import { indent } from '../helpers/_.js';
+import { Line } from './_.js';
+import { Token } from './_.js';
+
 
 const Group = Object.create(GraphicsNode);
 

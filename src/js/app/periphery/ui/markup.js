@@ -12,7 +12,7 @@ const markup = {
       lineNumbers: true,
       lineWrapping: true,
       mode: 'xml',
-      value: markupTree.toMarkup(),
+      value: markupTree.toMarkupString(),
     });
     this.markupDoc = this.markupEditor.getDoc();
     this.previousMarkupTree = markupTree;
@@ -48,50 +48,50 @@ const markup = {
   },
 
   bindCustomEvents(func) {
-    window.addEventListener('userChangedMarkup', event => {
-      func({
-        source: this.name,
-        type: 'userChangedMarkup',
-        value: this.markupEditor.getValue(),
-      });
-    });
-
-    window.addEventListener('userSelectedIndex', event => {
-      const node = this.previousMarkupTree.findLeafByIndex(event.detail);
-
-      if (node) {
-        func({
-          source: this.name,
-          type: 'userSelectedMarkupNode',
-          key: node.key, // note that we are only interested in the key
-        });
-      }
-    });
+    // window.addEventListener('userChangedMarkup', event => {
+    //   func({
+    //     source: this.name,
+    //     type: 'userChangedMarkup',
+    //     value: this.markupEditor.getValue(),
+    //   });
+    // });
+    //
+    // window.addEventListener('userSelectedIndex', event => {
+    //   const node = this.previousMarkupTree.findLeafByIndex(event.detail);
+    //
+    //   if (node) {
+    //     func({
+    //       source: this.name,
+    //       type: 'userSelectedMarkupNode',
+    //       key: node.key, // note that we are only interested in the key
+    //     });
+    //   }
+    // });
   },
 
   react(info) {
     const markupTree = this.requestSnapshot('markupTree');
 
-    // optimization: don't handle text markers during animation
-    if (info.input.type !== 'mousemove') {
-      this.clearTextMarker();
-    }
+    // // optimization: don't handle text markers during animation
+    // if (info.input.type !== 'mousemove') {
+    //   this.clearTextMarker();
+    // }
 
-    if (this.previousMarkupTree.toMarkup() !== markupTree.toMarkup()) {
+    if (this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()) {
       this.reconcile(markupTree);
     }
 
-    // optimization: don't handle text markers during animation
-    if (info.input.type !== 'mousemove') {
-      this.placeTextMarker(markupTree);
-    }
-
-    this.previousMarkupTree = markupTree;
+    // // optimization: don't handle text markers during animation
+    // if (info.input.type !== 'mousemove') {
+    //   this.placeTextMarker(markupTree);
+    // }
+    //
+    // this.previousMarkupTree = markupTree;
   },
 
   reconcile(markupTree) {
     this.patchLines(
-      this.diffLines(this.markupDoc.getValue(), markupTree.toMarkup())
+      this.diffLines(this.markupDoc.getValue(), markupTree.toMarkupString())
     );
   },
 

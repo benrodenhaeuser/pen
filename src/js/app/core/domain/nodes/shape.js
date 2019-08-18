@@ -1,18 +1,11 @@
 import { GraphicsNode } from './_.js';
 import { Spline } from './_.js';
 import { MarkupNode } from './_.js';
-import { Tag } from './_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
 import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
-import { indent } from '../helpers/_.js';
-
-const linebreak = '\n';
-const slash = '/';
-const quote = '"';
-const blank = ' ';
 
 const Shape = Object.create(GraphicsNode);
 Shape.defineProps(['splitter']);
@@ -87,10 +80,10 @@ Object.assign(Shape, {
     return nodes;
   },
 
-  // toMarkupComponent?
   toTags(level) {
     const tags = {
       open: [],
+      close: [],
     };
 
     tags.open.push(
@@ -98,13 +91,10 @@ Object.assign(Shape, {
         .create({ indent: 1 })
         .append(
           Token.create({
-            markup: '<'
-          }),
-          Token.create({
-            markup: 'path',
+            markup: '<path',
             key: this.key,
             class: this.class,
-          }),
+          })
         )
     );
 
@@ -148,7 +138,7 @@ Object.assign(Shape, {
 
     // TODO: append further properties (one line each)
     // for (let attribute of attributes)
-    // ...
+    // Currently, we only have `transform` to take care of.
 
     tags.open.push(
       Line
@@ -168,110 +158,9 @@ Object.assign(Shape, {
         )
     );
 
-    console.log(open); // looks fine at first glance
+    // console.log(tags.open); // looks fine at first glance
 
     return tags;
-  },
-
-  // TODO: confusing naming ('d')!
-  toPathTree(d, level) {
-    for (let spline of this.children) {
-      const segment = spline.children[0];
-
-      d.append(
-        Text.create({
-          markup: linebreak + indent(level + 2),
-        }),
-        Text.create({
-          markup: 'M ',
-          key: spline.key,
-        }),
-        Coords.create({
-          markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
-          key: segment.anchor.key,
-          class: segment.anchor.class,
-        }),
-        Text.create({
-          markup: blank,
-        })
-      );
-
-      for (let i = 1; i < spline.children.length; i += 1) {
-        const currSeg = spline.children[i];
-        const prevSeg = spline.children[i - 1];
-
-        if (prevSeg.handleOut && currSeg.handleIn) {
-          d.append(
-            Text.create({
-              markup: linebreak + indent(level + 2),
-            }),
-            Text.create({
-              markup: 'C',
-              key: spline.key,
-            })
-          );
-        } else if (currSeg.handleIn || prevSeg.handleOut) {
-          d.append(
-            Text.create({
-              markup: linebreak + indent(level + 2),
-            }),
-            Text.create({
-              markup: 'Q',
-              key: spline.key,
-            })
-          );
-        } else {
-          d.append(
-            Text.create({
-              markup: linebreak + indent(level + 2),
-            }),
-            Text.create({
-              markup: 'L',
-              key: spline.key,
-            })
-          );
-        }
-
-        if (prevSeg.handleOut) {
-          d.append(
-            Text.create({
-              markup: blank,
-            }),
-            Coords.create({
-              markup: `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
-              key: prevSeg.handleOut.key,
-              class: prevSeg.handleOut.class,
-            })
-          );
-        }
-
-        if (currSeg.handleIn) {
-          d.append(
-            Text.create({
-              markup: blank,
-            }),
-            Coords.create({
-              markup: `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
-              key: currSeg.handleIn.key,
-              class: currSeg.handleIn.class,
-            })
-          );
-        }
-
-        d.append(
-          Text.create({
-            markup: blank,
-          }),
-          Coords.create({
-            markup: `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
-            key: currSeg.anchor.key,
-            class: currSeg.anchor.class,
-          })
-        );
-      }
-    }
-
-    return d;
   },
 
   toPathString() {
@@ -287,8 +176,6 @@ Object.assign(Shape, {
     }
 
     const pathString = commands.map(command => command.join(' ')).join(' ');
-
-    console.log(pathString);
 
     return pathString;
   },

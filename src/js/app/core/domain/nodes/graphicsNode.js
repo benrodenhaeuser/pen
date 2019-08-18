@@ -5,6 +5,7 @@ import { Vector } from '../geometry/_.js';
 import { Rectangle } from '../geometry/_.js';
 import { Matrix } from '../geometry/_.js';
 import { Class } from '../helpers/_.js';
+import { MarkupRoot } from './_.js';
 
 const GraphicsNode = SceneNode.create();
 GraphicsNode.defineProps(['transform']);
@@ -117,6 +118,20 @@ Object.assign(GraphicsNode, {
 
     this.bounds = bounds;
     return bounds;
+  },
+
+  renderTags() {
+    return MarkupRoot
+      .create()
+      .append(...this.tagList());
+  },
+
+  tagList() {
+    return [
+      ...this.toTags().open,
+      ...this.graphicsChildren.flatMap(node => node.tagList()),
+      ...this.toTags().close
+    ];
   },
 });
 

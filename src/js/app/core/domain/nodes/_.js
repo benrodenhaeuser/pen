@@ -19,6 +19,6 @@ export { Docs } from './docs.js';
 export { Message } from './message.js';
 export { Identifier } from './identifier.js';
 export { MarkupNode } from './markupNode.js';
-export { Tag } from './tag.js';
+export { MarkupRoot } from './markupRoot.js';
 export { Line } from './line.js';
 export { Token } from './token.js';

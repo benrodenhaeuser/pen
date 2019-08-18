@@ -3807,7 +3807,7 @@
 
     // markup
     MARKUPNODE: 'markupNode',
-    TAG: 'tag',
+    MARKUPROOT: 'markupRoot',
     LINE: 'line',
     TOKEN: 'token',
   };
@@ -4143,6 +4143,20 @@
       this.bounds = bounds;
       return bounds;
     },
+
+    renderTags() {
+      return MarkupRoot$$1
+        .create()
+        .append(...this.tagList());
+    },
+
+    tagList() {
+      return [
+        ...this.toTags().open,
+        ...this.graphicsChildren.flatMap(node => node.tagList()),
+        ...this.toTags().close
+      ];
+    },
   });
 
   Object.defineProperty(GraphicsNode$$1, 'attributes', {
@@ -4309,10 +4323,10 @@
       };
 
       tags.open.push(
-        Line
+        Line$$1
           .create({ indent: 0 })
           .append(
-            Token.create({
+            Token$$1.create({
               markup: `<svg xmlns="${this.xmlns}" viewBox="${this.viewBox.toString()}">`,
               key: this.key,
             })
@@ -4320,10 +4334,10 @@
       );
 
       tags.close.push(
-        Line
+        Line$$1
           .create({ indent: -1 })
           .append(
-            Token.create({
+            Token$$1.create({
               markup: '</svg>',
               key: this.key,
             })
@@ -4371,10 +4385,10 @@
       }
 
       tags.open.push(
-        Line
+        Line$$1
           .create({ indent: 1 })
           .append(
-            Token.create({
+            Token$$1.create({
               markup: openMarkup,
               key: this.key,
               class: this.class,
@@ -4383,10 +4397,10 @@
       );
 
       tags.close.push(
-        Line
+        Line$$1
           .create({ indent: -1 })
           .append(
-            Token.create({
+            Token$$1.create({
               markup: '</g>',
               key: this.key,
               class: this.class,
@@ -4397,9 +4411,6 @@
       return tags;
     },
   });
-
-  const linebreak = '\n';
-  const blank = ' ';
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
   Shape$$1.defineProps(['splitter']);
@@ -4474,10 +4485,10 @@
       return nodes;
     },
 
-    // toMarkupComponent?
     toTags(level) {
       const tags = {
         open: [],
+        close: [],
       };
 
       tags.open.push(
@@ -4485,13 +4496,10 @@
           .create({ indent: 1 })
           .append(
             Token$$1.create({
-              markup: '<'
-            }),
-            Token$$1.create({
-              markup: 'path',
+              markup: '<path',
               key: this.key,
               class: this.class,
-            }),
+            })
           )
       );
 
@@ -4509,11 +4517,11 @@
         const commands = spline.commands();
 
         for (let command of commands) {
-          let indent$$1;
-          command[0] === 'M' ? indent$$1 = 1 : indent$$1 = 0;
+          let indent;
+          command[0] === 'M' ? indent = 1 : indent = 0;
 
           const line = Line$$1
-            .create({ indent: indent$$1 })
+            .create({ indent: indent })
             .append(
               Token$$1.create({
                 markup: command[0],
@@ -4535,7 +4543,7 @@
 
       // TODO: append further properties (one line each)
       // for (let attribute of attributes)
-      // ...
+      // Currently, we only have `transform` to take care of.
 
       tags.open.push(
         Line$$1
@@ -4555,110 +4563,9 @@
           )
       );
 
-      console.log(open); // looks fine at first glance
+      // console.log(tags.open); // looks fine at first glance
 
       return tags;
-    },
-
-    // TODO: confusing naming ('d')!
-    toPathTree(d, level) {
-      for (let spline of this.children) {
-        const segment = spline.children[0];
-
-        d.append(
-          Text.create({
-            markup: linebreak + indent(level + 2),
-          }),
-          Text.create({
-            markup: 'M ',
-            key: spline.key,
-          }),
-          Coords.create({
-            markup: `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
-            key: segment.anchor.key,
-            class: segment.anchor.class,
-          }),
-          Text.create({
-            markup: blank,
-          })
-        );
-
-        for (let i = 1; i < spline.children.length; i += 1) {
-          const currSeg = spline.children[i];
-          const prevSeg = spline.children[i - 1];
-
-          if (prevSeg.handleOut && currSeg.handleIn) {
-            d.append(
-              Text.create({
-                markup: linebreak + indent(level + 2),
-              }),
-              Text.create({
-                markup: 'C',
-                key: spline.key,
-              })
-            );
-          } else if (currSeg.handleIn || prevSeg.handleOut) {
-            d.append(
-              Text.create({
-                markup: linebreak + indent(level + 2),
-              }),
-              Text.create({
-                markup: 'Q',
-                key: spline.key,
-              })
-            );
-          } else {
-            d.append(
-              Text.create({
-                markup: linebreak + indent(level + 2),
-              }),
-              Text.create({
-                markup: 'L',
-                key: spline.key,
-              })
-            );
-          }
-
-          if (prevSeg.handleOut) {
-            d.append(
-              Text.create({
-                markup: blank,
-              }),
-              Coords.create({
-                markup: `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
-                key: prevSeg.handleOut.key,
-                class: prevSeg.handleOut.class,
-              })
-            );
-          }
-
-          if (currSeg.handleIn) {
-            d.append(
-              Text.create({
-                markup: blank,
-              }),
-              Coords.create({
-                markup: `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
-                key: currSeg.handleIn.key,
-                class: currSeg.handleIn.class,
-              })
-            );
-          }
-
-          d.append(
-            Text.create({
-              markup: blank,
-            }),
-            Coords.create({
-              markup: `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
-              key: currSeg.anchor.key,
-              class: currSeg.anchor.class,
-            })
-          );
-        }
-      }
-
-      return d;
     },
 
     toPathString() {
@@ -4674,8 +4581,6 @@
       }
 
       const pathString = commands.map(command => command.join(' ')).join(' ');
-
-      console.log(pathString);
 
       return pathString;
     },
@@ -5002,28 +4907,7 @@
     create(opts = {}) {
       return Node$$1.create
         .bind(this)()
-        .set({ type: types.MARKUPNODE })
         .set(opts);
-    },
-
-    // these methods will belong to Canvas rather than to MarkupNode
-
-    // TODO - we won't need this
-    indexify(start = 0) {
-      this.start = start;
-
-      if (this.markup) {
-        this.end = this.start + this.markup.length - 1;
-        return this.end + 1;
-      } else {
-        for (let child of this.children) {
-          start = child.indexify(start);
-        }
-
-        this.end = start - 1;
-
-        return start;
-      }
     },
 
     // TODO -- will have to find a different solution
@@ -5047,34 +4931,33 @@
       }
     },
 
-    // TODO -- change implementation
-    flattenToList(list = []) {
-      if (this.markup) {
-        list.push(this);
-      } else {
-        for (let child of this.children) {
-          child.flattenToList(list);
-        }
+    toMarkupString() {
+      switch (this.type) {
+        case types.TOKEN:
+          return this.markup;
+        case types.LINE:
+          return this.children
+            .map(
+              node => node.toMarkupString()
+            )
+            .join(' ');
+        case types.MARKUPROOT:
+          return this.children
+            .map(
+              node => node.toMarkupString()
+            )
+            .join('\n') + '\n'; // <= need trailing newline!
       }
-
-      return list;
-    },
-
-    // TODO -- will have to find a different solution
-    toMarkup() {
-      return this.flattenToList()
-        .map(node => node.markup)
-        .join('');
     },
   });
 
-  const Tag$$1 = Object.create(MarkupNode$$1);
+  const MarkupRoot$$1 = Object.create(MarkupNode$$1);
 
-  Object.assign(Tag$$1, {
+  Object.assign(MarkupRoot$$1, {
     create(opts = {}) {
       return MarkupNode$$1.create
         .bind(this)()
-        .set({ type: types.TAG })
+        .set({ type: types.MARKUPROOT })
         .set(opts);
     },
   });
@@ -5425,7 +5308,7 @@
     create() {
       return Object.create(State).init();
     },
-    
+
     init() {
       this.label = 'start';
       this.input = {};
@@ -5498,7 +5381,7 @@
         case 'plain':
           return this.snapshots['plain'] = this.docToObject();
         case 'markupTree':
-          return this.snapshots['markupTree'] = this.canvasToMarkupTree();
+          return this.snapshots['markupTree'] = this.canvas.renderTags();
       }
     },
   };
@@ -7737,7 +7620,7 @@
     throw new Error("Mode " + mode.name + " failed to advance stream.")
   }
 
-  class Token$2 {
+  class Token$1 {
     constructor(stream, type, state) {
       this.start = stream.start; this.end = stream.pos;
       this.string = stream.current();
@@ -7756,9 +7639,9 @@
     while ((asArray || stream.pos < pos.ch) && !stream.eol()) {
       stream.start = stream.pos;
       style = readToken(mode, stream, context.state);
-      if (asArray) tokens.push(new Token$2(stream, style, copyState(doc.mode, context.state)));
+      if (asArray) tokens.push(new Token$1(stream, style, copyState(doc.mode, context.state)));
     }
-    return asArray ? tokens : new Token$2(stream, style, context.state)
+    return asArray ? tokens : new Token$1(stream, style, context.state)
   }
 
   function extractLineClasses(type, output) {
@@ -8246,7 +8129,7 @@
 
   // Line objects. These hold state related to a line, including
   // highlighting info (the styles array).
-  class Line$2 {
+  class Line$1 {
     constructor(text, markedSpans, estimateHeight) {
       this.text = text;
       attachMarkedSpans(this, markedSpans);
@@ -8255,7 +8138,7 @@
 
     lineNo() { return lineNo(this) }
   }
-  eventMixin(Line$2);
+  eventMixin(Line$1);
 
   // Change the content (text, markers) of a line. Automatically
   // invalidates cached information and tries to re-estimate the
@@ -11281,7 +11164,7 @@
     function linesFor(start, end) {
       let result = [];
       for (let i = start; i < end; ++i)
-        result.push(new Line$2(text[i], spansFor(i), estimateHeight$$1));
+        result.push(new Line$1(text[i], spansFor(i), estimateHeight$$1));
       return result
     }
 
@@ -11305,7 +11188,7 @@
         update(firstLine, firstLine.text.slice(0, from.ch) + lastText + firstLine.text.slice(to.ch), lastSpans);
       } else {
         let added = linesFor(1, text.length - 1);
-        added.push(new Line$2(lastText + firstLine.text.slice(to.ch), lastSpans, estimateHeight$$1));
+        added.push(new Line$1(lastText + firstLine.text.slice(to.ch), lastSpans, estimateHeight$$1));
         update(firstLine, firstLine.text.slice(0, from.ch) + text[0], spansFor(0));
         doc.insert(from.line + 1, added);
       }
@@ -12621,7 +12504,7 @@
     if (!(this instanceof Doc$1)) return new Doc$1(text, mode, firstLine, lineSep, direction)
     if (firstLine == null) firstLine = 0;
 
-    BranchChunk.call(this, [new LeafChunk([new Line$2("", null)])]);
+    BranchChunk.call(this, [new LeafChunk([new Line$1("", null)])]);
     this.first = firstLine;
     this.scrollTop = this.scrollLeft = 0;
     this.cantEdit = false;
@@ -16180,7 +16063,7 @@
     CodeMirror.isWordChar = isWordCharBasic;
     CodeMirror.Pass = Pass;
     CodeMirror.signal = signal;
-    CodeMirror.Line = Line$2;
+    CodeMirror.Line = Line$1;
     CodeMirror.changeEnd = changeEnd;
     CodeMirror.scrollbarModel = scrollbarModel;
     CodeMirror.Pos = Pos;
@@ -18891,7 +18774,7 @@
         lineNumbers: true,
         lineWrapping: true,
         mode: 'xml',
-        value: markupTree.toMarkup(),
+        value: markupTree.toMarkupString(),
       });
       this.markupDoc = this.markupEditor.getDoc();
       this.previousMarkupTree = markupTree;
@@ -18927,50 +18810,50 @@
     },
 
     bindCustomEvents(func) {
-      window.addEventListener('userChangedMarkup', event => {
-        func({
-          source: this.name,
-          type: 'userChangedMarkup',
-          value: this.markupEditor.getValue(),
-        });
-      });
-
-      window.addEventListener('userSelectedIndex', event => {
-        const node = this.previousMarkupTree.findLeafByIndex(event.detail);
-
-        if (node) {
-          func({
-            source: this.name,
-            type: 'userSelectedMarkupNode',
-            key: node.key, // note that we are only interested in the key
-          });
-        }
-      });
+      // window.addEventListener('userChangedMarkup', event => {
+      //   func({
+      //     source: this.name,
+      //     type: 'userChangedMarkup',
+      //     value: this.markupEditor.getValue(),
+      //   });
+      // });
+      //
+      // window.addEventListener('userSelectedIndex', event => {
+      //   const node = this.previousMarkupTree.findLeafByIndex(event.detail);
+      //
+      //   if (node) {
+      //     func({
+      //       source: this.name,
+      //       type: 'userSelectedMarkupNode',
+      //       key: node.key, // note that we are only interested in the key
+      //     });
+      //   }
+      // });
     },
 
     react(info) {
       const markupTree = this.requestSnapshot('markupTree');
 
-      // optimization: don't handle text markers during animation
-      if (info.input.type !== 'mousemove') {
-        this.clearTextMarker();
-      }
+      // // optimization: don't handle text markers during animation
+      // if (info.input.type !== 'mousemove') {
+      //   this.clearTextMarker();
+      // }
 
-      if (this.previousMarkupTree.toMarkup() !== markupTree.toMarkup()) {
+      if (this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()) {
         this.reconcile(markupTree);
       }
 
-      // optimization: don't handle text markers during animation
-      if (info.input.type !== 'mousemove') {
-        this.placeTextMarker(markupTree);
-      }
-
-      this.previousMarkupTree = markupTree;
+      // // optimization: don't handle text markers during animation
+      // if (info.input.type !== 'mousemove') {
+      //   this.placeTextMarker(markupTree);
+      // }
+      //
+      // this.previousMarkupTree = markupTree;
     },
 
     reconcile(markupTree) {
       this.patchLines(
-        this.diffLines(this.markupDoc.getValue(), markupTree.toMarkup())
+        this.diffLines(this.markupDoc.getValue(), markupTree.toMarkupString())
       );
     },
 

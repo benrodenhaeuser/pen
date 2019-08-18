@@ -17,7 +17,7 @@ const types = {
 
   // markup
   MARKUPNODE: 'markupNode',
-  TAG: 'tag',
+  MARKUPROOT: 'markupRoot',
   LINE: 'line',
   TOKEN: 'token',
 };
