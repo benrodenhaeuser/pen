@@ -76,11 +76,11 @@ const State = {
     // TODO: clean up the structure?
     switch (label) {
       case 'vDOM':
-        return this.snapshots['vDOM'] = {
+        return (this.snapshots['vDOM'] = {
           tools: stuff.tools(this.editor),
           message: this.editor.message.text,
           canvas: this.canvas.toComponent()(),
-        }
+        });
       case 'plain':
         return (this.snapshots['plain'] = this.docToObject());
       case 'markupTree':

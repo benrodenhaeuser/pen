@@ -3,7 +3,7 @@ import { Shape } from './_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
 import { types } from './_.js';
-import { stuff } from '../components/_.js'; 
+import { stuff } from '../components/_.js';
 
 const Canvas = Object.create(GraphicsNode);
 Canvas.defineProps(['viewBox', 'xmlns']);
@@ -158,20 +158,6 @@ Object.assign(Canvas, {
     );
 
     return tags;
-  },
-
-  toVDOMNode() {
-    return {
-      tag: 'svg',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': this.type,
-        viewBox: this.viewBox.toString(),
-        xmlns: this.xmlns,
-        class: this.class.toString(),
-      },
-    };
   },
 
   toComponent() {

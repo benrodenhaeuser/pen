@@ -396,7 +396,6 @@ const stuff = {
             },
             identifier._id
           )
-          //  TODO: This is where we would need to put the *name* of the document.
         )
       );
     }
@@ -410,9 +409,14 @@ const stuff = {
         h(
           'li',
           {
-            class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
+            class:
+              'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
           },
-          h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
+          h(
+            'a',
+            { href: '#', id: 'menuLink1', class: 'pure-menu-link' },
+            'Open'
+          ),
           vDocs
         )
       )

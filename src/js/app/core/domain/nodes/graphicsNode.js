@@ -173,17 +173,13 @@ Object.defineProperty(GraphicsNode, 'tags', {
 
 Object.defineProperty(GraphicsNode, 'graphicsChildren', {
   get() {
-    return this.children.filter(
-      node => node.isGraphicsNode()
-    );
+    return this.children.filter(node => node.isGraphicsNode());
   },
 });
 
 Object.defineProperty(GraphicsNode, 'graphicsAncestors', {
   get() {
-    return this.ancestors.filter(
-      node => node.isGraphicsNode()
-    );
+    return this.ancestors.filter(node => node.isGraphicsNode());
   },
 });
 

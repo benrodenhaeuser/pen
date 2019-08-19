@@ -63,7 +63,7 @@ Object.assign(Spline, {
       [
         `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
         segment.anchor.key,
-        segment.anchor.class
+        segment.anchor.class,
       ],
     ]);
 
@@ -85,7 +85,7 @@ Object.assign(Spline, {
         command.push([
           `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
           prevSeg.handleOut.key,
-          prevSeg.handleOut.class
+          prevSeg.handleOut.class,
         ]);
       }
 
@@ -93,14 +93,14 @@ Object.assign(Spline, {
         command.push([
           `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
           currSeg.handleIn.key,
-          currSeg.handleIn.class
+          currSeg.handleIn.class,
         ]);
       }
 
       command.push([
         `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
         currSeg.anchor.key,
-        currSeg.anchor.class
+        currSeg.anchor.class,
       ]);
 
       commands.push(command);

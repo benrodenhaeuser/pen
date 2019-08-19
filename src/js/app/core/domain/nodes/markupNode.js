@@ -15,15 +15,13 @@ Object.assign(MarkupNode, {
       case types.TOKEN:
         return this.markup;
       case types.LINE:
-        return '  '.repeat(this.indent) + // TODO: '  ' should be constant ('unitPad')
-          this.children.map(
-            node => node.toMarkupString()
-          ).join(' ');
+        return (
+          '  '.repeat(this.indent) + // TODO: '  ' should be constant ('unitPad')
+          this.children.map(node => node.toMarkupString()).join(' ')
+        );
       case types.MARKUPROOT:
         return (
-          this.children.map(
-            node => node.toMarkupString()
-          ).join('\n') + '\n' // <= here, we insert trailing newline!
+          this.children.map(node => node.toMarkupString()).join('\n') + '\n' // <= here, we insert trailing newline!
         );
     }
   },

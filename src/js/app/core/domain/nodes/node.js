@@ -141,7 +141,7 @@ Object.assign(Node, {
 
   isGroupOrShape() {
     return [types.GROUP, types.SHAPE].includes(this.type);
-  }
+  },
 });
 
 Object.defineProperty(Node, 'root', {

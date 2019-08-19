@@ -472,7 +472,6 @@
               },
               identifier._id
             )
-            //  TODO: This is where we would need to put the *name* of the document.
           )
         );
       }
@@ -486,9 +485,14 @@
           h(
             'li',
             {
-              class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
+              class:
+                'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
             },
-            h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
+            h(
+              'a',
+              { href: '#', id: 'menuLink1', class: 'pure-menu-link' },
+              'Open'
+            ),
             vDocs
           )
         )
@@ -4014,7 +4018,7 @@
 
     isGroupOrShape() {
       return [types.GROUP, types.SHAPE].includes(this.type);
-    }
+    },
   });
 
   Object.defineProperty(Node$$1, 'root', {
@@ -4233,17 +4237,13 @@
 
   Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
     get() {
-      return this.children.filter(
-        node => node.isGraphicsNode()
-      );
+      return this.children.filter(node => node.isGraphicsNode());
     },
   });
 
   Object.defineProperty(GraphicsNode$$1, 'graphicsAncestors', {
     get() {
-      return this.ancestors.filter(
-        node => node.isGraphicsNode()
-      );
+      return this.ancestors.filter(node => node.isGraphicsNode());
     },
   });
 
@@ -4402,20 +4402,6 @@
       return tags;
     },
 
-    toVDOMNode() {
-      return {
-        tag: 'svg',
-        children: [],
-        props: {
-          'data-key': this.key,
-          'data-type': this.type,
-          viewBox: this.viewBox.toString(),
-          xmlns: this.xmlns,
-          class: this.class.toString(),
-        },
-      };
-    },
-
     toComponent() {
       const canvas = stuff$$1.canvas(this);
 
@@ -4472,19 +4458,6 @@
       return tags;
     },
 
-    toVDOMNode() {
-      return {
-        tag: 'g',
-        children: [],
-        props: {
-          'data-key': this.key,
-          'data-type': this.type,
-          transform: this.transform && this.transform.toString(),
-          class: this.class.toString(),
-        },
-      };
-    },
-
     toComponent() {
       const wrapper = stuff$$1.wrapper(this);
       const group = stuff$$1.group(this);
@@ -4496,7 +4469,7 @@
         group.children = this.children.map(node => node.toComponent()());
         return wrapper;
       };
-    }
+    },
   });
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
@@ -4580,7 +4553,7 @@
               Token$$1.create({
                 markup: command[i][0], // TODO: ugly
                 key: command[i][1],
-                class: command[i][2]
+                class: command[i][2],
               })
             );
           }
@@ -4601,14 +4574,16 @@
         tags.open.push(
           Line$$1.create({ indent: this.height + 1 }).append(
             Token$$1.create({
-              markup: `transform="${this.transform.toString()}"`
+              markup: `transform="${this.transform.toString()}"`,
             })
           )
         );
       }
 
       tags.open.push(
-        Line$$1.create({ indent: this.height }).append(Token$$1.create({ markup: '/>' }))
+        Line$$1.create({ indent: this.height }).append(
+          Token$$1.create({ markup: '/>' })
+        )
       );
 
       return tags;
@@ -4629,59 +4604,6 @@
       return () => {
         return wrapper;
       };
-    },
-
-    // to virtualDOMNode ==> goes to "stuff" DONE
-    toVDOMNode() {
-      return {
-        tag: 'path',
-        children: [],
-        props: {
-          'data-key': this.key,
-          'data-type': this.type,
-          d: this.toPathString(), // FINE
-          transform: this.transform && this.transform.toString(),
-          class: this.class.toString(),
-        },
-      };
-    },
-
-    // toCurves()? toCurveNodes()? ==> goes to "stuff" DONE
-    toVDOMCurves() {
-      const nodes = [];
-      const splines = this.children;
-
-      for (let spline of splines) {
-        const segments = spline.children;
-        const curves = spline.curves();
-
-        for (let i = 0; i < curves.length; i += 1) {
-          // this node will be the "hit target" for the curve:
-          nodes.push({
-            tag: 'path',
-            children: [],
-            props: {
-              'data-type': 'curve',
-              'data-key': segments[i].key,
-              d: curves[i].toPathString(),
-              transform: this.transform && this.transform.toString(),
-            },
-          });
-
-          // this node will display the curve stroke:
-          nodes.push({
-            tag: 'path',
-            children: [],
-            props: {
-              'data-type': 'curve-stroke',
-              d: curves[i].toPathString(),
-              transform: this.transform && this.transform.toString(),
-            },
-          });
-        }
-      }
-
-      return nodes;
     },
   });
 
@@ -4744,7 +4666,7 @@
         [
           `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
           segment.anchor.key,
-          segment.anchor.class
+          segment.anchor.class,
         ],
       ]);
 
@@ -4766,7 +4688,7 @@
           command.push([
             `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
             prevSeg.handleOut.key,
-            prevSeg.handleOut.class
+            prevSeg.handleOut.class,
           ]);
         }
 
@@ -4774,14 +4696,14 @@
           command.push([
             `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
             currSeg.handleIn.key,
-            currSeg.handleIn.class
+            currSeg.handleIn.class,
           ]);
         }
 
         command.push([
           `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
           currSeg.anchor.key,
-          currSeg.anchor.class
+          currSeg.anchor.class,
         ]);
 
         commands.push(command);
@@ -5015,15 +4937,13 @@
         case types.TOKEN:
           return this.markup;
         case types.LINE:
-          return '  '.repeat(this.indent) + // TODO: '  ' should be constant ('unitPad')
-            this.children.map(
-              node => node.toMarkupString()
-            ).join(' ');
+          return (
+            '  '.repeat(this.indent) + // TODO: '  ' should be constant ('unitPad')
+            this.children.map(node => node.toMarkupString()).join(' ')
+          );
         case types.MARKUPROOT:
           return (
-            this.children.map(
-              node => node.toMarkupString()
-            ).join('\n') + '\n' // <= here, we insert trailing newline!
+            this.children.map(node => node.toMarkupString()).join('\n') + '\n' // <= here, we insert trailing newline!
           );
       }
     },
@@ -5091,22 +5011,22 @@
       const line = rootNode.children.indexOf(lineNode);
       const tokenIndex = lineNode.children.indexOf(this);
 
-      const start = lineNode.children
-        .slice(0, tokenIndex)
-        .reduce(
-          (sum, node) => sum + node.markup.length,
-          0
-        ) + tokenIndex + (lineNode.indent * 2);
-        // ^ TODO: magic number representing unitPad length
+      const start =
+        lineNode.children
+          .slice(0, tokenIndex)
+          .reduce((sum, node) => sum + node.markup.length, 0) +
+        tokenIndex +
+        lineNode.indent * 2;
+      // ^ TODO: magic number representing unitPad length
 
       const from = {
         line: line,
-        ch: start
+        ch: start,
       };
 
       const to = {
         line: line,
-        ch: start + this.markup.length
+        ch: start + this.markup.length,
       };
 
       return [from, to];
@@ -5432,11 +5352,11 @@
       // TODO: clean up the structure?
       switch (label) {
         case 'vDOM':
-          return this.snapshots['vDOM'] = {
+          return (this.snapshots['vDOM'] = {
             tools: stuff$$1.tools(this.editor),
             message: this.editor.message.text,
             canvas: this.canvas.toComponent()(),
-          }
+          });
         case 'plain':
           return (this.snapshots['plain'] = this.docToObject());
         case 'markupTree':
@@ -5803,7 +5723,6 @@
       target.invalidateCache();
     },
 
-
     // SELECTION
 
     focus(state, input) {
@@ -5984,12 +5903,16 @@
     // PEN
 
     addSegment(state, input) {
-      state.aux.target = state.canvas.findPen() || state.canvas.appendShape().placePen();
-      const spline = state.aux.target.lastChild || state.aux.target.appendSpline();
+      state.aux.target =
+        state.canvas.findPen() || state.canvas.appendShape().placePen();
+      const spline =
+        state.aux.target.lastChild || state.aux.target.appendSpline();
       const segment = spline.appendSegment();
 
       segment
-        .appendAnchor(Vector$$1.create(input.x, input.y).transformToLocal(state.aux.target))
+        .appendAnchor(
+          Vector$$1.create(input.x, input.y).transformToLocal(state.aux.target)
+        )
         .placePenTip();
     },
 
@@ -5997,7 +5920,9 @@
       state.aux.target = state.canvas.findPen();
       const segment = state.aux.target.lastChild.lastChild;
       const handleIn = segment.handleIn || segment.appendHandleIn();
-      handleIn.vector = Vector$$1.create(input.x, input.y).transformToLocal(state.aux.target);
+      handleIn.vector = Vector$$1.create(input.x, input.y).transformToLocal(
+        state.aux.target
+      );
       const handleOut = segment.handleOut || segment.appendHandleOut();
       handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
       handleIn.placePenTip();
@@ -6006,7 +5931,9 @@
     initAdjustSegment(state, input) {
       const control = state.canvas.findDescendantByKey(input.key);
       state.aux.target = control.parent.parent.parent; // TODO: great
-      state.aux.from = Vector$$1.create(input.x, input.y).transformToLocal(state.aux.target);
+      state.aux.from = Vector$$1.create(input.x, input.y).transformToLocal(
+        state.aux.target
+      );
       control.placePenTip();
     },
 
@@ -6014,7 +5941,9 @@
       const control = state.canvas.findPenTip();
       const segment = control.parent;
       state.aux.target = segment.parent.parent;
-      const to = Vector$$1.create(input.x, input.y).transformToLocal(state.aux.target);
+      const to = Vector$$1.create(input.x, input.y).transformToLocal(
+        state.aux.target
+      );
       const change = to.minus(state.aux.from);
       control.vector = control.vector.add(change);
 

@@ -20,7 +20,6 @@ const updates = {
     target.invalidateCache();
   },
 
-
   // SELECTION
 
   focus(state, input) {
@@ -201,12 +200,16 @@ const updates = {
   // PEN
 
   addSegment(state, input) {
-    state.aux.target = state.canvas.findPen() || state.canvas.appendShape().placePen();
-    const spline = state.aux.target.lastChild || state.aux.target.appendSpline();
+    state.aux.target =
+      state.canvas.findPen() || state.canvas.appendShape().placePen();
+    const spline =
+      state.aux.target.lastChild || state.aux.target.appendSpline();
     const segment = spline.appendSegment();
 
     segment
-      .appendAnchor(Vector.create(input.x, input.y).transformToLocal(state.aux.target))
+      .appendAnchor(
+        Vector.create(input.x, input.y).transformToLocal(state.aux.target)
+      )
       .placePenTip();
   },
 
@@ -214,7 +217,9 @@ const updates = {
     state.aux.target = state.canvas.findPen();
     const segment = state.aux.target.lastChild.lastChild;
     const handleIn = segment.handleIn || segment.appendHandleIn();
-    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(state.aux.target);
+    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(
+      state.aux.target
+    );
     const handleOut = segment.handleOut || segment.appendHandleOut();
     handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
     handleIn.placePenTip();
@@ -223,7 +228,9 @@ const updates = {
   initAdjustSegment(state, input) {
     const control = state.canvas.findDescendantByKey(input.key);
     state.aux.target = control.parent.parent.parent; // TODO: great
-    state.aux.from = Vector.create(input.x, input.y).transformToLocal(state.aux.target);
+    state.aux.from = Vector.create(input.x, input.y).transformToLocal(
+      state.aux.target
+    );
     control.placePenTip();
   },
 
@@ -231,7 +238,9 @@ const updates = {
     const control = state.canvas.findPenTip();
     const segment = control.parent;
     state.aux.target = segment.parent.parent;
-    const to = Vector.create(input.x, input.y).transformToLocal(state.aux.target);
+    const to = Vector.create(input.x, input.y).transformToLocal(
+      state.aux.target
+    );
     const change = to.minus(state.aux.from);
     control.vector = control.vector.add(change);
 

@@ -3,7 +3,7 @@ import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
-import { stuff } from '../components/_.js'; 
+import { stuff } from '../components/_.js';
 
 const Group = Object.create(GraphicsNode);
 
@@ -51,19 +51,6 @@ Object.assign(Group, {
     return tags;
   },
 
-  toVDOMNode() {
-    return {
-      tag: 'g',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': this.type,
-        transform: this.transform && this.transform.toString(),
-        class: this.class.toString(),
-      },
-    };
-  },
-
   toComponent() {
     const wrapper = stuff.wrapper(this);
     const group = stuff.group(this);
@@ -75,7 +62,7 @@ Object.assign(Group, {
       group.children = this.children.map(node => node.toComponent()());
       return wrapper;
     };
-  }
+  },
 });
 
 export { Group };
