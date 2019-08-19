@@ -79,7 +79,11 @@ const State = {
 
     switch (label) {
       case 'vDOM':
-        return (this.snapshots['vDOM'] = this.editorToVDOM());
+        return {
+          tools: this.editorToVDOM().tools,
+          message: this.editorToVDOM().message,
+          canvas: this.canvas.toComponent()(),
+        }
       case 'plain':
         return (this.snapshots['plain'] = this.docToObject());
       case 'markupTree':
