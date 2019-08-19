@@ -17,7 +17,7 @@ const core = {
   compute(input) {
     this.state.input = input;
 
-    console.log(this.state);
+    // console.log(this.state);
 
     const transition = transitions.get(this.state, input);
 
@@ -27,6 +27,7 @@ const core = {
 
       const update = updates[transition.do]; // a function, or undefined
       update && update(this.state, input);
+      updates.after(this.state, input);
 
       this.publish();
     }

@@ -130,16 +130,6 @@ Object.assign(Shape, {
       }
     }
 
-    if (this.transform) {
-      tags.open.push(
-        Line.create({ indent: this.height + 1 }).append(
-          Token.create({
-            markup: `transform: ${this.transform.toString()}`
-          })
-        )
-      );
-    }
-
     tags.open.push(
       Line.create({ indent: this.height + 1 }).append(
         Token.create({
@@ -147,6 +137,16 @@ Object.assign(Shape, {
         })
       )
     );
+
+    if (this.transform) {
+      tags.open.push(
+        Line.create({ indent: this.height + 1 }).append(
+          Token.create({
+            markup: `transform="${this.transform.toString()}"`
+          })
+        )
+      );
+    }
 
     tags.open.push(
       Line.create({ indent: this.height }).append(Token.create({ markup: '/>' }))

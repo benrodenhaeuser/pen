@@ -28,6 +28,7 @@ Object.assign(Canvas, {
 
     if (focus) {
       focus.class.remove('focus');
+      focus.invalidateCache();
     }
   },
 
@@ -40,6 +41,7 @@ Object.assign(Canvas, {
 
     if (selected) {
       selected.class.remove('selected');
+      selected.invalidateCache();
     }
 
     this.updateFrontier();
@@ -55,6 +57,7 @@ Object.assign(Canvas, {
     if (pen) {
       pen.class.remove('pen');
       this.removePenTip();
+      pen.invalidateCache();
     }
   },
 
@@ -78,6 +81,7 @@ Object.assign(Canvas, {
   removeFrontier() {
     for (let node of this.findFrontier()) {
       node.class.remove('frontier');
+      node.invalidateCache();
     }
   },
 
@@ -87,17 +91,20 @@ Object.assign(Canvas, {
     if (this.findSelection() && this.findSelection() !== this) {
       const selected = this.findSelection();
       selected.class = selected.class.add('frontier');
+      selected.invalidateCache();
       let node = selected;
 
       do {
         for (let sibling of node.siblings) {
           sibling.class = sibling.class.add('frontier');
+          sibling.invalidateCache();
         }
         node = node.parent;
       } while (node.parent.type !== types.DOC);
     } else {
       for (let child of this.children) {
         child.class = child.class.add('frontier');
+        child.invalidateCache();
       }
     }
   },
@@ -105,10 +112,15 @@ Object.assign(Canvas, {
   updateBounds(graphicsNode) {
     for (let child of graphicsNode.children) {
       child.computeBounds();
+
+      if (child.isGraphicsNode()) {
+        child.invalidateCache();
+      }
     }
 
     for (let ancestor of graphicsNode.graphicsAncestors) {
       ancestor.computeBounds();
+      ancestor.invalidateCache();
     }
   },
 

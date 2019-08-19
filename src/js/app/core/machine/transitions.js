@@ -180,7 +180,7 @@ const transitions = [
   {
     from: 'settingHandles',
     type: 'mouseup',
-    do: 'releasePen', // does nothing (?)
+    do: 'releasePen', // TODO: does nothing (?)
     to: 'penMode',
   },
 
@@ -205,7 +205,7 @@ const transitions = [
   {
     from: 'adjustingSegment',
     type: 'mouseup',
-    do: 'releasePen', // does nothing (?)
+    do: 'releasePen', // TODO: does nothing (?)
     to: 'penMode',
   },
 
