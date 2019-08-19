@@ -15,6 +15,7 @@ Object.assign(Canvas, {
         type: types.CANVAS,
         xmlns: 'http://www.w3.org/2000/svg',
       })
+      .set({ height: 0 })
       .set(opts);
   },
 
@@ -149,7 +150,7 @@ Object.assign(Canvas, {
     );
 
     tags.close.push(
-      Line.create({ indent: -1 }).append(
+      Line.create({ indent: 0 }).append(
         Token.create({
           markup: '</svg>',
           key: this.key,

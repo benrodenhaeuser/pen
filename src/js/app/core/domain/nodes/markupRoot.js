@@ -13,7 +13,8 @@ Object.assign(MarkupRoot, {
 
   findTokenByPosition(position) {
     const lineNode = this.children[position.line];
-    return lineNode.findTokenByCharIndex(position.ch);
+    return lineNode.findTokenByCharIndex(position.ch - lineNode.indent * 2);
+    // ^ TODO: magic number represents "unitPad" for indentation
   },
 });
 

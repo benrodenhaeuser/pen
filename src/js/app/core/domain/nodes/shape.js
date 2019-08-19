@@ -87,7 +87,7 @@ Object.assign(Shape, {
     };
 
     tags.open.push(
-      Line.create({ indent: 1 }).append(
+      Line.create({ indent: this.height }).append(
         Token.create({
           markup: '<path',
           key: this.key,
@@ -97,7 +97,7 @@ Object.assign(Shape, {
     );
 
     tags.open.push(
-      Line.create({ indent: 1 }).append(
+      Line.create({ indent: this.height + 1 }).append(
         Token.create({
           markup: 'd="',
         })
@@ -108,8 +108,7 @@ Object.assign(Shape, {
       const commands = spline.commands();
 
       for (let command of commands) {
-        let indent;
-        command[0] === 'M' ? (indent = 1) : (indent = 0);
+        const indent = this.height + 2;
 
         const line = Line.create({ indent: indent }).append(
           Token.create({
@@ -131,13 +130,18 @@ Object.assign(Shape, {
       }
     }
 
-    // TODO: append further properties
-    // currently, there's only transform
-    // for (let attribute of attributes)
-    // Currently, we only have `transform` to take care of.
+    if (this.transform) {
+      tags.open.push(
+        Line.create({ indent: this.height + 1 }).append(
+          Token.create({
+            markup: `transform: ${this.transform.toString()}`
+          })
+        )
+      );
+    }
 
     tags.open.push(
-      Line.create({ indent: -1 }).append(
+      Line.create({ indent: this.height + 1 }).append(
         Token.create({
           markup: '"',
         })
@@ -145,7 +149,7 @@ Object.assign(Shape, {
     );
 
     tags.open.push(
-      Line.create({ indent: -1 }).append(Token.create({ markup: '/>' }))
+      Line.create({ indent: this.height }).append(Token.create({ markup: '/>' }))
     );
 
     return tags;

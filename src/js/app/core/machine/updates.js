@@ -24,6 +24,8 @@ const updates = {
         toFocus.focus();
       }
     }
+
+    // TODO: bookkeeping
   },
 
   select(state, input) {
@@ -35,6 +37,8 @@ const updates = {
     } else {
       state.canvas.removeSelection();
     }
+
+    // TODO: bookkeeping
   },
 
   // TODO: try to simplify logic
@@ -66,6 +70,8 @@ const updates = {
         state.canvas.removeFocus();
       }
     }
+
+    // TODO: bookkeeping
   },
 
   // TODO: cleanup and release are very similar
@@ -91,6 +97,8 @@ const updates = {
     state.canvas.removeSelection();
     state.canvas.removePen();
     state.aux = {};
+
+    // TODO: bookkeeping
   },
 
   // TODO: weird name
@@ -104,22 +112,30 @@ const updates = {
     } else if (state.label === 'selectMode') {
       updates.cleanup(state, input);
     }
+
+    // TODO: bookkeeping
   },
 
   deleteNode(state, input) {
     let target = state.canvas.findSelection() || state.canvas.findPenTip();
 
-    if (target) {
-      if (target.type === types.ANCHOR) {
-        target.parent.remove();
-      } else if (
-        [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
-          target.type
-        )
-      ) {
-        target.remove();
-      }
+    if (!target) {
+      return;
     }
+
+
+    if (target.type === types.ANCHOR) {
+      target.parent.remove();
+    } else if (
+      [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
+        target.type
+      )
+    ) {
+      target.remove();
+    }
+
+    // bookkeeping
+    target.invalidateCache();
   },
 
   // TRANSFORMS
@@ -128,7 +144,9 @@ const updates = {
     const node = state.canvas.findSelection();
     state.aux.from = Vector.create(input.x, input.y);
     state.aux.center = node.bounds.center.transform(node.globalTransform());
-    // ^ TODO: can we get rid of this? it looks like we can find the selection within the transform, and derive the center using the result.
+
+    // bookkeeping
+    node.invalidateCache();
   },
 
   shift(state, input) {
@@ -144,7 +162,9 @@ const updates = {
 
     node.translate(offset);
 
+    // bookkeeping
     state.aux.from = to;
+    node.invalidateCache();
   },
 
   rotate(state, input) {
@@ -161,7 +181,9 @@ const updates = {
 
     node.rotate(angle, center);
 
+    // bookkeeping
     state.aux.from = to;
+    node.invalidateCache();
   },
 
   scale(state, input) {
@@ -178,7 +200,9 @@ const updates = {
 
     node.scale(factor, center);
 
+    // bookkeeping
     state.aux.from = to;
+    node.invalidateCache();
   },
 
   // PEN
@@ -191,6 +215,9 @@ const updates = {
     segment
       .appendAnchor(Vector.create(input.x, input.y).transformToLocal(pen))
       .placePenTip();
+
+    // bookkeeping
+    pen.invalidateCache();
   },
 
   setHandles(state, input) {
@@ -201,6 +228,9 @@ const updates = {
     const handleOut = segment.handleOut || segment.appendHandleOut();
     handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
     handleIn.placePenTip();
+
+    // bookkeeping
+    pen.invalidateCache();
   },
 
   initAdjustSegment(state, input) {
@@ -209,7 +239,9 @@ const updates = {
     const from = Vector.create(input.x, input.y).transformToLocal(shape);
     control.placePenTip();
 
+    // bookkeeping
     state.aux.from = from;
+    shape.invalidateCache();
   },
 
   adjustSegment(state, input) {
@@ -246,7 +278,9 @@ const updates = {
         break;
     }
 
+    // bookkeeping
     state.aux.from = to;
+    shape.invalidateCache();
   },
 
   projectInput(state, input) {
@@ -262,9 +296,8 @@ const updates = {
     const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
     shape.splitter = Vector.createFromObject(pointOnCurve);
 
-    // TODO: do we really need all this stuff?
-    // It looks like we can at least condense it!
-    // maybe we can extract this into a function that is called both from projectInput and splitCurve, because both seem to do similar stuff.
+    // TODO: bookkeeping
+    state.aux.shape = shape;
     state.aux.spline = spline;
     state.aux.splitter = shape.splitter;
     state.aux.startSegment = startSegment;
@@ -273,11 +306,12 @@ const updates = {
     state.aux.bCurve = bCurve;
     state.aux.curveTime = pointOnCurve.t;
     state.aux.from = from;
+    shape.invalidateCache();
   },
 
   // TODO: refactor
   splitCurve(state, input) {
-    // TODO: see preceding comment
+    const shape = state.aux.shape;
     const spline = state.aux.spline;
     const splitter = state.aux.splitter;
     const startSegment = state.aux.startSegment;
@@ -306,12 +340,18 @@ const updates = {
     anchor.placePenTip();
     updates.hideSplitter(state, input);
     updates.adjustSegment(state, input);
+
+    // bookkeeping
+    shape.invalidateCache();
   },
 
   hideSplitter(state, input) {
     const segment = state.canvas.findDescendantByKey(input.key);
     const shape = segment.parent.parent;
     shape.splitter = Vector.create(-1000, -1000);
+
+    // bookkeeping
+    shape.invalidateCache();
   },
 
   // MARKUP
@@ -337,6 +377,8 @@ const updates = {
         state.label = 'penMode';
       }
     }
+
+    // TODO: bookkeeping
   },
 
   userChangedMarkup(state, input) {

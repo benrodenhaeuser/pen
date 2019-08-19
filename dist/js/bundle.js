@@ -3929,6 +3929,10 @@
       for (let node of nodes) {
         this.children = this.children.concat([node]);
         node.parent = this;
+
+        if (node.isGroupOrShape()) {
+          node.height = node.parent.height + 1;
+        }
       }
 
       return this;
@@ -3965,6 +3969,14 @@
     isRoot() {
       return this.parent === null;
     },
+
+    isGraphicsNode() {
+      return [types.CANVAS, types.GROUP, types.SHAPE].includes(this.type);
+    },
+
+    isGroupOrShape() {
+      return [types.GROUP, types.SHAPE].includes(this.type);
+    }
   });
 
   Object.defineProperty(Node$$1, 'root', {
@@ -4018,24 +4030,14 @@
   });
 
   const GraphicsNode$$1 = SceneNode$$1.create();
-  GraphicsNode$$1.defineProps(['transform']);
-
-  Object.defineProperty(GraphicsNode$$1, 'bounds', {
-    get() {
-      return this.props.bounds || this.computeBounds();
-    },
-
-    set(value) {
-      this.props.bounds = value;
-    },
-  });
+  GraphicsNode$$1.defineProps(['transform', 'height']);
 
   Object.assign(GraphicsNode$$1, {
     create() {
       return SceneNode$$1.create
         .bind(this)()
         .set({
-          // transform: Matrix.identity(),
+          comps: {},
           class: Class.create(),
         });
     },
@@ -4142,10 +4144,24 @@
 
     tagList() {
       return [
-        ...this.toTags().open,
+        ...this.tags.open, // uses the cache
         ...this.graphicsChildren.flatMap(node => node.tagList()),
-        ...this.toTags().close,
+        ...this.tags.close, // uses the cache
       ];
+    },
+
+    invalidateCache() {
+      this.tags = null;
+    },
+  });
+
+  Object.defineProperty(GraphicsNode$$1, 'bounds', {
+    get() {
+      return this.props.bounds || this.computeBounds();
+    },
+
+    set(value) {
+      this.props.bounds = value;
     },
   });
 
@@ -4163,18 +4179,32 @@
     },
   });
 
+  Object.defineProperty(GraphicsNode$$1, 'tags', {
+    get() {
+      if (!this.comps.tags) {
+        this.comps.tags = this.toTags();
+      }
+
+      return this.comps.tags;
+    },
+
+    set(value) {
+      this.comps.tags = value;
+    },
+  });
+
   Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
     get() {
-      return this.children.filter(node =>
-        [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
+      return this.children.filter(
+        node => node.isGraphicsNode()
       );
     },
   });
 
   Object.defineProperty(GraphicsNode$$1, 'graphicsAncestors', {
     get() {
-      return this.ancestors.filter(node =>
-        [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
+      return this.ancestors.filter(
+        node => node.isGraphicsNode()
       );
     },
   });
@@ -4190,6 +4220,7 @@
           type: types.CANVAS,
           xmlns: 'http://www.w3.org/2000/svg',
         })
+        .set({ height: 0 })
         .set(opts);
     },
 
@@ -4324,7 +4355,7 @@
       );
 
       tags.close.push(
-        Line$$1.create({ indent: -1 }).append(
+        Line$$1.create({ indent: 0 }).append(
           Token$$1.create({
             markup: '</svg>',
             key: this.key,
@@ -4373,7 +4404,7 @@
       }
 
       tags.open.push(
-        Line$$1.create({ indent: 1 }).append(
+        Line$$1.create({ indent: this.height }).append(
           Token$$1.create({
             markup: openMarkup,
             key: this.key,
@@ -4383,7 +4414,7 @@
       );
 
       tags.close.push(
-        Line$$1.create({ indent: -1 }).append(
+        Line$$1.create({ indent: this.height }).append(
           Token$$1.create({
             markup: '</g>',
             key: this.key,
@@ -4476,7 +4507,7 @@
       };
 
       tags.open.push(
-        Line$$1.create({ indent: 1 }).append(
+        Line$$1.create({ indent: this.height }).append(
           Token$$1.create({
             markup: '<path',
             key: this.key,
@@ -4486,7 +4517,7 @@
       );
 
       tags.open.push(
-        Line$$1.create({ indent: 1 }).append(
+        Line$$1.create({ indent: this.height + 1 }).append(
           Token$$1.create({
             markup: 'd="',
           })
@@ -4497,8 +4528,7 @@
         const commands = spline.commands();
 
         for (let command of commands) {
-          let indent;
-          command[0] === 'M' ? (indent = 1) : (indent = 0);
+          const indent = this.height + 2;
 
           const line = Line$$1.create({ indent: indent }).append(
             Token$$1.create({
@@ -4520,13 +4550,18 @@
         }
       }
 
-      // TODO: append further properties
-      // currently, there's only transform
-      // for (let attribute of attributes)
-      // Currently, we only have `transform` to take care of.
+      if (this.transform) {
+        tags.open.push(
+          Line$$1.create({ indent: this.height + 1 }).append(
+            Token$$1.create({
+              markup: `transform: ${this.transform.toString()}`
+            })
+          )
+        );
+      }
 
       tags.open.push(
-        Line$$1.create({ indent: -1 }).append(
+        Line$$1.create({ indent: this.height + 1 }).append(
           Token$$1.create({
             markup: '"',
           })
@@ -4534,7 +4569,7 @@
       );
 
       tags.open.push(
-        Line$$1.create({ indent: -1 }).append(Token$$1.create({ markup: '/>' }))
+        Line$$1.create({ indent: this.height }).append(Token$$1.create({ markup: '/>' }))
       );
 
       return tags;
@@ -4891,11 +4926,16 @@
         case types.TOKEN:
           return this.markup;
         case types.LINE:
-          return this.children.map(node => node.toMarkupString()).join(' ');
+          return '  '.repeat(this.indent) + // TODO: '  ' should be constant ('unitPad')
+            this.children.map(
+              node => node.toMarkupString()
+            ).join(' ');
         case types.MARKUPROOT:
           return (
-            this.children.map(node => node.toMarkupString()).join('\n') + '\n'
-          ); // <= need trailing newline!
+            this.children.map(
+              node => node.toMarkupString()
+            ).join('\n') + '\n' // <= here, we insert trailing newline!
+          );
       }
     },
   });
@@ -4912,7 +4952,8 @@
 
     findTokenByPosition(position) {
       const lineNode = this.children[position.line];
-      return lineNode.findTokenByCharIndex(position.ch);
+      return lineNode.findTokenByCharIndex(position.ch - lineNode.indent * 2);
+      // ^ TODO: magic number represents "unitPad" for indentation
     },
   });
 
@@ -4961,18 +5002,22 @@
       const line = rootNode.children.indexOf(lineNode);
       const tokenIndex = lineNode.children.indexOf(this);
 
-      const before = lineNode.children
+      const start = lineNode.children
         .slice(0, tokenIndex)
-        .reduce((sum, node) => sum + node.markup.length, 0) + tokenIndex;
+        .reduce(
+          (sum, node) => sum + node.markup.length,
+          0
+        ) + tokenIndex + (lineNode.indent * 2);
+        // ^ TODO: magic number representing unitPad length
 
       const from = {
         line: line,
-        ch: before
+        ch: start
       };
 
       const to = {
         line: line,
-        ch: before + this.markup.length
+        ch: start + this.markup.length
       };
 
       return [from, to];
@@ -5680,6 +5725,8 @@
           toFocus.focus();
         }
       }
+
+      // TODO: bookkeeping
     },
 
     select(state, input) {
@@ -5691,6 +5738,8 @@
       } else {
         state.canvas.removeSelection();
       }
+
+      // TODO: bookkeeping
     },
 
     // TODO: try to simplify logic
@@ -5722,6 +5771,8 @@
           state.canvas.removeFocus();
         }
       }
+
+      // TODO: bookkeeping
     },
 
     // TODO: cleanup and release are very similar
@@ -5747,6 +5798,8 @@
       state.canvas.removeSelection();
       state.canvas.removePen();
       state.aux = {};
+
+      // TODO: bookkeeping
     },
 
     // TODO: weird name
@@ -5760,22 +5813,30 @@
       } else if (state.label === 'selectMode') {
         updates.cleanup(state, input);
       }
+
+      // TODO: bookkeeping
     },
 
     deleteNode(state, input) {
       let target = state.canvas.findSelection() || state.canvas.findPenTip();
 
-      if (target) {
-        if (target.type === types.ANCHOR) {
-          target.parent.remove();
-        } else if (
-          [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
-            target.type
-          )
-        ) {
-          target.remove();
-        }
+      if (!target) {
+        return;
       }
+
+
+      if (target.type === types.ANCHOR) {
+        target.parent.remove();
+      } else if (
+        [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
+          target.type
+        )
+      ) {
+        target.remove();
+      }
+
+      // bookkeeping
+      target.invalidateCache();
     },
 
     // TRANSFORMS
@@ -5784,7 +5845,9 @@
       const node = state.canvas.findSelection();
       state.aux.from = Vector$$1.create(input.x, input.y);
       state.aux.center = node.bounds.center.transform(node.globalTransform());
-      // ^ TODO: can we get rid of this? it looks like we can find the selection within the transform, and derive the center using the result.
+
+      // bookkeeping
+      node.invalidateCache();
     },
 
     shift(state, input) {
@@ -5800,7 +5863,9 @@
 
       node.translate(offset);
 
+      // bookkeeping
       state.aux.from = to;
+      node.invalidateCache();
     },
 
     rotate(state, input) {
@@ -5817,7 +5882,9 @@
 
       node.rotate(angle, center);
 
+      // bookkeeping
       state.aux.from = to;
+      node.invalidateCache();
     },
 
     scale(state, input) {
@@ -5834,7 +5901,9 @@
 
       node.scale(factor, center);
 
+      // bookkeeping
       state.aux.from = to;
+      node.invalidateCache();
     },
 
     // PEN
@@ -5847,6 +5916,9 @@
       segment
         .appendAnchor(Vector$$1.create(input.x, input.y).transformToLocal(pen))
         .placePenTip();
+
+      // bookkeeping
+      pen.invalidateCache();
     },
 
     setHandles(state, input) {
@@ -5857,6 +5929,9 @@
       const handleOut = segment.handleOut || segment.appendHandleOut();
       handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
       handleIn.placePenTip();
+
+      // bookkeeping
+      pen.invalidateCache();
     },
 
     initAdjustSegment(state, input) {
@@ -5865,7 +5940,9 @@
       const from = Vector$$1.create(input.x, input.y).transformToLocal(shape);
       control.placePenTip();
 
+      // bookkeeping
       state.aux.from = from;
+      shape.invalidateCache();
     },
 
     adjustSegment(state, input) {
@@ -5902,7 +5979,9 @@
           break;
       }
 
+      // bookkeeping
       state.aux.from = to;
+      shape.invalidateCache();
     },
 
     projectInput(state, input) {
@@ -5918,9 +5997,8 @@
       const pointOnCurve = bCurve.project({ x: from.x, y: from.y });
       shape.splitter = Vector$$1.createFromObject(pointOnCurve);
 
-      // TODO: do we really need all this stuff?
-      // It looks like we can at least condense it!
-      // maybe we can extract this into a function that is called both from projectInput and splitCurve, because both seem to do similar stuff.
+      // TODO: bookkeeping
+      state.aux.shape = shape;
       state.aux.spline = spline;
       state.aux.splitter = shape.splitter;
       state.aux.startSegment = startSegment;
@@ -5929,11 +6007,12 @@
       state.aux.bCurve = bCurve;
       state.aux.curveTime = pointOnCurve.t;
       state.aux.from = from;
+      shape.invalidateCache();
     },
 
     // TODO: refactor
     splitCurve(state, input) {
-      // TODO: see preceding comment
+      const shape = state.aux.shape;
       const spline = state.aux.spline;
       const splitter = state.aux.splitter;
       const startSegment = state.aux.startSegment;
@@ -5962,12 +6041,18 @@
       anchor.placePenTip();
       updates.hideSplitter(state, input);
       updates.adjustSegment(state, input);
+
+      // bookkeeping
+      shape.invalidateCache();
     },
 
     hideSplitter(state, input) {
       const segment = state.canvas.findDescendantByKey(input.key);
       const shape = segment.parent.parent;
       shape.splitter = Vector$$1.create(-1000, -1000);
+
+      // bookkeeping
+      shape.invalidateCache();
     },
 
     // MARKUP
@@ -5993,6 +6078,8 @@
           state.label = 'penMode';
         }
       }
+
+      // TODO: bookkeeping
     },
 
     userChangedMarkup(state, input) {
@@ -6057,6 +6144,8 @@
 
     compute(input) {
       this.state.input = input;
+
+      console.log(this.state);
 
       const transition = transitions$$1.get(this.state, input);
 

@@ -8,24 +8,14 @@ import { Class } from '../helpers/_.js';
 import { MarkupRoot } from './_.js';
 
 const GraphicsNode = SceneNode.create();
-GraphicsNode.defineProps(['transform']);
-
-Object.defineProperty(GraphicsNode, 'bounds', {
-  get() {
-    return this.props.bounds || this.computeBounds();
-  },
-
-  set(value) {
-    this.props.bounds = value;
-  },
-});
+GraphicsNode.defineProps(['transform', 'height']);
 
 Object.assign(GraphicsNode, {
   create() {
     return SceneNode.create
       .bind(this)()
       .set({
-        // transform: Matrix.identity(),
+        comps: {},
         class: Class.create(),
       });
   },
@@ -132,10 +122,24 @@ Object.assign(GraphicsNode, {
 
   tagList() {
     return [
-      ...this.toTags().open,
+      ...this.tags.open, // uses the cache
       ...this.graphicsChildren.flatMap(node => node.tagList()),
-      ...this.toTags().close,
+      ...this.tags.close, // uses the cache
     ];
+  },
+
+  invalidateCache() {
+    this.tags = null;
+  },
+});
+
+Object.defineProperty(GraphicsNode, 'bounds', {
+  get() {
+    return this.props.bounds || this.computeBounds();
+  },
+
+  set(value) {
+    this.props.bounds = value;
   },
 });
 
@@ -153,18 +157,32 @@ Object.defineProperty(GraphicsNode, 'attributes', {
   },
 });
 
+Object.defineProperty(GraphicsNode, 'tags', {
+  get() {
+    if (!this.comps.tags) {
+      this.comps.tags = this.toTags();
+    }
+
+    return this.comps.tags;
+  },
+
+  set(value) {
+    this.comps.tags = value;
+  },
+});
+
 Object.defineProperty(GraphicsNode, 'graphicsChildren', {
   get() {
-    return this.children.filter(node =>
-      [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
+    return this.children.filter(
+      node => node.isGraphicsNode()
     );
   },
 });
 
 Object.defineProperty(GraphicsNode, 'graphicsAncestors', {
   get() {
-    return this.ancestors.filter(node =>
-      [types.CANVAS, types.GROUP, types.SHAPE].includes(node.type)
+    return this.ancestors.filter(
+      node => node.isGraphicsNode()
     );
   },
 });

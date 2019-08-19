@@ -1,4 +1,5 @@
 import { ProtoNode } from './_.js';
+import { types } from './_.js';
 import { Class } from '../helpers/_.js';
 import { createID } from '../helpers/_.js';
 
@@ -93,6 +94,10 @@ Object.assign(Node, {
     for (let node of nodes) {
       this.children = this.children.concat([node]);
       node.parent = this;
+
+      if (node.isGroupOrShape()) {
+        node.height = node.parent.height + 1;
+      }
     }
 
     return this;
@@ -129,6 +134,14 @@ Object.assign(Node, {
   isRoot() {
     return this.parent === null;
   },
+
+  isGraphicsNode() {
+    return [types.CANVAS, types.GROUP, types.SHAPE].includes(this.type);
+  },
+
+  isGroupOrShape() {
+    return [types.GROUP, types.SHAPE].includes(this.type);
+  }
 });
 
 Object.defineProperty(Node, 'root', {

@@ -41,7 +41,7 @@ Object.assign(Group, {
     }
 
     tags.open.push(
-      Line.create({ indent: 1 }).append(
+      Line.create({ indent: this.height }).append(
         Token.create({
           markup: openMarkup,
           key: this.key,
@@ -51,7 +51,7 @@ Object.assign(Group, {
     );
 
     tags.close.push(
-      Line.create({ indent: -1 }).append(
+      Line.create({ indent: this.height }).append(
         Token.create({
           markup: '</g>',
           key: this.key,

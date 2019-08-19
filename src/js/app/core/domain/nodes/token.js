@@ -19,18 +19,22 @@ Object.assign(Token, {
     const line = rootNode.children.indexOf(lineNode);
     const tokenIndex = lineNode.children.indexOf(this);
 
-    const before = lineNode.children
+    const start = lineNode.children
       .slice(0, tokenIndex)
-      .reduce((sum, node) => sum + node.markup.length, 0) + tokenIndex;
+      .reduce(
+        (sum, node) => sum + node.markup.length,
+        0
+      ) + tokenIndex + (lineNode.indent * 2);
+      // ^ TODO: magic number representing unitPad length
 
     const from = {
       line: line,
-      ch: before
+      ch: start
     };
 
     const to = {
       line: line,
-      ch: before + this.markup.length
+      ch: start + this.markup.length
     };
 
     return [from, to];
