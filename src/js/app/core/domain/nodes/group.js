@@ -3,7 +3,7 @@ import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
-import { stuff } from './stuff.js'; // TODO -- rename
+import { stuff } from '../components/_.js'; 
 
 const Group = Object.create(GraphicsNode);
 

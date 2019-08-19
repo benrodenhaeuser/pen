@@ -5,10 +5,10 @@ import { Message } from '../domain/_.js';
 import { Canvas } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 
+import { stuff } from '../domain/_.js';
 import { docToObject } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
 import { markupToCanvas } from '../ports/_.js';
-import { editorToVDOM } from '../ports/_.js';
 
 const State = {
   create() {
@@ -56,10 +56,6 @@ const State = {
     return doc;
   },
 
-  editorToVDOM() {
-    return editorToVDOM(this.editor);
-  },
-
   docToObject() {
     return docToObject(this.doc);
   },
@@ -77,11 +73,12 @@ const State = {
       return this.snapshots[label];
     }
 
+    // TODO: clean up the structure?
     switch (label) {
       case 'vDOM':
-        return {
-          tools: this.editorToVDOM().tools,
-          message: this.editorToVDOM().message,
+        return this.snapshots['vDOM'] = {
+          tools: stuff.tools(this.editor),
+          message: this.editor.message.text,
           canvas: this.canvas.toComponent()(),
         }
       case 'plain':

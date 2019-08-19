@@ -3,7 +3,7 @@ import { Shape } from './_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
 import { types } from './_.js';
-import { stuff } from './stuff.js'; // TODO -- rename
+import { stuff } from '../components/_.js'; 
 
 const Canvas = Object.create(GraphicsNode);
 Canvas.defineProps(['viewBox', 'xmlns']);

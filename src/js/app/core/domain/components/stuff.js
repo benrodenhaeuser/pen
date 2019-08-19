@@ -6,6 +6,10 @@ const LENGTHS_IN_PX = {
   controlDiameter: 5.5,
 };
 
+const scale = (node, length) => {
+  return length / node.globalScaleFactor();
+};
+
 const stuff = {
   canvas(node) {
     return {
@@ -84,7 +88,7 @@ const stuff = {
     const vTopRCorner = h('rect');
     const vBotRCorner = h('rect');
     const vCorners = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
-    const length = this.scale(node, LENGTHS_IN_PX.cornerSideLength);
+    const length = scale(node, LENGTHS_IN_PX.cornerSideLength);
 
     for (let vCorner of vCorners) {
       Object.assign(vCorner.props, {
@@ -125,7 +129,7 @@ const stuff = {
     const vTopRDot = h('circle');
     const vBotRDot = h('circle');
     const vDots = [vTopLDot, vBotLDot, vTopRDot, vBotRDot];
-    const diameter = this.scale(node, LENGTHS_IN_PX.dotDiameter);
+    const diameter = scale(node, LENGTHS_IN_PX.dotDiameter);
     const radius = diameter / 2;
 
     for (let vDot of vDots) {
@@ -173,7 +177,7 @@ const stuff = {
   },
 
   curves(node) {
-    const diameter = this.scale(node, LENGTHS_IN_PX.controlDiameter);
+    const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
     const radius = diameter / 2;
 
     const vParts = this.curveParts(node);
@@ -255,7 +259,7 @@ const stuff = {
       'data-key': node.key,
     });
 
-    const diameter = this.scale(node, LENGTHS_IN_PX.controlDiameter);
+    const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
 
     for (let handle of ['handleIn', 'handleOut']) {
       if (segment[handle]) {
@@ -295,8 +299,126 @@ const stuff = {
     });
   },
 
-  scale(node, length) {
-    return length / node.globalScaleFactor();
+  tools(editor) {
+    return h(
+      'ul',
+      { id: 'buttons' },
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'newDocButton',
+            class: 'pure-button',
+            'data-type': 'newDocButton',
+          },
+          'New'
+        )
+      ),
+      this.docs(editor),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'getPrevious',
+            'data-type': 'getPrevious',
+            class: 'pure-button',
+          },
+          'Undo'
+        )
+      ),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'getNext',
+            'data-type': 'getNext',
+            class: 'pure-button',
+          },
+          'Redo'
+        )
+      ),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'selectButton',
+            'data-type': 'selectButton',
+            class: 'pure-button',
+          },
+          'Select'
+        )
+      ),
+      h(
+        'li',
+        {},
+        h(
+          'button',
+          {
+            id: 'penButton',
+            'data-type': 'penButton',
+            class: 'pure-button',
+          },
+          'Pen'
+        )
+      )
+    );
+  },
+
+  docs(editor) {
+    const vDocs = h('ul', {
+      id: 'docs',
+      class: 'pure-menu-children doc-list',
+    });
+
+    const docs = editor.docs;
+
+    for (let identifier of docs.children) {
+      vDocs.children.push(
+        h(
+          'li',
+          {
+            class: 'pure-menu-item',
+          },
+          h(
+            'a',
+            {
+              class: 'pure-menu-link',
+              'data-key': identifier._id,
+              'data-type': 'doc-identifier',
+            },
+            identifier._id
+          )
+          //  TODO: This is where we would need to put the *name* of the document.
+        )
+      );
+    }
+
+    const container = h(
+      'div',
+      { class: 'pure-menu pure-menu-horizontal' },
+      h(
+        'ul',
+        { class: 'pure-menu-list' },
+        h(
+          'li',
+          {
+            class: 'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
+          },
+          h('a', { href: '#', id: 'menuLink1', class: 'pure-menu-link' }, 'Open'),
+          vDocs
+        )
+      )
+    );
+
+    return container;
   },
 };
 

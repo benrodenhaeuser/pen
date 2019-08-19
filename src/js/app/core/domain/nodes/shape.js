@@ -6,7 +6,7 @@ import { Token } from './_.js';
 import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
-import { stuff } from './stuff.js'; // TODO -- rename
+import { stuff } from '../components/_.js'; 
 
 const Shape = Object.create(GraphicsNode);
 Shape.defineProps(['splitter']);
@@ -140,7 +140,7 @@ Object.assign(Shape, {
     };
   },
 
-  // to virtualDOMNode ==> goes to "stuff" DONE 
+  // to virtualDOMNode ==> goes to "stuff" DONE
   toVDOMNode() {
     return {
       tag: 'path',
