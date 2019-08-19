@@ -6,6 +6,7 @@ import { Token } from './_.js';
 import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
+import { stuff } from './stuff.js'; // TODO -- rename
 
 const Shape = Object.create(GraphicsNode);
 Shape.defineProps(['splitter']);
@@ -27,57 +28,24 @@ Object.assign(Shape, {
     return spline;
   },
 
-  // to virtualDOMNode
-  toVDOMNode() {
-    return {
-      tag: 'path',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': this.type,
-        d: this.toPathString(), // FINE
-        transform: this.transform && this.transform.toString(),
-        class: this.class.toString(),
-      },
-    };
-  },
+  toPathString() {
+    let commands = [];
 
-  // toCurves()? toCurveNodes()?
-  toVDOMCurves() {
-    const nodes = [];
-    const splines = this.children;
-
-    for (let spline of splines) {
-      const segments = spline.children;
-      const curves = spline.curves();
-
-      for (let i = 0; i < curves.length; i += 1) {
-        // this node will be the "hit target" for the curve:
-        nodes.push({
-          tag: 'path',
-          children: [],
-          props: {
-            'data-type': 'curve',
-            'data-key': segments[i].key,
-            d: curves[i].toPathString(),
-            transform: this.transform && this.transform.toString(),
-          },
-        });
-
-        // this node will display the curve stroke:
-        nodes.push({
-          tag: 'path',
-          children: [],
-          props: {
-            'data-type': 'curve-stroke',
-            d: curves[i].toPathString(),
-            transform: this.transform && this.transform.toString(),
-          },
-        });
-      }
+    for (let spline of this.children) {
+      commands.push(
+        spline
+          .commands()
+          .map(command =>
+            command
+              .map(part => (Array.isArray(part) ? part[0] : part))
+              .join(' ')
+          )
+      );
     }
 
-    return nodes;
+    const pathString = commands.map(command => command.join(' ')).join(' ');
+
+    return pathString;
   },
 
   toTags(level) {
@@ -155,24 +123,74 @@ Object.assign(Shape, {
     return tags;
   },
 
-  toPathString() {
-    let commands = [];
+  toComponent() {
+    const wrapper = stuff.wrapper(this);
+    const shape = stuff.shape(this);
+    const curves = stuff.curves(this);
+    const segments = stuff.segments(this);
+    const outerUI = stuff.outerUI(this);
 
-    for (let spline of this.children) {
-      commands.push(
-        spline
-          .commands()
-          .map(command =>
-            command
-              .map(part => (Array.isArray(part) ? part[0] : part))
-              .join(' ')
-          )
-      );
+    wrapper.children.push(shape);
+    wrapper.children.push(curves);
+    wrapper.children.push(segments);
+    wrapper.children.push(outerUI)
+
+    return () => {
+      return wrapper;
+    };
+  },
+
+  // to virtualDOMNode ==> goes to "stuff" DONE 
+  toVDOMNode() {
+    return {
+      tag: 'path',
+      children: [],
+      props: {
+        'data-key': this.key,
+        'data-type': this.type,
+        d: this.toPathString(), // FINE
+        transform: this.transform && this.transform.toString(),
+        class: this.class.toString(),
+      },
+    };
+  },
+
+  // toCurves()? toCurveNodes()? ==> goes to "stuff" DONE
+  toVDOMCurves() {
+    const nodes = [];
+    const splines = this.children;
+
+    for (let spline of splines) {
+      const segments = spline.children;
+      const curves = spline.curves();
+
+      for (let i = 0; i < curves.length; i += 1) {
+        // this node will be the "hit target" for the curve:
+        nodes.push({
+          tag: 'path',
+          children: [],
+          props: {
+            'data-type': 'curve',
+            'data-key': segments[i].key,
+            d: curves[i].toPathString(),
+            transform: this.transform && this.transform.toString(),
+          },
+        });
+
+        // this node will display the curve stroke:
+        nodes.push({
+          tag: 'path',
+          children: [],
+          props: {
+            'data-type': 'curve-stroke',
+            d: curves[i].toPathString(),
+            transform: this.transform && this.transform.toString(),
+          },
+        });
+      }
     }
 
-    const pathString = commands.map(command => command.join(' ')).join(' ');
-
-    return pathString;
+    return nodes;
   },
 });
 

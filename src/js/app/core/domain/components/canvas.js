@@ -24,11 +24,11 @@ const buildTree = (node, vParent = null) => {
 
   if (vParent) {
     const vWrapper = wrap(vNode, node);
-    vParent.children.push(vWrapper);
+    vParent.children.push(vWrapper); // append vWrapper to vParent
   }
 
   for (let child of node.graphicsChildren) {
-    buildTree(child, vNode);
+    buildTree(child, vNode); // append children to vNode (which is inside vWrapper)
   }
 
   return vNode;
@@ -56,7 +56,7 @@ const curves = node => {
   const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
   const radius = diameter / 2;
 
-  const vParts = node.toVDOMCurves();
+  const vParts = node.toVDOMCurves(); // TODO
   const splitter = h('circle', {
     'data-type': 'splitter',
     r: radius,

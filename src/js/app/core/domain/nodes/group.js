@@ -3,6 +3,7 @@ import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
+import { stuff } from './stuff.js'; // TODO -- rename
 
 const Group = Object.create(GraphicsNode);
 
@@ -12,19 +13,6 @@ Object.assign(Group, {
       .bind(this)()
       .set({ type: types.GROUP })
       .set(opts);
-  },
-
-  toVDOMNode() {
-    return {
-      tag: 'g',
-      children: [],
-      props: {
-        'data-key': this.key,
-        'data-type': this.type,
-        transform: this.transform && this.transform.toString(),
-        class: this.class.toString(),
-      },
-    };
   },
 
   toTags(level) {
@@ -62,6 +50,32 @@ Object.assign(Group, {
 
     return tags;
   },
+
+  toVDOMNode() {
+    return {
+      tag: 'g',
+      children: [],
+      props: {
+        'data-key': this.key,
+        'data-type': this.type,
+        transform: this.transform && this.transform.toString(),
+        class: this.class.toString(),
+      },
+    };
+  },
+
+  toComponent() {
+    const wrapper = stuff.wrapper(this);
+    const group = stuff.group(this);
+    const outerUI = stuff.outerUI(this);
+    wrapper.children.push(group);
+    wrapper.children.push(outerUI);
+
+    return () => {
+      group.children = this.children.map(node => node.toComponent()());
+      return wrapper;
+    };
+  }
 });
 
 export { Group };
