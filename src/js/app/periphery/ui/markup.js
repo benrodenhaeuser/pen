@@ -70,24 +70,19 @@ const markup = {
 
   react(info) {
     const markupTree = this.requestSnapshot('markupTree');
+    this.clearTextMarker();
 
-    // optimization: don't handle text markers during animation
     if (info.input.type !== 'mousemove') {
-      this.clearTextMarker();
-    }
 
-    if (
-      this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
-    ) {
-      this.reconcile(markupTree);
-    }
+      if (
+        this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
+      ) {
+        this.reconcile(markupTree);
+      }
 
-    // optimization: don't handle text markers during animation
-    if (info.input.type !== 'mousemove') {
       this.placeTextMarker(markupTree);
+      this.previousMarkupTree = markupTree;
     }
-
-    this.previousMarkupTree = markupTree;
   },
 
   reconcile(markupTree) {
