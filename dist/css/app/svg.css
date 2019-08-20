@@ -62,7 +62,7 @@ line {
 /* frame when shape/group in focus */
 .focus ~ [data-type="outerUI"] > [data-type="frame"] {
   stroke: #5d6be2;
-  stroke-width: 3px;
+  stroke-width: 2px;
 }
 
 /* frame when shape/group selected */

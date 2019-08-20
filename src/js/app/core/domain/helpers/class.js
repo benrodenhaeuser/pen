@@ -27,12 +27,12 @@ const Class = {
     return this.list.indexOf(className) >= 0;
   },
 
-  // return value: new Class instance, does not mutate this
+  // return value: new Class instance, does not mutate this (or its list)
   add(className) {
     return Class.create([...this.list, className]);
   },
 
-  // return value: new Class instance, does not mutate this
+  // return value: new Class instance, does not mutate this (or its list)
   remove(className) {
     return Class.create(this.list.filter(elem => elem !== className));
   },
