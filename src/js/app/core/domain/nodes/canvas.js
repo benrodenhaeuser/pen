@@ -29,7 +29,7 @@ Object.assign(Canvas, {
     const focus = this.findFocus();
 
     if (focus) {
-      focus.class.remove('focus');
+      focus.class = focus.class.remove('focus');
       focus.invalidateCache();
     }
   },
@@ -42,7 +42,7 @@ Object.assign(Canvas, {
     const selected = this.findSelection();
 
     if (selected) {
-      selected.class.remove('selected');
+      selected.class = selected.class.remove('selected');
       selected.invalidateCache();
     }
 
@@ -57,7 +57,7 @@ Object.assign(Canvas, {
     const pen = this.findPen();
 
     if (pen) {
-      pen.class.remove('pen');
+      pen.class = pen.class.remove('pen');
       this.removePenTip();
       pen.invalidateCache();
     }
@@ -71,8 +71,8 @@ Object.assign(Canvas, {
     const penTip = this.findPenTip();
 
     if (penTip) {
-      penTip.class.remove('tip');
-      penTip.parent.class.remove('containsTip');
+      penTip.class = penTip.class.remove('tip');
+      penTip.parent.class = penTip.parent.class.remove('containsTip');
     }
   },
 
@@ -82,7 +82,7 @@ Object.assign(Canvas, {
 
   removeFrontier() {
     for (let node of this.findFrontier()) {
-      node.class.remove('frontier');
+      node.class = node.class.remove('frontier');
       node.invalidateCache();
     }
   },

@@ -5,11 +5,9 @@ const Class = {
 
   init(classNames) {
     if (classNames instanceof Array) {
-      this.set = new Set(classNames);
-    } else if (classNames instanceof Set) {
-      this.set = classNames;
+      this.list = [...classNames];
     } else {
-      throw new Error('Create Class instances from array or set');
+      throw new Error('Create Class instances from array!');
     }
 
     return this;
@@ -17,27 +15,26 @@ const Class = {
 
   // return value: string
   toString() {
-    return Array.from(this.set).join(' ');
+    return this.list.join(' ');
   },
 
   toJSON() {
-    return Array.from(this.set);
+    return this.list;
   },
 
   // return value: boolean
   includes(className) {
-    return this.set.has(className);
+    return this.list.indexOf(className) >= 0;
   },
 
-  // return value: new Class instance
+  // return value: new Class instance, does not mutate this
   add(className) {
-    return Class.create(this.set.add(className));
+    return Class.create([...this.list, className]);
   },
 
-  // return value: new Class instance
+  // return value: new Class instance, does not mutate this
   remove(className) {
-    this.set.delete(className);
-    return Class.create(this.set);
+    return Class.create(this.list.filter(elem => elem !== className));
   },
 };
 

@@ -24,11 +24,9 @@
 
     init(classNames) {
       if (classNames instanceof Array) {
-        this.set = new Set(classNames);
-      } else if (classNames instanceof Set) {
-        this.set = classNames;
+        this.list = [...classNames];
       } else {
-        throw new Error('Create Class instances from array or set');
+        throw new Error('Create Class instances from array!');
       }
 
       return this;
@@ -36,27 +34,26 @@
 
     // return value: string
     toString() {
-      return Array.from(this.set).join(' ');
+      return this.list.join(' ');
     },
 
     toJSON() {
-      return Array.from(this.set);
+      return this.list;
     },
 
     // return value: boolean
     includes(className) {
-      return this.set.has(className);
+      return this.list.indexOf(className) >= 0;
     },
 
-    // return value: new Class instance
+    // return value: new Class instance, does not mutate this
     add(className) {
-      return Class.create(this.set.add(className));
+      return Class.create([...this.list, className]);
     },
 
-    // return value: new Class instance
+    // return value: new Class instance, does not mutate this
     remove(className) {
-      this.set.delete(className);
-      return Class.create(this.set);
+      return Class.create(this.list.filter(elem => elem !== className));
     },
   };
 
@@ -4290,7 +4287,7 @@
       const focus = this.findFocus();
 
       if (focus) {
-        focus.class.remove('focus');
+        focus.class = focus.class.remove('focus');
         focus.invalidateCache();
       }
     },
@@ -4303,7 +4300,7 @@
       const selected = this.findSelection();
 
       if (selected) {
-        selected.class.remove('selected');
+        selected.class = selected.class.remove('selected');
         selected.invalidateCache();
       }
 
@@ -4318,7 +4315,7 @@
       const pen = this.findPen();
 
       if (pen) {
-        pen.class.remove('pen');
+        pen.class = pen.class.remove('pen');
         this.removePenTip();
         pen.invalidateCache();
       }
@@ -4332,8 +4329,8 @@
       const penTip = this.findPenTip();
 
       if (penTip) {
-        penTip.class.remove('tip');
-        penTip.parent.class.remove('containsTip');
+        penTip.class = penTip.class.remove('tip');
+        penTip.parent.class = penTip.parent.class.remove('containsTip');
       }
     },
 
@@ -4343,7 +4340,7 @@
 
     removeFrontier() {
       for (let node of this.findFrontier()) {
-        node.class.remove('frontier');
+        node.class = node.class.remove('frontier');
         node.invalidateCache();
       }
     },
