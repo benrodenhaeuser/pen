@@ -3855,6 +3855,10 @@
 
           set(value) {
             this.props[propName] = value;
+
+            if (this.isSceneNode()) {
+              this.invalidateCache();
+            }
           },
         });
       }
@@ -3974,10 +3978,10 @@
         if (node.isGroupOrShape()) {
           node.height = node.parent.height + 1;
         }
+      }
 
-        if (node.isGraphicsNode()) {
-          node.invalidateCache();
-        }
+      if (this.isSceneNode()) {
+        this.invalidateCache();
       }
 
       return this;
@@ -3999,10 +4003,10 @@
       if (index !== -1) {
         this.children.splice(index, 1);
         node.parent = null;
-      }
 
-      if (this.isGraphicsNode()) {
-        this.invalidateCache();
+        if (this.isSceneNode()) {
+          this.invalidateCache();
+        }
       }
     },
 
@@ -4026,6 +4030,19 @@
     isGroupOrShape() {
       return [types.GROUP, types.SHAPE].includes(this.type);
     },
+
+    isSceneNode() {
+      return [
+        types.CANVAS,
+        types.GROUP,
+        types.SHAPE,
+        types.SPLINE,
+        types.SEGMENT,
+        types.ANCHOR,
+        types.HANDLEIN,
+        types.HANDLEOUT
+      ].includes(this.type);
+    }
   });
 
   Object.defineProperty(Node$$1, 'root', {
@@ -4070,7 +4087,27 @@
     },
   });
 
+  Object.defineProperty(Node$$1, 'graphicsChildren', {
+    get() {
+      return this.children.filter(node => node.isGraphicsNode());
+    },
+  });
+
+  Object.defineProperty(Node$$1, 'graphicsAncestors', {
+    get() {
+      return this.ancestors.filter(node => node.isGraphicsNode());
+    },
+  });
+
   const SceneNode$$1 = Object.create(Node$$1);
+
+  Object.assign(SceneNode$$1, {
+    invalidateCache() {
+      for (let ancestor of this.graphicsAncestors) {
+        ancestor.cache = {};
+      }
+    },
+  });
 
   Object.defineProperty(SceneNode$$1, 'canvas', {
     get() {
@@ -4187,14 +4224,8 @@
       return bounds;
     },
 
-    invalidateCache() {
-      for (let ancestor of this.graphicsAncestors) {
-        ancestor.cache = {};
-      }
-    },
-
     renderElement() {
-      return (this.component)();
+      return this.component();
     },
   });
 
@@ -4252,18 +4283,6 @@
     },
   });
 
-  Object.defineProperty(GraphicsNode$$1, 'graphicsChildren', {
-    get() {
-      return this.children.filter(node => node.isGraphicsNode());
-    },
-  });
-
-  Object.defineProperty(GraphicsNode$$1, 'graphicsAncestors', {
-    get() {
-      return this.ancestors.filter(node => node.isGraphicsNode());
-    },
-  });
-
   const Canvas$$1 = Object.create(GraphicsNode$$1);
   Canvas$$1.defineProps(['viewBox', 'xmlns']);
 
@@ -4288,7 +4307,6 @@
 
       if (focus) {
         focus.class = focus.class.remove('focus');
-        focus.invalidateCache();
       }
     },
 
@@ -4301,7 +4319,6 @@
 
       if (selected) {
         selected.class = selected.class.remove('selected');
-        selected.invalidateCache();
       }
 
       this.updateFrontier();
@@ -4317,7 +4334,6 @@
       if (pen) {
         pen.class = pen.class.remove('pen');
         this.removePenTip();
-        pen.invalidateCache();
       }
     },
 
@@ -4341,7 +4357,6 @@
     removeFrontier() {
       for (let node of this.findFrontier()) {
         node.class = node.class.remove('frontier');
-        node.invalidateCache();
       }
     },
 
@@ -4351,20 +4366,18 @@
       if (this.findSelection() && this.findSelection() !== this) {
         const selected = this.findSelection();
         selected.class = selected.class.add('frontier');
-        selected.invalidateCache();
+
         let node = selected;
 
         do {
           for (let sibling of node.siblings) {
             sibling.class = sibling.class.add('frontier');
-            sibling.invalidateCache();
           }
           node = node.parent;
         } while (node.parent.type !== types.DOC);
       } else {
         for (let child of this.children) {
           child.class = child.class.add('frontier');
-          child.invalidateCache();
         }
       }
     },
@@ -4372,15 +4385,10 @@
     updateBounds(graphicsNode) {
       for (let child of graphicsNode.children) {
         child.computeBounds();
-
-        if (child.isGraphicsNode()) {
-          child.invalidateCache();
-        }
       }
 
       for (let ancestor of graphicsNode.graphicsAncestors) {
         ancestor.computeBounds();
-        ancestor.invalidateCache();
       }
     },
 
@@ -5729,16 +5737,6 @@
   };
 
   const updates = {
-    after(state, input) {
-      const target = state.aux.target;
-
-      if (!target) {
-        return;
-      }
-
-      target.invalidateCache();
-    },
-
     // SELECTION
 
     focus(state, input) {
@@ -6155,7 +6153,6 @@
 
         const update = updates[transition.do]; // a function, or undefined
         update && update(this.state, input);
-        updates.after(this.state, input);
 
         this.publish();
       }
@@ -18790,6 +18787,223 @@
     return text.join('').replace(/%20/g, ' ');
   };
 
+  const DiffMatchPatch = diff_match_patch;
+
+  const markup = {
+    init() {
+      this.name = 'markup';
+      this.mountPoint = document.querySelector(`#markup`);
+
+      const markupTree = this.requestSnapshot('markupTree');
+
+      this.markupEditor = CodeMirror(this.mountPoint, {
+        lineNumbers: true,
+        lineWrapping: true,
+        mode: 'xml',
+        value: markupTree.toMarkupString(),
+      });
+      this.markupDoc = this.markupEditor.getDoc();
+      this.previousMarkupTree = markupTree;
+
+      return this;
+    },
+
+    bindEvents(func) {
+      this.bindCodemirrorEvents();
+      this.bindCustomEvents(func);
+    },
+
+    bindCodemirrorEvents() {
+      this.markupEditor.on('change', (instance, obj) => {
+        if (obj.origin !== 'reconcile') {
+          window.dispatchEvent(new CustomEvent('userChangedMarkup'));
+        }
+      });
+
+      this.markupEditor.on('beforeSelectionChange', (instance, obj) => {
+        if (obj.origin !== undefined) {
+          obj.update(obj.ranges);
+          const cursorPosition = obj.ranges[0].anchor;
+
+          if (cursorPosition) {
+            window.dispatchEvent(
+              new CustomEvent('userSelectedPosition', { detail: cursorPosition })
+            );
+          }
+        }
+      });
+    },
+
+    bindCustomEvents(func) {
+      window.addEventListener('userChangedMarkup', event => {
+        func({
+          source: this.name,
+          type: 'userChangedMarkup',
+          value: this.markupEditor.getValue(),
+        });
+      });
+
+      window.addEventListener('userSelectedPosition', event => {
+        const node = this.previousMarkupTree.findTokenByPosition(event.detail);
+
+        if (node) {
+          func({
+            source: this.name,
+            type: 'userSelectedMarkupNode',
+            key: node.key, // note that we are only interested in the key!
+          });
+        }
+      });
+    },
+
+    react(info) {
+      const markupTree = this.requestSnapshot('markupTree');
+
+      // optimization: don't handle text markers during animation
+      if (info.input.type !== 'mousemove') {
+        this.clearTextMarker();
+      }
+
+      if (
+        this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
+      ) {
+        this.reconcile(markupTree);
+      }
+
+      // optimization: don't handle text markers during animation
+      if (info.input.type !== 'mousemove') {
+        this.placeTextMarker(markupTree);
+      }
+
+      this.previousMarkupTree = markupTree;
+    },
+
+    reconcile(markupTree) {
+      this.patchLines(
+        this.diffLines(this.markupDoc.getValue(), markupTree.toMarkupString())
+      );
+    },
+
+    diffLines(text1, text2) {
+      const dmp = new DiffMatchPatch();
+      const a = dmp.diff_linesToChars_(text1, text2);
+      const lineText1 = a.chars1;
+      const lineText2 = a.chars2;
+      const lineArray = a.lineArray;
+      const diffs = dmp.diff_main(lineText1, lineText2, false);
+      dmp.diff_charsToLines_(diffs, lineArray);
+      return diffs;
+    },
+
+    patchLines(diffs) {
+      let currentLine = 0;
+      let i = 0;
+
+      while (i < diffs.length) {
+        const diff = diffs[i];
+        const instruction = diff[0];
+        const text = diff[1];
+
+        switch (instruction) {
+          case 0:
+            currentLine += this.countLines(diff);
+            i += 1;
+
+            break;
+          case -1:
+            const nextDiff = diffs[i + 1];
+            const nextInstruction = nextDiff && nextDiff[0];
+            const nextText = nextDiff && nextDiff[1];
+
+            if (nextInstruction === 1) {
+              // optimization: replace line instead of delete + insert whwnever possible
+              this.replaceLines(currentLine, this.countLines(diff), nextText);
+              currentLine += this.countLines(nextDiff);
+              i += 2;
+            } else {
+              this.deleteLines(currentLine, this.countLines(diff));
+              i += 1;
+            }
+
+            break;
+          case 1:
+            this.insertLines(currentLine, text);
+            currentLine += this.countLines(diff);
+            i += 1;
+
+            break;
+        }
+      }
+    },
+
+    countLines(diff) {
+      return diff[1].match(/\n/g).length;
+    },
+
+    deleteLines(lineNumber, linesCount) {
+      const startLine = lineNumber;
+      const endLine = lineNumber + linesCount;
+
+      this.markupDoc.replaceRange(
+        '',
+        { line: startLine, ch: 0 },
+        { line: endLine, ch: 0 },
+        'reconcile'
+      );
+    },
+
+    insertLines(lineNumber, text) {
+      this.markupDoc.replaceRange(
+        text,
+        { line: lineNumber, ch: 0 },
+        { line: lineNumber, ch: 0 },
+        'reconcile'
+      );
+    },
+
+    replaceLines(lineNumber, linesCount, text) {
+      const startLine = lineNumber;
+      const endLine = lineNumber + linesCount;
+
+      this.markupDoc.replaceRange(
+        text,
+        { line: startLine, ch: 0 },
+        { line: endLine, ch: 0 },
+        'reconcile'
+      );
+    },
+
+    placeTextMarker(markupTree) {
+      let cssClass;
+
+      let node = markupTree.findDescendantByClass('selected');
+
+      if (node) {
+        cssClass = 'selected-markup';
+        this.setMarker(node, cssClass);
+      } else {
+        node = markupTree.findDescendantByClass('tip');
+        if (node) {
+          cssClass = 'tip-markup';
+          this.setMarker(node, cssClass);
+        }
+      }
+    },
+
+    setMarker(node, cssClass) {
+      const range = node.getRange();
+      this.textMarker = this.markupDoc.markText(...range, {
+        className: cssClass,
+      });
+    },
+
+    clearTextMarker() {
+      if (this.textMarker) {
+        this.textMarker.clear();
+      }
+    },
+  };
+
   const tools = Object.assign(Object.create(UIModule), {
     init() {
       this.name = 'tools';
@@ -18899,7 +19113,7 @@
 
   const modules = [
     canvas$1,
-    // markup,
+    markup,
     tools,
     message,
     keyboard,

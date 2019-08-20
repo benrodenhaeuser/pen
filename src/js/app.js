@@ -9,7 +9,7 @@ import { keyboard } from './app/periphery/_.js';
 
 const modules = [
   canvas,
-  // markup,
+  markup,
   tools,
   message,
   keyboard,

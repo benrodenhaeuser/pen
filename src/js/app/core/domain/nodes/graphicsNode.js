@@ -116,14 +116,8 @@ Object.assign(GraphicsNode, {
     return bounds;
   },
 
-  invalidateCache() {
-    for (let ancestor of this.graphicsAncestors) {
-      ancestor.cache = {};
-    }
-  },
-
   renderElement() {
-    return (this.component)();
+    return this.component();
   },
 });
 
@@ -178,18 +172,6 @@ Object.defineProperty(GraphicsNode, 'component', {
 
   set(value) {
     this.cache.component = value;
-  },
-});
-
-Object.defineProperty(GraphicsNode, 'graphicsChildren', {
-  get() {
-    return this.children.filter(node => node.isGraphicsNode());
-  },
-});
-
-Object.defineProperty(GraphicsNode, 'graphicsAncestors', {
-  get() {
-    return this.ancestors.filter(node => node.isGraphicsNode());
   },
 });
 

@@ -10,16 +10,6 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
-  after(state, input) {
-    const target = state.aux.target;
-
-    if (!target) {
-      return;
-    }
-
-    target.invalidateCache();
-  },
-
   // SELECTION
 
   focus(state, input) {

@@ -8,6 +8,10 @@ const ProtoNode = {
 
         set(value) {
           this.props[propName] = value;
+
+          if (this.isSceneNode()) {
+            this.invalidateCache();
+          }
         },
       });
     }

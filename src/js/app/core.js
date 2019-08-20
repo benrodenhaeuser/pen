@@ -25,7 +25,6 @@ const core = {
 
       const update = updates[transition.do]; // a function, or undefined
       update && update(this.state, input);
-      updates.after(this.state, input);
 
       this.publish();
     }

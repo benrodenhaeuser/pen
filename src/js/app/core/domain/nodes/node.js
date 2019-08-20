@@ -98,10 +98,10 @@ Object.assign(Node, {
       if (node.isGroupOrShape()) {
         node.height = node.parent.height + 1;
       }
+    }
 
-      if (node.isGraphicsNode()) {
-        node.invalidateCache();
-      }
+    if (this.isSceneNode()) {
+      this.invalidateCache();
     }
 
     return this;
@@ -123,10 +123,10 @@ Object.assign(Node, {
     if (index !== -1) {
       this.children.splice(index, 1);
       node.parent = null;
-    }
 
-    if (this.isGraphicsNode()) {
-      this.invalidateCache();
+      if (this.isSceneNode()) {
+        this.invalidateCache();
+      }
     }
   },
 
@@ -150,6 +150,19 @@ Object.assign(Node, {
   isGroupOrShape() {
     return [types.GROUP, types.SHAPE].includes(this.type);
   },
+
+  isSceneNode() {
+    return [
+      types.CANVAS,
+      types.GROUP,
+      types.SHAPE,
+      types.SPLINE,
+      types.SEGMENT,
+      types.ANCHOR,
+      types.HANDLEIN,
+      types.HANDLEOUT
+    ].includes(this.type);
+  }
 });
 
 Object.defineProperty(Node, 'root', {
@@ -193,5 +206,18 @@ Object.defineProperty(Node, 'lastChild', {
     return this.children[this.children.length - 1];
   },
 });
+
+Object.defineProperty(Node, 'graphicsChildren', {
+  get() {
+    return this.children.filter(node => node.isGraphicsNode());
+  },
+});
+
+Object.defineProperty(Node, 'graphicsAncestors', {
+  get() {
+    return this.ancestors.filter(node => node.isGraphicsNode());
+  },
+});
+
 
 export { Node };
