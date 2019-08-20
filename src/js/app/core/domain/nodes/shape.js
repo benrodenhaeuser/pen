@@ -114,9 +114,7 @@ Object.assign(Shape, {
     }
 
     open.push(
-      Line.create({ indent: this.height }).mount(
-        Token.create({ markup: '/>' })
-      )
+      Line.create({ indent: this.height }).mount(Token.create({ markup: '/>' }))
     );
 
     return () => open;

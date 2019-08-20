@@ -160,9 +160,9 @@ Object.assign(Node, {
       types.SEGMENT,
       types.ANCHOR,
       types.HANDLEIN,
-      types.HANDLEOUT
+      types.HANDLEOUT,
     ].includes(this.type);
-  }
+  },
 });
 
 Object.defineProperty(Node, 'root', {
@@ -218,6 +218,5 @@ Object.defineProperty(Node, 'graphicsAncestors', {
     return this.ancestors.filter(node => node.isGraphicsNode());
   },
 });
-
 
 export { Node };

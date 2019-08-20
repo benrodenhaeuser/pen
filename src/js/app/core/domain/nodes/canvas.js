@@ -122,34 +122,28 @@ Object.assign(Canvas, {
   },
 
   toTags() {
-    const open = Line
-      .create({ indent: 0 })
-      .mount(
-        Token.create({
-          markup: `<svg xmlns="${
-            this.xmlns
-          }" viewBox="${this.viewBox.toString()}">`,
-          key: this.key,
-        })
-      );
+    const open = Line.create({ indent: 0 }).mount(
+      Token.create({
+        markup: `<svg xmlns="${
+          this.xmlns
+        }" viewBox="${this.viewBox.toString()}">`,
+        key: this.key,
+      })
+    );
 
-    const close = Line
-      .create({ indent: 0 })
-      .mount(
-        Token.create({
-          markup: '</svg>',
-          key: this.key,
-        })
-      );
+    const close = Line.create({ indent: 0 }).mount(
+      Token.create({
+        markup: '</svg>',
+        key: this.key,
+      })
+    );
 
     return () => {
-      return MarkupRoot
-        .create()
-        .mount(
-          open,
-          ...this.children.flatMap(child => child.tags()),
-          close
-        );
+      return MarkupRoot.create().mount(
+        open,
+        ...this.children.flatMap(child => child.tags()),
+        close
+      );
     };
   },
 

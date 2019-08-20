@@ -4044,9 +4044,9 @@
         types.SEGMENT,
         types.ANCHOR,
         types.HANDLEIN,
-        types.HANDLEOUT
+        types.HANDLEOUT,
       ].includes(this.type);
-    }
+    },
   });
 
   Object.defineProperty(Node$$1, 'root', {
@@ -4403,34 +4403,28 @@
     },
 
     toTags() {
-      const open = Line$$1
-        .create({ indent: 0 })
-        .mount(
-          Token$$1.create({
-            markup: `<svg xmlns="${
-            this.xmlns
-          }" viewBox="${this.viewBox.toString()}">`,
-            key: this.key,
-          })
-        );
+      const open = Line$$1.create({ indent: 0 }).mount(
+        Token$$1.create({
+          markup: `<svg xmlns="${
+          this.xmlns
+        }" viewBox="${this.viewBox.toString()}">`,
+          key: this.key,
+        })
+      );
 
-      const close = Line$$1
-        .create({ indent: 0 })
-        .mount(
-          Token$$1.create({
-            markup: '</svg>',
-            key: this.key,
-          })
-        );
+      const close = Line$$1.create({ indent: 0 }).mount(
+        Token$$1.create({
+          markup: '</svg>',
+          key: this.key,
+        })
+      );
 
       return () => {
-        return MarkupRoot$$1
-          .create()
-          .mount(
-            open,
-            ...this.children.flatMap(child => child.tags()),
-            close
-          );
+        return MarkupRoot$$1.create().mount(
+          open,
+          ...this.children.flatMap(child => child.tags()),
+          close
+        );
       };
     },
 
@@ -4467,25 +4461,21 @@
         openMarkup = `<g>`;
       }
 
-      const open = Line$$1
-        .create({ indent: this.height })
-        .mount(
-          Token$$1.create({
-            markup: openMarkup,
-            key: this.key,
-            class: this.class,
-          })
-        );
+      const open = Line$$1.create({ indent: this.height }).mount(
+        Token$$1.create({
+          markup: openMarkup,
+          key: this.key,
+          class: this.class,
+        })
+      );
 
-      const close = Line$$1
-        .create({ indent: this.height })
-        .mount(
-          Token$$1.create({
-            markup: '</g>',
-            key: this.key,
-            class: this.class,
-          })
-        );
+      const close = Line$$1.create({ indent: this.height }).mount(
+        Token$$1.create({
+          markup: '</g>',
+          key: this.key,
+          class: this.class,
+        })
+      );
 
       return () => [open, ...this.children.flatMap(child => child.tags()), close];
     },
@@ -4610,9 +4600,7 @@
       }
 
       open.push(
-        Line$$1.create({ indent: this.height }).mount(
-          Token$$1.create({ markup: '/>' })
-        )
+        Line$$1.create({ indent: this.height }).mount(Token$$1.create({ markup: '/>' }))
       );
 
       return () => open;
@@ -5922,8 +5910,7 @@
     addSegment(state, input) {
       state.aux.target =
         state.canvas.findPen() || state.canvas.mountShape().placePen();
-      const spline =
-        state.aux.target.lastChild || state.aux.target.mountSpline();
+      const spline = state.aux.target.lastChild || state.aux.target.mountSpline();
       const segment = spline.mountSegment();
 
       segment
@@ -18872,7 +18859,6 @@
       this.clearTextMarker();
 
       if (info.input.type !== 'mousemove') {
-
         if (
           this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
         ) {

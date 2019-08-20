@@ -192,8 +192,7 @@ const updates = {
   addSegment(state, input) {
     state.aux.target =
       state.canvas.findPen() || state.canvas.mountShape().placePen();
-    const spline =
-      state.aux.target.lastChild || state.aux.target.mountSpline();
+    const spline = state.aux.target.lastChild || state.aux.target.mountSpline();
     const segment = spline.mountSegment();
 
     segment

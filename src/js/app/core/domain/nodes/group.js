@@ -23,25 +23,21 @@ Object.assign(Group, {
       openMarkup = `<g>`;
     }
 
-    const open = Line
-      .create({ indent: this.height })
-      .mount(
-        Token.create({
-          markup: openMarkup,
-          key: this.key,
-          class: this.class,
-        })
-      );
+    const open = Line.create({ indent: this.height }).mount(
+      Token.create({
+        markup: openMarkup,
+        key: this.key,
+        class: this.class,
+      })
+    );
 
-    const close = Line
-      .create({ indent: this.height })
-      .mount(
-        Token.create({
-          markup: '</g>',
-          key: this.key,
-          class: this.class,
-        })
-      );
+    const close = Line.create({ indent: this.height }).mount(
+      Token.create({
+        markup: '</g>',
+        key: this.key,
+        class: this.class,
+      })
+    );
 
     return () => [open, ...this.children.flatMap(child => child.tags()), close];
   },

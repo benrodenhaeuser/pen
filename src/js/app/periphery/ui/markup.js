@@ -73,7 +73,6 @@ const markup = {
     this.clearTextMarker();
 
     if (info.input.type !== 'mousemove') {
-
       if (
         this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
       ) {
