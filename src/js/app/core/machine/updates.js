@@ -123,13 +123,13 @@ const updates = {
     }
 
     if (node.type === types.ANCHOR) {
-      node.parent.remove();
+      node.parent.unmount();
     } else if (
       [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
         node.type
       )
     ) {
-      node.remove();
+      node.unmount();
     }
   },
 
@@ -191,13 +191,13 @@ const updates = {
 
   addSegment(state, input) {
     state.aux.target =
-      state.canvas.findPen() || state.canvas.appendShape().placePen();
+      state.canvas.findPen() || state.canvas.mountShape().placePen();
     const spline =
-      state.aux.target.lastChild || state.aux.target.appendSpline();
-    const segment = spline.appendSegment();
+      state.aux.target.lastChild || state.aux.target.mountSpline();
+    const segment = spline.mountSegment();
 
     segment
-      .appendAnchor(
+      .mountAnchor(
         Vector.create(input.x, input.y).transformToLocal(state.aux.target)
       )
       .placePenTip();
@@ -206,11 +206,11 @@ const updates = {
   setHandles(state, input) {
     state.aux.target = state.canvas.findPen();
     const segment = state.aux.target.lastChild.lastChild;
-    const handleIn = segment.handleIn || segment.appendHandleIn();
+    const handleIn = segment.handleIn || segment.mountHandleIn();
     handleIn.vector = Vector.create(input.x, input.y).transformToLocal(
       state.aux.target
     );
-    const handleOut = segment.handleOut || segment.appendHandleOut();
+    const handleOut = segment.handleOut || segment.mountHandleOut();
     handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
     handleIn.placePenTip();
   },
@@ -302,9 +302,9 @@ const updates = {
     const right = splitCurves.right;
 
     const segment = Segment.create();
-    const anchor = segment.appendAnchor();
-    const handleIn = segment.appendHandleIn();
-    const handleOut = segment.appendHandleOut();
+    const anchor = segment.mountAnchor();
+    const handleIn = segment.mountHandleIn();
+    const handleOut = segment.mountHandleOut();
 
     spline.insertChild(segment, insertionIndex);
 
@@ -375,7 +375,7 @@ const updates = {
     for (let id of input.data.docIDs) {
       const identNode = Identifier.create();
       identNode._id = id;
-      state.docs.append(identNode);
+      state.docs.mount(identNode);
     }
   },
 

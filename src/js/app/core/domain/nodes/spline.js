@@ -24,9 +24,9 @@ Object.assign(Spline, {
       .set(opts);
   },
 
-  appendSegment() {
+  mountSegment() {
     const segment = Segment.create();
-    this.append(segment);
+    this.mount(segment);
     return segment;
   },
 

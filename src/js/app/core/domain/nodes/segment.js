@@ -14,24 +14,24 @@ Object.assign(Segment, {
       .set(opts);
   },
 
-  appendAnchor(vector) {
+  mountAnchor(vector) {
     const anchor = Anchor.create();
     anchor.vector = vector;
-    this.append(anchor);
+    this.mount(anchor);
     return anchor;
   },
 
-  appendHandleIn(vector) {
+  mountHandleIn(vector) {
     const handleIn = HandleIn.create();
     handleIn.vector = vector;
-    this.append(handleIn);
+    this.mount(handleIn);
     return handleIn;
   },
 
-  appendHandleOut(vector) {
+  mountHandleOut(vector) {
     const handleOut = HandleOut.create();
     handleOut.vector = vector;
-    this.append(handleOut);
+    this.mount(handleOut);
     return handleOut;
   },
 });

@@ -25,7 +25,7 @@ Object.assign(Group, {
 
     const open = Line
       .create({ indent: this.height })
-      .append(
+      .mount(
         Token.create({
           markup: openMarkup,
           key: this.key,
@@ -35,7 +35,7 @@ Object.assign(Group, {
 
     const close = Line
       .create({ indent: this.height })
-      .append(
+      .mount(
         Token.create({
           markup: '</g>',
           key: this.key,

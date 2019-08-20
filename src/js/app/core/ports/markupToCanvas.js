@@ -58,11 +58,11 @@ const buildTree = ($node, node) => {
 
     if ($child instanceof SVGGElement) {
       child = Group.create();
-      node.append(child);
+      node.mount(child);
       buildTree($child, child);
     } else {
       child = buildShapeTree($child);
-      node.append(child);
+      node.mount(child);
     }
   }
 };
@@ -121,7 +121,7 @@ const buildShapeTree = $geometryNode => {
   const pathSequences = sequences(pathCommands);
 
   for (let sequence of pathSequences) {
-    shape.append(buildSplineTree(sequence));
+    shape.mount(buildSplineTree(sequence));
   }
 
   return shape;
@@ -130,7 +130,7 @@ const buildShapeTree = $geometryNode => {
 const buildSplineTree = sequence => {
   const spline = Spline.create();
   for (let segment of buildSegmentList(sequence)) {
-    spline.append(segment);
+    spline.mount(segment);
   }
 
   return spline;
@@ -147,7 +147,7 @@ const buildSegmentList = commands => {
   segments[0] = Segment.create();
   const child = Anchor.create();
   child.vector = Vector.create(commands[0].x, commands[0].y);
-  segments[0].append(child);
+  segments[0].mount(child);
 
   for (let i = 1; i < commands.length; i += 1) {
     const command = commands[i];
@@ -156,20 +156,20 @@ const buildSegmentList = commands => {
 
     const anchor = Anchor.create();
     anchor.vector = Vector.create(command.x, command.y);
-    currSeg.append(anchor);
+    currSeg.mount(anchor);
 
     if (command.x1 && command.x2) {
       const handleOut = HandleOut.create();
       handleOut.vector = Vector.create(command.x1, command.y1);
-      prevSeg.append(handleOut);
+      prevSeg.mount(handleOut);
 
       const handleIn = HandleIn.create();
       handleIn.vector = Vector.create(command.x2, command.y2);
-      currSeg.append(handleIn);
+      currSeg.mount(handleIn);
     } else if (command.x1) {
       const handleIn = HandleIn.create();
       handleIn.vector = Vector.create(command.x1, command.y1);
-      currSeg.append(handleIn);
+      currSeg.mount(handleIn);
     }
 
     segments[i] = currSeg;

@@ -90,7 +90,7 @@ Object.assign(Node, {
     });
   },
 
-  append(...nodes) {
+  mount(...nodes) {
     for (let node of nodes) {
       this.children = this.children.concat([node]);
       node.parent = this;
@@ -113,11 +113,11 @@ Object.assign(Node, {
     this.parent.children.splice(index, 1, node);
   },
 
-  remove() {
-    this.parent.removeChild(this);
+  unmount() {
+    this.parent.unmountChild(this);
   },
 
-  removeChild(node) {
+  unmountChild(node) {
     const index = this.children.indexOf(node);
 
     if (index !== -1) {

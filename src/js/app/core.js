@@ -27,6 +27,8 @@ const core = {
       update && update(this.state, input);
 
       this.publish();
+
+      // console.log('DOM nodes', document.getElementsByTagName('*').length);
     }
   },
 

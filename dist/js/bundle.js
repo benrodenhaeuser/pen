@@ -3970,7 +3970,7 @@
       });
     },
 
-    append(...nodes) {
+    mount(...nodes) {
       for (let node of nodes) {
         this.children = this.children.concat([node]);
         node.parent = this;
@@ -3993,11 +3993,11 @@
       this.parent.children.splice(index, 1, node);
     },
 
-    remove() {
-      this.parent.removeChild(this);
+    unmount() {
+      this.parent.unmountChild(this);
     },
 
-    removeChild(node) {
+    unmountChild(node) {
       const index = this.children.indexOf(node);
 
       if (index !== -1) {
@@ -4392,16 +4392,16 @@
       }
     },
 
-    appendShape() {
+    mountShape() {
       const shape = Shape$$1.create();
-      this.append(shape);
+      this.mount(shape);
       return shape;
     },
 
     toTags() {
       const open = Line$$1
         .create({ indent: 0 })
-        .append(
+        .mount(
           Token$$1.create({
             markup: `<svg xmlns="${
             this.xmlns
@@ -4412,7 +4412,7 @@
 
       const close = Line$$1
         .create({ indent: 0 })
-        .append(
+        .mount(
           Token$$1.create({
             markup: '</svg>',
             key: this.key,
@@ -4422,7 +4422,7 @@
       return () => {
         return MarkupRoot$$1
           .create()
-          .append(
+          .mount(
             open,
             ...this.children.flatMap(child => child.tags()),
             close
@@ -4465,7 +4465,7 @@
 
       const open = Line$$1
         .create({ indent: this.height })
-        .append(
+        .mount(
           Token$$1.create({
             markup: openMarkup,
             key: this.key,
@@ -4475,7 +4475,7 @@
 
       const close = Line$$1
         .create({ indent: this.height })
-        .append(
+        .mount(
           Token$$1.create({
             markup: '</g>',
             key: this.key,
@@ -4514,9 +4514,9 @@
         .set(opts);
     },
 
-    appendSpline() {
+    mountSpline() {
       const spline = Spline$$1.create();
-      this.append(spline);
+      this.mount(spline);
       return spline;
     },
 
@@ -4544,7 +4544,7 @@
       const open = [];
 
       open.push(
-        Line$$1.create({ indent: this.height }).append(
+        Line$$1.create({ indent: this.height }).mount(
           Token$$1.create({
             markup: '<path',
             key: this.key,
@@ -4554,7 +4554,7 @@
       );
 
       open.push(
-        Line$$1.create({ indent: this.height + 1 }).append(
+        Line$$1.create({ indent: this.height + 1 }).mount(
           Token$$1.create({
             markup: 'd="',
           })
@@ -4567,14 +4567,14 @@
         for (let command of commands) {
           const indent = this.height + 2;
 
-          const line = Line$$1.create({ indent: indent }).append(
+          const line = Line$$1.create({ indent: indent }).mount(
             Token$$1.create({
               markup: command[0],
             })
           );
 
           for (let i = 1; i < command.length; i += 1) {
-            line.append(
+            line.mount(
               Token$$1.create({
                 markup: command[i][0], // TODO: ugly
                 key: command[i][1],
@@ -4588,7 +4588,7 @@
       }
 
       open.push(
-        Line$$1.create({ indent: this.height + 1 }).append(
+        Line$$1.create({ indent: this.height + 1 }).mount(
           Token$$1.create({
             markup: '"',
           })
@@ -4597,7 +4597,7 @@
 
       if (this.transform) {
         open.push(
-          Line$$1.create({ indent: this.height + 1 }).append(
+          Line$$1.create({ indent: this.height + 1 }).mount(
             Token$$1.create({
               markup: `transform="${this.transform.toString()}"`,
             })
@@ -4606,7 +4606,7 @@
       }
 
       open.push(
-        Line$$1.create({ indent: this.height }).append(
+        Line$$1.create({ indent: this.height }).mount(
           Token$$1.create({ markup: '/>' })
         )
       );
@@ -4650,9 +4650,9 @@
         .set(opts);
     },
 
-    appendSegment() {
+    mountSegment() {
       const segment = Segment$$1.create();
-      this.append(segment);
+      this.mount(segment);
       return segment;
     },
 
@@ -4777,24 +4777,24 @@
         .set(opts);
     },
 
-    appendAnchor(vector) {
+    mountAnchor(vector) {
       const anchor = Anchor$$1.create();
       anchor.vector = vector;
-      this.append(anchor);
+      this.mount(anchor);
       return anchor;
     },
 
-    appendHandleIn(vector) {
+    mountHandleIn(vector) {
       const handleIn = HandleIn$$1.create();
       handleIn.vector = vector;
-      this.append(handleIn);
+      this.mount(handleIn);
       return handleIn;
     },
 
-    appendHandleOut(vector) {
+    mountHandleOut(vector) {
       const handleOut = HandleOut$$1.create();
       handleOut.vector = vector;
-      this.append(handleOut);
+      this.mount(handleOut);
       return handleOut;
     },
   });
@@ -5083,7 +5083,7 @@
     setProps(node, object);
 
     for (let child of object.children) {
-      node.append(objectToDoc(child));
+      node.mount(objectToDoc(child));
     }
 
     return node;
@@ -5166,11 +5166,11 @@
 
       if ($child instanceof SVGGElement) {
         child = Group$$1.create();
-        node.append(child);
+        node.mount(child);
         buildTree($child, child);
       } else {
         child = buildShapeTree($child);
-        node.append(child);
+        node.mount(child);
       }
     }
   };
@@ -5229,7 +5229,7 @@
     const pathSequences = sequences(pathCommands);
 
     for (let sequence of pathSequences) {
-      shape.append(buildSplineTree(sequence));
+      shape.mount(buildSplineTree(sequence));
     }
 
     return shape;
@@ -5238,7 +5238,7 @@
   const buildSplineTree = sequence => {
     const spline = Spline$$1.create();
     for (let segment of buildSegmentList(sequence)) {
-      spline.append(segment);
+      spline.mount(segment);
     }
 
     return spline;
@@ -5255,7 +5255,7 @@
     segments[0] = Segment$$1.create();
     const child = Anchor$$1.create();
     child.vector = Vector$$1.create(commands[0].x, commands[0].y);
-    segments[0].append(child);
+    segments[0].mount(child);
 
     for (let i = 1; i < commands.length; i += 1) {
       const command = commands[i];
@@ -5264,20 +5264,20 @@
 
       const anchor = Anchor$$1.create();
       anchor.vector = Vector$$1.create(command.x, command.y);
-      currSeg.append(anchor);
+      currSeg.mount(anchor);
 
       if (command.x1 && command.x2) {
         const handleOut = HandleOut$$1.create();
         handleOut.vector = Vector$$1.create(command.x1, command.y1);
-        prevSeg.append(handleOut);
+        prevSeg.mount(handleOut);
 
         const handleIn = HandleIn$$1.create();
         handleIn.vector = Vector$$1.create(command.x2, command.y2);
-        currSeg.append(handleIn);
+        currSeg.mount(handleIn);
       } else if (command.x1) {
         const handleIn = HandleIn$$1.create();
         handleIn.vector = Vector$$1.create(command.x1, command.y1);
-        currSeg.append(handleIn);
+        currSeg.mount(handleIn);
       }
 
       segments[i] = currSeg;
@@ -5332,9 +5332,9 @@
       const docs = Docs$$1.create();
       const message = this.buildMessage();
 
-      editor.append(doc);
-      editor.append(docs);
-      editor.append(message);
+      editor.mount(doc);
+      editor.mount(docs);
+      editor.mount(message);
 
       return editor;
     },
@@ -5350,7 +5350,7 @@
 
       const canvas = Canvas$$1.create();
       canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 700, 700);
-      doc.append(canvas);
+      doc.mount(canvas);
 
       return doc;
     },
@@ -5850,13 +5850,13 @@
       }
 
       if (node.type === types.ANCHOR) {
-        node.parent.remove();
+        node.parent.unmount();
       } else if (
         [types.GROUP, types.SHAPE, types.HANDLEIN, types.HANDLEOUT].includes(
           node.type
         )
       ) {
-        node.remove();
+        node.unmount();
       }
     },
 
@@ -5918,13 +5918,13 @@
 
     addSegment(state, input) {
       state.aux.target =
-        state.canvas.findPen() || state.canvas.appendShape().placePen();
+        state.canvas.findPen() || state.canvas.mountShape().placePen();
       const spline =
-        state.aux.target.lastChild || state.aux.target.appendSpline();
-      const segment = spline.appendSegment();
+        state.aux.target.lastChild || state.aux.target.mountSpline();
+      const segment = spline.mountSegment();
 
       segment
-        .appendAnchor(
+        .mountAnchor(
           Vector$$1.create(input.x, input.y).transformToLocal(state.aux.target)
         )
         .placePenTip();
@@ -5933,11 +5933,11 @@
     setHandles(state, input) {
       state.aux.target = state.canvas.findPen();
       const segment = state.aux.target.lastChild.lastChild;
-      const handleIn = segment.handleIn || segment.appendHandleIn();
+      const handleIn = segment.handleIn || segment.mountHandleIn();
       handleIn.vector = Vector$$1.create(input.x, input.y).transformToLocal(
         state.aux.target
       );
-      const handleOut = segment.handleOut || segment.appendHandleOut();
+      const handleOut = segment.handleOut || segment.mountHandleOut();
       handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
       handleIn.placePenTip();
     },
@@ -6029,9 +6029,9 @@
       const right = splitCurves.right;
 
       const segment = Segment$$1.create();
-      const anchor = segment.appendAnchor();
-      const handleIn = segment.appendHandleIn();
-      const handleOut = segment.appendHandleOut();
+      const anchor = segment.mountAnchor();
+      const handleIn = segment.mountHandleIn();
+      const handleOut = segment.mountHandleOut();
 
       spline.insertChild(segment, insertionIndex);
 
@@ -6102,7 +6102,7 @@
       for (let id of input.data.docIDs) {
         const identNode = Identifier$$1.create();
         identNode._id = id;
-        state.docs.append(identNode);
+        state.docs.mount(identNode);
       }
     },
 
@@ -6155,6 +6155,8 @@
         update && update(this.state, input);
 
         this.publish();
+
+        // console.log('DOM nodes', document.getElementsByTagName('*').length);
       }
     },
 

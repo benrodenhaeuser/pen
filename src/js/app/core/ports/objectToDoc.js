@@ -28,7 +28,7 @@ const objectToDoc = object => {
   setProps(node, object);
 
   for (let child of object.children) {
-    node.append(objectToDoc(child));
+    node.mount(objectToDoc(child));
   }
 
   return node;

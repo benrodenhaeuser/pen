@@ -22,9 +22,9 @@ Object.assign(Shape, {
       .set(opts);
   },
 
-  appendSpline() {
+  mountSpline() {
     const spline = Spline.create();
-    this.append(spline);
+    this.mount(spline);
     return spline;
   },
 
@@ -52,7 +52,7 @@ Object.assign(Shape, {
     const open = [];
 
     open.push(
-      Line.create({ indent: this.height }).append(
+      Line.create({ indent: this.height }).mount(
         Token.create({
           markup: '<path',
           key: this.key,
@@ -62,7 +62,7 @@ Object.assign(Shape, {
     );
 
     open.push(
-      Line.create({ indent: this.height + 1 }).append(
+      Line.create({ indent: this.height + 1 }).mount(
         Token.create({
           markup: 'd="',
         })
@@ -75,14 +75,14 @@ Object.assign(Shape, {
       for (let command of commands) {
         const indent = this.height + 2;
 
-        const line = Line.create({ indent: indent }).append(
+        const line = Line.create({ indent: indent }).mount(
           Token.create({
             markup: command[0],
           })
         );
 
         for (let i = 1; i < command.length; i += 1) {
-          line.append(
+          line.mount(
             Token.create({
               markup: command[i][0], // TODO: ugly
               key: command[i][1],
@@ -96,7 +96,7 @@ Object.assign(Shape, {
     }
 
     open.push(
-      Line.create({ indent: this.height + 1 }).append(
+      Line.create({ indent: this.height + 1 }).mount(
         Token.create({
           markup: '"',
         })
@@ -105,7 +105,7 @@ Object.assign(Shape, {
 
     if (this.transform) {
       open.push(
-        Line.create({ indent: this.height + 1 }).append(
+        Line.create({ indent: this.height + 1 }).mount(
           Token.create({
             markup: `transform="${this.transform.toString()}"`,
           })
@@ -114,7 +114,7 @@ Object.assign(Shape, {
     }
 
     open.push(
-      Line.create({ indent: this.height }).append(
+      Line.create({ indent: this.height }).mount(
         Token.create({ markup: '/>' })
       )
     );

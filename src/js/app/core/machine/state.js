@@ -33,9 +33,9 @@ const State = {
     const docs = Docs.create();
     const message = this.buildMessage();
 
-    editor.append(doc);
-    editor.append(docs);
-    editor.append(message);
+    editor.mount(doc);
+    editor.mount(docs);
+    editor.mount(message);
 
     return editor;
   },
@@ -51,7 +51,7 @@ const State = {
 
     const canvas = Canvas.create();
     canvas.viewBox = Rectangle.createFromDimensions(0, 0, 700, 700);
-    doc.append(canvas);
+    doc.mount(canvas);
 
     return doc;
   },

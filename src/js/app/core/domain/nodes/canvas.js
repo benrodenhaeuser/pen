@@ -115,16 +115,16 @@ Object.assign(Canvas, {
     }
   },
 
-  appendShape() {
+  mountShape() {
     const shape = Shape.create();
-    this.append(shape);
+    this.mount(shape);
     return shape;
   },
 
   toTags() {
     const open = Line
       .create({ indent: 0 })
-      .append(
+      .mount(
         Token.create({
           markup: `<svg xmlns="${
             this.xmlns
@@ -135,7 +135,7 @@ Object.assign(Canvas, {
 
     const close = Line
       .create({ indent: 0 })
-      .append(
+      .mount(
         Token.create({
           markup: '</svg>',
           key: this.key,
@@ -145,7 +145,7 @@ Object.assign(Canvas, {
     return () => {
       return MarkupRoot
         .create()
-        .append(
+        .mount(
           open,
           ...this.children.flatMap(child => child.tags()),
           close
