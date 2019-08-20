@@ -6327,6 +6327,12 @@
     },
 
     reconcile(oldVNode, newVNode, $node) {
+      // the magic clause:
+      if (oldVNode === newVNode) {
+        // console.log('strict equality applies');
+        return;
+      }
+
       if (typeof newVNode === 'string') {
         if (newVNode !== oldVNode) {
           $node.replaceWith(this.createElement(newVNode));
