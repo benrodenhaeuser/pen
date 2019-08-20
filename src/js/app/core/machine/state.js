@@ -79,7 +79,8 @@ const State = {
         return (this.snapshots['vDOM'] = {
           tools: stuff.tools(this.editor),
           message: this.editor.message.text,
-          canvas: this.canvas.toComponent()(),
+          // canvas: JSON.parse(JSON.stringify(this.canvas.renderElement())),
+          canvas: this.canvas.renderElement(),
         });
       case 'plain':
         return (this.snapshots['plain'] = this.docToObject());

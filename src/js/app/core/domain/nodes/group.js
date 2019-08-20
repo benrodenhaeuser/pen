@@ -16,11 +16,6 @@ Object.assign(Group, {
   },
 
   toTags(level) {
-    const tags = {
-      open: [],
-      close: [],
-    };
-
     let openMarkup;
     if (this.transform) {
       openMarkup = `<g transform="${this.transform.toString()}">`;
@@ -28,27 +23,27 @@ Object.assign(Group, {
       openMarkup = `<g>`;
     }
 
-    tags.open.push(
-      Line.create({ indent: this.height }).append(
+    const open = Line
+      .create({ indent: this.height })
+      .append(
         Token.create({
           markup: openMarkup,
           key: this.key,
           class: this.class,
         })
-      )
-    );
+      );
 
-    tags.close.push(
-      Line.create({ indent: this.height }).append(
+    const close = Line
+      .create({ indent: this.height })
+      .append(
         Token.create({
           markup: '</g>',
           key: this.key,
           class: this.class,
         })
-      )
-    );
+      );
 
-    return tags;
+    return () => [open, ...this.children.flatMap(child => child.tags()), close];
   },
 
   toComponent() {
@@ -59,7 +54,7 @@ Object.assign(Group, {
     wrapper.children.push(outerUI);
 
     return () => {
-      group.children = this.children.map(node => node.toComponent()());
+      group.children = this.children.map(child => child.renderElement());
       return wrapper;
     };
   },

@@ -15,7 +15,7 @@ Object.assign(GraphicsNode, {
     return SceneNode.create
       .bind(this)()
       .set({
-        comps: {},
+        cache: {},
         class: Class.create(),
       });
   },
@@ -116,20 +116,14 @@ Object.assign(GraphicsNode, {
     return bounds;
   },
 
-  renderTags() {
-    return MarkupRoot.create().append(...this.tagList());
-  },
-
-  tagList() {
-    return [
-      ...this.tags.open, // uses the cache
-      ...this.graphicsChildren.flatMap(node => node.tagList()),
-      ...this.tags.close, // uses the cache
-    ];
-  },
-
   invalidateCache() {
-    this.tags = null;
+    for (let ancestor of this.graphicsAncestors) {
+      ancestor.cache = {};
+    }
+  },
+
+  renderElement() {
+    return (this.component)();
   },
 });
 
@@ -157,17 +151,33 @@ Object.defineProperty(GraphicsNode, 'attributes', {
   },
 });
 
+// tag cache
 Object.defineProperty(GraphicsNode, 'tags', {
   get() {
-    if (!this.comps.tags) {
-      this.comps.tags = this.toTags();
+    if (!this.cache.tags) {
+      this.cache.tags = this.toTags();
     }
 
-    return this.comps.tags;
+    return this.cache.tags;
   },
 
   set(value) {
-    this.comps.tags = value;
+    this.cache.tags = value;
+  },
+});
+
+// component cache
+Object.defineProperty(GraphicsNode, 'component', {
+  get() {
+    if (!this.cache.component) {
+      this.cache.component = this.toComponent();
+    }
+
+    return this.cache.component;
+  },
+
+  set(value) {
+    this.cache.component = value;
   },
 });
 

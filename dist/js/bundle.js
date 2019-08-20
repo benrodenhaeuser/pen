@@ -115,7 +115,7 @@
     },
 
     shape(node) {
-      return {
+      const theShape = {
         tag: 'path',
         children: [],
         props: {
@@ -126,6 +126,8 @@
           class: node.class.toString(),
         },
       };
+
+      return theShape;
     },
 
     wrapper(node) {
@@ -3975,6 +3977,10 @@
         if (node.isGroupOrShape()) {
           node.height = node.parent.height + 1;
         }
+
+        if (node.isGraphicsNode()) {
+          node.invalidateCache();
+        }
       }
 
       return this;
@@ -3996,6 +4002,10 @@
       if (index !== -1) {
         this.children.splice(index, 1);
         node.parent = null;
+      }
+
+      if (this.isGraphicsNode()) {
+        this.invalidateCache();
       }
     },
 
@@ -4079,7 +4089,7 @@
       return SceneNode$$1.create
         .bind(this)()
         .set({
-          comps: {},
+          cache: {},
           class: Class.create(),
         });
     },
@@ -4180,20 +4190,14 @@
       return bounds;
     },
 
-    renderTags() {
-      return MarkupRoot$$1.create().append(...this.tagList());
-    },
-
-    tagList() {
-      return [
-        ...this.tags.open, // uses the cache
-        ...this.graphicsChildren.flatMap(node => node.tagList()),
-        ...this.tags.close, // uses the cache
-      ];
-    },
-
     invalidateCache() {
-      this.tags = null;
+      for (let ancestor of this.graphicsAncestors) {
+        ancestor.cache = {};
+      }
+    },
+
+    renderElement() {
+      return (this.component)();
     },
   });
 
@@ -4221,17 +4225,33 @@
     },
   });
 
+  // tag cache
   Object.defineProperty(GraphicsNode$$1, 'tags', {
     get() {
-      if (!this.comps.tags) {
-        this.comps.tags = this.toTags();
+      if (!this.cache.tags) {
+        this.cache.tags = this.toTags();
       }
 
-      return this.comps.tags;
+      return this.cache.tags;
     },
 
     set(value) {
-      this.comps.tags = value;
+      this.cache.tags = value;
+    },
+  });
+
+  // component cache
+  Object.defineProperty(GraphicsNode$$1, 'component', {
+    get() {
+      if (!this.cache.component) {
+        this.cache.component = this.toComponent();
+      }
+
+      return this.cache.component;
+    },
+
+    set(value) {
+      this.cache.component = value;
     },
   });
 
@@ -4374,41 +4394,49 @@
     },
 
     toTags() {
-      const tags = {
-        open: [],
-        close: [],
-      };
-
-      tags.open.push(
-        Line$$1.create({ indent: 0 }).append(
+      const open = Line$$1
+        .create({ indent: 0 })
+        .append(
           Token$$1.create({
             markup: `<svg xmlns="${
             this.xmlns
           }" viewBox="${this.viewBox.toString()}">`,
             key: this.key,
           })
-        )
-      );
+        );
 
-      tags.close.push(
-        Line$$1.create({ indent: 0 }).append(
+      const close = Line$$1
+        .create({ indent: 0 })
+        .append(
           Token$$1.create({
             markup: '</svg>',
             key: this.key,
           })
-        )
-      );
+        );
 
-      return tags;
+      return () => {
+        return MarkupRoot$$1
+          .create()
+          .append(
+            open,
+            ...this.children.flatMap(child => child.tags()),
+            close
+          );
+      };
     },
 
     toComponent() {
       const canvas = stuff$$1.canvas(this);
 
       return () => {
-        canvas.children = this.children.map(node => node.toComponent()());
+        canvas.children = this.children.map(child => child.renderElement());
         return canvas;
       };
+    },
+
+    // TODO: this should go to graphicsNode
+    renderTags() {
+      return this.tags(); // TODO: tags is an odd name for a *function* that returns tags!
     },
   });
 
@@ -4423,11 +4451,6 @@
     },
 
     toTags(level) {
-      const tags = {
-        open: [],
-        close: [],
-      };
-
       let openMarkup;
       if (this.transform) {
         openMarkup = `<g transform="${this.transform.toString()}">`;
@@ -4435,27 +4458,27 @@
         openMarkup = `<g>`;
       }
 
-      tags.open.push(
-        Line$$1.create({ indent: this.height }).append(
+      const open = Line$$1
+        .create({ indent: this.height })
+        .append(
           Token$$1.create({
             markup: openMarkup,
             key: this.key,
             class: this.class,
           })
-        )
-      );
+        );
 
-      tags.close.push(
-        Line$$1.create({ indent: this.height }).append(
+      const close = Line$$1
+        .create({ indent: this.height })
+        .append(
           Token$$1.create({
             markup: '</g>',
             key: this.key,
             class: this.class,
           })
-        )
-      );
+        );
 
-      return tags;
+      return () => [open, ...this.children.flatMap(child => child.tags()), close];
     },
 
     toComponent() {
@@ -4466,7 +4489,7 @@
       wrapper.children.push(outerUI);
 
       return () => {
-        group.children = this.children.map(node => node.toComponent()());
+        group.children = this.children.map(child => child.renderElement());
         return wrapper;
       };
     },
@@ -4513,12 +4536,9 @@
     },
 
     toTags(level) {
-      const tags = {
-        open: [],
-        close: [],
-      };
+      const open = [];
 
-      tags.open.push(
+      open.push(
         Line$$1.create({ indent: this.height }).append(
           Token$$1.create({
             markup: '<path',
@@ -4528,7 +4548,7 @@
         )
       );
 
-      tags.open.push(
+      open.push(
         Line$$1.create({ indent: this.height + 1 }).append(
           Token$$1.create({
             markup: 'd="',
@@ -4558,11 +4578,11 @@
             );
           }
 
-          tags.open.push(line);
+          open.push(line);
         }
       }
 
-      tags.open.push(
+      open.push(
         Line$$1.create({ indent: this.height + 1 }).append(
           Token$$1.create({
             markup: '"',
@@ -4571,7 +4591,7 @@
       );
 
       if (this.transform) {
-        tags.open.push(
+        open.push(
           Line$$1.create({ indent: this.height + 1 }).append(
             Token$$1.create({
               markup: `transform="${this.transform.toString()}"`,
@@ -4580,13 +4600,13 @@
         );
       }
 
-      tags.open.push(
+      open.push(
         Line$$1.create({ indent: this.height }).append(
           Token$$1.create({ markup: '/>' })
         )
       );
 
-      return tags;
+      return () => open;
     },
 
     toComponent() {
@@ -4601,9 +4621,7 @@
       wrapper.children.push(segments);
       wrapper.children.push(outerUI);
 
-      return () => {
-        return wrapper;
-      };
+      return () => wrapper;
     },
   });
 
@@ -5355,7 +5373,8 @@
           return (this.snapshots['vDOM'] = {
             tools: stuff$$1.tools(this.editor),
             message: this.editor.message.text,
-            canvas: this.canvas.toComponent()(),
+            // canvas: JSON.parse(JSON.stringify(this.canvas.renderElement())),
+            canvas: this.canvas.renderElement(),
           });
         case 'plain':
           return (this.snapshots['plain'] = this.docToObject());
@@ -6130,9 +6149,6 @@
 
     compute(input) {
       this.state.input = input;
-
-      // TODO: a test
-      console.log(this.state.canvas.toComponent()());
 
       const transition = transitions$$1.get(this.state, input);
 
@@ -18777,223 +18793,6 @@
     return text.join('').replace(/%20/g, ' ');
   };
 
-  const DiffMatchPatch = diff_match_patch;
-
-  const markup = {
-    init() {
-      this.name = 'markup';
-      this.mountPoint = document.querySelector(`#markup`);
-
-      const markupTree = this.requestSnapshot('markupTree');
-
-      this.markupEditor = CodeMirror(this.mountPoint, {
-        lineNumbers: true,
-        lineWrapping: true,
-        mode: 'xml',
-        value: markupTree.toMarkupString(),
-      });
-      this.markupDoc = this.markupEditor.getDoc();
-      this.previousMarkupTree = markupTree;
-
-      return this;
-    },
-
-    bindEvents(func) {
-      this.bindCodemirrorEvents();
-      this.bindCustomEvents(func);
-    },
-
-    bindCodemirrorEvents() {
-      this.markupEditor.on('change', (instance, obj) => {
-        if (obj.origin !== 'reconcile') {
-          window.dispatchEvent(new CustomEvent('userChangedMarkup'));
-        }
-      });
-
-      this.markupEditor.on('beforeSelectionChange', (instance, obj) => {
-        if (obj.origin !== undefined) {
-          obj.update(obj.ranges);
-          const cursorPosition = obj.ranges[0].anchor;
-
-          if (cursorPosition) {
-            window.dispatchEvent(
-              new CustomEvent('userSelectedPosition', { detail: cursorPosition })
-            );
-          }
-        }
-      });
-    },
-
-    bindCustomEvents(func) {
-      window.addEventListener('userChangedMarkup', event => {
-        func({
-          source: this.name,
-          type: 'userChangedMarkup',
-          value: this.markupEditor.getValue(),
-        });
-      });
-
-      window.addEventListener('userSelectedPosition', event => {
-        const node = this.previousMarkupTree.findTokenByPosition(event.detail);
-
-        if (node) {
-          func({
-            source: this.name,
-            type: 'userSelectedMarkupNode',
-            key: node.key, // note that we are only interested in the key!
-          });
-        }
-      });
-    },
-
-    react(info) {
-      const markupTree = this.requestSnapshot('markupTree');
-
-      // optimization: don't handle text markers during animation
-      if (info.input.type !== 'mousemove') {
-        this.clearTextMarker();
-      }
-
-      if (
-        this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
-      ) {
-        this.reconcile(markupTree);
-      }
-
-      // optimization: don't handle text markers during animation
-      if (info.input.type !== 'mousemove') {
-        this.placeTextMarker(markupTree);
-      }
-
-      this.previousMarkupTree = markupTree;
-    },
-
-    reconcile(markupTree) {
-      this.patchLines(
-        this.diffLines(this.markupDoc.getValue(), markupTree.toMarkupString())
-      );
-    },
-
-    diffLines(text1, text2) {
-      const dmp = new DiffMatchPatch();
-      const a = dmp.diff_linesToChars_(text1, text2);
-      const lineText1 = a.chars1;
-      const lineText2 = a.chars2;
-      const lineArray = a.lineArray;
-      const diffs = dmp.diff_main(lineText1, lineText2, false);
-      dmp.diff_charsToLines_(diffs, lineArray);
-      return diffs;
-    },
-
-    patchLines(diffs) {
-      let currentLine = 0;
-      let i = 0;
-
-      while (i < diffs.length) {
-        const diff = diffs[i];
-        const instruction = diff[0];
-        const text = diff[1];
-
-        switch (instruction) {
-          case 0:
-            currentLine += this.countLines(diff);
-            i += 1;
-
-            break;
-          case -1:
-            const nextDiff = diffs[i + 1];
-            const nextInstruction = nextDiff && nextDiff[0];
-            const nextText = nextDiff && nextDiff[1];
-
-            if (nextInstruction === 1) {
-              // optimization: replace line instead of delete + insert whwnever possible
-              this.replaceLines(currentLine, this.countLines(diff), nextText);
-              currentLine += this.countLines(nextDiff);
-              i += 2;
-            } else {
-              this.deleteLines(currentLine, this.countLines(diff));
-              i += 1;
-            }
-
-            break;
-          case 1:
-            this.insertLines(currentLine, text);
-            currentLine += this.countLines(diff);
-            i += 1;
-
-            break;
-        }
-      }
-    },
-
-    countLines(diff) {
-      return diff[1].match(/\n/g).length;
-    },
-
-    deleteLines(lineNumber, linesCount) {
-      const startLine = lineNumber;
-      const endLine = lineNumber + linesCount;
-
-      this.markupDoc.replaceRange(
-        '',
-        { line: startLine, ch: 0 },
-        { line: endLine, ch: 0 },
-        'reconcile'
-      );
-    },
-
-    insertLines(lineNumber, text) {
-      this.markupDoc.replaceRange(
-        text,
-        { line: lineNumber, ch: 0 },
-        { line: lineNumber, ch: 0 },
-        'reconcile'
-      );
-    },
-
-    replaceLines(lineNumber, linesCount, text) {
-      const startLine = lineNumber;
-      const endLine = lineNumber + linesCount;
-
-      this.markupDoc.replaceRange(
-        text,
-        { line: startLine, ch: 0 },
-        { line: endLine, ch: 0 },
-        'reconcile'
-      );
-    },
-
-    placeTextMarker(markupTree) {
-      let cssClass;
-
-      let node = markupTree.findDescendantByClass('selected');
-
-      if (node) {
-        cssClass = 'selected-markup';
-        this.setMarker(node, cssClass);
-      } else {
-        node = markupTree.findDescendantByClass('tip');
-        if (node) {
-          cssClass = 'tip-markup';
-          this.setMarker(node, cssClass);
-        }
-      }
-    },
-
-    setMarker(node, cssClass) {
-      const range = node.getRange();
-      this.textMarker = this.markupDoc.markText(...range, {
-        className: cssClass,
-      });
-    },
-
-    clearTextMarker() {
-      if (this.textMarker) {
-        this.textMarker.clear();
-      }
-    },
-  };
-
   const tools = Object.assign(Object.create(UIModule), {
     init() {
       this.name = 'tools';
@@ -19103,13 +18902,13 @@
 
   const modules = [
     canvas$1,
+    // markup,
     tools,
     message,
     keyboard,
     db,
     hist,
-    markup,
-  ];  
+  ];
 
   const app = {
     init() {

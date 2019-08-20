@@ -9,13 +9,13 @@ import { keyboard } from './app/periphery/_.js';
 
 const modules = [
   canvas,
+  // markup,
   tools,
   message,
   keyboard,
   db,
   hist,
-  markup,
-];  
+];
 
 const app = {
   init() {

@@ -49,12 +49,9 @@ Object.assign(Shape, {
   },
 
   toTags(level) {
-    const tags = {
-      open: [],
-      close: [],
-    };
+    const open = [];
 
-    tags.open.push(
+    open.push(
       Line.create({ indent: this.height }).append(
         Token.create({
           markup: '<path',
@@ -64,7 +61,7 @@ Object.assign(Shape, {
       )
     );
 
-    tags.open.push(
+    open.push(
       Line.create({ indent: this.height + 1 }).append(
         Token.create({
           markup: 'd="',
@@ -94,11 +91,11 @@ Object.assign(Shape, {
           );
         }
 
-        tags.open.push(line);
+        open.push(line);
       }
     }
 
-    tags.open.push(
+    open.push(
       Line.create({ indent: this.height + 1 }).append(
         Token.create({
           markup: '"',
@@ -107,7 +104,7 @@ Object.assign(Shape, {
     );
 
     if (this.transform) {
-      tags.open.push(
+      open.push(
         Line.create({ indent: this.height + 1 }).append(
           Token.create({
             markup: `transform="${this.transform.toString()}"`,
@@ -116,13 +113,13 @@ Object.assign(Shape, {
       );
     }
 
-    tags.open.push(
+    open.push(
       Line.create({ indent: this.height }).append(
         Token.create({ markup: '/>' })
       )
     );
 
-    return tags;
+    return () => open;
   },
 
   toComponent() {
@@ -137,9 +134,7 @@ Object.assign(Shape, {
     wrapper.children.push(segments);
     wrapper.children.push(outerUI);
 
-    return () => {
-      return wrapper;
-    };
+    return () => wrapper;
   },
 });
 

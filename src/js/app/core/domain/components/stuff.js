@@ -39,7 +39,7 @@ const stuff = {
   },
 
   shape(node) {
-    return {
+    const theShape = {
       tag: 'path',
       children: [],
       props: {
@@ -50,6 +50,8 @@ const stuff = {
         class: node.class.toString(),
       },
     };
+
+    return theShape;
   },
 
   wrapper(node) {

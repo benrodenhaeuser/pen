@@ -17,9 +17,6 @@ const core = {
   compute(input) {
     this.state.input = input;
 
-    // TODO: a test
-    console.log(this.state.canvas.toComponent()());
-
     const transition = transitions.get(this.state, input);
 
     if (transition) {

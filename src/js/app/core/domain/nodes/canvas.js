@@ -4,6 +4,7 @@ import { Line } from './_.js';
 import { Token } from './_.js';
 import { types } from './_.js';
 import { stuff } from '../components/_.js';
+import { MarkupRoot } from './_.js';
 
 const Canvas = Object.create(GraphicsNode);
 Canvas.defineProps(['viewBox', 'xmlns']);
@@ -132,41 +133,49 @@ Object.assign(Canvas, {
   },
 
   toTags() {
-    const tags = {
-      open: [],
-      close: [],
-    };
-
-    tags.open.push(
-      Line.create({ indent: 0 }).append(
+    const open = Line
+      .create({ indent: 0 })
+      .append(
         Token.create({
           markup: `<svg xmlns="${
             this.xmlns
           }" viewBox="${this.viewBox.toString()}">`,
           key: this.key,
         })
-      )
-    );
+      );
 
-    tags.close.push(
-      Line.create({ indent: 0 }).append(
+    const close = Line
+      .create({ indent: 0 })
+      .append(
         Token.create({
           markup: '</svg>',
           key: this.key,
         })
-      )
-    );
+      );
 
-    return tags;
+    return () => {
+      return MarkupRoot
+        .create()
+        .append(
+          open,
+          ...this.children.flatMap(child => child.tags()),
+          close
+        );
+    };
   },
 
   toComponent() {
     const canvas = stuff.canvas(this);
 
     return () => {
-      canvas.children = this.children.map(node => node.toComponent()());
+      canvas.children = this.children.map(child => child.renderElement());
       return canvas;
     };
+  },
+
+  // TODO: this should go to graphicsNode
+  renderTags() {
+    return this.tags(); // TODO: tags is an odd name for a *function* that returns tags!
   },
 });
 

@@ -98,6 +98,10 @@ Object.assign(Node, {
       if (node.isGroupOrShape()) {
         node.height = node.parent.height + 1;
       }
+
+      if (node.isGraphicsNode()) {
+        node.invalidateCache();
+      }
     }
 
     return this;
@@ -119,6 +123,10 @@ Object.assign(Node, {
     if (index !== -1) {
       this.children.splice(index, 1);
       node.parent = null;
+    }
+
+    if (this.isGraphicsNode()) {
+      this.invalidateCache();
     }
   },
 
