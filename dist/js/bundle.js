@@ -46,12 +46,16 @@
       return this.list.indexOf(className) >= 0;
     },
 
-    // return value: new Class instance, does not mutate this (or its list)
+    // return value: new Class instance
+    // does not mutate this/this.list
+    // does not check for uniqueness
     add(className) {
       return Class.create([...this.list, className]);
     },
 
-    // return value: new Class instance, does not mutate this (or its list)
+    // return value: new Class instance
+    // does not mutate this/this.list
+    // will remove multiple instances of className, if present
     remove(className) {
       return Class.create(this.list.filter(elem => elem !== className));
     },
@@ -83,7 +87,7 @@
     return length / node.globalScaleFactor();
   };
 
-  const stuff$$1 = {
+  const comps$$1 = {
     canvas(node) {
       return {
         tag: 'svg',
@@ -4431,7 +4435,7 @@
     },
 
     toComponent() {
-      const canvas = stuff$$1.canvas(this);
+      const canvas = comps$$1.canvas(this);
 
       return () => {
         canvas.children = this.children.map(child => child.renderElement());
@@ -4487,9 +4491,9 @@
     },
 
     toComponent() {
-      const wrapper = stuff$$1.wrapper(this);
-      const group = stuff$$1.group(this);
-      const outerUI = stuff$$1.outerUI(this);
+      const wrapper = comps$$1.wrapper(this);
+      const group = comps$$1.group(this);
+      const outerUI = comps$$1.outerUI(this);
       wrapper.children.push(group);
       wrapper.children.push(outerUI);
 
@@ -4615,11 +4619,11 @@
     },
 
     toComponent() {
-      const wrapper = stuff$$1.wrapper(this);
-      const shape = stuff$$1.shape(this);
-      const curves = stuff$$1.curves(this);
-      const segments = stuff$$1.segments(this);
-      const outerUI = stuff$$1.outerUI(this);
+      const wrapper = comps$$1.wrapper(this);
+      const shape = comps$$1.shape(this);
+      const curves = comps$$1.curves(this);
+      const segments = comps$$1.segments(this);
+      const outerUI = comps$$1.outerUI(this);
 
       wrapper.children.push(shape);
       wrapper.children.push(curves);
@@ -5376,9 +5380,8 @@
       switch (label) {
         case 'vDOM':
           return (this.snapshots['vDOM'] = {
-            tools: stuff$$1.tools(this.editor),
+            tools: comps$$1.tools(this.editor),
             message: this.editor.message.text,
-            // canvas: JSON.parse(JSON.stringify(this.canvas.renderElement())),
             canvas: this.canvas.renderElement(),
           });
         case 'plain':

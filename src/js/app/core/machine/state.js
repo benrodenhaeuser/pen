@@ -5,7 +5,7 @@ import { Message } from '../domain/_.js';
 import { Canvas } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 
-import { stuff } from '../domain/_.js';
+import { comps } from '../domain/_.js';
 import { docToObject } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
 import { markupToCanvas } from '../ports/_.js';
@@ -77,9 +77,8 @@ const State = {
     switch (label) {
       case 'vDOM':
         return (this.snapshots['vDOM'] = {
-          tools: stuff.tools(this.editor),
+          tools: comps.tools(this.editor),
           message: this.editor.message.text,
-          // canvas: JSON.parse(JSON.stringify(this.canvas.renderElement())),
           canvas: this.canvas.renderElement(),
         });
       case 'plain':

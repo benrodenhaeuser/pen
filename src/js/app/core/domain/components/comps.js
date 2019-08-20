@@ -10,7 +10,7 @@ const scale = (node, length) => {
   return length / node.globalScaleFactor();
 };
 
-const stuff = {
+const comps = {
   canvas(node) {
     return {
       tag: 'svg',
@@ -428,4 +428,4 @@ const stuff = {
   },
 };
 
-export { stuff };
+export { comps };

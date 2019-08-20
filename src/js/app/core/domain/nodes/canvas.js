@@ -3,7 +3,7 @@ import { Shape } from './_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
 import { types } from './_.js';
-import { stuff } from '../components/_.js';
+import { comps } from '../components/_.js';
 import { MarkupRoot } from './_.js';
 
 const Canvas = Object.create(GraphicsNode);
@@ -154,7 +154,7 @@ Object.assign(Canvas, {
   },
 
   toComponent() {
-    const canvas = stuff.canvas(this);
+    const canvas = comps.canvas(this);
 
     return () => {
       canvas.children = this.children.map(child => child.renderElement());

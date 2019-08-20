@@ -1,2 +1,2 @@
 export { h } from './h.js';
-export { stuff } from './stuff.js';
+export { comps } from './comps.js';

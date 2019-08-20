@@ -3,7 +3,7 @@ import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Line } from './_.js';
 import { Token } from './_.js';
-import { stuff } from '../components/_.js';
+import { comps } from '../components/_.js';
 
 const Group = Object.create(GraphicsNode);
 
@@ -47,9 +47,9 @@ Object.assign(Group, {
   },
 
   toComponent() {
-    const wrapper = stuff.wrapper(this);
-    const group = stuff.group(this);
-    const outerUI = stuff.outerUI(this);
+    const wrapper = comps.wrapper(this);
+    const group = comps.group(this);
+    const outerUI = comps.outerUI(this);
     wrapper.children.push(group);
     wrapper.children.push(outerUI);
 

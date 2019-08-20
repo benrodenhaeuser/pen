@@ -6,7 +6,7 @@ import { Token } from './_.js';
 import { types } from './_.js';
 import { Matrix } from '../geometry/_.js';
 import { Vector } from '../geometry/_.js';
-import { stuff } from '../components/_.js';
+import { comps } from '../components/_.js';
 
 const Shape = Object.create(GraphicsNode);
 Shape.defineProps(['splitter']);
@@ -123,11 +123,11 @@ Object.assign(Shape, {
   },
 
   toComponent() {
-    const wrapper = stuff.wrapper(this);
-    const shape = stuff.shape(this);
-    const curves = stuff.curves(this);
-    const segments = stuff.segments(this);
-    const outerUI = stuff.outerUI(this);
+    const wrapper = comps.wrapper(this);
+    const shape = comps.shape(this);
+    const curves = comps.curves(this);
+    const segments = comps.segments(this);
+    const outerUI = comps.outerUI(this);
 
     wrapper.children.push(shape);
     wrapper.children.push(curves);
