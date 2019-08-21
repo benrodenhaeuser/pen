@@ -84,8 +84,6 @@ const UIDevice = {
       newVNode.children.length
     );
 
-    let $index = 0;
-
     for (let vIndex = 0; vIndex < maxLength; vIndex += 1) {
       const oldVChild = oldVNode.children[vIndex];
       const newVChild = newVNode.children[vIndex];
@@ -93,14 +91,11 @@ const UIDevice = {
 
       if (newVChild === undefined) {
         $child && patches.push(() => $child.remove());
-        $index -= 1;
       } else if (oldVChild === undefined) {
         patches.push(() => $node.appendChild(this.createElement(newVChild)));
       } else {
         this.reconcile(oldVChild, newVChild, $child, patches);
       }
-
-      $index += 1;
     }
   },
 };
