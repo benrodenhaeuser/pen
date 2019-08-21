@@ -1,9 +1,9 @@
-import { UIModule } from './uiModule.js';
+import { UIDevice } from '../uiDevice.js';
 
-const message = Object.assign(Object.create(UIModule), {
+const message = Object.assign(Object.create(UIDevice), {
   init() {
     this.name = 'message';
-    UIModule.init.bind(this)();
+    UIDevice.init.bind(this)();
     return this;
   },
 

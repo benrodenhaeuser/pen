@@ -1,4 +1,4 @@
-const UIModule = {
+const UIDevice = {
   init() {
     this.mountPoint = document.querySelector(`#${this.name}`);
     const vDOM = this.requestSnapshot('vDOM')[this.name];
@@ -97,4 +97,4 @@ const UIModule = {
   },
 };
 
-export { UIModule };
+export { UIDevice };

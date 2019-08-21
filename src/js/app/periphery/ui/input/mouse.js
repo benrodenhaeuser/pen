@@ -1,12 +1,7 @@
-import { UIModule } from './uiModule.js';
-
-const svgns = 'http://www.w3.org/2000/svg';
-const xmlns = 'http://www.w3.org/2000/xmlns/';
-
-const canvas = Object.assign(Object.create(UIModule), {
+const mouse = {
   init() {
-    this.name = 'canvas';
-    UIModule.init.bind(this)();
+    this.name = 'mouse';
+    this.mountPoint = document.querySelector('#canvas');
     return this;
   },
 
@@ -88,28 +83,6 @@ const canvas = Object.assign(Object.create(UIModule), {
     requestAnimationFrame(mouseMove);
   },
 
-  createElement(vNode) {
-    if (typeof vNode === 'string') {
-      return document.createTextNode(vNode);
-    }
-
-    const $node = document.createElementNS(svgns, vNode.tag);
-
-    for (let [key, value] of Object.entries(vNode.props)) {
-      if (key === 'xmlns') {
-        $node.setAttributeNS(xmlns, key, value);
-      } else if (value) {
-        $node.setAttributeNS(null, key, value);
-      }
-    }
-
-    for (let vChild of vNode.children) {
-      $node.appendChild(this.createElement(vChild));
-    }
-
-    return $node;
-  },
-
   coordinates(event) {
     const coords = {};
 
@@ -126,6 +99,6 @@ const canvas = Object.assign(Object.create(UIModule), {
 
     return coords;
   },
-});
+};
 
-export { canvas };
+export { mouse };

@@ -28,8 +28,6 @@ const keyboard = {
       }
     });
   },
-
-  react(info) {},
 };
 
 export { keyboard };

@@ -1,31 +1,22 @@
 import { core } from './app/core.js';
-import { db } from './app/periphery/_.js';
-import { hist } from './app/periphery/_.js';
-import { canvas } from './app/periphery/_.js';
-import { markup } from './app/periphery/_.js';
-import { tools } from './app/periphery/_.js';
-import { message } from './app/periphery/_.js';
-import { keyboard } from './app/periphery/_.js';
+import * as devices from './app/periphery/_.js';
 
-const modules = [
-  canvas,
-  markup,
-  tools,
-  message,
-  keyboard,
-  db,
-  hist,
-];
+// exclude as needed for development purposes:
+const excluded = [devices.message, devices.db];
 
 const app = {
   init() {
     core.init();
 
-    for (let module of modules) {
-      module.requestSnapshot = label => core.state.snapshot(label);
-      module.init();
-      module.bindEvents(core.compute.bind(core));
-      core.attach(module.name, module.react.bind(module));
+    for (let device of Object.values(devices)) {
+      if (excluded.includes(device)) {
+        continue;
+      }
+
+      device.requestSnapshot = label => core.state.snapshot(label);
+      device.init();
+      device.bindEvents && device.bindEvents(core.compute.bind(core));
+      device.react && core.attach(device.name, device.react.bind(device));
     }
 
     core.kickoff();

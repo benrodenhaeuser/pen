@@ -6274,7 +6274,142 @@
     },
   };
 
-  const UIModule = {
+  const ESCAPE_CODE = 27;
+  const BACKSPACE_CODE = 8;
+
+  const keyboard = {
+    init() {
+      this.name = 'keyboard';
+      return this;
+    },
+
+    bindEvents(func) {
+      window.addEventListener('keydown', event => {
+        if (event.keyCode === ESCAPE_CODE) {
+          func({
+            source: this.name,
+            type: event.type,
+            target: 'esc',
+          });
+        }
+      });
+
+      window.addEventListener('keydown', event => {
+        if (event.keyCode === BACKSPACE_CODE) {
+          func({
+            source: this.name,
+            type: event.type,
+            target: 'delete',
+          });
+        }
+      });
+    },
+  };
+
+  const mouse = {
+    init() {
+      this.name = 'mouse';
+      this.mountPoint = document.querySelector('#canvas');
+      return this;
+    },
+
+    bindEvents(func) {
+      this.bindMouseButtonEvents(func);
+      this.bindMouseMoveEvents(func);
+    },
+
+    bindMouseButtonEvents(func) {
+      const eventTypes = [
+        'click',
+        'dblclick',
+        'mousedown',
+        'mouseup',
+        'mouseout',
+      ];
+
+      for (let eventType of eventTypes) {
+        const input = {
+          source: this.name,
+          type: eventType,
+        };
+
+        this.mountPoint.addEventListener(eventType, event => {
+          if (
+            ['click', 'mousedown', 'mouseup'].includes(eventType) &&
+            event.detail > 1
+          ) {
+            event.stopPropagation();
+            return;
+          }
+
+          const textarea = document.querySelector('textarea');
+          textarea && textarea.blur();
+          event.preventDefault();
+
+          Object.assign(input, {
+            target: event.target.dataset.type,
+            key: event.target.dataset.key,
+            x: this.coordinates(event).x,
+            y: this.coordinates(event).y,
+          });
+
+          func(input);
+        });
+      }
+    },
+
+    bindMouseMoveEvents(func) {
+      const input = {
+        source: this.name,
+        type: 'mousemove',
+      };
+
+      const old = {};
+
+      this.mountPoint.addEventListener('mousemove', event => {
+        event.preventDefault();
+
+        Object.assign(input, {
+          target: event.target.dataset.type,
+          key: event.target.dataset.key,
+          x: this.coordinates(event).x,
+          y: this.coordinates(event).y,
+        });
+      });
+
+      const mouseMove = () => {
+        requestAnimationFrame(mouseMove);
+
+        if (input.x !== old.x || input.y !== old.y) {
+          func(input);
+        }
+
+        old.x = input.x;
+        old.y = input.y;
+      };
+
+      requestAnimationFrame(mouseMove);
+    },
+
+    coordinates(event) {
+      const coords = {};
+
+      const svg = document.querySelector('svg');
+
+      if (svg) {
+        let point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        point = point.matrixTransform(svg.getScreenCTM().inverse());
+        coords.x = point.x;
+        coords.y = point.y;
+      }
+
+      return coords;
+    },
+  };
+
+  const UIDevice = {
     init() {
       this.mountPoint = document.querySelector(`#${this.name}`);
       const vDOM = this.requestSnapshot('vDOM')[this.name];
@@ -6373,92 +6508,48 @@
     },
   };
 
-  const svgns = 'http://www.w3.org/2000/svg';
-  const xmlns = 'http://www.w3.org/2000/xmlns/';
-
-  const canvas$1 = Object.assign(Object.create(UIModule), {
+  const tools = Object.assign(Object.create(UIDevice), {
     init() {
-      this.name = 'canvas';
-      UIModule.init.bind(this)();
+      this.name = 'tools';
+      UIDevice.init.bind(this)();
       return this;
     },
 
     bindEvents(func) {
-      this.bindMouseButtonEvents(func);
-      this.bindMouseMoveEvents(func);
-    },
-
-    bindMouseButtonEvents(func) {
-      const eventTypes = [
-        'click',
-        'dblclick',
-        'mousedown',
-        'mouseup',
-        'mouseout',
-      ];
-
-      for (let eventType of eventTypes) {
-        const input = {
-          source: this.name,
-          type: eventType,
-        };
-
-        this.mountPoint.addEventListener(eventType, event => {
-          if (
-            ['click', 'mousedown', 'mouseup'].includes(eventType) &&
-            event.detail > 1
-          ) {
-            event.stopPropagation();
-            return;
-          }
-
-          const textarea = document.querySelector('textarea');
-          textarea && textarea.blur();
-          event.preventDefault();
-
-          Object.assign(input, {
-            target: event.target.dataset.type,
-            key: event.target.dataset.key,
-            x: this.coordinates(event).x,
-            y: this.coordinates(event).y,
-          });
-
-          func(input);
-        });
-      }
-    },
-
-    bindMouseMoveEvents(func) {
-      const input = {
-        source: this.name,
-        type: 'mousemove',
-      };
-
-      const old = {};
-
-      this.mountPoint.addEventListener('mousemove', event => {
+      this.mountPoint.addEventListener('click', event => {
         event.preventDefault();
 
-        Object.assign(input, {
-          target: event.target.dataset.type,
-          key: event.target.dataset.key,
-          x: this.coordinates(event).x,
-          y: this.coordinates(event).y,
-        });
-      });
-
-      const mouseMove = () => {
-        requestAnimationFrame(mouseMove);
-
-        if (input.x !== old.x || input.y !== old.y) {
-          func(input);
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+          textarea.blur();
         }
 
-        old.x = input.x;
-        old.y = input.y;
-      };
+        func({
+          source: this.name,
+          type: event.type,
+          target: event.target.dataset.type,
+          key: event.target.dataset.key,
+        });
+      });
+    },
 
-      requestAnimationFrame(mouseMove);
+    react(info) {
+      if (info.input.type === 'updateDocList') {
+        const vDOM = this.requestSnapshot('vDOM')[this.name];
+        this.reconcile(this.previousVDOM, vDOM, this.dom);
+        this.previousVDOM = vDOM;
+      }
+    },
+  });
+
+  const svgns = 'http://www.w3.org/2000/svg';
+  const xmlns = 'http://www.w3.org/2000/xmlns/';
+
+  const canvas$1 = Object.assign(Object.create(UIDevice), {
+    init() {
+      this.name = 'canvas';
+      UIDevice.init.bind(this)();
+      return this;
     },
 
     createElement(vNode) {
@@ -18996,45 +19087,10 @@
     },
   };
 
-  const tools = Object.assign(Object.create(UIModule), {
-    init() {
-      this.name = 'tools';
-      UIModule.init.bind(this)();
-      return this;
-    },
-
-    bindEvents(func) {
-      this.mountPoint.addEventListener('click', event => {
-        event.preventDefault();
-
-        const textarea = document.querySelector('textarea');
-        if (textarea) {
-          textarea.blur();
-        }
-
-        func({
-          source: this.name,
-          type: event.type,
-          target: event.target.dataset.type,
-          key: event.target.dataset.key,
-        });
-      });
-    },
-
-    // TODO: check if this works once db is hooked up
-    react(info) {
-      if (info.input.type === 'updateDocList') {
-        const vDOM = this.requestSnapshot('vDOM')[this.name];
-        this.reconcile(this.previousVDOM, vDOM, this.dom);
-        this.previousVDOM = vDOM;
-      }
-    },
-  });
-
-  const message = Object.assign(Object.create(UIModule), {
+  const message = Object.assign(Object.create(UIDevice), {
     init() {
       this.name = 'message';
-      UIModule.init.bind(this)();
+      UIDevice.init.bind(this)();
       return this;
     },
 
@@ -19069,59 +19125,35 @@
     },
   });
 
-  const ESCAPE_CODE = 27;
-  const BACKSPACE_CODE = 8;
 
-  const keyboard = {
-    init() {
-      this.name = 'keyboard';
-      return this;
-    },
 
-    bindEvents(func) {
-      window.addEventListener('keydown', event => {
-        if (event.keyCode === ESCAPE_CODE) {
-          func({
-            source: this.name,
-            type: event.type,
-            target: 'esc',
-          });
-        }
-      });
+  var devices = /*#__PURE__*/Object.freeze({
+    db: db,
+    hist: hist,
+    keyboard: keyboard,
+    mouse: mouse,
+    tools: tools,
+    canvas: canvas$1,
+    markup: markup,
+    message: message
+  });
 
-      window.addEventListener('keydown', event => {
-        if (event.keyCode === BACKSPACE_CODE) {
-          func({
-            source: this.name,
-            type: event.type,
-            target: 'delete',
-          });
-        }
-      });
-    },
-
-    react(info) {},
-  };
-
-  const modules = [
-    canvas$1,
-    markup,
-    tools,
-    message,
-    keyboard,
-    db,
-    hist,
-  ];
+  // exclude as needed for development purposes:
+  const excluded = [message, db];
 
   const app = {
     init() {
       core.init();
 
-      for (let module of modules) {
-        module.requestSnapshot = label => core.state.snapshot(label);
-        module.init();
-        module.bindEvents(core.compute.bind(core));
-        core.attach(module.name, module.react.bind(module));
+      for (let device of Object.values(devices)) {
+        if (excluded.includes(device)) {
+          continue;
+        }
+
+        device.requestSnapshot = label => core.state.snapshot(label);
+        device.init();
+        device.bindEvents && device.bindEvents(core.compute.bind(core));
+        device.react && core.attach(device.name, device.react.bind(device));
       }
 
       core.kickoff();

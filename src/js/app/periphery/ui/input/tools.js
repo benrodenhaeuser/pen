@@ -1,9 +1,9 @@
-import { UIModule } from './uiModule.js';
+import { UIDevice } from '../uiDevice.js';
 
-const tools = Object.assign(Object.create(UIModule), {
+const tools = Object.assign(Object.create(UIDevice), {
   init() {
     this.name = 'tools';
-    UIModule.init.bind(this)();
+    UIDevice.init.bind(this)();
     return this;
   },
 
@@ -25,7 +25,6 @@ const tools = Object.assign(Object.create(UIModule), {
     });
   },
 
-  // TODO: check if this works once db is hooked up
   react(info) {
     if (info.input.type === 'updateDocList') {
       const vDOM = this.requestSnapshot('vDOM')[this.name];
