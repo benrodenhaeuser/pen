@@ -19000,12 +19000,12 @@
     },
 
     reconcile(markupTree) {
-      this.patchLines(
-        this.diffLines(this.markupDoc.getValue(), markupTree.toMarkupString())
+      this.patch(
+        this.diff(this.markupDoc.getValue(), markupTree.toMarkupString())
       );
     },
 
-    diffLines(text1, text2) {
+    diff(text1, text2) {
       const dmp = new DiffMatchPatch();
       const a = dmp.diff_linesToChars_(text1, text2);
       const lineText1 = a.chars1;
@@ -19016,7 +19016,7 @@
       return diffs;
     },
 
-    patchLines(diffs) {
+    patch(diffs) {
       let currentLine = 0;
       let i = 0;
 
