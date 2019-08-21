@@ -122,12 +122,12 @@ Object.assign(Shape, {
 
   toComponent() {
     const wrapper = comps.wrapper(this);
-    const shape = comps.shape(this);
+    // const shape = comps.shape(this);
     const curves = comps.curves(this);
     const segments = comps.segments(this);
     const outerUI = comps.outerUI(this);
 
-    wrapper.children.push(shape);
+    // wrapper.children.push(shape);
     wrapper.children.push(curves);
     wrapper.children.push(segments);
     wrapper.children.push(outerUI);

@@ -49,7 +49,7 @@ line {
 }
 
 /* curve hover in pen mode */
-.pen ~ [data-type="curves"] > [data-type="curve"]:hover + [data-type="curve-stroke"] {
+.pen ~ [data-type="shape"] > [data-type="curve"]:hover + [data-type="curve-stroke"] {
   stroke: red;
 }
 
@@ -164,7 +164,7 @@ line {
 }
 
 /* curve is the pointer target for curve splitting */
-.pen ~ [data-type="curves"] > [data-type="curve"] {
+.pen ~ [data-type="shape"] > [data-type="curve"] {
   pointer-events: stroke;
 }
 

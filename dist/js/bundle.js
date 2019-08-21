@@ -117,7 +117,7 @@
 
     shape(node) {
       const theShape = {
-        tag: 'path',
+        tag: 'g',
         children: [],
         props: {
           'data-key': node.key,
@@ -255,6 +255,18 @@
       });
     },
 
+    // {
+    //   tag: 'g',
+    //   children: [],
+    //   props: {
+    //     'data-key': node.key,
+    //     'data-type': node.type,
+    //     d: node.toPathString(),
+    //     transform: node.transform && node.transform.toString(),
+    //     class: node.class.toString(),
+    //   },
+    // }
+
     curves(node) {
       const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
       const radius = diameter / 2;
@@ -271,8 +283,9 @@
       return h(
         'g',
         {
-          'data-type': 'curves',
+          'data-type': 'shape',
           'data-key': node.key,
+          class: node.class.toString(),
         },
         ...vParts,
         splitter
@@ -4608,12 +4621,12 @@
 
     toComponent() {
       const wrapper = comps$$1.wrapper(this);
-      const shape = comps$$1.shape(this);
+      // const shape = comps.shape(this);
       const curves = comps$$1.curves(this);
       const segments = comps$$1.segments(this);
       const outerUI = comps$$1.outerUI(this);
 
-      wrapper.children.push(shape);
+      // wrapper.children.push(shape);
       wrapper.children.push(curves);
       wrapper.children.push(segments);
       wrapper.children.push(outerUI);
@@ -5767,6 +5780,8 @@
     },
 
     select(state, input) {
+      state.target = state.canvas.findFocus();
+
       if (!state.target) {
         state.canvas.removeSelection();
         return;
@@ -6484,8 +6499,8 @@
     },
 
     patch(patches) {
-      for (let p of patches) {
-        p();
+      for (let instruction of patches) {
+        instruction();
       }
     },
 

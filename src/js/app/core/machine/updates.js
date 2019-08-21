@@ -29,6 +29,8 @@ const updates = {
   },
 
   select(state, input) {
+    state.target = state.canvas.findFocus();
+
     if (!state.target) {
       state.canvas.removeSelection();
       return;

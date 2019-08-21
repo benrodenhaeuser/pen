@@ -57,8 +57,8 @@ const UIDevice = {
   },
 
   patch(patches) {
-    for (let p of patches) {
-      p();
+    for (let instruction of patches) {
+      instruction();
     }
   },
 

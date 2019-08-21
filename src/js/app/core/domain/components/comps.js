@@ -40,7 +40,7 @@ const comps = {
 
   shape(node) {
     const theShape = {
-      tag: 'path',
+      tag: 'g',
       children: [],
       props: {
         'data-key': node.key,
@@ -178,6 +178,18 @@ const comps = {
     });
   },
 
+  // {
+  //   tag: 'g',
+  //   children: [],
+  //   props: {
+  //     'data-key': node.key,
+  //     'data-type': node.type,
+  //     d: node.toPathString(),
+  //     transform: node.transform && node.transform.toString(),
+  //     class: node.class.toString(),
+  //   },
+  // }
+
   curves(node) {
     const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
     const radius = diameter / 2;
@@ -194,8 +206,9 @@ const comps = {
     return h(
       'g',
       {
-        'data-type': 'curves',
+        'data-type': 'shape',
         'data-key': node.key,
+        class: node.class.toString(),
       },
       ...vParts,
       splitter
