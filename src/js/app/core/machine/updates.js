@@ -10,7 +10,6 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
-  // FINE
   focus(state, input) {
     state.canvas.removeFocus();
     const node = state.canvas.findDescendantByKey(input.key);
@@ -20,27 +19,26 @@ const updates = {
     }
 
     const hit = Vector.create(input.x, input.y);
-    const target = node.findAncestorByClass('frontier');
+    state.target = node.findAncestorByClass('frontier');
 
-    if (target && target.contains(hit)) {
-      target.focus();
+    if (!state.target || !state.target.contains(hit)) {
+      return;
     }
+
+    state.target.focus();
   },
 
-  // FINE
   select(state, input) {
-    state.aux.target = state.canvas.findFocus(); // TODO: could we avoid finding the focus?
-
-    if (!state.aux.target) {
+    if (!state.target) {
       state.canvas.removeSelection();
       return;
     }
 
-    state.aux.target.select();
+    state.target.select();
     updates.initTransform(state, input);
   },
 
-  // FINE
+  // TODO: try to simplify logic
   deepSelect(state, input) {
     const node = state.canvas.findDescendantByKey(input.key);
 
@@ -50,36 +48,43 @@ const updates = {
 
     if (node.type === types.SHAPE && node.class.includes('frontier')) {
       // node is a shape frontier: place pen in shape
+      state.target = node;
       node.placePen();
       state.canvas.removeFocus();
       state.label = 'penMode';
       // node is a frontier group: select canvas
     } else if (node.class.includes('frontier')) {
-      state.canvas.select();
-      state.canvas.removeFocus();
+      state.target = canvas;
+      canvas.select();
+      canvas.removeFocus();
     } else {
       // node not at frontier: select closest ancestor at frontier
-      const target = node.findAncestor(node => {
+      state.target = node.findAncestor(node => {
         return node.parent && node.parent.class.includes('frontier');
       });
 
-      target.select();
+      if (!state.target) {
+        return;
+      }
+
+      state.target.select();
       state.canvas.updateFrontier(); // TODO: why do we need to do this?
       state.canvas.removeFocus();
     }
   },
 
-  // FINE
+  // release is the 'do' action for various mouseup events
   release(state, input) {
-    if (!state.aux.target) {
+    if (!state.target) {
       return;
     }
 
-    state.canvas.updateBounds(state.aux.target);
-    state.aux = {};
+    state.canvas.updateBounds(state.target);
+    state.temp = {};
   },
 
-  // FINE
+  // cleanup is called internally from other updates
+  // it is useful to call within some pen-related actions!
   cleanup(state, event) {
     const current = state.canvas.findPen();
 
@@ -89,21 +94,23 @@ const updates = {
 
     state.canvas.removeSelection();
     state.canvas.removePen();
+
+    // we cannot reset temp here, because state.target might still be needed.
   },
 
-  // FINE
+  // TODO: weird name
+  // triggered by escape key
   exitEdit(state, input) {
     if (state.label === 'penMode') {
-      const target = state.canvas.findPen();
+      state.target = state.canvas.findPen();
       updates.cleanup(state, input);
-      target.select();
+      state.target.select();
       state.label = 'selectMode';
     } else if (state.label === 'selectMode') {
       updates.cleanup(state, input);
     }
   },
 
-  // FINE
   deleteNode(state, input) {
     let node = state.canvas.findSelection() || state.canvas.findPenTip();
 
@@ -122,98 +129,104 @@ const updates = {
     }
   },
 
-  // FINE
+  // TRANSFORMS
+
   initTransform(state, input) {
-    // TODO: screwed this up
-    state.aux.from = Vector.create(input.x, input.y);
-    state.aux.center = state.aux.target.bounds.center.transform(
-      state.aux.target.globalTransform()
+    state.from = Vector.create(input.x, input.y);
+    state.temp.center = state.target.bounds.center.transform(
+      state.target.globalTransform()
     );
   },
 
-  // FINE
   shift(state, input) {
-    if (!state.aux.target) {
+    if (!state.target) {
       return;
     }
 
     const to = Vector.create(input.x, input.y);
-    const from = state.aux.from;
+    const from = state.from;
     const offset = to.minus(from);
 
-    state.aux.target.translate(offset);
-    state.aux.from = to;
+    state.target.translate(offset);
+
+    // bookkeeping
+    state.from = to;
   },
 
-  // FINE
   rotate(state, input) {
-    if (!state.aux.target) {
+    if (!state.target) {
       return;
     }
 
     const to = Vector.create(input.x, input.y);
-    const from = state.aux.from;
-    const center = state.aux.center;
+    const from = state.from;
+    const center = state.temp.center;
     const angle = center.angle(from, to);
 
-    state.aux.target.rotate(angle, center);
-    state.aux.from = to;
+    state.target.rotate(angle, center);
+
+    state.from = to;
   },
 
-  // FINE
   scale(state, input) {
-    if (!state.aux.target) {
+    if (!state.target) {
       return;
     }
 
     const to = Vector.create(input.x, input.y);
-    const from = state.aux.from;
-    const center = state.aux.center;
+    const from = state.from;
+    const center = state.temp.center;
     const factor = to.minus(center).length() / from.minus(center).length();
 
-    state.aux.target.scale(factor, center);
-    state.aux.from = to;
+    state.target.scale(factor, center);
+
+    state.from = to;
   },
 
-  // FINE
+  // PEN
+
   addSegment(state, input) {
-    const target = state.canvas.findPen() || state.canvas.mountShape().placePen();
-    const spline = target.lastChild || target.mountSpline();
+    state.target =
+      state.canvas.findPen() || state.canvas.mountShape().placePen();
+    const spline = state.target.lastChild || state.target.mountSpline();
     const segment = spline.mountSegment();
 
     segment
       .mountAnchor(
-        Vector.create(input.x, input.y).transformToLocal(target)
+        Vector.create(input.x, input.y).transformToLocal(state.target)
       )
       .placePenTip();
   },
 
-  // FINE
   setHandles(state, input) {
-    const target = state.canvas.findPen();
-    const segment = target.lastChild.lastChild;
+    state.target = state.canvas.findPen();
+    const segment = state.target.lastChild.lastChild;
     const handleIn = segment.handleIn || segment.mountHandleIn();
-    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(target);
+    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(
+      state.target
+    );
     const handleOut = segment.handleOut || segment.mountHandleOut();
     handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
     handleIn.placePenTip();
   },
 
-  // FINE
   initAdjustSegment(state, input) {
     const control = state.canvas.findDescendantByKey(input.key);
-    const target = control.parent.parent.parent; // TODO: great
-    state.aux.from = Vector.create(input.x, input.y).transformToLocal(target);
+    state.target = control.parent.parent.parent; // TODO: great
+    state.from = Vector.create(input.x, input.y).transformToLocal(
+      state.target
+    );
     control.placePenTip();
   },
 
-  // FINE
   adjustSegment(state, input) {
     const control = state.canvas.findPenTip();
     const segment = control.parent;
-    const target = segment.parent.parent;
-    const to = Vector.create(input.x, input.y).transformToLocal(target);
-    const change = to.minus(state.aux.from);
+    state.target = segment.parent.parent;
+    const to = Vector.create(input.x, input.y).transformToLocal(
+      state.target
+    );
+    const change = to.minus(state.from);
     control.vector = control.vector.add(change);
 
     switch (control.type) {
@@ -240,10 +253,9 @@ const updates = {
         break;
     }
 
-    state.aux.from = to;
+    state.from = to;
   },
 
-  // FINE
   projectInput(state, input) {
     const startSegment = state.canvas.findDescendantByKey(input.key);
     const spline = startSegment.parent;
@@ -258,27 +270,27 @@ const updates = {
     target.splitter = Vector.createFromObject(pointOnCurve);
 
     // BOOKKEEPING
-    state.aux.spline = spline;
-    state.aux.splitter = target.splitter;
-    state.aux.startSegment = startSegment;
-    state.aux.endSegment = endSegment;
-    state.aux.insertionIndex = startIndex + 1;
-    state.aux.bCurve = bCurve;
-    state.aux.curveTime = pointOnCurve.t;
-    state.aux.from = from;
-    state.aux.target = target;
+    state.temp.spline = spline;
+    state.temp.splitter = target.splitter;
+    state.temp.startSegment = startSegment;
+    state.temp.endSegment = endSegment;
+    state.temp.insertionIndex = startIndex + 1;
+    state.temp.bCurve = bCurve;
+    state.temp.curveTime = pointOnCurve.t;
+    state.from = from;
+    state.target = target;
   },
 
-  // FINE
+  // TODO: refactor
   splitCurve(state, input) {
-    const target = state.aux.target;
-    const spline = state.aux.spline;
-    const splitter = state.aux.splitter;
-    const startSegment = state.aux.startSegment;
-    const endSegment = state.aux.endSegment;
-    const insertionIndex = state.aux.insertionIndex;
-    const bCurve = state.aux.bCurve;
-    const curveTime = state.aux.curveTime;
+    const target = state.target;
+    const spline = state.temp.spline;
+    const splitter = state.temp.splitter;
+    const startSegment = state.temp.startSegment;
+    const endSegment = state.temp.endSegment;
+    const insertionIndex = state.temp.insertionIndex;
+    const bCurve = state.temp.bCurve;
+    const curveTime = state.temp.curveTime;
 
     const splitCurves = bCurve.split(curveTime);
     const left = splitCurves.left;
@@ -302,14 +314,14 @@ const updates = {
     updates.adjustSegment(state, input);
   },
 
-  // FINE
   hideSplitter(state, input) {
     const segment = state.canvas.findDescendantByKey(input.key);
-    const target = segment.parent.parent;
-    target.splitter = Vector.create(-1000, -1000);
+    state.target = segment.parent.parent;
+    state.target.splitter = Vector.create(-1000, -1000);
   },
 
-  // FINE
+  // MARKUP
+
   userSelectedMarkupNode(state, input) {
     updates.cleanup(state, input);
 
@@ -320,23 +332,24 @@ const updates = {
     }
 
     if (node.type === types.SHAPE || node.type === types.GROUP) {
+      state.target = node;
       node.select();
       state.label = 'selectMode';
     } else if (node.type === types.SPLINE) {
-      node.parent.placePen();
+      state.target = node.parent;
+      state.target.placePen();
       state.canvas.removeFocus();
       state.label = 'penMode';
     } else if (
       [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)
     ) {
-      const target = node.parent.parent.parent; // TODO: great
-      target.placePen();
+      state.target = node.parent.parent.parent; // TODO: great
+      state.target.placePen();
       node.placePenTip();
       state.label = 'penMode';
     }
   },
 
-  // FINE
   userChangedMarkup(state, input) {
     const canvas = state.markupToCanvas(input.value);
 
@@ -345,12 +358,12 @@ const updates = {
     }
   },
 
-  // FINE
+  // DOCUMENT MANAGEMENT
+
   createDoc(state, input) {
     state.doc.replaceWith(state.buildDoc());
   },
 
-  // FINE
   updateDocList(state, input) {
     state.docs.children = [];
 
@@ -361,28 +374,25 @@ const updates = {
     }
   },
 
-  // FINE
   getPrevious(state, input) {
     window.history.back(); // TODO: shouldn't we do this inside of hist?
   },
 
-  // FINE
   getNext(state, input) {
     window.history.forward(); // TODO: shouldn't we do this inside of hist?
   },
 
-  // FINE
   switchDocument(state, input) {
     state.doc.replaceWith(state.objectToDoc(input.data.doc));
     updates.cleanup(state, input);
   },
 
-  // FINE
+  // MESSAGES
+
   setSavedMessage(state, input) {
     state.message.text = 'Saved';
   },
 
-  // FINE
   wipeMessage(state, input) {
     state.message.text = '';
   },

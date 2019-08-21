@@ -19,7 +19,7 @@ const State = {
     this.label = 'start';
     this.input = {};
     this.update = '';
-    this.aux = {};
+    this.temp = {};
     this.snapshots = {};
 
     this.editor = this.buildEditorTree();
@@ -120,6 +120,26 @@ Object.defineProperty(State, 'docs', {
 Object.defineProperty(State, 'message', {
   get() {
     return this.editor.message;
+  },
+});
+
+Object.defineProperty(State, 'target', {
+  get() {
+    return this.temp.target;
+  },
+
+  set(value) {
+    this.temp.target = value;
+  },
+});
+
+Object.defineProperty(State, 'from', {
+  get() {
+    return this.temp.from;
+  },
+
+  set(value) {
+    this.temp.from = value;
   },
 });
 
