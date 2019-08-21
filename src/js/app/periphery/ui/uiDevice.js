@@ -38,39 +38,47 @@ const UIDevice = {
   },
 
   reconcile(oldVNode, newVNode, $node) {
-    // the magic clause:
-    if (oldVNode === newVNode) {
-      // console.log('strict equality applies');
-      return;
+    this.patch(
+      this.diff(oldVNode, newVNode, $node)
+    );
+  },
+
+  diff(oldVNode, newVNode, $node, patches = []) {
+    if (oldVNode !== newVNode) {
+      if (typeof newVNode === 'string') {
+        patches.push(() => $node.replaceWith(this.createElement(newVNode)));
+      } else if (oldVNode.tag !== newVNode.tag) {
+        patches.push(() => $node.replaceWith(this.createElement(newVNode)));
+      } else {
+        this.reconcileProps(oldVNode, newVNode, $node, patches);
+        this.reconcileChildren(oldVNode, newVNode, $node, patches);
+      }
     }
 
-    if (typeof newVNode === 'string') {
-      if (newVNode !== oldVNode) {
-        $node.replaceWith(this.createElement(newVNode));
-      }
-    } else if (oldVNode.tag !== newVNode.tag) {
-      $node.replaceWith(this.createElement(newVNode));
-    } else {
-      this.reconcileProps(oldVNode, newVNode, $node);
-      this.reconcileChildren(oldVNode, newVNode, $node);
+    return patches;
+  },
+
+  patch(patches) {
+    for (let elem of patches) {
+      elem();
     }
   },
 
-  reconcileProps(oldVNode, newVNode, $node) {
+  reconcileProps(oldVNode, newVNode, $node, patches) {
     for (let [key, value] of Object.entries(newVNode.props)) {
       if (oldVNode.props[key] !== newVNode.props[key]) {
-        $node.setAttributeNS(null, key, value);
+        patches.push(() => $node.setAttributeNS(null, key, value));
       }
     }
 
     for (let [key, value] of Object.entries(oldVNode.props)) {
       if (newVNode.props[key] === undefined) {
-        $node.removeAttributeNS(null, key);
+        patches.push(() => $node.removeAttributeNS(null, key));
       }
     }
   },
 
-  reconcileChildren(oldVNode, newVNode, $node) {
+  reconcileChildren(oldVNode, newVNode, $node, patches) {
     const maxLength = Math.max(
       oldVNode.children.length,
       newVNode.children.length
@@ -84,12 +92,12 @@ const UIDevice = {
       const $child = $node.childNodes[$index];
 
       if (newVChild === undefined) {
-        $child && $child.remove();
+        $child && patches.push(() => $child.remove());
         $index -= 1;
       } else if (oldVChild === undefined) {
-        $node.appendChild(this.createElement(newVChild));
+        patches.push(() => $node.appendChild(this.createElement(newVChild)));
       } else {
-        this.reconcile(oldVChild, newVChild, $child);
+        this.reconcile(oldVChild, newVChild, $child, patches);
       }
 
       $index += 1;
