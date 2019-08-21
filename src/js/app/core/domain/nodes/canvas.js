@@ -110,7 +110,7 @@ Object.assign(Canvas, {
       child.computeBounds();
     }
 
-    for (let ancestor of graphicsNode.graphicsAncestors) {
+    for (let ancestor of graphicsNode.shapeOrGroupAncestors) {
       ancestor.computeBounds();
     }
   },

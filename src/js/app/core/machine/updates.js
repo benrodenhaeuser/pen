@@ -11,7 +11,7 @@ import { types } from '../domain/_.js';
 
 const updates = {
   focus(state, input) {
-    state.canvas.removeFocus();
+    state.canvas.removeFocus(); // remove focus from other nodes
     const node = state.canvas.findDescendantByKey(input.key);
 
     if (!node) {
@@ -21,14 +21,13 @@ const updates = {
     const hit = Vector.create(input.x, input.y);
     state.target = node.findAncestorByClass('frontier');
 
-    if (!state.target || !state.target.contains(hit)) {
-      return;
+    if (state.target && state.target.contains(hit)) {
+      state.target.focus();
     }
-
-    state.target.focus();
   },
 
   select(state, input) {
+    // user can only select what she has focused first:
     state.target = state.canvas.findFocus();
 
     if (!state.target) {

@@ -219,4 +219,10 @@ Object.defineProperty(Node, 'graphicsAncestors', {
   },
 });
 
+Object.defineProperty(Node, 'shapeOrGroupAncestors', {
+  get() {
+    return this.ancestors.filter(node => node.isGroupOrShape());
+  },
+});
+
 export { Node };

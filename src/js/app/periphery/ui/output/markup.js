@@ -69,10 +69,11 @@ const markup = {
   },
 
   react(info) {
-    const markupTree = this.requestSnapshot('markupTree');
     this.clearTextMarker();
 
     if (info.input.type !== 'mousemove') {
+      const markupTree = this.requestSnapshot('markupTree');
+
       if (
         this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
       ) {

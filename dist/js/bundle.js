@@ -4116,6 +4116,12 @@
     },
   });
 
+  Object.defineProperty(Node$$1, 'shapeOrGroupAncestors', {
+    get() {
+      return this.ancestors.filter(node => node.isGroupOrShape());
+    },
+  });
+
   const SceneNode$$1 = Object.create(Node$$1);
 
   Object.assign(SceneNode$$1, {
@@ -4404,7 +4410,7 @@
         child.computeBounds();
       }
 
-      for (let ancestor of graphicsNode.graphicsAncestors) {
+      for (let ancestor of graphicsNode.shapeOrGroupAncestors) {
         ancestor.computeBounds();
       }
     },
@@ -5762,7 +5768,7 @@
 
   const updates = {
     focus(state, input) {
-      state.canvas.removeFocus();
+      state.canvas.removeFocus(); // remove focus from other nodes
       const node = state.canvas.findDescendantByKey(input.key);
 
       if (!node) {
@@ -5772,14 +5778,13 @@
       const hit = Vector$$1.create(input.x, input.y);
       state.target = node.findAncestorByClass('frontier');
 
-      if (!state.target || !state.target.contains(hit)) {
-        return;
+      if (state.target && state.target.contains(hit)) {
+        state.target.focus();
       }
-
-      state.target.focus();
     },
 
     select(state, input) {
+      // user can only select what she has focused first:
       state.target = state.canvas.findFocus();
 
       if (!state.target) {
@@ -18978,10 +18983,11 @@
     },
 
     react(info) {
-      const markupTree = this.requestSnapshot('markupTree');
       this.clearTextMarker();
 
       if (info.input.type !== 'mousemove') {
+        const markupTree = this.requestSnapshot('markupTree');
+
         if (
           this.previousMarkupTree.toMarkupString() !== markupTree.toMarkupString()
         ) {
