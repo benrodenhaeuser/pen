@@ -10,8 +10,7 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
-  // SELECTION
-
+  // FINE
   focus(state, input) {
     state.canvas.removeFocus();
     const node = state.canvas.findDescendantByKey(input.key);
@@ -21,15 +20,14 @@ const updates = {
     }
 
     const hit = Vector.create(input.x, input.y);
-    state.aux.target = node.findAncestorByClass('frontier');
+    const target = node.findAncestorByClass('frontier');
 
-    if (!state.aux.target || !state.aux.target.contains(hit)) {
-      return;
+    if (target && target.contains(hit)) {
+      target.focus();
     }
-
-    state.aux.target.focus();
   },
 
+  // FINE
   select(state, input) {
     state.aux.target = state.canvas.findFocus(); // TODO: could we avoid finding the focus?
 
@@ -42,7 +40,7 @@ const updates = {
     updates.initTransform(state, input);
   },
 
-  // TODO: try to simplify logic
+  // FINE
   deepSelect(state, input) {
     const node = state.canvas.findDescendantByKey(input.key);
 
@@ -52,32 +50,26 @@ const updates = {
 
     if (node.type === types.SHAPE && node.class.includes('frontier')) {
       // node is a shape frontier: place pen in shape
-      state.aux.target = node;
       node.placePen();
       state.canvas.removeFocus();
       state.label = 'penMode';
       // node is a frontier group: select canvas
     } else if (node.class.includes('frontier')) {
-      state.aux.target = canvas;
-      canvas.select();
-      canvas.removeFocus();
+      state.canvas.select();
+      state.canvas.removeFocus();
     } else {
       // node not at frontier: select closest ancestor at frontier
-      state.aux.target = node.findAncestor(node => {
+      const target = node.findAncestor(node => {
         return node.parent && node.parent.class.includes('frontier');
       });
 
-      if (!state.aux.target) {
-        return;
-      }
-
-      state.aux.target.select();
+      target.select();
       state.canvas.updateFrontier(); // TODO: why do we need to do this?
       state.canvas.removeFocus();
     }
   },
 
-  // release is the 'do' action for various mouseup events
+  // FINE
   release(state, input) {
     if (!state.aux.target) {
       return;
@@ -87,8 +79,7 @@ const updates = {
     state.aux = {};
   },
 
-  // cleanup is called internally from other updates
-  // it is useful to call within some pen-related actions!
+  // FINE
   cleanup(state, event) {
     const current = state.canvas.findPen();
 
@@ -98,23 +89,21 @@ const updates = {
 
     state.canvas.removeSelection();
     state.canvas.removePen();
-
-    // we cannot reset aux here, because state.aux.target might still be needed.
   },
 
-  // TODO: weird name
-  // triggered by escape key
+  // FINE
   exitEdit(state, input) {
     if (state.label === 'penMode') {
-      state.aux.target = state.canvas.findPen();
+      const target = state.canvas.findPen();
       updates.cleanup(state, input);
-      state.aux.target.select();
+      target.select();
       state.label = 'selectMode';
     } else if (state.label === 'selectMode') {
       updates.cleanup(state, input);
     }
   },
 
+  // FINE
   deleteNode(state, input) {
     let node = state.canvas.findSelection() || state.canvas.findPenTip();
 
@@ -133,15 +122,16 @@ const updates = {
     }
   },
 
-  // TRANSFORMS
-
+  // FINE
   initTransform(state, input) {
+    // TODO: screwed this up
     state.aux.from = Vector.create(input.x, input.y);
     state.aux.center = state.aux.target.bounds.center.transform(
       state.aux.target.globalTransform()
     );
   },
 
+  // FINE
   shift(state, input) {
     if (!state.aux.target) {
       return;
@@ -152,11 +142,10 @@ const updates = {
     const offset = to.minus(from);
 
     state.aux.target.translate(offset);
-
-    // bookkeeping
     state.aux.from = to;
   },
 
+  // FINE
   rotate(state, input) {
     if (!state.aux.target) {
       return;
@@ -168,10 +157,10 @@ const updates = {
     const angle = center.angle(from, to);
 
     state.aux.target.rotate(angle, center);
-
     state.aux.from = to;
   },
 
+  // FINE
   scale(state, input) {
     if (!state.aux.target) {
       return;
@@ -183,53 +172,47 @@ const updates = {
     const factor = to.minus(center).length() / from.minus(center).length();
 
     state.aux.target.scale(factor, center);
-
     state.aux.from = to;
   },
 
-  // PEN
-
+  // FINE
   addSegment(state, input) {
-    state.aux.target =
-      state.canvas.findPen() || state.canvas.mountShape().placePen();
-    const spline = state.aux.target.lastChild || state.aux.target.mountSpline();
+    const target = state.canvas.findPen() || state.canvas.mountShape().placePen();
+    const spline = target.lastChild || target.mountSpline();
     const segment = spline.mountSegment();
 
     segment
       .mountAnchor(
-        Vector.create(input.x, input.y).transformToLocal(state.aux.target)
+        Vector.create(input.x, input.y).transformToLocal(target)
       )
       .placePenTip();
   },
 
+  // FINE
   setHandles(state, input) {
-    state.aux.target = state.canvas.findPen();
-    const segment = state.aux.target.lastChild.lastChild;
+    const target = state.canvas.findPen();
+    const segment = target.lastChild.lastChild;
     const handleIn = segment.handleIn || segment.mountHandleIn();
-    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(
-      state.aux.target
-    );
+    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(target);
     const handleOut = segment.handleOut || segment.mountHandleOut();
     handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
     handleIn.placePenTip();
   },
 
+  // FINE
   initAdjustSegment(state, input) {
     const control = state.canvas.findDescendantByKey(input.key);
-    state.aux.target = control.parent.parent.parent; // TODO: great
-    state.aux.from = Vector.create(input.x, input.y).transformToLocal(
-      state.aux.target
-    );
+    const target = control.parent.parent.parent; // TODO: great
+    state.aux.from = Vector.create(input.x, input.y).transformToLocal(target);
     control.placePenTip();
   },
 
+  // FINE
   adjustSegment(state, input) {
     const control = state.canvas.findPenTip();
     const segment = control.parent;
-    state.aux.target = segment.parent.parent;
-    const to = Vector.create(input.x, input.y).transformToLocal(
-      state.aux.target
-    );
+    const target = segment.parent.parent;
+    const to = Vector.create(input.x, input.y).transformToLocal(target);
     const change = to.minus(state.aux.from);
     control.vector = control.vector.add(change);
 
@@ -260,6 +243,7 @@ const updates = {
     state.aux.from = to;
   },
 
+  // FINE
   projectInput(state, input) {
     const startSegment = state.canvas.findDescendantByKey(input.key);
     const spline = startSegment.parent;
@@ -285,7 +269,7 @@ const updates = {
     state.aux.target = target;
   },
 
-  // TODO: refactor
+  // FINE
   splitCurve(state, input) {
     const target = state.aux.target;
     const spline = state.aux.spline;
@@ -318,14 +302,14 @@ const updates = {
     updates.adjustSegment(state, input);
   },
 
+  // FINE
   hideSplitter(state, input) {
     const segment = state.canvas.findDescendantByKey(input.key);
-    state.aux.target = segment.parent.parent;
-    state.aux.target.splitter = Vector.create(-1000, -1000);
+    const target = segment.parent.parent;
+    target.splitter = Vector.create(-1000, -1000);
   },
 
-  // MARKUP
-
+  // FINE
   userSelectedMarkupNode(state, input) {
     updates.cleanup(state, input);
 
@@ -336,24 +320,23 @@ const updates = {
     }
 
     if (node.type === types.SHAPE || node.type === types.GROUP) {
-      state.aux.target = node;
       node.select();
       state.label = 'selectMode';
     } else if (node.type === types.SPLINE) {
-      state.aux.target = node.parent;
-      state.aux.target.placePen();
+      node.parent.placePen();
       state.canvas.removeFocus();
       state.label = 'penMode';
     } else if (
       [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)
     ) {
-      state.aux.target = node.parent.parent.parent; // TODO: great
-      state.aux.target.placePen();
+      const target = node.parent.parent.parent; // TODO: great
+      target.placePen();
       node.placePenTip();
       state.label = 'penMode';
     }
   },
 
+  // FINE
   userChangedMarkup(state, input) {
     const canvas = state.markupToCanvas(input.value);
 
@@ -362,12 +345,12 @@ const updates = {
     }
   },
 
-  // DOCUMENT MANAGEMENT
-
+  // FINE
   createDoc(state, input) {
     state.doc.replaceWith(state.buildDoc());
   },
 
+  // FINE
   updateDocList(state, input) {
     state.docs.children = [];
 
@@ -378,25 +361,28 @@ const updates = {
     }
   },
 
+  // FINE
   getPrevious(state, input) {
     window.history.back(); // TODO: shouldn't we do this inside of hist?
   },
 
+  // FINE
   getNext(state, input) {
     window.history.forward(); // TODO: shouldn't we do this inside of hist?
   },
 
+  // FINE
   switchDocument(state, input) {
     state.doc.replaceWith(state.objectToDoc(input.data.doc));
     updates.cleanup(state, input);
   },
 
-  // MESSAGES
-
+  // FINE
   setSavedMessage(state, input) {
     state.message.text = 'Saved';
   },
 
+  // FINE
   wipeMessage(state, input) {
     state.message.text = '';
   },
