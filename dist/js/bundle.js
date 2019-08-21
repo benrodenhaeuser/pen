@@ -6472,9 +6472,7 @@
 
     diff(oldVNode, newVNode, $node, patches = []) {
       if (oldVNode !== newVNode) {
-        if (typeof newVNode === 'string') {
-          patches.push(() => $node.replaceWith(this.createElement(newVNode)));
-        } else if (oldVNode.tag !== newVNode.tag) {
+        if (typeof newVNode === 'string' || oldVNode.tag !== newVNode.tag) {
           patches.push(() => $node.replaceWith(this.createElement(newVNode)));
         } else {
           this.reconcileProps(oldVNode, newVNode, $node, patches);
@@ -6486,8 +6484,8 @@
     },
 
     patch(patches) {
-      for (let elem of patches) {
-        elem();
+      for (let p of patches) {
+        p();
       }
     },
 
@@ -6511,10 +6509,10 @@
         newVNode.children.length
       );
 
-      for (let vIndex = 0; vIndex < maxLength; vIndex += 1) {
-        const oldVChild = oldVNode.children[vIndex];
-        const newVChild = newVNode.children[vIndex];
-        const $child = $node.childNodes[$index];
+      for (let i = 0; i < maxLength; i += 1) {
+        const oldVChild = oldVNode.children[i];
+        const newVChild = newVNode.children[i];
+        const $child = $node.childNodes[i];
 
         if (newVChild === undefined) {
           $child && patches.push(() => $child.remove());
