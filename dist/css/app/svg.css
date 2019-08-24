@@ -48,8 +48,13 @@ line {
   stroke-width: 13px;
 }
 
+/* curve hover in select mode */
+[data-type="shape"].focus > [data-type="curve-stroke"]  {
+  stroke: gray;
+}
+
 /* curve hover in pen mode */
-.pen ~ [data-type="shape"] > [data-type="curve"]:hover + [data-type="curve-stroke"] {
+[data-type="shape"].pen > [data-type="curve"]:hover + [data-type="curve-stroke"] {
   stroke: red;
 }
 
@@ -159,17 +164,17 @@ line {
   pointer-events: none;
 }
 
-[data-type="scene"], [data-type="shape"], [data-type="group"]  {
+[data-type="scene"], [data-type="group"]  {
   pointer-events: bounding-box;
 }
 
 /* curve is the pointer target for curve splitting */
-.pen ~ [data-type="shape"] > [data-type="curve"] {
+[data-type="curve"] {
   pointer-events: stroke;
 }
 
-/* curve stroke displays actual bezier curve */
-[data-type="curve"], [data-type="curve-stroke"] {
+/* curve stroke displays the actual bezier curve */
+[data-type="curve-stroke"] {
   pointer-events: none;
 }
 

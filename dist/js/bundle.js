@@ -5547,7 +5547,7 @@
     {
       from: 'selectMode',
       type: 'dblclick',
-      target: [types.SHAPE, types.GROUP, types.CANVAS],
+      // target: [types.SHAPE, types.GROUP, types.CANVAS],  // unnecessary?
       do: 'deepSelect',
     },
 
@@ -5555,7 +5555,7 @@
     {
       from: 'selectMode',
       type: 'mousedown',
-      target: [types.SHAPE, types.GROUP, types.CANVAS],
+      // target: [types.SHAPE, types.GROUP, types.CANVAS], // unnecessary?
       do: 'select',
       to: 'shifting',
     },
@@ -5809,7 +5809,7 @@
       updates.initTransform(state, input);
     },
 
-    // TODO: try to simplify logic
+    // TODO: simplify and clarify logic!!
     deepSelect(state, input) {
       const node = state.canvas.findDescendantByKey(input.key);
 
@@ -5817,10 +5817,10 @@
         return;
       }
 
-      if (node.type === types.SHAPE && node.class.includes('frontier')) {
-        // node is a shape frontier: place pen in shape
-        state.target = node;
-        node.placePen();
+      if (node.parent.parent.type === types.SHAPE && node.parent.parent.class.includes('frontier')) {
+        // node is a segment whose shape is at frontier: place pen in shape
+        state.target = node.parent.parent;
+        node.parent.parent.placePen();
         state.canvas.removeFocus();
         state.label = 'penMode';
         // node is a frontier group: select canvas
