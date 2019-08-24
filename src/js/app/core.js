@@ -26,6 +26,8 @@ const core = {
       const update = updates[transition.do]; // a function, or undefined
       update && update(this.state, input);
 
+      // console.log(input.type, transition);
+
       this.publish();
 
       // console.log('DOM nodes', document.getElementsByTagName('*').length);
@@ -34,7 +36,7 @@ const core = {
 
   publish() {
     for (let key of Object.keys(this.modules)) {
-      this.modules[key](this.state.info);
+      this.modules[key](this.state.description);
     }
 
     this.state.snapshots = {};

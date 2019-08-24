@@ -57,15 +57,15 @@ const db = {
     });
   },
 
-  react(info) {
-    if (info.update === 'go') {
+  react(description) {
+    if (description.update === 'go') {
       window.dispatchEvent(new Event('loadDocIDs'));
-    } else if (info.update === 'requestDoc') {
+    } else if (description.update === 'requestDoc') {
       window.dispatchEvent(
-        new CustomEvent('readDoc', { detail: info.input.key })
+        new CustomEvent('readDoc', { detail: description.input.key })
       );
     } else if (
-      ['release', 'releasePen', 'changeMarkup'].includes(info.update)
+      ['release', 'releasePen', 'changeMarkup'].includes(description.update)
     ) {
       const plain = this.requestSnapshot('plain');
 

@@ -13,7 +13,7 @@ const UIDevice = {
     this.mountPoint.appendChild(this.dom);
   },
 
-  react(info) {
+  react(description) {
     const vDOM = this.requestSnapshot('vDOM')[this.name];
     this.reconcile(this.previousVDOM, vDOM, this.dom);
     this.previousVDOM = vDOM;

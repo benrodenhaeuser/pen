@@ -687,7 +687,11 @@
     },
 
     toString() {
-      return `${this.x} ${this.y}`;
+      // TODO: rounding (extract precision to constant)
+      const x = Number(Math.round(this.x+'e4')+'e-4');
+      const y = Number(Math.round(this.y+'e4')+'e-4');
+
+      return `${x} ${y}`;
     },
   };
 
@@ -812,7 +816,12 @@
     },
 
     toString() {
-      return `matrix(${this.m.join(', ')})`;
+      // TODO: rounding, extract precision to constant
+      const m = Array.from(this.m).map(
+        value => Number(Math.round(value+'e4')+'e-4')
+      );
+
+      return `matrix(${m.join(', ')})`;
     },
 
     toArray() {
@@ -4589,7 +4598,7 @@
           for (let i = 1; i < command.length; i += 1) {
             line.mount(
               Token$$1.create({
-                markup: command[i][0], // TODO: ugly
+                markup: command[i][0],
                 key: command[i][1],
                 class: command[i][2],
               })
@@ -4698,7 +4707,7 @@
       commands.push([
         'M',
         [
-          `${segment.anchor.vector.x} ${segment.anchor.vector.y}`,
+          segment.anchor.toString(),
           segment.anchor.key,
           segment.anchor.class,
         ],
@@ -4720,7 +4729,7 @@
 
         if (prevSeg.handleOut) {
           command.push([
-            `${prevSeg.handleOut.vector.x} ${prevSeg.handleOut.vector.y}`,
+            prevSeg.handleOut.toString(),
             prevSeg.handleOut.key,
             prevSeg.handleOut.class,
           ]);
@@ -4728,14 +4737,14 @@
 
         if (currSeg.handleIn) {
           command.push([
-            `${currSeg.handleIn.vector.x} ${currSeg.handleIn.vector.y}`,
+            currSeg.handleIn.toString(),
             currSeg.handleIn.key,
             currSeg.handleIn.class,
           ]);
         }
 
         command.push([
-          `${currSeg.anchor.vector.x} ${currSeg.anchor.vector.y}`,
+          currSeg.anchor.toString(),
           currSeg.anchor.key,
           currSeg.anchor.class,
         ]);
@@ -4836,6 +4845,10 @@
       this.canvas.removePenTip();
       this.class = this.class.add('tip');
       this.parent.class = this.parent.class.add('containsTip');
+    },
+
+    toString() {
+      return this.vector.toString();
     },
   });
 
@@ -5399,7 +5412,7 @@
     },
   };
 
-  Object.defineProperty(State, 'info', {
+  Object.defineProperty(State, 'description', {
     get() {
       return {
         label: this.label,
@@ -6180,6 +6193,8 @@
         const update = updates[transition.do]; // a function, or undefined
         update && update(this.state, input);
 
+        // console.log(input.type, transition);
+
         this.publish();
 
         // console.log('DOM nodes', document.getElementsByTagName('*').length);
@@ -6188,7 +6203,7 @@
 
     publish() {
       for (let key of Object.keys(this.modules)) {
-        this.modules[key](this.state.info);
+        this.modules[key](this.state.description);
       }
 
       this.state.snapshots = {};
@@ -6258,15 +6273,15 @@
       });
     },
 
-    react(info) {
-      if (info.update === 'go') {
+    react(description) {
+      if (description.update === 'go') {
         window.dispatchEvent(new Event('loadDocIDs'));
-      } else if (info.update === 'requestDoc') {
+      } else if (description.update === 'requestDoc') {
         window.dispatchEvent(
-          new CustomEvent('readDoc', { detail: info.input.key })
+          new CustomEvent('readDoc', { detail: description.input.key })
         );
       } else if (
-        ['release', 'releasePen', 'changeMarkup'].includes(info.update)
+        ['release', 'releasePen', 'changeMarkup'].includes(description.update)
       ) {
         const plain = this.requestSnapshot('plain');
 
@@ -6293,8 +6308,8 @@
       });
     },
 
-    react(info) {
-      if (this.isRelevant(info.update)) {
+    react(description) {
+      if (this.isRelevant(description.update)) {
         const plain = this.requestSnapshot('plain');
         window.history.pushState(plain, 'entry');
       }
@@ -6460,7 +6475,7 @@
       this.mountPoint.appendChild(this.dom);
     },
 
-    react(info) {
+    react(description) {
       const vDOM = this.requestSnapshot('vDOM')[this.name];
       this.reconcile(this.previousVDOM, vDOM, this.dom);
       this.previousVDOM = vDOM;
@@ -6570,8 +6585,8 @@
       });
     },
 
-    react(info) {
-      if (info.input.type === 'updateDocList') {
+    react(description) {
+      if (description.input.type === 'updateDocList') {
         const vDOM = this.requestSnapshot('vDOM')[this.name];
         this.reconcile(this.previousVDOM, vDOM, this.dom);
         this.previousVDOM = vDOM;
@@ -18923,8 +18938,8 @@
       const markupTree = this.requestSnapshot('markupTree');
 
       this.markupEditor = CodeMirror(this.mountPoint, {
-        lineNumbers: true,
-        lineWrapping: true,
+        lineNumbers: false,
+        lineWrapping: false,
         mode: 'xml',
         value: markupTree.toMarkupString(),
       });
@@ -18982,10 +18997,10 @@
       });
     },
 
-    react(info) {
-      this.clearTextMarker();
+    react(description) {
+      if (description.input.type !== 'mousemove' && description.input.type !== 'mousedown') {
+        this.clearTextMarker();
 
-      if (info.input.type !== 'mousemove') {
         const markupTree = this.requestSnapshot('markupTree');
 
         if (
@@ -19112,8 +19127,11 @@
     },
 
     setMarker(node, cssClass) {
-      const range = node.getRange();
-      this.textMarker = this.markupDoc.markText(...range, {
+      const markerRange = node.getRange();
+      const scrollTarget = { line: markerRange[0].line, ch: 0 };
+      // ^ TODO: just an approximation
+      this.markupEditor.scrollIntoView(scrollTarget);
+      this.textMarker = this.markupDoc.markText(...markerRange, {
         className: cssClass,
       });
     },

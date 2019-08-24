@@ -89,7 +89,7 @@ const State = {
   },
 };
 
-Object.defineProperty(State, 'info', {
+Object.defineProperty(State, 'description', {
   get() {
     return {
       label: this.label,

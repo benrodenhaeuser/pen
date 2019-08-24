@@ -14,7 +14,7 @@ rect, circ {
 
 path {
   stroke-width: 1px;
-  stroke: #d3d3d3;
+  stroke: black;
 }
 
 line {
@@ -38,7 +38,7 @@ line {
 /* bezier curve controls */
 
 [data-type="anchor"], [data-type="handleIn"], [data-type="handleOut"] {
-  stroke: #d3d3d3;
+  stroke: black;
   fill: white;
 }
 

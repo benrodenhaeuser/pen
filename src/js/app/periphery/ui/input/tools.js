@@ -25,8 +25,8 @@ const tools = Object.assign(Object.create(UIDevice), {
     });
   },
 
-  react(info) {
-    if (info.input.type === 'updateDocList') {
+  react(description) {
+    if (description.input.type === 'updateDocList') {
       const vDOM = this.requestSnapshot('vDOM')[this.name];
       this.reconcile(this.previousVDOM, vDOM, this.dom);
       this.previousVDOM = vDOM;

@@ -84,7 +84,7 @@ Object.assign(Shape, {
         for (let i = 1; i < command.length; i += 1) {
           line.mount(
             Token.create({
-              markup: command[i][0], // TODO: ugly
+              markup: command[i][0],
               key: command[i][1],
               class: command[i][2],
             })

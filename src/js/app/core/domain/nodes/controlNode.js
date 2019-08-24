@@ -9,6 +9,10 @@ Object.assign(ControlNode, {
     this.class = this.class.add('tip');
     this.parent.class = this.parent.class.add('containsTip');
   },
+
+  toString() {
+    return this.vector.toString();
+  },
 });
 
 export { ControlNode };

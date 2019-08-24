@@ -9,8 +9,8 @@ const markup = {
     const markupTree = this.requestSnapshot('markupTree');
 
     this.markupEditor = CodeMirror(this.mountPoint, {
-      lineNumbers: true,
-      lineWrapping: true,
+      lineNumbers: false,
+      lineWrapping: false,
       mode: 'xml',
       value: markupTree.toMarkupString(),
     });
@@ -68,10 +68,10 @@ const markup = {
     });
   },
 
-  react(info) {
-    this.clearTextMarker();
+  react(description) {
+    if (description.input.type !== 'mousemove' && description.input.type !== 'mousedown') {
+      this.clearTextMarker();
 
-    if (info.input.type !== 'mousemove') {
       const markupTree = this.requestSnapshot('markupTree');
 
       if (
@@ -198,8 +198,11 @@ const markup = {
   },
 
   setMarker(node, cssClass) {
-    const range = node.getRange();
-    this.textMarker = this.markupDoc.markText(...range, {
+    const markerRange = node.getRange();
+    const scrollTarget = { line: markerRange[0].line, ch: 0 };
+    // ^ TODO: just an approximation
+    this.markupEditor.scrollIntoView(scrollTarget);
+    this.textMarker = this.markupDoc.markText(...markerRange, {
       className: cssClass,
     });
   },
