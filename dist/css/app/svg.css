@@ -5,7 +5,7 @@ path, line, circle, rect {
 }
 
 path, line {
-  fill: none;
+  fill: blue;
 }
 
 rect, circ {

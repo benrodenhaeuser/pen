@@ -36,7 +36,14 @@ const updates = {
     }
 
     state.target.select();
-    updates.initTransform(state, input);
+    updates.initShift(state, input);
+  },
+
+  initShift(state, input) {
+    state.from = Vector.create(input.x, input.y);
+    state.temp.center = state.target.bounds.center.transform(
+      state.target.globalTransform()
+    ); // ^ TODO: temp.center should perhaps be `center` with defined property?
   },
 
   // TODO: simplify and clarify logic!!
@@ -131,13 +138,18 @@ const updates = {
   },
 
   // TRANSFORMS
-
   initTransform(state, input) {
+    state.target = state.canvas.findDescendantByKey(input.key); // ??
+
+    console.log(state.target);
+
     state.from = Vector.create(input.x, input.y);
     state.temp.center = state.target.bounds.center.transform(
       state.target.globalTransform()
-    );
+    ); // ^ TODO: temp.center should perhaps be `center` with defined property?
   },
+
+
 
   shift(state, input) {
     if (!state.target) {

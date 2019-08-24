@@ -3861,6 +3861,7 @@
     ANCHOR: 'anchor',
     HANDLEIN: 'handleIn',
     HANDLEOUT: 'handleOut',
+    CURVE: 'curve',
 
     // markup
     MARKUPNODE: 'markupNode',
@@ -5547,7 +5548,7 @@
     {
       from: 'selectMode',
       type: 'dblclick',
-      // target: [types.SHAPE, types.GROUP, types.CANVAS],  // unnecessary?
+      // target: [types.SEGMENT, types.GROUP, types.CANVAS],  // unnecessary?
       do: 'deepSelect',
     },
 
@@ -5555,7 +5556,7 @@
     {
       from: 'selectMode',
       type: 'mousedown',
-      // target: [types.SHAPE, types.GROUP, types.CANVAS], // unnecessary?
+      target: [types.CURVE, types.GROUP, types.CANVAS], 
       do: 'select',
       to: 'shifting',
     },
@@ -5806,7 +5807,14 @@
       }
 
       state.target.select();
-      updates.initTransform(state, input);
+      updates.initShift(state, input);
+    },
+
+    initShift(state, input) {
+      state.from = Vector$$1.create(input.x, input.y);
+      state.temp.center = state.target.bounds.center.transform(
+        state.target.globalTransform()
+      ); // ^ TODO: temp.center should perhaps be `center` with defined property?
     },
 
     // TODO: simplify and clarify logic!!
@@ -5901,13 +5909,18 @@
     },
 
     // TRANSFORMS
-
     initTransform(state, input) {
+      state.target = state.canvas.findDescendantByKey(input.key); // ??
+
+      console.log(state.target);
+
       state.from = Vector$$1.create(input.x, input.y);
       state.temp.center = state.target.bounds.center.transform(
         state.target.globalTransform()
-      );
+      ); // ^ TODO: temp.center should perhaps be `center` with defined property?
     },
+
+
 
     shift(state, input) {
       if (!state.target) {
@@ -6187,6 +6200,9 @@
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
+        console.log(input);
+        // console.log(transition);
+
         this.state.update = transition.do; // a string
         this.state.label = transition.to;
 

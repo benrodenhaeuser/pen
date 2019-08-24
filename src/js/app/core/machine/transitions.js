@@ -81,7 +81,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'dblclick',
-    // target: [types.SHAPE, types.GROUP, types.CANVAS],  // unnecessary?
+    // target: [types.SEGMENT, types.GROUP, types.CANVAS],  // unnecessary?
     do: 'deepSelect',
   },
 
@@ -89,7 +89,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'mousedown',
-    // target: [types.SHAPE, types.GROUP, types.CANVAS], // unnecessary?
+    target: [types.CURVE, types.GROUP, types.CANVAS], 
     do: 'select',
     to: 'shifting',
   },

@@ -14,6 +14,7 @@ const types = {
   ANCHOR: 'anchor',
   HANDLEIN: 'handleIn',
   HANDLEOUT: 'handleOut',
+  CURVE: 'curve',
 
   // markup
   MARKUPNODE: 'markupNode',
