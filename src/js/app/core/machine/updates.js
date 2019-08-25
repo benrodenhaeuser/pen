@@ -54,6 +54,12 @@ const updates = {
       return;
     }
 
+    // TODO: DOES THIS WORK?
+    // in either case, we look up an ancestor at the frontier:
+    // if it is the node itself, select the canvas
+    // else: if it is a shape, select the shape
+    // else: if it is a group, select the group
+
     if (node.parent.parent.type === types.SHAPE && node.parent.parent.class.includes('frontier')) {
       // node is a segment whose shape is at frontier: place pen in shape
       state.target = node.parent.parent;
@@ -66,10 +72,10 @@ const updates = {
       canvas.select();
       canvas.removeFocus();
     } else {
-      // node not at frontier: select closest ancestor at frontier
+      // node not at frontier: select closest ancestor (group) at frontier
       state.target = node.findAncestor(node => {
         return node.parent && node.parent.class.includes('frontier');
-      });
+      }); // ^ I am unclear about the node.parent conjunct ... why do we need it?
 
       if (!state.target) {
         return;
@@ -262,7 +268,7 @@ const updates = {
         segment.handleIn.vector = segment.handleOut.vector.rotate(
           Math.PI,
           segment.anchor.vector
-        );
+        );mic
         break;
     }
 
@@ -270,6 +276,7 @@ const updates = {
   },
 
   projectInput(state, input) {
+    console.log('projectInput');
     const startSegment = state.canvas.findDescendantByKey(input.key);
     const spline = startSegment.parent;
     const target = spline.parent;

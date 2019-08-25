@@ -5,7 +5,7 @@ path, line, circle, rect {
 }
 
 path, line {
-  fill: blue;
+  fill: none;
 }
 
 rect, circ {
@@ -15,6 +15,11 @@ rect, circ {
 path {
   stroke-width: 1px;
   stroke: black;
+}
+
+[data-type="shape"] {
+  fill: blue;
+  stroke: none;
 }
 
 line {
@@ -44,7 +49,7 @@ line {
 
 /* 'curve' is the pointer target for bezier curves  */
 [data-type="curve"] {
-  stroke: transparent;
+  stroke: none;
   stroke-width: 13px;
 }
 
@@ -97,6 +102,9 @@ line {
 }
 
 /* VISIBILITY */
+[data-type="curve"] {
+  visibility: hidden;
+}
 
 [data-type="splitter"] {
   visibility: hidden;
@@ -168,7 +176,12 @@ line {
   pointer-events: bounding-box;
 }
 
+[data-type="shape"] {
+  pointer-events: painted;
+}
+
 /* curve is the pointer target for curve splitting */
+/* it is not painted, but receives events */
 [data-type="curve"] {
   pointer-events: stroke;
 }

@@ -40,7 +40,7 @@ const comps = {
 
   shape(node) {
     const theShape = {
-      tag: 'g',
+      tag: 'path',
       children: [],
       props: {
         'data-key': node.key,
