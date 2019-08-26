@@ -128,9 +128,7 @@ const updates = {
 
   // TRANSFORMS
   initTransform(state, input) {
-    state.target = state.canvas.findDescendantByKey(input.key); // ??
-
-    console.log(state.target);
+    state.target = state.canvas.findDescendantByKey(input.key);
 
     state.from = Vector.create(input.x, input.y);
     state.temp.center = state.target.bounds.center.transform(

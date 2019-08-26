@@ -274,6 +274,7 @@
           'data-key': node.key,
           d: node.toPathString(),
           transform: node.transform && node.transform.toString(),
+          fill: node.fill, // TODO: fill
         },
       };
 
@@ -309,6 +310,7 @@
               'data-type': 'curve-stroke',
               d: curves[i].toPathString(),
               transform: node.transform && node.transform.toString(),
+              stroke: node.stroke, // TODO: stroke
             },
           });
         }
@@ -4512,7 +4514,7 @@
   });
 
   const Shape$$1 = Object.create(GraphicsNode$$1);
-  Shape$$1.defineProps(['splitter']);
+  Shape$$1.defineProps(['fill', 'stroke', 'splitter']);
 
   Object.assign(Shape$$1, {
     create(opts = {}) {
@@ -4521,6 +4523,8 @@
         .set({
           type: types.SHAPE,
           splitter: Vector$$1.create(-1000, -1000),
+          fill: 'none',
+          stroke: 'black', // TODO: extract to constant
         })
         .set(opts);
     },
@@ -4560,6 +4564,14 @@
             markup: '<path',
             key: this.key,
             class: this.class,
+          })
+        )
+      );
+
+      open.push(
+        Line$$1.create({ indent: this.height + 1 }).mount(
+          Token$$1.create({
+            markup: `fill="${this.fill}" stroke="${this.stroke}"`,
           })
         )
       );
@@ -5206,13 +5218,21 @@
 
     // classes
     node.class = Class.create(Array.from($node.classList));
+
+    // TODO: fill
+    if ($node.attributes.fill) {
+      node.fill = $node.getAttributeNS(null, 'fill');
+    }
+
+    if ($node.attributes.stroke) {
+      node.stroke = $node.getAttributeNS(null, 'stroke');
+    }
   };
 
   const buildShapeTree = $geometryNode => {
     const shape = Shape$$1.create();
 
     processAttributes($geometryNode, shape);
-    // ^ TODO: we are also calling processAttributes further above, duplication!
 
     let pathCommands;
 
@@ -5884,9 +5904,7 @@
 
     // TRANSFORMS
     initTransform(state, input) {
-      state.target = state.canvas.findDescendantByKey(input.key); // ??
-
-      console.log(state.target);
+      state.target = state.canvas.findDescendantByKey(input.key);
 
       state.from = Vector$$1.create(input.x, input.y);
       state.temp.center = state.target.bounds.center.transform(

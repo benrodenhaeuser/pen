@@ -197,6 +197,7 @@ const comps = {
         'data-key': node.key,
         d: node.toPathString(),
         transform: node.transform && node.transform.toString(),
+        fill: node.fill, // TODO: fill
       },
     };
 
@@ -232,6 +233,7 @@ const comps = {
             'data-type': 'curve-stroke',
             d: curves[i].toPathString(),
             transform: node.transform && node.transform.toString(),
+            stroke: node.stroke, // TODO: stroke
           },
         });
       }

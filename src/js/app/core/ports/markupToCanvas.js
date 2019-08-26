@@ -88,13 +88,21 @@ const processAttributes = ($node, node) => {
 
   // classes
   node.class = Class.create(Array.from($node.classList));
+
+  // TODO: fill
+  if ($node.attributes.fill) {
+    node.fill = $node.getAttributeNS(null, 'fill');
+  }
+
+  if ($node.attributes.stroke) {
+    node.stroke = $node.getAttributeNS(null, 'stroke');
+  }
 };
 
 const buildShapeTree = $geometryNode => {
   const shape = Shape.create();
 
   processAttributes($geometryNode, shape);
-  // ^ TODO: we are also calling processAttributes further above, duplication!
 
   let pathCommands;
 

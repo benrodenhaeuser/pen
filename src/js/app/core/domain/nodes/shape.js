@@ -9,7 +9,7 @@ import { Vector } from '../geometry/_.js';
 import { comps } from '../components/_.js';
 
 const Shape = Object.create(GraphicsNode);
-Shape.defineProps(['splitter']);
+Shape.defineProps(['fill', 'stroke', 'splitter']);
 
 Object.assign(Shape, {
   create(opts = {}) {
@@ -18,6 +18,8 @@ Object.assign(Shape, {
       .set({
         type: types.SHAPE,
         splitter: Vector.create(-1000, -1000),
+        fill: 'none',
+        stroke: 'black', // TODO: extract to constant
       })
       .set(opts);
   },
@@ -57,6 +59,14 @@ Object.assign(Shape, {
           markup: '<path',
           key: this.key,
           class: this.class,
+        })
+      )
+    );
+
+    open.push(
+      Line.create({ indent: this.height + 1 }).mount(
+        Token.create({
+          markup: `fill="${this.fill}" stroke="${this.stroke}"`,
         })
       )
     );
