@@ -115,22 +115,6 @@
       };
     },
 
-    shape(node) {
-      const theShape = {
-        tag: 'path',
-        children: [],
-        props: {
-          'data-key': node.key,
-          'data-type': node.type,
-          d: node.toPathString(),
-          transform: node.transform && node.transform.toString(),
-          class: node.class.toString(),
-        },
-      };
-
-      return theShape;
-    },
-
     wrapper(node) {
       return h('g', {
         'data-type': `${node.type}-wrapper`,
@@ -255,18 +239,6 @@
       });
     },
 
-    // {
-    //   tag: 'g',
-    //   children: [],
-    //   props: {
-    //     'data-key': node.key,
-    //     'data-type': node.type,
-    //     d: node.toPathString(),
-    //     transform: node.transform && node.transform.toString(),
-    //     class: node.class.toString(),
-    //   },
-    // }
-
     curves(node) {
       const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
       const radius = diameter / 2;
@@ -287,9 +259,25 @@
           'data-key': node.key,
           class: node.class.toString(),
         },
+        this.shapeFill(node),
         ...vParts,
         splitter
       );
+    },
+
+    shapeFill(node) {
+      const theShape = {
+        tag: 'path',
+        children: [],
+        props: {
+          'data-type': node.type,
+          'data-key': node.key,
+          d: node.toPathString(),
+          transform: node.transform && node.transform.toString(),
+        },
+      };
+
+      return theShape;
     },
 
     curveParts(node) {
@@ -4636,13 +4624,10 @@
     },
 
     toComponent() {
-      const wrapper = comps$$1.wrapper(this);
-      const shape = comps$$1.shape(this);
-      const curves = comps$$1.curves(this);
+      const wrapper = comps$$1.wrapper(this);    const curves = comps$$1.curves(this);
       const segments = comps$$1.segments(this);
       const outerUI = comps$$1.outerUI(this);
 
-      wrapper.children.push(shape);
       wrapper.children.push(curves);
       wrapper.children.push(segments);
       wrapper.children.push(outerUI);
@@ -5556,7 +5541,7 @@
     {
       from: 'selectMode',
       type: 'mousedown',
-      target: [types.CURVE, types.SHAPE, types.GROUP, types.CANVAS], 
+      target: [types.CURVE, types.SHAPE, types.GROUP, types.CANVAS],
       do: 'select',
       to: 'shifting',
     },
@@ -5817,44 +5802,27 @@
       ); // ^ TODO: temp.center should perhaps be `center` with defined property?
     },
 
-    // TODO: simplify and clarify logic!!
     deepSelect(state, input) {
       const node = state.canvas.findDescendantByKey(input.key);
+      const target = node && node.findAncestorByClass('frontier');
 
-      if (!node) {
+      if (!target) {
         return;
       }
 
-      // TODO: DOES THIS WORK?
-      // in either case, we look up an ancestor at the frontier:
-      // if it is the node itself, select the canvas
-      // else: if it is a shape, select the shape
-      // else: if it is a group, select the group
-
-      if (node.parent.parent.type === types.SHAPE && node.parent.parent.class.includes('frontier')) {
-        // node is a segment whose shape is at frontier: place pen in shape
-        state.target = node.parent.parent;
-        node.parent.parent.placePen();
-        state.canvas.removeFocus();
+      if (target.type === types.SHAPE) {
+        target.placePen();
         state.label = 'penMode';
-        // node is a frontier group: select canvas
-      } else if (node.class.includes('frontier')) {
-        state.target = canvas;
-        canvas.select();
-        canvas.removeFocus();
-      } else {
-        // node not at frontier: select closest ancestor (group) at frontier
-        state.target = node.findAncestor(node => {
-          return node.parent && node.parent.class.includes('frontier');
-        }); // ^ I am unclear about the node.parent conjunct ... why do we need it?
-
-        if (!state.target) {
-          return;
-        }
-
-        state.target.select();
-        state.canvas.updateFrontier(); // TODO: why do we need to do this?
         state.canvas.removeFocus();
+      } else if (target.type === types.GROUP) {
+        if (target === node) {
+          state.canvas.select();
+          state.canvas.removeFocus();
+        } else {
+          target.children.find(aNode => aNode.descendants.includes(node)).select();
+          state.canvas.updateFrontier();
+          state.canvas.removeFocus();
+        }
       }
     },
 
@@ -6046,7 +6014,7 @@
     },
 
     projectInput(state, input) {
-      console.log('projectInput');
+      // console.log('projectInput');
       const startSegment = state.canvas.findDescendantByKey(input.key);
       const spline = startSegment.parent;
       const target = spline.parent;
@@ -6206,7 +6174,7 @@
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
-        console.log(input);
+        // console.log(input);
         // console.log(transition);
 
         this.state.update = transition.do; // a string
@@ -6619,7 +6587,7 @@
   const svgns = 'http://www.w3.org/2000/svg';
   const xmlns = 'http://www.w3.org/2000/xmlns/';
 
-  const canvas$1 = Object.assign(Object.create(UIDevice), {
+  const canvas = Object.assign(Object.create(UIDevice), {
     init() {
       this.name = 'canvas';
       UIDevice.init.bind(this)();
@@ -19211,7 +19179,7 @@
     keyboard: keyboard,
     mouse: mouse,
     tools: tools,
-    canvas: canvas$1,
+    canvas: canvas,
     markup: markup,
     message: message
   });

@@ -38,22 +38,6 @@ const comps = {
     };
   },
 
-  shape(node) {
-    const theShape = {
-      tag: 'path',
-      children: [],
-      props: {
-        'data-key': node.key,
-        'data-type': node.type,
-        d: node.toPathString(),
-        transform: node.transform && node.transform.toString(),
-        class: node.class.toString(),
-      },
-    };
-
-    return theShape;
-  },
-
   wrapper(node) {
     return h('g', {
       'data-type': `${node.type}-wrapper`,
@@ -178,18 +162,6 @@ const comps = {
     });
   },
 
-  // {
-  //   tag: 'g',
-  //   children: [],
-  //   props: {
-  //     'data-key': node.key,
-  //     'data-type': node.type,
-  //     d: node.toPathString(),
-  //     transform: node.transform && node.transform.toString(),
-  //     class: node.class.toString(),
-  //   },
-  // }
-
   curves(node) {
     const diameter = scale(node, LENGTHS_IN_PX.controlDiameter);
     const radius = diameter / 2;
@@ -210,9 +182,25 @@ const comps = {
         'data-key': node.key,
         class: node.class.toString(),
       },
+      this.shapeFill(node),
       ...vParts,
       splitter
     );
+  },
+
+  shapeFill(node) {
+    const theShape = {
+      tag: 'path',
+      children: [],
+      props: {
+        'data-type': node.type,
+        'data-key': node.key,
+        d: node.toPathString(),
+        transform: node.transform && node.transform.toString(),
+      },
+    };
+
+    return theShape;
   },
 
   curveParts(node) {

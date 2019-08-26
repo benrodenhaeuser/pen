@@ -89,7 +89,7 @@ const transitions = [
   {
     from: 'selectMode',
     type: 'mousedown',
-    target: [types.CURVE, types.SHAPE, types.GROUP, types.CANVAS], 
+    target: [types.CURVE, types.SHAPE, types.GROUP, types.CANVAS],
     do: 'select',
     to: 'shifting',
   },

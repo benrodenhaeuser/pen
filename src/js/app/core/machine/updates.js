@@ -46,44 +46,27 @@ const updates = {
     ); // ^ TODO: temp.center should perhaps be `center` with defined property?
   },
 
-  // TODO: simplify and clarify logic!!
   deepSelect(state, input) {
     const node = state.canvas.findDescendantByKey(input.key);
+    const target = node && node.findAncestorByClass('frontier');
 
-    if (!node) {
+    if (!target) {
       return;
     }
 
-    // TODO: DOES THIS WORK?
-    // in either case, we look up an ancestor at the frontier:
-    // if it is the node itself, select the canvas
-    // else: if it is a shape, select the shape
-    // else: if it is a group, select the group
-
-    if (node.parent.parent.type === types.SHAPE && node.parent.parent.class.includes('frontier')) {
-      // node is a segment whose shape is at frontier: place pen in shape
-      state.target = node.parent.parent;
-      node.parent.parent.placePen();
-      state.canvas.removeFocus();
+    if (target.type === types.SHAPE) {
+      target.placePen();
       state.label = 'penMode';
-      // node is a frontier group: select canvas
-    } else if (node.class.includes('frontier')) {
-      state.target = canvas;
-      canvas.select();
-      canvas.removeFocus();
-    } else {
-      // node not at frontier: select closest ancestor (group) at frontier
-      state.target = node.findAncestor(node => {
-        return node.parent && node.parent.class.includes('frontier');
-      }); // ^ I am unclear about the node.parent conjunct ... why do we need it?
-
-      if (!state.target) {
-        return;
-      }
-
-      state.target.select();
-      state.canvas.updateFrontier(); // TODO: why do we need to do this?
       state.canvas.removeFocus();
+    } else if (target.type === types.GROUP) {
+      if (target === node) {
+        state.canvas.select();
+        state.canvas.removeFocus();
+      } else {
+        target.children.find(aNode => aNode.descendants.includes(node)).select();
+        state.canvas.updateFrontier();
+        state.canvas.removeFocus();
+      }
     }
   },
 
@@ -276,7 +259,7 @@ const updates = {
   },
 
   projectInput(state, input) {
-    console.log('projectInput');
+    // console.log('projectInput');
     const startSegment = state.canvas.findDescendantByKey(input.key);
     const spline = startSegment.parent;
     const target = spline.parent;

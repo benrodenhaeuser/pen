@@ -18,7 +18,7 @@ path {
 }
 
 [data-type="shape"] {
-  fill: blue;
+  fill: yellow;
   stroke: none;
 }
 
@@ -41,7 +41,6 @@ line {
 }
 
 /* bezier curve controls */
-
 [data-type="anchor"], [data-type="handleIn"], [data-type="handleOut"] {
   stroke: black;
   fill: white;
@@ -71,8 +70,8 @@ line {
 
 /* frame when shape/group in focus */
 .focus ~ [data-type="outerUI"] > [data-type="frame"] {
-  stroke: #5d6be2;
-  stroke-width: 2px;
+  stroke: red; /* #5d6be2 */
+  stroke-width: 1px;
 }
 
 /* frame when shape/group selected */
@@ -110,7 +109,7 @@ line {
   visibility: hidden;
 }
 
-.pen ~ g > [data-type="splitter"] {
+.pen > [data-type="splitter"] {
   visibility: visible;
 }
 
