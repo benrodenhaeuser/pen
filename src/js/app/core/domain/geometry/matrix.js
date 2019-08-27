@@ -40,8 +40,8 @@ const Matrix = {
 
   toString() {
     // TODO: rounding, extract precision to constant
-    const m = Array.from(this.m).map(
-      value => Number(Math.round(value+'e4')+'e-4')
+    const m = Array.from(this.m).map(value =>
+      Number(Math.round(value + 'e4') + 'e-4')
     );
 
     return `matrix(${m.join(', ')})`;

@@ -46,25 +46,25 @@ Object.assign(Spline, {
 
     switch (this.children.length) {
       case 1:
-        theCurves.push(Curve.createFromSegments(
-          this.children[0],
-          Segment.create()
-        ));
+        theCurves.push(
+          Curve.createFromSegments(this.children[0], Segment.create())
+        );
         break;
 
       default:
         for (let i = 0; i + 1 < this.children.length; i += 1) {
-          theCurves.push(Curve.createFromSegments(
-            this.children[i],
-            this.children[i + 1]
-          ));
+          theCurves.push(
+            Curve.createFromSegments(this.children[i], this.children[i + 1])
+          );
         }
 
         if (this.isClosed()) {
-          theCurves.push(Curve.createFromSegments(
-            this.children[this.children.length - 1],
-            this.children[0]
-          ));
+          theCurves.push(
+            Curve.createFromSegments(
+              this.children[this.children.length - 1],
+              this.children[0]
+            )
+          );
         }
     }
 
@@ -77,17 +77,13 @@ Object.assign(Spline, {
     commands.push(this.command(this.children[0])); // 'M' command
 
     for (let i = 1; i < this.children.length; i += 1) {
-      commands.push(this.command(
-        this.children[i - 1],
-        this.children[i]
-      ));
+      commands.push(this.command(this.children[i - 1], this.children[i]));
     }
 
     if (this.isClosed()) {
-      commands.push(this.command(
-        this.children[this.children.length - 1],
-        this.children[0]
-      ));
+      commands.push(
+        this.command(this.children[this.children.length - 1], this.children[0])
+      );
 
       commands.push(this.command()); // 'Z' command
     }

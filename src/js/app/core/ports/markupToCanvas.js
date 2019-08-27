@@ -104,20 +104,19 @@ const processAttributes = ($node, node) => {
 
 const buildShapeTree = $geometryNode => {
   const shape = Shape.create();
-
   processAttributes($geometryNode, shape);
 
-  let pathCommands;
+  let pathData;
 
   switch ($geometryNode.tagName) {
-    // TODO: unused
+    // TODO: not used
     case 'rect':
       const x = Number($geometryNode.getAttributeNS(null, 'x'));
       const y = Number($geometryNode.getAttributeNS(null, 'y'));
       const width = Number($geometryNode.getAttributeNS(null, 'width'));
       const height = Number($geometryNode.getAttributeNS(null, 'height'));
 
-      pathCommands = commands(`
+      pathData = pathDataParser(`
         M ${x} ${y}
         H ${x + width}
         V ${y + height}
@@ -126,13 +125,13 @@ const buildShapeTree = $geometryNode => {
       `);
       break;
     case 'path':
-      pathCommands = commands($geometryNode.getAttributeNS(null, 'd'));
+      pathData = pathDataParser($geometryNode.getAttributeNS(null, 'd'));
       break;
   }
 
-  const pathSequences = sequences(pathCommands);
+  const pathDataPerSpline = splitPathData(pathData);
 
-  for (let sequence of pathSequences) {
+  for (let sequence of pathDataPerSpline) {
     const spline = buildSplineTree(sequence);
     shape.mount(spline);
   }
@@ -140,85 +139,129 @@ const buildShapeTree = $geometryNode => {
   return shape;
 };
 
-const buildSplineTree = sequence => {
-  const spline = Spline.create();
-  for (let segment of buildSegmentList(sequence, spline)) {
+const buildSplineTree = pathData => {
+  const CLOSE = 1; // NOTE: constant is introduced by svg-pathdata module
+  const spline = Spline.create({
+    closed: pathData[pathData.length - 1].type === CLOSE,
+  });
+
+  const segments = buildSegmentList(pathData, spline);
+  for (let segment of segments) {
     spline.mount(segment);
   }
 
   return spline;
 };
 
-const buildSegmentList = (commands, spline) => {
+const buildSegmentList = (pathData, spline) => {
   const segments = [];
 
-  // the first command is ALWAYS an `M` command (no handles)
+  segments.push(
+    Segment.create().mount(
+      Anchor.create({
+        vector: Vector.create(pathData[0].x, pathData[0].y),
+      })
+    )
+  );
 
-  // TODO: the first segment *may* need a handleIn
-  //       and the last segment *may* need a handleOut
+  // the pathData for a closed spline has two additional pathDataItems
+  // that we do not wish to add as segments
+  const upperBound = spline.isClosed() ? pathData.length - 2 : pathData.length;
 
-  segments[0] = Segment.create();
-  const child = Anchor.create();
-  child.vector = Vector.create(commands[0].x, commands[0].y);
-  segments[0].mount(child);
-
-  for (let i = 1; i < commands.length; i += 1) {
-    const command = commands[i];
-    const prevSeg = segments[i - 1];
-    const currSeg = Segment.create();
-
-    const anchor = Anchor.create();
-    anchor.vector = Vector.create(command.x, command.y);
-    currSeg.mount(anchor);
-
-    if (command.x1 && command.x2) {
-      const handleOut = HandleOut.create();
-      handleOut.vector = Vector.create(command.x1, command.y1);
-      prevSeg.mount(handleOut);
-
-      const handleIn = HandleIn.create();
-      handleIn.vector = Vector.create(command.x2, command.y2);
-      currSeg.mount(handleIn);
-    } else if (command.x1) {
-      const handleIn = HandleIn.create();
-      handleIn.vector = Vector.create(command.x1, command.y1);
-      currSeg.mount(handleIn);
-    } else { // ... it's a Z command
-      spline.close(); // TODO: new
-      return segments; // TODO: early return to avoid pushing a segment when command is "Z" --- I think this is correct?
-    }
-
-    segments[i] = currSeg;
+  for (let i = 1; i < upperBound; i += 1) {
+    segments.push(makeSegment(pathData[i], segments[i - 1]));
   }
+
+  addRotatedHandles(segments);
 
   return segments;
 };
 
-const sequences = svgCommands => {
-  const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
-  // const CLOSE = 1; // NOTE: constant is introduced by svg-pathdata module
-  const theSequences = [];
+const makeSegment = (pathDataItem, prevSeg) => {
+  // structure of pathDataItem (from vendor):
+  // (pathDataItem.x, pathDataItem.y) represents anchor
+  // (pathDataItem.x1 or x2, pathDataItem.y1 or y2) represent handles
 
-  for (let command of svgCommands) {
-    if (command.type === MOVE) {
-      theSequences.push([command]);
+  const currSeg = Segment.create().mount(
+    Anchor.create({
+      vector: Vector.create(pathDataItem.x, pathDataItem.y),
+    })
+  );
+
+  if (pathDataItem.x1 && pathDataItem.x2) {
+    prevSeg.mount(
+      HandleOut.create({
+        vector: Vector.create(pathDataItem.x1, pathDataItem.y1),
+      })
+    );
+
+    currSeg.mount(
+      HandleIn.create({
+        vector: Vector.create(pathDataItem.x2, pathDataItem.y2),
+      })
+    );
+  } else if (pathDataItem.x1) {
+    currSeg.mount(
+      HandleIn.create({
+        vector: Vector.create(pathDataItem.x1, pathDataItem.y1),
+      })
+    );
+  }
+
+  return currSeg;
+};
+
+const addRotatedHandles = segments => {
+  const firstSegment = segments[0];
+  const lastSegment = segments[segments.length - 1];
+
+  if (firstSegment.handleOut) {
+    firstSegment.mount(
+      HandleIn.create({
+        vector: firstSegment.handleOut.vector.rotate(
+          Math.PI,
+          firstSegment.anchor.vector
+        ),
+      })
+    );
+  }
+
+  if (lastSegment.handleIn) {
+    lastSegment.mount(
+      HandleOut.create({
+        vector: lastSegment.handleIn.vector.rotate(
+          Math.PI,
+          lastSegment.anchor.vector
+        ),
+      })
+    );
+  }
+};
+
+const splitPathData = pathData => {
+  const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
+  const pathDataLists = [];
+
+  for (let pathDataItem of pathData) {
+    if (pathDataItem.type === MOVE) {
+      pathDataLists.push([pathDataItem]);
     } else {
-      theSequences[theSequences.length - 1].push(command);
+      pathDataLists[pathDataLists.length - 1].push(pathDataItem);
     }
   }
 
-  console.log(theSequences);
-
-  return theSequences;
+  return pathDataLists;
 };
 
-const commands = svgPath => {
-  return new SVGPathData(svgPath)
-    .transform(SVGPathDataTransformer.NORMALIZE_HVZ(false))
-    // ^ no H or V shortcuts (we do use Z)
-    .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
-    .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
-    .toAbs().commands; // no relative commands
+const pathDataParser = d => {
+  return (
+    new SVGPathData(d)
+      .transform(SVGPathDataTransformer.NORMALIZE_HVZ(false))
+      // ^ no H or V shortcuts (but we do use Z, hence the `false`)
+      .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
+      .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
+      .toAbs().commands // no relative commands
+  );
 };
 
 export { markupToCanvas };

@@ -679,8 +679,8 @@
 
     toString() {
       // TODO: rounding (extract precision to constant)
-      const x = Number(Math.round(this.x+'e4')+'e-4');
-      const y = Number(Math.round(this.y+'e4')+'e-4');
+      const x = Number(Math.round(this.x + 'e4') + 'e-4');
+      const y = Number(Math.round(this.y + 'e4') + 'e-4');
 
       return `${x} ${y}`;
     },
@@ -808,8 +808,8 @@
 
     toString() {
       // TODO: rounding, extract precision to constant
-      const m = Array.from(this.m).map(
-        value => Number(Math.round(value+'e4')+'e-4')
+      const m = Array.from(this.m).map(value =>
+        Number(Math.round(value + 'e4') + 'e-4')
       );
 
       return `matrix(${m.join(', ')})`;
@@ -4524,8 +4524,8 @@
         .set({
           type: types.SHAPE,
           splitter: Vector$$1.create(-1000, -1000),
-          fill: 'none', // TODO: extract to constant
-          stroke: 'black', // TODO: extract to constant
+          fill: '#f1f1f1', // TODO: extract to constant
+          stroke: '#000000', // TODO: extract to constant
         })
         .set(opts);
     },
@@ -4541,14 +4541,12 @@
 
       for (let spline of this.children) {
         commands.push(
-          spline
-            .commands()
-            .map(command =>
-              command
-                .map(part => (Array.isArray(part) ? part[0] : part))
-                // ^ TODO: refactor to use object instead of array
-                .join(' ')
-            )
+          spline.commands().map(command =>
+            command
+              .map(part => (Array.isArray(part) ? part[0] : part))
+              // ^ TODO: refactor to use object instead of array
+              .join(' ')
+          )
         );
       }
 
@@ -4557,7 +4555,7 @@
       return pathString;
     },
 
-    // TODO: refactor  
+    // TODO: refactor
     toTags(level) {
       const open = [];
 
@@ -4639,7 +4637,8 @@
     },
 
     toComponent() {
-      const wrapper = comps$$1.wrapper(this);    const curves = comps$$1.curves(this);
+      const wrapper = comps$$1.wrapper(this);
+      const curves = comps$$1.curves(this);
       const segments = comps$$1.segments(this);
       const outerUI = comps$$1.outerUI(this);
 
@@ -4693,25 +4692,25 @@
 
       switch (this.children.length) {
         case 1:
-          theCurves.push(Curve$$1.createFromSegments(
-            this.children[0],
-            Segment$$1.create()
-          ));
+          theCurves.push(
+            Curve$$1.createFromSegments(this.children[0], Segment$$1.create())
+          );
           break;
 
         default:
           for (let i = 0; i + 1 < this.children.length; i += 1) {
-            theCurves.push(Curve$$1.createFromSegments(
-              this.children[i],
-              this.children[i + 1]
-            ));
+            theCurves.push(
+              Curve$$1.createFromSegments(this.children[i], this.children[i + 1])
+            );
           }
 
           if (this.isClosed()) {
-            theCurves.push(Curve$$1.createFromSegments(
-              this.children[this.children.length - 1],
-              this.children[0]
-            ));
+            theCurves.push(
+              Curve$$1.createFromSegments(
+                this.children[this.children.length - 1],
+                this.children[0]
+              )
+            );
           }
       }
 
@@ -4724,17 +4723,13 @@
       commands.push(this.command(this.children[0])); // 'M' command
 
       for (let i = 1; i < this.children.length; i += 1) {
-        commands.push(this.command(
-          this.children[i - 1],
-          this.children[i]
-        ));
+        commands.push(this.command(this.children[i - 1], this.children[i]));
       }
 
       if (this.isClosed()) {
-        commands.push(this.command(
-          this.children[this.children.length - 1],
-          this.children[0]
-        ));
+        commands.push(
+          this.command(this.children[this.children.length - 1], this.children[0])
+        );
 
         commands.push(this.command()); // 'Z' command
       }
@@ -5269,20 +5264,19 @@
 
   const buildShapeTree = $geometryNode => {
     const shape = Shape$$1.create();
-
     processAttributes($geometryNode, shape);
 
-    let pathCommands;
+    let pathData;
 
     switch ($geometryNode.tagName) {
-      // TODO: unused
+      // TODO: not used
       case 'rect':
         const x = Number($geometryNode.getAttributeNS(null, 'x'));
         const y = Number($geometryNode.getAttributeNS(null, 'y'));
         const width = Number($geometryNode.getAttributeNS(null, 'width'));
         const height = Number($geometryNode.getAttributeNS(null, 'height'));
 
-        pathCommands = commands(`
+        pathData = pathDataParser(`
         M ${x} ${y}
         H ${x + width}
         V ${y + height}
@@ -5291,13 +5285,13 @@
       `);
         break;
       case 'path':
-        pathCommands = commands($geometryNode.getAttributeNS(null, 'd'));
+        pathData = pathDataParser($geometryNode.getAttributeNS(null, 'd'));
         break;
     }
 
-    const pathSequences = sequences(pathCommands);
+    const pathDataPerSpline = splitPathData(pathData);
 
-    for (let sequence of pathSequences) {
+    for (let sequence of pathDataPerSpline) {
       const spline = buildSplineTree(sequence);
       shape.mount(spline);
     }
@@ -5305,85 +5299,129 @@
     return shape;
   };
 
-  const buildSplineTree = sequence => {
-    const spline = Spline$$1.create();
-    for (let segment of buildSegmentList(sequence, spline)) {
+  const buildSplineTree = pathData => {
+    const CLOSE = 1; // NOTE: constant is introduced by svg-pathdata module
+    const spline = Spline$$1.create({
+      closed: pathData[pathData.length - 1].type === CLOSE,
+    });
+
+    const segments = buildSegmentList(pathData, spline);
+    for (let segment of segments) {
       spline.mount(segment);
     }
 
     return spline;
   };
 
-  const buildSegmentList = (commands, spline) => {
+  const buildSegmentList = (pathData, spline) => {
     const segments = [];
 
-    // the first command is ALWAYS an `M` command (no handles)
+    segments.push(
+      Segment$$1.create().mount(
+        Anchor$$1.create({
+          vector: Vector$$1.create(pathData[0].x, pathData[0].y),
+        })
+      )
+    );
 
-    // TODO: the first segment *may* need a handleIn
-    //       and the last segment *may* need a handleOut
+    // the pathData for a closed spline has two additional pathDataItems
+    // that we do not wish to add as segments
+    const upperBound = spline.isClosed() ? pathData.length - 2 : pathData.length;
 
-    segments[0] = Segment$$1.create();
-    const child = Anchor$$1.create();
-    child.vector = Vector$$1.create(commands[0].x, commands[0].y);
-    segments[0].mount(child);
-
-    for (let i = 1; i < commands.length; i += 1) {
-      const command = commands[i];
-      const prevSeg = segments[i - 1];
-      const currSeg = Segment$$1.create();
-
-      const anchor = Anchor$$1.create();
-      anchor.vector = Vector$$1.create(command.x, command.y);
-      currSeg.mount(anchor);
-
-      if (command.x1 && command.x2) {
-        const handleOut = HandleOut$$1.create();
-        handleOut.vector = Vector$$1.create(command.x1, command.y1);
-        prevSeg.mount(handleOut);
-
-        const handleIn = HandleIn$$1.create();
-        handleIn.vector = Vector$$1.create(command.x2, command.y2);
-        currSeg.mount(handleIn);
-      } else if (command.x1) {
-        const handleIn = HandleIn$$1.create();
-        handleIn.vector = Vector$$1.create(command.x1, command.y1);
-        currSeg.mount(handleIn);
-      } else { // ... it's a Z command
-        spline.close(); // TODO: new
-        return segments; // TODO: early return to avoid pushing a segment when command is "Z" --- I think this is correct?
-      }
-
-      segments[i] = currSeg;
+    for (let i = 1; i < upperBound; i += 1) {
+      segments.push(makeSegment(pathData[i], segments[i - 1]));
     }
+
+    addRotatedHandles(segments);
 
     return segments;
   };
 
-  const sequences = svgCommands => {
-    const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
-    // const CLOSE = 1; // NOTE: constant is introduced by svg-pathdata module
-    const theSequences = [];
+  const makeSegment = (pathDataItem, prevSeg) => {
+    // structure of pathDataItem (from vendor):
+    // (pathDataItem.x, pathDataItem.y) represents anchor
+    // (pathDataItem.x1 or x2, pathDataItem.y1 or y2) represent handles
 
-    for (let command of svgCommands) {
-      if (command.type === MOVE) {
-        theSequences.push([command]);
+    const currSeg = Segment$$1.create().mount(
+      Anchor$$1.create({
+        vector: Vector$$1.create(pathDataItem.x, pathDataItem.y),
+      })
+    );
+
+    if (pathDataItem.x1 && pathDataItem.x2) {
+      prevSeg.mount(
+        HandleOut$$1.create({
+          vector: Vector$$1.create(pathDataItem.x1, pathDataItem.y1),
+        })
+      );
+
+      currSeg.mount(
+        HandleIn$$1.create({
+          vector: Vector$$1.create(pathDataItem.x2, pathDataItem.y2),
+        })
+      );
+    } else if (pathDataItem.x1) {
+      currSeg.mount(
+        HandleIn$$1.create({
+          vector: Vector$$1.create(pathDataItem.x1, pathDataItem.y1),
+        })
+      );
+    }
+
+    return currSeg;
+  };
+
+  const addRotatedHandles = segments => {
+    const firstSegment = segments[0];
+    const lastSegment = segments[segments.length - 1];
+
+    if (firstSegment.handleOut) {
+      firstSegment.mount(
+        HandleIn$$1.create({
+          vector: firstSegment.handleOut.vector.rotate(
+            Math.PI,
+            firstSegment.anchor.vector
+          ),
+        })
+      );
+    }
+
+    if (lastSegment.handleIn) {
+      lastSegment.mount(
+        HandleOut$$1.create({
+          vector: lastSegment.handleIn.vector.rotate(
+            Math.PI,
+            lastSegment.anchor.vector
+          ),
+        })
+      );
+    }
+  };
+
+  const splitPathData = pathData => {
+    const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
+    const pathDataLists = [];
+
+    for (let pathDataItem of pathData) {
+      if (pathDataItem.type === MOVE) {
+        pathDataLists.push([pathDataItem]);
       } else {
-        theSequences[theSequences.length - 1].push(command);
+        pathDataLists[pathDataLists.length - 1].push(pathDataItem);
       }
     }
 
-    console.log(theSequences);
-
-    return theSequences;
+    return pathDataLists;
   };
 
-  const commands = svgPath => {
-    return new SVGPathData$1(svgPath)
-      .transform(SVGPathDataTransformer.NORMALIZE_HVZ(false))
-      // ^ no H or V shortcuts (we do use Z)
-      .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
-      .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
-      .toAbs().commands; // no relative commands
+  const pathDataParser = d => {
+    return (
+      new SVGPathData$1(d)
+        .transform(SVGPathDataTransformer.NORMALIZE_HVZ(false))
+        // ^ no H or V shortcuts (but we do use Z, hence the `false`)
+        .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
+        .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
+        .toAbs().commands // no relative commands
+    );
   };
 
   const State = {
@@ -5886,7 +5924,9 @@
           state.canvas.select();
           state.canvas.removeFocus();
         } else {
-          target.children.find(aNode => aNode.descendants.includes(node)).select();
+          target.children
+            .find(aNode => aNode.descendants.includes(node))
+            .select();
           state.canvas.updateFrontier();
           state.canvas.removeFocus();
         }
@@ -5959,8 +5999,6 @@
       ); // ^ TODO: temp.center should perhaps be `center` with defined property?
     },
 
-
-
     shift(state, input) {
       if (!state.target) {
         return;
@@ -6011,16 +6049,16 @@
     addSegment(state, input) {
       state.target =
         state.canvas.findPen() || state.canvas.mountShape().placePen();
+
       const spline = state.target.lastChild || state.target.mountSpline();
 
       if (spline.isClosed()) {
-        state.label = 'penMode'; // TODO: bit of a hack
+        state.label = 'penMode'; // TODO: hack(ish)
         return;
       }
 
-      const segment = spline.mountSegment();
-
-      segment
+      spline
+        .mountSegment()
         .mountAnchor(
           Vector$$1.create(input.x, input.y).transformToLocal(state.target)
         )
@@ -6055,9 +6093,7 @@
 
       // adjustment
       state.target = control.parent.parent.parent; // TODO: great
-      state.from = Vector$$1.create(input.x, input.y).transformToLocal(
-        state.target
-      );
+      state.from = Vector$$1.create(input.x, input.y).transformToLocal(state.target);
       control.placePenTip();
     },
 
@@ -6065,9 +6101,7 @@
       const control = state.canvas.findPenTip();
       const segment = control.parent;
       state.target = segment.parent.parent;
-      const to = Vector$$1.create(input.x, input.y).transformToLocal(
-        state.target
-      );
+      const to = Vector$$1.create(input.x, input.y).transformToLocal(state.target);
       const change = to.minus(state.from);
       control.vector = control.vector.add(change);
 
@@ -6091,7 +6125,8 @@
           segment.handleIn.vector = segment.handleOut.vector.rotate(
             Math.PI,
             segment.anchor.vector
-          );        break;
+          );
+          break;
       }
 
       state.from = to;
@@ -6574,9 +6609,7 @@
     },
 
     reconcile(oldVNode, newVNode, $node) {
-      this.patch(
-        this.diff(oldVNode, newVNode, $node)
-      );
+      this.patch(this.diff(oldVNode, newVNode, $node));
     },
 
     diff(oldVNode, newVNode, $node, patches = []) {
@@ -13594,7 +13627,7 @@
 
   // Commands are parameter-less actions that can be performed on an
   // editor, mostly used for keybindings.
-  let commands$1 = {
+  let commands = {
     selectAll: selectAll,
     singleSelection: cm => cm.setSelection(cm.getCursor("anchor"), cm.getCursor("head"), sel_dontScroll),
     killLine: cm => deleteNearSelection(cm, range => {
@@ -13762,7 +13795,7 @@
   // Run a handler that was bound to a key.
   function doHandleBinding(cm, bound, dropShift) {
     if (typeof bound == "string") {
-      bound = commands$1[bound];
+      bound = commands[bound];
       if (!bound) return false
     }
     // Ensure previous input has been read, so that the handler sees a
@@ -13988,7 +14021,7 @@
     name = (button == 1 ? "Left" : button == 2 ? "Middle" : "Right") + name;
 
     return dispatchKey(cm,  addModifierNames(name, event), event, bound => {
-      if (typeof bound == "string") bound = commands$1[bound];
+      if (typeof bound == "string") bound = commands[bound];
       if (!bound) return false
       let done = false;
       try {
@@ -15088,8 +15121,8 @@
       triggerOnMouseDown: methodOp(onMouseDown),
 
       execCommand: function(cmd) {
-        if (commands$1.hasOwnProperty(cmd))
-          return commands$1[cmd].call(null, this)
+        if (commands.hasOwnProperty(cmd))
+          return commands[cmd].call(null, this)
       },
 
       triggerElectric: methodOp(function(text) { triggerElectric(this, text); }),
@@ -16318,7 +16351,7 @@
     CodeMirror.copyState = copyState;
     CodeMirror.startState = startState;
     CodeMirror.innerMode = innerMode;
-    CodeMirror.commands = commands$1;
+    CodeMirror.commands = commands;
     CodeMirror.keyMap = keyMap;
     CodeMirror.keyName = keyName;
     CodeMirror.isModifierKey = isModifierKey;
@@ -19072,7 +19105,10 @@
     },
 
     react(description) {
-      if (description.input.type !== 'mousemove' && description.input.type !== 'mousedown') {
+      if (
+        description.input.type !== 'mousemove' &&
+        description.input.type !== 'mousedown'
+      ) {
         this.clearTextMarker();
 
         const markupTree = this.requestSnapshot('markupTree');

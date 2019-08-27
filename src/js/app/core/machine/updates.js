@@ -63,7 +63,9 @@ const updates = {
         state.canvas.select();
         state.canvas.removeFocus();
       } else {
-        target.children.find(aNode => aNode.descendants.includes(node)).select();
+        target.children
+          .find(aNode => aNode.descendants.includes(node))
+          .select();
         state.canvas.updateFrontier();
         state.canvas.removeFocus();
       }
@@ -136,8 +138,6 @@ const updates = {
     ); // ^ TODO: temp.center should perhaps be `center` with defined property?
   },
 
-
-
   shift(state, input) {
     if (!state.target) {
       return;
@@ -188,16 +188,16 @@ const updates = {
   addSegment(state, input) {
     state.target =
       state.canvas.findPen() || state.canvas.mountShape().placePen();
+
     const spline = state.target.lastChild || state.target.mountSpline();
 
     if (spline.isClosed()) {
-      state.label = 'penMode'; // TODO: bit of a hack
+      state.label = 'penMode'; // TODO: hack(ish)
       return;
     }
 
-    const segment = spline.mountSegment();
-
-    segment
+    spline
+      .mountSegment()
       .mountAnchor(
         Vector.create(input.x, input.y).transformToLocal(state.target)
       )
@@ -232,9 +232,7 @@ const updates = {
 
     // adjustment
     state.target = control.parent.parent.parent; // TODO: great
-    state.from = Vector.create(input.x, input.y).transformToLocal(
-      state.target
-    );
+    state.from = Vector.create(input.x, input.y).transformToLocal(state.target);
     control.placePenTip();
   },
 
@@ -242,9 +240,7 @@ const updates = {
     const control = state.canvas.findPenTip();
     const segment = control.parent;
     state.target = segment.parent.parent;
-    const to = Vector.create(input.x, input.y).transformToLocal(
-      state.target
-    );
+    const to = Vector.create(input.x, input.y).transformToLocal(state.target);
     const change = to.minus(state.from);
     control.vector = control.vector.add(change);
 
@@ -268,7 +264,8 @@ const updates = {
         segment.handleIn.vector = segment.handleOut.vector.rotate(
           Math.PI,
           segment.anchor.vector
-        );mic
+        );
+        mic;
         break;
     }
 

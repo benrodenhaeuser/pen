@@ -38,9 +38,7 @@ const UIDevice = {
   },
 
   reconcile(oldVNode, newVNode, $node) {
-    this.patch(
-      this.diff(oldVNode, newVNode, $node)
-    );
+    this.patch(this.diff(oldVNode, newVNode, $node));
   },
 
   diff(oldVNode, newVNode, $node, patches = []) {

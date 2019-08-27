@@ -18,8 +18,8 @@ Object.assign(Shape, {
       .set({
         type: types.SHAPE,
         splitter: Vector.create(-1000, -1000),
-        fill: 'none', // TODO: extract to constant
-        stroke: 'black', // TODO: extract to constant
+        fill: '#f1f1f1', // TODO: extract to constant
+        stroke: '#000000', // TODO: extract to constant
       })
       .set(opts);
   },
@@ -35,14 +35,12 @@ Object.assign(Shape, {
 
     for (let spline of this.children) {
       commands.push(
-        spline
-          .commands()
-          .map(command =>
-            command
-              .map(part => (Array.isArray(part) ? part[0] : part))
-              // ^ TODO: refactor to use object instead of array
-              .join(' ')
-          )
+        spline.commands().map(command =>
+          command
+            .map(part => (Array.isArray(part) ? part[0] : part))
+            // ^ TODO: refactor to use object instead of array
+            .join(' ')
+        )
       );
     }
 
@@ -51,7 +49,7 @@ Object.assign(Shape, {
     return pathString;
   },
 
-  // TODO: refactor  
+  // TODO: refactor
   toTags(level) {
     const open = [];
 
@@ -133,7 +131,7 @@ Object.assign(Shape, {
   },
 
   toComponent() {
-    const wrapper = comps.wrapper(this);;
+    const wrapper = comps.wrapper(this);
     const curves = comps.curves(this);
     const segments = comps.segments(this);
     const outerUI = comps.outerUI(this);
