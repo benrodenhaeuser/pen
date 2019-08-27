@@ -189,7 +189,7 @@ const transitions = [
     from: 'penMode',
     type: 'mousedown',
     target: [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT],
-    do: 'initAdjustSegment',
+    do: 'initAdjustOrCloseSpline',
     to: 'adjustingSegment',
   },
 

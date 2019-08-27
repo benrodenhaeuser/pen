@@ -216,21 +216,21 @@ const updates = {
     handleIn.placePenTip();
   },
 
-  initAdjustSegment(state, input) {
+  initAdjustOrCloseSpline(state, input) {
     const control = state.canvas.findDescendantByKey(input.key);
 
-    // new code for close path
     if (control.type === types.ANCHOR) {
       const segment = control.parent;
       const spline = segment.parent;
 
+      // close spline
       if (spline.children.indexOf(segment) === 0 && !spline.isClosed()) {
         spline.close();
         return;
       }
     }
 
-    // adjustment
+    // adjust segment
     state.target = control.parent.parent.parent; // TODO: great
     state.from = Vector.create(input.x, input.y).transformToLocal(state.target);
     control.placePenTip();
@@ -278,7 +278,8 @@ const updates = {
     const spline = startSegment.parent;
     const target = spline.parent;
     const startIndex = spline.children.indexOf(startSegment);
-    const endSegment = spline.children[startIndex + 1];
+    const endSegment = spline.children[startIndex + 1] || spline.children[0];
+    // ^ second disjunct: wrap around for curve linking last to first segment in spline
     const curve = Curve.createFromSegments(startSegment, endSegment);
     const bCurve = new Bezier(...curve.coords());
 
