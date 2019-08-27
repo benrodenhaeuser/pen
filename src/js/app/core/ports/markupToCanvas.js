@@ -36,10 +36,12 @@ const domToScene = $svg => {
   return canvas;
 };
 
+// TODO: unused
 const copyStyles = ($node, node) => {
   node.styles = Array.from($node.querySelectorAll('style'));
 };
 
+// TODO: unused
 const copyDefs = ($node, node) => {
   node.defs = Array.from($node.querySelectorAll('style'));
 };
@@ -58,8 +60,8 @@ const buildTree = ($node, node) => {
 
     if ($child instanceof SVGGElement) {
       child = Group.create();
-      node.mount(child);
       buildTree($child, child);
+      node.mount(child);
     } else {
       child = buildShapeTree($child);
       node.mount(child);
@@ -89,11 +91,12 @@ const processAttributes = ($node, node) => {
   // classes
   node.class = Class.create(Array.from($node.classList));
 
-  // TODO: fill
+  // fill
   if ($node.attributes.fill) {
     node.fill = $node.getAttributeNS(null, 'fill');
   }
 
+  // stroke
   if ($node.attributes.stroke) {
     node.stroke = $node.getAttributeNS(null, 'stroke');
   }
@@ -107,6 +110,7 @@ const buildShapeTree = $geometryNode => {
   let pathCommands;
 
   switch ($geometryNode.tagName) {
+    // TODO: unused
     case 'rect':
       const x = Number($geometryNode.getAttributeNS(null, 'x'));
       const y = Number($geometryNode.getAttributeNS(null, 'y'));
@@ -129,7 +133,8 @@ const buildShapeTree = $geometryNode => {
   const pathSequences = sequences(pathCommands);
 
   for (let sequence of pathSequences) {
-    shape.mount(buildSplineTree(sequence));
+    const spline = buildSplineTree(sequence);
+    shape.mount(spline);
   }
 
   return shape;
@@ -137,21 +142,21 @@ const buildShapeTree = $geometryNode => {
 
 const buildSplineTree = sequence => {
   const spline = Spline.create();
-  for (let segment of buildSegmentList(sequence)) {
+  for (let segment of buildSegmentList(sequence, spline)) {
     spline.mount(segment);
   }
 
   return spline;
 };
 
-// helpers
-
-// we want a segment to have children 'handleIn', 'anchor' etc
-
-const buildSegmentList = commands => {
+const buildSegmentList = (commands, spline) => {
   const segments = [];
 
   // the first command is ALWAYS an `M` command (no handles)
+
+  // TODO: the first segment *may* need a handleIn
+  //       and the last segment *may* need a handleOut
+
   segments[0] = Segment.create();
   const child = Anchor.create();
   child.vector = Vector.create(commands[0].x, commands[0].y);
@@ -178,6 +183,9 @@ const buildSegmentList = commands => {
       const handleIn = HandleIn.create();
       handleIn.vector = Vector.create(command.x1, command.y1);
       currSeg.mount(handleIn);
+    } else { // ... it's a Z command
+      spline.close(); // TODO: new
+      return segments; // TODO: early return to avoid pushing a segment when command is "Z" --- I think this is correct?
     }
 
     segments[i] = currSeg;
@@ -188,6 +196,7 @@ const buildSegmentList = commands => {
 
 const sequences = svgCommands => {
   const MOVE = 2; // NOTE: constant is introduced by svg-pathdata module
+  // const CLOSE = 1; // NOTE: constant is introduced by svg-pathdata module
   const theSequences = [];
 
   for (let command of svgCommands) {
@@ -198,12 +207,15 @@ const sequences = svgCommands => {
     }
   }
 
+  console.log(theSequences);
+
   return theSequences;
 };
 
 const commands = svgPath => {
   return new SVGPathData(svgPath)
-    .transform(SVGPathDataTransformer.NORMALIZE_HVZ()) // no H, V or Z shortcuts
+    .transform(SVGPathDataTransformer.NORMALIZE_HVZ(false))
+    // ^ no H or V shortcuts (we do use Z)
     .transform(SVGPathDataTransformer.NORMALIZE_ST()) // no S (smooth multi-Bezier)
     .transform(SVGPathDataTransformer.A_TO_C()) // no A (arcs)
     .toAbs().commands; // no relative commands

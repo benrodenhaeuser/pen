@@ -189,6 +189,12 @@ const updates = {
     state.target =
       state.canvas.findPen() || state.canvas.mountShape().placePen();
     const spline = state.target.lastChild || state.target.mountSpline();
+
+    if (spline.isClosed()) {
+      state.label = 'penMode'; // TODO: bit of a hack
+      return;
+    }
+
     const segment = spline.mountSegment();
 
     segment
@@ -212,6 +218,19 @@ const updates = {
 
   initAdjustSegment(state, input) {
     const control = state.canvas.findDescendantByKey(input.key);
+
+    // new code for close path
+    if (control.type === types.ANCHOR) {
+      const segment = control.parent;
+      const spline = segment.parent;
+
+      if (spline.children.indexOf(segment) === 0 && !spline.isClosed()) {
+        spline.close();
+        return;
+      }
+    }
+
+    // adjustment
     state.target = control.parent.parent.parent; // TODO: great
     state.from = Vector.create(input.x, input.y).transformToLocal(
       state.target

@@ -184,7 +184,7 @@ const transitions = [
     to: 'penMode',
   },
 
-  // initiate adjustment of segment
+  // initiate adjustment of segment (OR close path)
   {
     from: 'penMode',
     type: 'mousedown',

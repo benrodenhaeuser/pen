@@ -18,7 +18,7 @@ Object.assign(Shape, {
       .set({
         type: types.SHAPE,
         splitter: Vector.create(-1000, -1000),
-        fill: 'none',
+        fill: 'none', // TODO: extract to constant
         stroke: 'black', // TODO: extract to constant
       })
       .set(opts);
@@ -40,6 +40,7 @@ Object.assign(Shape, {
           .map(command =>
             command
               .map(part => (Array.isArray(part) ? part[0] : part))
+              // ^ TODO: refactor to use object instead of array
               .join(' ')
           )
       );
@@ -50,6 +51,7 @@ Object.assign(Shape, {
     return pathString;
   },
 
+  // TODO: refactor  
   toTags(level) {
     const open = [];
 
@@ -95,8 +97,8 @@ Object.assign(Shape, {
           line.mount(
             Token.create({
               markup: command[i][0],
-              key: command[i][1],
-              class: command[i][2],
+              key: command[i][1], // will be undefined for Z command
+              class: command[i][2], // will be undefined for Z command
             })
           );
         }
