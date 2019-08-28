@@ -13,7 +13,7 @@ const markup = {
       lineWrapping: false,
       mode: 'xml',
       value: markupTree.toMarkupString(),
-      // theme: 'base16-light'
+      theme: 'pen'
     });
     this.markupDoc = this.markupEditor.getDoc();
     this.previousMarkupTree = markupTree;

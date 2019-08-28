@@ -106,17 +106,17 @@
 }
 
 /* SIMPLE LIGHT MARKUP THEME */
-.cm-s-default .cm-header {color: blue;}
-.cm-s-default .cm-quote {color: #090;}
+.cm-s-pen .cm-header {color: blue;}
+.cm-s-pen .cm-quote {color: #090;}
 .cm-negative {color: #d44;}
 .cm-positive {color: #292;}
 .cm-header, .cm-strong {font-weight: bold;}
 .cm-em {font-style: italic;}
 .cm-link {text-decoration: underline;}
 .cm-strikethrough {text-decoration: line-through;}
-.cm-s-default .cm-tag {color: red;}
-.cm-s-default .cm-attribute {color: #919191;}
-.cm-s-default .CodeMirror-gutters { background: #f6f6f6; border-right: 0px; }
+.cm-s-pen .cm-tag {color: red;}
+.cm-s-pen .cm-attribute {color: #919191;}
+.cm-s-pen .CodeMirror-gutters { background: #f6f6f6; border-right: 0px; }
 
 .selected-markup {
   background-color: #ffb2b2;
