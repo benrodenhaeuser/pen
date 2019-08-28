@@ -23,6 +23,7 @@ Object.assign(Spline, {
       .bind(this)()
       .set({
         type: types.SPLINE,
+        closed: false,
       })
       .set(opts);
   },
@@ -35,6 +36,10 @@ Object.assign(Spline, {
 
   close() {
     this.closed = true;
+  },
+
+  open() {
+    this.closed = false;
   },
 
   isClosed() {

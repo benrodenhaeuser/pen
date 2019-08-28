@@ -13,6 +13,10 @@ Object.assign(ControlNode, {
   toString() {
     return this.vector.toString();
   },
+
+  enclosingShape() {
+    return this.parent && this.parent.parent && this.parent.parent.parent;
+  }
 });
 
 export { ControlNode };

@@ -50,7 +50,7 @@ Object.assign(Shape, {
   },
 
   // TODO: refactor
-  toTags(level) {
+  toTags() {
     const open = [];
 
     open.push(

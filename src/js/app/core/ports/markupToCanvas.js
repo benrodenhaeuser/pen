@@ -60,8 +60,10 @@ const buildTree = ($node, node) => {
 
     if ($child instanceof SVGGElement) {
       child = Group.create();
-      buildTree($child, child);
       node.mount(child);
+      buildTree($child, child);
+      // ^ the order of the preceding two lines cannot be reversed
+      //   if the order is reserved, node heights are set incorrectly
     } else {
       child = buildShapeTree($child);
       node.mount(child);

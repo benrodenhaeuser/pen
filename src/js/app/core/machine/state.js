@@ -50,7 +50,7 @@ const State = {
     const doc = Doc.create();
 
     const canvas = Canvas.create();
-    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 700, 700);
+    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 800, 600);
     doc.mount(canvas);
 
     return doc;

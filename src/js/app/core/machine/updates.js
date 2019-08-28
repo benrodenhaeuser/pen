@@ -216,24 +216,19 @@ const updates = {
     handleIn.placePenTip();
   },
 
-  initAdjustOrCloseSpline(state, input) {
+  initAdjustSegment(state, input) {
     const control = state.canvas.findDescendantByKey(input.key);
-
-    if (control.type === types.ANCHOR) {
-      const segment = control.parent;
-      const spline = segment.parent;
-
-      // close spline
-      if (spline.children.indexOf(segment) === 0 && !spline.isClosed()) {
-        spline.close();
-        return;
-      }
-    }
-
-    // adjust segment
     state.target = control.parent.parent.parent; // TODO: great
     state.from = Vector.create(input.x, input.y).transformToLocal(state.target);
     control.placePenTip();
+  },
+
+  toggleClosedStatus(state, input) {
+    console.log('toggleClosedStatus update');
+    const control = state.canvas.findPenTip();
+    const spline = control.parent.parent;
+
+    spline.isClosed() ? spline.open() : spline.close();
   },
 
   adjustSegment(state, input) {

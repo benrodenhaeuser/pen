@@ -60,12 +60,27 @@ const transitions = [
     to: 'selectMode',
   },
 
-  // INPUT MODES
+  // escape
 
   {
     type: 'keydown',
     target: 'esc',
     do: 'exitEdit',
+  },
+
+  // delete
+
+  {
+    type: 'keydown',
+    target: 'delete',
+    do: 'deleteNode',
+  },
+
+  {
+    from: 'penMode',
+    type: 'keydown',
+    target: 'letterC',
+    do: 'toggleClosedStatus',
   },
 
   // SELECT MODE
@@ -189,7 +204,7 @@ const transitions = [
     from: 'penMode',
     type: 'mousedown',
     target: [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT],
-    do: 'initAdjustOrCloseSpline',
+    do: 'initAdjustSegment',
     to: 'adjustingSegment',
   },
 
@@ -236,14 +251,6 @@ const transitions = [
     target: 'curve',
     do: 'splitCurve',
     to: 'adjustingSegment',
-  },
-
-  // DELETE
-
-  {
-    type: 'keydown',
-    target: 'delete',
-    do: 'deleteNode',
   },
 
   // MARKUP
