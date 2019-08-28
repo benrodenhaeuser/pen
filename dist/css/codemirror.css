@@ -117,13 +117,14 @@
 .cm-s-pen .cm-tag {color: red;}
 .cm-s-pen .cm-attribute {color: #919191;}
 .cm-s-pen .CodeMirror-gutters { background: #f6f6f6; border-right: 0px; }
+.cm-s-pen .CodeMirror-linenumber { color: #e3e3e3; }
 
 .selected-markup {
-  background-color: #ffb2b2;
+  background-color: #e3e3e3;
 }
 
 .tip-markup {
-  background-color: #ffb2b2;
+  background-color: red;
 }
 
 

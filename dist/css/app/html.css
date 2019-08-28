@@ -9,13 +9,14 @@ body {
 
 main {
   display: grid;
-  grid-template-columns: 90px auto 580px;
+  grid-template-columns: 60px auto 580px;
   grid-template-areas:
     "tools canvas-wrapper markup";
   /* grid-row-gap: 10px; */
   /* grid-column-gap: 5px; */
   font-family: -apple-system, BlinkMacSystemFont, 'Open Sans';
   font-weight: 400;
+  font-size: 10px;
 }
 
 .CodeMirror {

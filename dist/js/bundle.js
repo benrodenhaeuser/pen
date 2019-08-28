@@ -679,8 +679,8 @@
 
     toString() {
       // TODO: rounding (extract precision to constant)
-      const x = Number(Math.round(this.x + 'e4') + 'e-4');
-      const y = Number(Math.round(this.y + 'e4') + 'e-4');
+      const x = Number(Math.round(this.x + 'e3') + 'e-3');
+      const y = Number(Math.round(this.y + 'e3') + 'e-3');
 
       return `${x} ${y}`;
     },
@@ -809,7 +809,7 @@
     toString() {
       // TODO: rounding, extract precision to constant
       const m = Array.from(this.m).map(value =>
-        Number(Math.round(value + 'e4') + 'e-4')
+        Number(Math.round(value + 'e3') + 'e-3')
       );
 
       return `matrix(${m.join(', ')})`;
