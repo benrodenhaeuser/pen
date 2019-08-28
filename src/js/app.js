@@ -2,7 +2,8 @@ import { core } from './app/core.js';
 import * as devices from './app/periphery/_.js';
 
 // exclude as needed for development purposes:
-const excluded = [devices.message, devices.db];
+// const excluded = [devices.message, devices.db];
+const excluded = [];
 
 const app = {
   init() {

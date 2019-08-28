@@ -13,7 +13,7 @@
 // - diff-match-patch is copyright (c) by the authors
 //   Distributed under an Apache License
 //   https://github.com/google/diff-match-patch
-    
+
 (function () {
   'use strict';
 
@@ -4524,8 +4524,8 @@
         .set({
           type: types.SHAPE,
           splitter: Vector$$1.create(-1000, -1000),
-          fill: '#f1f1f1', // TODO: extract to constant
-          stroke: '#000000', // TODO: extract to constant
+          fill: '#fff', // TODO: extract to constant
+          stroke: '#000', // TODO: extract to constant
         })
         .set(opts);
     },
@@ -4556,7 +4556,7 @@
     },
 
     // TODO: refactor
-    toTags(level) {
+    toTags() {
       const open = [];
 
       open.push(
@@ -4669,6 +4669,7 @@
         .bind(this)()
         .set({
           type: types.SPLINE,
+          closed: false,
         })
         .set(opts);
     },
@@ -4681,6 +4682,10 @@
 
     close() {
       this.closed = true;
+    },
+
+    open() {
+      this.closed = false;
     },
 
     isClosed() {
@@ -4880,6 +4885,10 @@
     toString() {
       return this.vector.toString();
     },
+
+    enclosingShape() {
+      return this.parent && this.parent.parent && this.parent.parent.parent;
+    }
   });
 
   const Anchor$$1 = Object.create(ControlNode$$1);
@@ -5220,8 +5229,10 @@
 
       if ($child instanceof SVGGElement) {
         child = Group$$1.create();
-        buildTree($child, child);
         node.mount(child);
+        buildTree($child, child);
+        // ^ the order of the preceding two lines cannot be reversed
+        //   if the order is reserved, node heights are set incorrectly
       } else {
         child = buildShapeTree($child);
         node.mount(child);
@@ -5464,7 +5475,7 @@
       const doc = Doc$$1.create();
 
       const canvas = Canvas$$1.create();
-      canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 700, 700);
+      canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 800, 1600);
       doc.mount(canvas);
 
       return doc;
@@ -5617,12 +5628,27 @@
       to: 'selectMode',
     },
 
-    // INPUT MODES
+    // escape
 
     {
       type: 'keydown',
       target: 'esc',
       do: 'exitEdit',
+    },
+
+    // delete
+
+    {
+      type: 'keydown',
+      target: 'delete',
+      do: 'deleteNode',
+    },
+
+    {
+      from: 'penMode',
+      type: 'keydown',
+      target: 'letterC',
+      do: 'toggleClosedStatus',
     },
 
     // SELECT MODE
@@ -5793,14 +5819,6 @@
       target: 'curve',
       do: 'splitCurve',
       to: 'adjustingSegment',
-    },
-
-    // DELETE
-
-    {
-      type: 'keydown',
-      target: 'delete',
-      do: 'deleteNode',
     },
 
     // MARKUP
@@ -6079,22 +6097,17 @@
 
     initAdjustSegment(state, input) {
       const control = state.canvas.findDescendantByKey(input.key);
-
-      // new code for close path
-      if (control.type === types.ANCHOR) {
-        const segment = control.parent;
-        const spline = segment.parent;
-
-        if (spline.children.indexOf(segment) === 0 && !spline.isClosed()) {
-          spline.close();
-          return;
-        }
-      }
-
-      // adjustment
       state.target = control.parent.parent.parent; // TODO: great
       state.from = Vector$$1.create(input.x, input.y).transformToLocal(state.target);
       control.placePenTip();
+    },
+
+    toggleClosedStatus(state, input) {
+      console.log('toggleClosedStatus update');
+      const control = state.canvas.findPenTip();
+      const spline = control.parent.parent;
+
+      spline.isClosed() ? spline.open() : spline.close();
     },
 
     adjustSegment(state, input) {
@@ -6138,7 +6151,8 @@
       const spline = startSegment.parent;
       const target = spline.parent;
       const startIndex = spline.children.indexOf(startSegment);
-      const endSegment = spline.children[startIndex + 1];
+      const endSegment = spline.children[startIndex + 1] || spline.children[0];
+      // ^ second disjunct: wrap around for curve linking last to first segment in spline
       const curve = Curve$$1.createFromSegments(startSegment, endSegment);
       const bCurve = new Bezier$1(...curve.coords());
 
@@ -6436,6 +6450,7 @@
 
   const ESCAPE_CODE = 27;
   const BACKSPACE_CODE = 8;
+  const LETTER_C_CODE = 67;
 
   const keyboard = {
     init() {
@@ -6463,6 +6478,17 @@
           });
         }
       });
+
+      window.addEventListener('keydown', event => {
+        if (event.keyCode === LETTER_C_CODE) {
+          func({
+            source: this.name,
+            type: event.type,
+            target: 'letterC',
+          });
+        }
+      });
+
     },
   };
 
@@ -6571,7 +6597,10 @@
 
   const UIDevice = {
     init() {
-      this.mountPoint = document.querySelector(`#${this.name}`);
+      if (!this.mountPoint) {
+        this.mountPoint = document.querySelector(`#${this.name}`);
+      }
+
       const vDOM = this.requestSnapshot('vDOM')[this.name];
       this.dom = this.createElement(vDOM);
       this.previousVDOM = vDOM;
@@ -6580,6 +6609,7 @@
     },
 
     mount() {
+      console.log(this.mountPoint);
       this.mountPoint.innerHTML = '';
       this.mountPoint.appendChild(this.dom);
     },
@@ -19045,10 +19075,11 @@
       const markupTree = this.requestSnapshot('markupTree');
 
       this.markupEditor = CodeMirror(this.mountPoint, {
-        lineNumbers: false,
+        lineNumbers: true,
         lineWrapping: false,
         mode: 'xml',
         value: markupTree.toMarkupString(),
+        // theme: 'base16-light'
       });
       this.markupDoc = this.markupEditor.getDoc();
       this.previousMarkupTree = markupTree;
@@ -19305,7 +19336,8 @@
   });
 
   // exclude as needed for development purposes:
-  const excluded = [message, db];
+  // const excluded = [devices.message, devices.db];
+  const excluded = [];
 
   const app = {
     init() {
