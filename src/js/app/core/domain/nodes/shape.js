@@ -18,8 +18,8 @@ Object.assign(Shape, {
       .set({
         type: types.SHAPE,
         splitter: Vector.create(-1000, -1000),
-        fill: '#f1f1f1', // TODO: extract to constant
-        stroke: '#000000', // TODO: extract to constant
+        fill: '#fff', // TODO: extract to constant
+        stroke: '#000', // TODO: extract to constant
       })
       .set(opts);
   },

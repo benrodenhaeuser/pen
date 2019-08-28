@@ -1,6 +1,9 @@
 const UIDevice = {
   init() {
-    this.mountPoint = document.querySelector(`#${this.name}`);
+    if (!this.mountPoint) {
+      this.mountPoint = document.querySelector(`#${this.name}`);
+    }
+
     const vDOM = this.requestSnapshot('vDOM')[this.name];
     this.dom = this.createElement(vDOM);
     this.previousVDOM = vDOM;
@@ -9,6 +12,7 @@ const UIDevice = {
   },
 
   mount() {
+    console.log(this.mountPoint);
     this.mountPoint.innerHTML = '';
     this.mountPoint.appendChild(this.dom);
   },

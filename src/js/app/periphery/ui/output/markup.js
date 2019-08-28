@@ -9,10 +9,11 @@ const markup = {
     const markupTree = this.requestSnapshot('markupTree');
 
     this.markupEditor = CodeMirror(this.mountPoint, {
-      lineNumbers: false,
+      lineNumbers: true,
       lineWrapping: false,
       mode: 'xml',
       value: markupTree.toMarkupString(),
+      // theme: 'base16-light'
     });
     this.markupDoc = this.markupEditor.getDoc();
     this.previousMarkupTree = markupTree;
