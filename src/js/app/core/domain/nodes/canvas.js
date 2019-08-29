@@ -156,7 +156,7 @@ Object.assign(Canvas, {
     };
   },
 
-  // TODO: this should go to graphicsNode
+  // TODO: this should perhaps go to graphicsNode (?)
   renderTags() {
     return this.tags(); // TODO: tags is an odd name for a *function* that returns tags!
   },

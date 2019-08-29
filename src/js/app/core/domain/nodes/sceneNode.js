@@ -17,4 +17,10 @@ Object.defineProperty(SceneNode, 'canvas', {
   },
 });
 
+Object.defineProperty(SceneNode, 'doc', {
+  get() {
+    return this.findAncestor(node => node.type === types.DOC);
+  },
+});
+
 export { SceneNode };

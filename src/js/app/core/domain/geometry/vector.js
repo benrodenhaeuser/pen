@@ -81,8 +81,9 @@ const Vector = {
 
   toString() {
     // TODO: rounding (extract precision to constant)
-    const x = Number(Math.round(this.x + 'e4') + 'e-4');
-    const y = Number(Math.round(this.y + 'e4') + 'e-4');
+    // see http://www.jacklmoore.com/notes/rounding-in-javascript/
+    const x = Number(Math.round(this.x + 'e3') + 'e-3');
+    const y = Number(Math.round(this.y + 'e3') + 'e-3');
 
     return `${x} ${y}`;
   },

@@ -11,6 +11,12 @@ const transitions = [
     to: 'selectMode',
   },
 
+  // RESIZE
+  {
+    type: 'resize',
+    do: 'refresh',
+  },
+
   // TOOLS
 
   // create new document

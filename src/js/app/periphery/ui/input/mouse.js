@@ -8,6 +8,15 @@ const mouse = {
   bindEvents(func) {
     this.bindMouseButtonEvents(func);
     this.bindMouseMoveEvents(func);
+
+    // TODO: move to a new input device (screen? viewport?)
+    window.onresize = () => {
+      func({
+        source: this.name,
+        type: 'resize',
+        width: document.querySelector('#canvas-wrapper').clientWidth
+      });
+    }
   },
 
   bindMouseButtonEvents(func) {

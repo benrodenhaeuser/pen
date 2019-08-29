@@ -74,7 +74,10 @@ const buildTree = ($node, node) => {
 const processAttributes = ($node, node) => {
   // viewBox
   if ($node.tagName === 'svg') {
-    const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
+    const viewBox = $node
+      .getAttributeNS(null, 'viewBox')
+      .split(' ')
+      .map(val => Number(val));
     const origin = Vector.create(viewBox[0], viewBox[1]);
     const size = Vector.create(viewBox[2], viewBox[3]);
     node.viewBox = Rectangle.create(origin, size);

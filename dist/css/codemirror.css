@@ -114,9 +114,10 @@
 .cm-em {font-style: italic;}
 .cm-link {text-decoration: underline;}
 .cm-strikethrough {text-decoration: line-through;}
-.cm-s-pen .cm-tag {color: red;}
+.cm-s-pen .cm-tag {color: gray; font-weight: 600; }
 .cm-s-pen .cm-attribute {color: #919191;}
-.cm-s-pen .CodeMirror-gutters { background: #f6f6f6; border-right: 0px; }
+/* .cm-s-pen .CodeMirror-gutters { background-color: #f6f6f6; border-right: 0px; } */
+.cm-s-pen .CodeMirror-gutters { background-color: #fdfdfd; border-right: 1px solid #e6e6e6; }
 .cm-s-pen .CodeMirror-linenumber { color: #e3e3e3; }
 
 .selected-markup {
@@ -124,11 +125,11 @@
 }
 
 .tip-markup {
-  background-color: red;
+  background-color: yellow;
 }
 
 
-.cm-s-default .cm-error {
+.cm-s-pen .cm-error {
   color: #f00;
 }
 .cm-invalidchar {color: #f00;}

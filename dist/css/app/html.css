@@ -3,8 +3,7 @@ html {
 }
 
 body {
-  background-color: #f1f1f1;
-  /* margin: 10px 10px; */
+  background-color: white;
 }
 
 main {
@@ -17,15 +16,25 @@ main {
   font-family: -apple-system, BlinkMacSystemFont, 'Open Sans';
   font-weight: 400;
   font-size: 10px;
+  padding-top: 1vh;
+  /* padding-bottom: 1vh; */
 }
 
 .CodeMirror {
   font-family: 'Roboto Mono';
   font-size: 13px;
   font-weight: 300;
-  /* margin: 10px; */
-  height: 100vh;
+  /* margin-top: 1vh; */
+  height: 99vh;
   overflow: scroll;
+  background-color: #fcfcfc;
+}
+
+.CodeMirror-lines {
+  background-color: white;
+  padding-top: 0;
+  padding-bottom: 0;
+  /* border-bottom: 1px solid #e6e6e6; */
 }
 
 .CodeMirror pre {
@@ -36,25 +45,27 @@ main {
   grid-area: tools;
   /* display: flex; */
   align-items: center;
-  height: 100vh;
-  background-color: #565656;
+  height: 99vh;
+  background-color: #fcfcfc;
+  /* margin-top: 1vh; */
 }
 
 #canvas {
+  background-color: white;
   grid-area: canvas;
-  border: 1px dashed white;
-  /* border-radius: 10px; */
-  margin: 15px;
+  /* border-bottom: 1px solid #e6e6e6; */
 }
 
 #canvas-wrapper {
-  background-color: #e3e3e3;
-  height: 100vh;
+  background-color: #fcfcfc;
+  height: 99vh;
   overflow: scroll;
+  /* margin-top: 1vh; */
+  border-left: 1px solid #e6e6e6;
+  border-right: 1px solid #e6e6e6;
 }
 
 #markup {
-  /* height: 100vh; */
   grid-area: markup;
   background-color: white;
 }
@@ -70,7 +81,6 @@ textarea:focus {
 }
 
 #buttons {
-  /* display: flex; */
   padding-left: 0;
   margin-left: 0;
   margin: 0;
@@ -91,13 +101,15 @@ textarea:focus {
 
 .pure-button {
   background-color: transparent;
-  color: white;
+  color: #000;
+  text-transform: uppercase;
+  width: 40px;
+  height: 40px;
 }
 
 .pure-button:hover, .pure-button:focus, .pure-menu-link:hover {
   background-image: none;
   color: red;
-  /* background-color: white; */
 }
 
 .pure-menu-horizontal {
@@ -106,7 +118,8 @@ textarea:focus {
 }
 
 #menuLink1 {
-  color: white;
+  color: #000;
+  text-transform: uppercase;
 }
 
 .doc-list {

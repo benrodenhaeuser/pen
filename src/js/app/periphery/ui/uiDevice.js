@@ -12,7 +12,7 @@ const UIDevice = {
   },
 
   mount() {
-    console.log(this.mountPoint);
+    // console.log(this.mountPoint);
     this.mountPoint.innerHTML = '';
     this.mountPoint.appendChild(this.dom);
   },

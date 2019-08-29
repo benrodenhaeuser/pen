@@ -16,7 +16,8 @@ Object.assign(MarkupNode, {
         return this.markup;
       case types.LINE:
         return (
-          '  '.repeat(this.indent) + // TODO: '  ' should be constant ('unitPad')
+          '  '.repeat(this.indent) +
+          // TODO: '  ' should be extracted to constant ('unitPad')
           this.children.map(node => node.toMarkupString()).join(' ')
         );
       case types.MARKUPROOT:

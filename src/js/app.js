@@ -7,7 +7,7 @@ const excluded = [];
 
 const app = {
   init() {
-    core.init();
+    core.init(document.querySelector('#canvas-wrapper').clientWidth);
 
     for (let device of Object.values(devices)) {
       if (excluded.includes(device)) {
@@ -16,12 +16,26 @@ const app = {
 
       device.requestSnapshot = label => core.state.snapshot(label);
       device.init();
-      device.bindEvents && device.bindEvents(core.compute.bind(core));
-      device.react && core.attach(device.name, device.react.bind(device));
+
+      if (this.isInputDevice(device)) {
+        device.bindEvents(core.compute.bind(core))
+      };
+
+      if (this.isOutputDevice(device)) {
+        core.attach(device.name, device.react.bind(device));
+      }
     }
 
     core.kickoff();
   },
+
+  isInputDevice(device) {
+    return !!device.bindEvents;
+  },
+
+  isOutputDevice(device) {
+    return !!device.react;
+  },
 };
 
-document.addEventListener('DOMContentLoaded', app.init);
+document.addEventListener('DOMContentLoaded', app.init.bind(app));

@@ -13,7 +13,7 @@
 // - diff-match-patch is copyright (c) by the authors
 //   Distributed under an Apache License
 //   https://github.com/google/diff-match-patch
-
+    
 (function () {
   'use strict';
 
@@ -84,7 +84,13 @@
   };
 
   const scale = (node, length) => {
-    return length / node.globalScaleFactor();
+    const canvasScaleFactor = node.doc.canvasWidth / node.canvas.viewBox.size.x;
+
+    console.log('viewbox width', node.canvas.viewBox.size.x);
+    console.log('stored screen width', node.doc.canvasWidth); 
+
+    const scaledLength = (length / node.globalScaleFactor()) / canvasScaleFactor;
+    return scaledLength;
   };
 
   const comps$$1 = {
@@ -381,6 +387,8 @@
         class: controlNode.class.toString(),
       });
     },
+
+    // tools
 
     tools(editor) {
       return h(
@@ -679,6 +687,7 @@
 
     toString() {
       // TODO: rounding (extract precision to constant)
+      // see http://www.jacklmoore.com/notes/rounding-in-javascript/
       const x = Number(Math.round(this.x + 'e3') + 'e-3');
       const y = Number(Math.round(this.y + 'e3') + 'e-3');
 
@@ -4139,6 +4148,12 @@
     },
   });
 
+  Object.defineProperty(SceneNode$$1, 'doc', {
+    get() {
+      return this.findAncestor(node => node.type === types.DOC);
+    },
+  });
+
   const GraphicsNode$$1 = SceneNode$$1.create();
   GraphicsNode$$1.defineProps(['transform', 'height']);
 
@@ -4457,7 +4472,7 @@
       };
     },
 
-    // TODO: this should go to graphicsNode
+    // TODO: this should perhaps go to graphicsNode (?)
     renderTags() {
       return this.tags(); // TODO: tags is an odd name for a *function* that returns tags!
     },
@@ -4524,7 +4539,7 @@
         .set({
           type: types.SHAPE,
           splitter: Vector$$1.create(-1000, -1000),
-          fill: '#fff', // TODO: extract to constant
+          fill: 'none', // TODO: extract to constant
           stroke: '#000', // TODO: extract to constant
         })
         .set(opts);
@@ -4925,7 +4940,7 @@
   });
 
   const Doc$$1 = Object.create(Node$$1);
-  Doc$$1.defineProps(['_id']);
+  Doc$$1.defineProps(['_id', 'canvasWidth']);
 
   Object.assign(Doc$$1, {
     create(opts = {}) {
@@ -5024,7 +5039,8 @@
           return this.markup;
         case types.LINE:
           return (
-            '  '.repeat(this.indent) + // TODO: '  ' should be constant ('unitPad')
+            '  '.repeat(this.indent) +
+            // TODO: '  ' should be extracted to constant ('unitPad')
             this.children.map(node => node.toMarkupString()).join(' ')
           );
         case types.MARKUPROOT:
@@ -5243,7 +5259,10 @@
   const processAttributes = ($node, node) => {
     // viewBox
     if ($node.tagName === 'svg') {
-      const viewBox = $node.getAttributeNS(null, 'viewBox').split(' ');
+      const viewBox = $node
+        .getAttributeNS(null, 'viewBox')
+        .split(' ')
+        .map(val => Number(val));
       const origin = Vector$$1.create(viewBox[0], viewBox[1]);
       const size = Vector$$1.create(viewBox[2], viewBox[3]);
       node.viewBox = Rectangle$$1.create(origin, size);
@@ -5436,25 +5455,25 @@
   };
 
   const State = {
-    create() {
-      return Object.create(State).init();
+    create(canvasWidth) {
+      return Object.create(State).init(canvasWidth);
     },
 
-    init() {
+    init(canvasWidth) {
       this.label = 'start';
       this.input = {};
       this.update = '';
       this.temp = {};
       this.snapshots = {};
 
-      this.editor = this.buildEditorTree();
+      this.editor = this.buildEditorTree(canvasWidth);
 
       return this;
     },
 
-    buildEditorTree() {
+    buildEditorTree(canvasWidth) {
       const editor = Editor$$1.create();
-      const doc = this.buildDoc();
+      const doc = this.buildDoc(canvasWidth);
       const docs = Docs$$1.create();
       const message = this.buildMessage();
 
@@ -5471,8 +5490,8 @@
       return message;
     },
 
-    buildDoc() {
-      const doc = Doc$$1.create();
+    buildDoc(canvasWidth) {
+      const doc = Doc$$1.create({ canvasWidth: canvasWidth });
 
       const canvas = Canvas$$1.create();
       canvas.viewBox = Rectangle$$1.createFromDimensions(0, 0, 800, 1600);
@@ -5577,6 +5596,12 @@
       type: 'go',
       do: 'go',
       to: 'selectMode',
+    },
+
+    // RESIZE
+    {
+      type: 'resize',
+      do: 'refresh',
     },
 
     // TOOLS
@@ -5889,6 +5914,16 @@
   };
 
   const updates = {
+    refresh(state, input) {
+      if (input.width > 0) {
+        state.doc.canvasWidth = input.width;
+      }
+
+      for (let leaf of state.canvas.leaves) {
+        leaf.invalidateCache();
+      }
+    },
+
     focus(state, input) {
       state.canvas.removeFocus(); // remove focus from other nodes
       const node = state.canvas.findDescendantByKey(input.key);
@@ -6290,8 +6325,8 @@
   };
 
   const core = {
-    init() {
-      this.state = State.create();
+    init(canvasWidth) {
+      this.state = State.create(canvasWidth);
       this.modules = [];
 
       return this;
@@ -6307,20 +6342,13 @@
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
-        // console.log(input);
-        // console.log(transition);
-
         this.state.update = transition.do; // a string
         this.state.label = transition.to;
 
         const update = updates[transition.do]; // a function, or undefined
         update && update(this.state, input);
 
-        // console.log(input.type, transition);
-
         this.publish();
-
-        // console.log('DOM nodes', document.getElementsByTagName('*').length);
       }
     },
 
@@ -6502,6 +6530,15 @@
     bindEvents(func) {
       this.bindMouseButtonEvents(func);
       this.bindMouseMoveEvents(func);
+
+      // TODO: move to a new input device (screen? viewport?)
+      window.onresize = () => {
+        func({
+          source: this.name,
+          type: 'resize',
+          width: document.querySelector('#canvas-wrapper').clientWidth
+        });
+      };
     },
 
     bindMouseButtonEvents(func) {
@@ -6609,7 +6646,7 @@
     },
 
     mount() {
-      console.log(this.mountPoint);
+      // console.log(this.mountPoint);
       this.mountPoint.innerHTML = '';
       this.mountPoint.appendChild(this.dom);
     },
@@ -19341,7 +19378,7 @@
 
   const app = {
     init() {
-      core.init();
+      core.init(document.querySelector('#canvas-wrapper').clientWidth);
 
       for (let device of Object.values(devices)) {
         if (excluded.includes(device)) {
@@ -19350,15 +19387,28 @@
 
         device.requestSnapshot = label => core.state.snapshot(label);
         device.init();
-        device.bindEvents && device.bindEvents(core.compute.bind(core));
-        device.react && core.attach(device.name, device.react.bind(device));
+
+        if (this.isInputDevice(device)) {
+          device.bindEvents(core.compute.bind(core));
+        }
+        if (this.isOutputDevice(device)) {
+          core.attach(device.name, device.react.bind(device));
+        }
       }
 
       core.kickoff();
     },
+
+    isInputDevice(device) {
+      return !!device.bindEvents;
+    },
+
+    isOutputDevice(device) {
+      return !!device.react;
+    },
   };
 
-  document.addEventListener('DOMContentLoaded', app.init);
+  document.addEventListener('DOMContentLoaded', app.init.bind(app));
 
 }());
 //# sourceMappingURL=bundle.js.map

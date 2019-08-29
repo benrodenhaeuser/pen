@@ -3,8 +3,8 @@ import { updates } from './core/_.js';
 import { transitions } from './core/_.js';
 
 const core = {
-  init() {
-    this.state = State.create();
+  init(canvasWidth) {
+    this.state = State.create(canvasWidth);
     this.modules = [];
 
     return this;
@@ -20,20 +20,13 @@ const core = {
     const transition = transitions.get(this.state, input);
 
     if (transition) {
-      // console.log(input);
-      // console.log(transition);
-
       this.state.update = transition.do; // a string
       this.state.label = transition.to;
 
       const update = updates[transition.do]; // a function, or undefined
       update && update(this.state, input);
 
-      // console.log(input.type, transition);
-
       this.publish();
-
-      // console.log('DOM nodes', document.getElementsByTagName('*').length);
     }
   },
 

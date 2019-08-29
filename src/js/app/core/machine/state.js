@@ -11,25 +11,25 @@ import { objectToDoc } from '../ports/_.js';
 import { markupToCanvas } from '../ports/_.js';
 
 const State = {
-  create() {
-    return Object.create(State).init();
+  create(canvasWidth) {
+    return Object.create(State).init(canvasWidth);
   },
 
-  init() {
+  init(canvasWidth) {
     this.label = 'start';
     this.input = {};
     this.update = '';
     this.temp = {};
     this.snapshots = {};
 
-    this.editor = this.buildEditorTree();
+    this.editor = this.buildEditorTree(canvasWidth);
 
     return this;
   },
 
-  buildEditorTree() {
+  buildEditorTree(canvasWidth) {
     const editor = Editor.create();
-    const doc = this.buildDoc();
+    const doc = this.buildDoc(canvasWidth);
     const docs = Docs.create();
     const message = this.buildMessage();
 
@@ -46,11 +46,11 @@ const State = {
     return message;
   },
 
-  buildDoc() {
-    const doc = Doc.create();
+  buildDoc(canvasWidth) {
+    const doc = Doc.create({ canvasWidth: canvasWidth });
 
     const canvas = Canvas.create();
-    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 800, 600);
+    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 800, 1600);
     doc.mount(canvas);
 
     return doc;

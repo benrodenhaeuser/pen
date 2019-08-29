@@ -10,6 +10,16 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
+  refresh(state, input) {
+    if (input.width > 0) {
+      state.doc.canvasWidth = input.width;
+    }
+
+    for (let leaf of state.canvas.leaves) {
+      leaf.invalidateCache();
+    }
+  },
+
   focus(state, input) {
     state.canvas.removeFocus(); // remove focus from other nodes
     const node = state.canvas.findDescendantByKey(input.key);

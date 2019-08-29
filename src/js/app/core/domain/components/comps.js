@@ -7,7 +7,13 @@ const LENGTHS_IN_PX = {
 };
 
 const scale = (node, length) => {
-  return length / node.globalScaleFactor();
+  const canvasScaleFactor = node.doc.canvasWidth / node.canvas.viewBox.size.x;
+
+  console.log('viewbox width', node.canvas.viewBox.size.x);
+  console.log('stored screen width', node.doc.canvasWidth); 
+
+  const scaledLength = (length / node.globalScaleFactor()) / canvasScaleFactor;
+  return scaledLength;
 };
 
 const comps = {
@@ -304,6 +310,8 @@ const comps = {
       class: controlNode.class.toString(),
     });
   },
+
+  // tools
 
   tools(editor) {
     return h(
