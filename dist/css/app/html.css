@@ -92,9 +92,10 @@ textarea:focus {
 
 #message {
   position: absolute;
-  left: 3px;
-  bottom: 8px;
+  left: 70px;
+  bottom: 15px;
   color: red;
+  font-size: 13px;
   background-color: transparent;
   border: 0px;
 }
