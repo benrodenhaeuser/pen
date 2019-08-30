@@ -401,7 +401,7 @@ const updates = {
   // DOCUMENT MANAGEMENT
 
   createDoc(state, input) {
-    state.doc.replaceWith(state.buildDoc());
+    state.doc.replaceWith(state.buildDoc(state.doc.canvasWidth));
   },
 
   updateDocList(state, input) {
