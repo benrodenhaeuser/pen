@@ -17,6 +17,8 @@ const core = {
   compute(input) {
     this.state.input = input;
 
+    console.log(input);
+
     const transition = transitions.get(this.state, input);
 
     if (transition) {

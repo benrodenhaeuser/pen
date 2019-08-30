@@ -29,7 +29,7 @@ const message = Object.assign(Object.create(UIDevice), {
 
     // if the message is non-empty, delete it after one second
     if (newVNode !== '') {
-      this.timer = window.setTimeout(this.wipeMessage, 1000);
+      this.timer = window.setTimeout(this.wipeMessage, 250);
     }
   },
 

@@ -1,0 +1,5 @@
+.buttonPath {
+  fill: #d3d3d3;
+  cursor: pointer;
+  pointer-events: bounding-box;
+}

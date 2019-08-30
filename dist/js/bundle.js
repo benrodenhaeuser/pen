@@ -394,66 +394,180 @@
           'li',
           {},
           h(
-            'button',
+            'a',
             {
-              id: 'newDocButton',
-              class: 'pure-button',
-              'data-type': 'newDocButton',
+              href: '#',
             },
-            'New'
-          )
-        ),
-        this.docs(editor),
-        h(
-          'li',
-          {},
-          h(
-            'button',
-            {
-              id: 'getPrevious',
-              'data-type': 'getPrevious',
-              class: 'pure-button',
-            },
-            'Undo'
-          )
-        ),
-        h(
-          'li',
-          {},
-          h(
-            'button',
-            {
-              id: 'getNext',
-              'data-type': 'getNext',
-              class: 'pure-button',
-            },
-            'Redo'
+            h(
+              'object',
+              {
+                type: 'image/svg+xml',
+                data: '/assets/buttons/pen.svg',
+              }
+            ),
+            h(
+              'p',
+              {},
+              'Pen'
+            ),
+            h(
+              'div',
+              {
+                id: 'penButton',
+                'data-type': 'penButton',
+                class: 'buttonTarget'
+              }
+            )
           )
         ),
         h(
           'li',
           {},
           h(
-            'button',
+            'a',
             {
-              id: 'selectButton',
-              'data-type': 'selectButton',
-              class: 'pure-button',
+              href: '#',
             },
-            'Select'
+            h(
+              'object',
+              {
+                type: 'image/svg+xml',
+                data: '/assets/buttons/select.svg',
+              }
+            ),
+            h(
+              'p',
+              {},
+              'Select'
+            ),
+            h(
+              'div',
+              {
+                id: 'selectButton',
+                'data-type': 'selectButton',
+                class: 'buttonTarget'
+              }
+            )
           )
         ),
         h(
           'li',
           {},
           h(
-            'button',
+            'a',
             {
-              id: 'penButton',
-              'data-type': 'penButton',
-              class: 'pure-button',
+              href: '#',
             },
-            'Pen'
+            h(
+              'object',
+              {
+                type: 'image/svg+xml',
+                data: '/assets/buttons/undo.svg',
+              }
+            ),
+            h(
+              'p',
+              {},
+              'Undo'
+            ),
+            h(
+              'div',
+              {
+                id: 'getPrevious',
+                'data-type': 'getPrevious',
+                class: 'buttonTarget'
+              }
+            )
+          )
+        ),
+        h(
+          'li',
+          {},
+          h(
+            'a',
+            {
+              href: '#',
+            },
+            h(
+              'object',
+              {
+                type: 'image/svg+xml',
+                data: '/assets/buttons/redo.svg',
+              }
+            ),
+            h(
+              'p',
+              {},
+              'Redo'
+            ),
+            h(
+              'div',
+              {
+                id: 'getNext',
+                'data-type': 'getNext',
+                class: 'buttonTarget'
+              }
+            )
+          )
+        ),
+        h(
+          'li',
+          {},
+          h(
+            'a',
+            {
+              href: '#',
+            },
+            h(
+              'object',
+              {
+                type: 'image/svg+xml',
+                data: '/assets/buttons/new.svg',
+              }
+            ),
+            h(
+              'p',
+              {},
+              'New'
+            ),
+            h(
+              'div',
+              {
+                id: 'newDocButton',
+                'data-type': 'newDocButton',
+                class: 'buttonTarget'
+              }
+            )
+          )
+        ),
+        h(
+          'li',
+          {},
+          h(
+            'a',
+            {
+              href: '#',
+            },
+            h(
+              'object',
+              {
+                type: 'image/svg+xml',
+                data: '/assets/buttons/open.svg',
+              }
+            ),
+            h(
+              'p',
+              {},
+              'Open'
+            ),
+            h(
+              'div',
+              {
+                id: 'docListButton',
+                'data-type': 'docListButton',
+                class: 'buttonTarget'
+              }
+            )
           )
         )
       );
@@ -6365,6 +6479,8 @@
     compute(input) {
       this.state.input = input;
 
+      console.log(input);
+
       const transition = transitions$$1.get(this.state, input);
 
       if (transition) {
@@ -6769,6 +6885,9 @@
 
     bindEvents(func) {
       this.mountPoint.addEventListener('click', event => {
+        console.log('click event in tools'); // TODO: clicks on embedded svgs do not register
+        console.log(event.target);
+
         event.preventDefault();
 
         const textarea = document.querySelector('textarea');
@@ -19376,7 +19495,7 @@
 
       // if the message is non-empty, delete it after one second
       if (newVNode !== '') {
-        this.timer = window.setTimeout(this.wipeMessage, 1000);
+        this.timer = window.setTimeout(this.wipeMessage, 250);
       }
     },
 

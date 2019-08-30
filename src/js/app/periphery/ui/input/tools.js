@@ -9,6 +9,9 @@ const tools = Object.assign(Object.create(UIDevice), {
 
   bindEvents(func) {
     this.mountPoint.addEventListener('click', event => {
+      console.log('click event in tools'); // TODO: clicks on embedded svgs do not register
+      console.log(event.target);
+
       event.preventDefault();
 
       const textarea = document.querySelector('textarea');
