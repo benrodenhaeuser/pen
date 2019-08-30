@@ -8,10 +8,6 @@ const LENGTHS_IN_PX = {
 
 const scale = (node, length) => {
   const canvasScaleFactor = node.doc.canvasWidth / node.canvas.viewBox.size.x;
-
-  console.log('viewbox width', node.canvas.viewBox.size.x);
-  console.log('stored screen width', node.doc.canvasWidth); 
-
   const scaledLength = (length / node.globalScaleFactor()) / canvasScaleFactor;
   return scaledLength;
 };

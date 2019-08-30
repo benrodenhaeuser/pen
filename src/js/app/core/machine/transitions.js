@@ -180,6 +180,13 @@ const transitions = [
 
   // PEN MODE
 
+  // switch to pen cursor
+  {
+    from: 'penMode',
+    type: 'mousemove',
+    do: 'switchToPenCursor',
+  },
+
   // add segment to (current or new) shape
   {
     from: 'penMode',

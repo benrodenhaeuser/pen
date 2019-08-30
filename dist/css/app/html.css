@@ -135,7 +135,22 @@ textarea:focus {
   background-color: #fff;
 }
 
-/* temporary */
-#canvas {
+.rotationCursor {
+  cursor: cell;
+}
+
+.scaleCursor {
+  cursor: row-resize;
+}
+
+.shiftCursor {
+  cursor: grabbing;
+}
+
+.penCursor {
   cursor: crosshair;
+}
+
+.selectCursor {
+  cursor: auto;
 }

@@ -7,7 +7,7 @@ import { comps } from '../components/_.js';
 import { MarkupRoot } from './_.js';
 
 const Canvas = Object.create(GraphicsNode);
-Canvas.defineProps(['viewBox', 'xmlns']);
+Canvas.defineProps(['viewBox', 'xmlns', 'cursor']);
 
 Object.assign(Canvas, {
   create(opts = {}) {
@@ -113,6 +113,12 @@ Object.assign(Canvas, {
     for (let ancestor of graphicsNode.shapeOrGroupAncestors) {
       ancestor.computeBounds();
     }
+  },
+
+  // TODO: remove others!
+  setCursor(cursorName) {
+    this.class = this.class.remove(this.cursor).add(cursorName);
+    this.cursor = cursorName;
   },
 
   mountShape() {

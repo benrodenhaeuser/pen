@@ -28,6 +28,17 @@ const updates = {
       return;
     }
 
+    if (input.target === 'dot') { // rotate
+      // document.querySelector('#canvas').style.cursor = 'cell';
+      state.canvas.setCursor('rotationCursor');
+    } else if (input.target === 'corner') { // scale
+      // document.querySelector('#canvas').style.cursor = 'move';
+      state.canvas.setCursor('scaleCursor');
+    } else { // "other"
+      // document.querySelector('#canvas').style.cursor = 'auto';
+      state.canvas.setCursor('selectCursor');
+    }
+
     const hit = Vector.create(input.x, input.y);
     state.target = node.findAncestorByClass('frontier');
 
@@ -46,10 +57,7 @@ const updates = {
     }
 
     state.target.select();
-    updates.initShift(state, input);
-  },
 
-  initShift(state, input) {
     state.from = Vector.create(input.x, input.y);
     state.temp.center = state.target.bounds.center.transform(
       state.target.globalTransform()
@@ -142,6 +150,8 @@ const updates = {
   initTransform(state, input) {
     state.target = state.canvas.findDescendantByKey(input.key);
 
+    // input => dot or corner
+
     state.from = Vector.create(input.x, input.y);
     state.temp.center = state.target.bounds.center.transform(
       state.target.globalTransform()
@@ -152,6 +162,9 @@ const updates = {
     if (!state.target) {
       return;
     }
+
+    // document.querySelector('#canvas').style.cursor = 'grabbing';
+    state.canvas.setCursor('shiftCursor');
 
     const to = Vector.create(input.x, input.y);
     const from = state.from;
@@ -194,6 +207,10 @@ const updates = {
   },
 
   // PEN
+  switchToPenCursor(state, input) {
+    // document.querySelector('#canvas').style.cursor = 'crosshair';
+    state.canvas.setCursor('penCursor');
+  },
 
   addSegment(state, input) {
     state.target =

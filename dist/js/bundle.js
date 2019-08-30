@@ -85,10 +85,6 @@
 
   const scale = (node, length) => {
     const canvasScaleFactor = node.doc.canvasWidth / node.canvas.viewBox.size.x;
-
-    console.log('viewbox width', node.canvas.viewBox.size.x);
-    console.log('stored screen width', node.doc.canvasWidth); 
-
     const scaledLength = (length / node.globalScaleFactor()) / canvasScaleFactor;
     return scaledLength;
   };
@@ -4323,7 +4319,7 @@
   });
 
   const Canvas$$1 = Object.create(GraphicsNode$$1);
-  Canvas$$1.defineProps(['viewBox', 'xmlns']);
+  Canvas$$1.defineProps(['viewBox', 'xmlns', 'cursor']);
 
   Object.assign(Canvas$$1, {
     create(opts = {}) {
@@ -4429,6 +4425,12 @@
       for (let ancestor of graphicsNode.shapeOrGroupAncestors) {
         ancestor.computeBounds();
       }
+    },
+
+    // TODO: remove others!
+    setCursor(cursorName) {
+      this.class = this.class.remove(this.cursor).add(cursorName);
+      this.cursor = cursorName;
     },
 
     mountShape() {
@@ -5767,6 +5769,13 @@
 
     // PEN MODE
 
+    // switch to pen cursor
+    {
+      from: 'penMode',
+      type: 'mousemove',
+      do: 'switchToPenCursor',
+    },
+
     // add segment to (current or new) shape
     {
       from: 'penMode',
@@ -5932,6 +5941,17 @@
         return;
       }
 
+      if (input.target === 'dot') { // rotate
+        // document.querySelector('#canvas').style.cursor = 'cell';
+        state.canvas.setCursor('rotationCursor');
+      } else if (input.target === 'corner') { // scale
+        // document.querySelector('#canvas').style.cursor = 'move';
+        state.canvas.setCursor('scaleCursor');
+      } else { // "other"
+        // document.querySelector('#canvas').style.cursor = 'auto';
+        state.canvas.setCursor('selectCursor');
+      }
+
       const hit = Vector$$1.create(input.x, input.y);
       state.target = node.findAncestorByClass('frontier');
 
@@ -5950,10 +5970,7 @@
       }
 
       state.target.select();
-      updates.initShift(state, input);
-    },
 
-    initShift(state, input) {
       state.from = Vector$$1.create(input.x, input.y);
       state.temp.center = state.target.bounds.center.transform(
         state.target.globalTransform()
@@ -6046,6 +6063,8 @@
     initTransform(state, input) {
       state.target = state.canvas.findDescendantByKey(input.key);
 
+      // input => dot or corner
+
       state.from = Vector$$1.create(input.x, input.y);
       state.temp.center = state.target.bounds.center.transform(
         state.target.globalTransform()
@@ -6056,6 +6075,9 @@
       if (!state.target) {
         return;
       }
+
+      // document.querySelector('#canvas').style.cursor = 'grabbing';
+      state.canvas.setCursor('shiftCursor');
 
       const to = Vector$$1.create(input.x, input.y);
       const from = state.from;
@@ -6098,6 +6120,10 @@
     },
 
     // PEN
+    switchToPenCursor(state, input) {
+      // document.querySelector('#canvas').style.cursor = 'crosshair';
+      state.canvas.setCursor('penCursor');
+    },
 
     addSegment(state, input) {
       state.target =
