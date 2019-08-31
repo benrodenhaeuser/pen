@@ -6862,7 +6862,7 @@
 
     react(description) {
       if (description.menuVisible) {
-        document.querySelector('main').classList.add('menu-expanded');
+        document.querySelector('main').classList.add('menu-expanded'); // TODO: ugly!
         const vDOM = this.requestSnapshot('vDOM')[this.name];
         this.reconcile(this.previousVDOM, vDOM, this.dom);
         this.previousVDOM = vDOM;
