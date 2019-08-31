@@ -437,12 +437,9 @@ const comps = {
   },
 
   menu(editor) {
-    const items = h(
-      'ul',
-      {
-        class: editor.docs.class.toString(),
-      }
-    );
+    const items = h('ul', {
+      class: editor.docs.class.toString(),
+    });
 
     for (let identifier of editor.docs.children) {
       items.children.push(
@@ -457,18 +454,9 @@ const comps = {
       );
     }
 
-    const header = h(
-      'h1',
-      {},
-      'Documents'
-    );
+    const header = h('h1', {}, 'Documents');
 
-    return h(
-      'div',
-      {},
-      header,
-      items
-    );
+    return h('div', {}, header, items);
   },
 };
 
