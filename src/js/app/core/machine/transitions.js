@@ -27,6 +27,13 @@ const transitions = [
     to: 'selectMode',
   },
 
+  // toggle menu view
+  {
+    type: 'click',
+    target: 'docListButton',
+    do: 'toggleMenu',
+  },
+
   // request editor document
   {
     type: 'click',

@@ -14,9 +14,9 @@ const mouse = {
       func({
         source: this.name,
         type: 'resize',
-        width: document.querySelector('#canvas-wrapper').clientWidth
+        width: document.querySelector('#canvas-wrapper').clientWidth,
       });
-    }
+    };
   },
 
   bindMouseButtonEvents(func) {

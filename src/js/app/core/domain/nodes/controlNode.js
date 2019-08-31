@@ -16,7 +16,7 @@ Object.assign(ControlNode, {
 
   enclosingShape() {
     return this.parent && this.parent.parent && this.parent.parent.parent;
-  }
+  },
 });
 
 export { ControlNode };

@@ -19,6 +19,7 @@ const State = {
     this.label = 'start';
     this.input = {};
     this.update = '';
+    this.menuVisible = false;
     this.temp = {};
     this.snapshots = {};
 
@@ -73,11 +74,12 @@ const State = {
       return this.snapshots[label];
     }
 
-    // TODO: clean up the structure?
+    // TODO: clean up the structure
     switch (label) {
       case 'vDOM':
         return (this.snapshots['vDOM'] = {
           tools: comps.tools(this.editor),
+          menu: comps.menu(this.editor),
           message: this.editor.message.text,
           canvas: this.canvas.renderElement(),
         });
@@ -95,6 +97,7 @@ Object.defineProperty(State, 'description', {
       label: this.label,
       input: this.input,
       update: this.update,
+      menuVisible: this.menuVisible,
     };
   },
 });

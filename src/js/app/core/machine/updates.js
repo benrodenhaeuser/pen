@@ -28,13 +28,16 @@ const updates = {
       return;
     }
 
-    if (input.target === 'dot') { // rotate
+    if (input.target === 'dot') {
+      // rotate
       // document.querySelector('#canvas').style.cursor = 'cell';
       state.canvas.setCursor('rotationCursor');
-    } else if (input.target === 'corner') { // scale
+    } else if (input.target === 'corner') {
+      // scale
       // document.querySelector('#canvas').style.cursor = 'move';
       state.canvas.setCursor('scaleCursor');
-    } else { // "other"
+    } else {
+      // "other"
       // document.querySelector('#canvas').style.cursor = 'auto';
       state.canvas.setCursor('selectCursor');
     }
@@ -411,6 +414,14 @@ const updates = {
       const identNode = Identifier.create();
       identNode._id = id;
       state.docs.mount(identNode);
+    }
+  },
+
+  toggleMenu(state, input) {
+    if (state.menuVisible) {
+      state.menuVisible = false;
+    } else {
+      state.menuVisible = true;
     }
   },
 

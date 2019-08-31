@@ -1,8 +1,8 @@
 import { UIDevice } from '../uiDevice.js';
 
-const tools = Object.assign(Object.create(UIDevice), {
+const menu = Object.assign(Object.create(UIDevice), {
   init() {
-    this.name = 'tools';
+    this.name = 'menu';
     UIDevice.init.bind(this)();
     return this;
   },
@@ -24,6 +24,17 @@ const tools = Object.assign(Object.create(UIDevice), {
       });
     });
   },
+
+  react(description) {
+    if (description.menuVisible) {
+      document.querySelector('main').classList.add('menu-expanded');
+      const vDOM = this.requestSnapshot('vDOM')[this.name];
+      this.reconcile(this.previousVDOM, vDOM, this.dom);
+      this.previousVDOM = vDOM;
+    } else {
+      document.querySelector('main').classList.remove('menu-expanded');
+    }
+  },
 });
 
-export { tools };
+export { menu };

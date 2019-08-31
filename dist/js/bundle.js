@@ -85,7 +85,7 @@
 
   const scale = (node, length) => {
     const canvasScaleFactor = node.doc.canvasWidth / node.canvas.viewBox.size.x;
-    const scaledLength = (length / node.globalScaleFactor()) / canvasScaleFactor;
+    const scaledLength = length / node.globalScaleFactor() / canvasScaleFactor;
     return scaledLength;
   };
 
@@ -398,26 +398,16 @@
             {
               href: '#',
             },
-            h(
-              'object',
-              {
-                type: 'image/svg+xml',
-                data: '/assets/buttons/pen.svg',
-              }
-            ),
-            h(
-              'p',
-              {},
-              'Pen'
-            ),
-            h(
-              'div',
-              {
-                id: 'penButton',
-                'data-type': 'penButton',
-                class: 'buttonTarget'
-              }
-            )
+            h('object', {
+              type: 'image/svg+xml',
+              data: '/assets/buttons/pen.svg',
+            }),
+            h('p', {}, 'Pen'),
+            h('div', {
+              id: 'penButton',
+              'data-type': 'penButton',
+              class: 'buttonTarget',
+            })
           )
         ),
         h(
@@ -428,26 +418,16 @@
             {
               href: '#',
             },
-            h(
-              'object',
-              {
-                type: 'image/svg+xml',
-                data: '/assets/buttons/select.svg',
-              }
-            ),
-            h(
-              'p',
-              {},
-              'Select'
-            ),
-            h(
-              'div',
-              {
-                id: 'selectButton',
-                'data-type': 'selectButton',
-                class: 'buttonTarget'
-              }
-            )
+            h('object', {
+              type: 'image/svg+xml',
+              data: '/assets/buttons/select.svg',
+            }),
+            h('p', {}, 'Select'),
+            h('div', {
+              id: 'selectButton',
+              'data-type': 'selectButton',
+              class: 'buttonTarget',
+            })
           )
         ),
         h(
@@ -458,26 +438,16 @@
             {
               href: '#',
             },
-            h(
-              'object',
-              {
-                type: 'image/svg+xml',
-                data: '/assets/buttons/undo.svg',
-              }
-            ),
-            h(
-              'p',
-              {},
-              'Undo'
-            ),
-            h(
-              'div',
-              {
-                id: 'getPrevious',
-                'data-type': 'getPrevious',
-                class: 'buttonTarget'
-              }
-            )
+            h('object', {
+              type: 'image/svg+xml',
+              data: '/assets/buttons/undo.svg',
+            }),
+            h('p', {}, 'Undo'),
+            h('div', {
+              id: 'getPrevious',
+              'data-type': 'getPrevious',
+              class: 'buttonTarget',
+            })
           )
         ),
         h(
@@ -488,26 +458,16 @@
             {
               href: '#',
             },
-            h(
-              'object',
-              {
-                type: 'image/svg+xml',
-                data: '/assets/buttons/redo.svg',
-              }
-            ),
-            h(
-              'p',
-              {},
-              'Redo'
-            ),
-            h(
-              'div',
-              {
-                id: 'getNext',
-                'data-type': 'getNext',
-                class: 'buttonTarget'
-              }
-            )
+            h('object', {
+              type: 'image/svg+xml',
+              data: '/assets/buttons/redo.svg',
+            }),
+            h('p', {}, 'Redo'),
+            h('div', {
+              id: 'getNext',
+              'data-type': 'getNext',
+              class: 'buttonTarget',
+            })
           )
         ),
         h(
@@ -518,26 +478,16 @@
             {
               href: '#',
             },
-            h(
-              'object',
-              {
-                type: 'image/svg+xml',
-                data: '/assets/buttons/new.svg',
-              }
-            ),
-            h(
-              'p',
-              {},
-              'New'
-            ),
-            h(
-              'div',
-              {
-                id: 'newDocButton',
-                'data-type': 'newDocButton',
-                class: 'buttonTarget'
-              }
-            )
+            h('object', {
+              type: 'image/svg+xml',
+              data: '/assets/buttons/new.svg',
+            }),
+            h('p', {}, 'New'),
+            h('div', {
+              id: 'newDocButton',
+              'data-type': 'newDocButton',
+              class: 'buttonTarget',
+            })
           )
         ),
         h(
@@ -548,82 +498,43 @@
             {
               href: '#',
             },
-            h(
-              'object',
-              {
-                type: 'image/svg+xml',
-                data: '/assets/buttons/open.svg',
-              }
-            ),
-            h(
-              'p',
-              {},
-              'Open'
-            ),
-            h(
-              'div',
-              {
-                id: 'docListButton',
-                'data-type': 'docListButton',
-                class: 'buttonTarget'
-              }
-            )
+            h('object', {
+              type: 'image/svg+xml',
+              data: '/assets/buttons/open.svg',
+            }),
+            h('p', {}, 'Open'),
+            h('div', {
+              id: 'docListButton',
+              'data-type': 'docListButton',
+              class: 'buttonTarget',
+            })
           )
         )
       );
     },
 
-    docs(editor) {
-      const vDocs = h('ul', {
-        id: 'docs',
-        class: 'pure-menu-children doc-list',
-      });
+    menu(editor) {
+      const items = h(
+        'ul',
+        {
+          class: editor.docs.class.toString(),
+        }
+      );
 
-      const docs = editor.docs;
-
-      for (let identifier of docs.children) {
-        vDocs.children.push(
+      for (let identifier of editor.docs.children) {
+        items.children.push(
           h(
             'li',
             {
-              class: 'pure-menu-item',
+              'data-key': identifier._id,
+              'data-type': 'doc-identifier',
             },
-            h(
-              'a',
-              {
-                class: 'pure-menu-link',
-                'data-key': identifier._id,
-                'data-type': 'doc-identifier',
-              },
-              identifier._id
-            )
+            identifier._id
           )
         );
       }
 
-      const container = h(
-        'div',
-        { class: 'pure-menu pure-menu-horizontal' },
-        h(
-          'ul',
-          { class: 'pure-menu-list' },
-          h(
-            'li',
-            {
-              class:
-                'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
-            },
-            h(
-              'a',
-              { href: '#', id: 'menuLink1', class: 'pure-menu-link' },
-              'Open'
-            ),
-            vDocs
-          )
-        )
-      );
-
-      return container;
+      return items;
     },
   };
 
@@ -5019,7 +4930,7 @@
 
     enclosingShape() {
       return this.parent && this.parent.parent && this.parent.parent.parent;
-    }
+    },
   });
 
   const Anchor$$1 = Object.create(ControlNode$$1);
@@ -5111,7 +5022,9 @@
     create(opts = {}) {
       return Node$$1.create
         .bind(this)()
-        .set({ type: types.DOCS })
+        .set({
+          type: types.DOCS,
+        })
         .set(opts);
     },
   });
@@ -5579,6 +5492,7 @@
       this.label = 'start';
       this.input = {};
       this.update = '';
+      this.menuVisible = false;
       this.temp = {};
       this.snapshots = {};
 
@@ -5633,11 +5547,12 @@
         return this.snapshots[label];
       }
 
-      // TODO: clean up the structure?
+      // TODO: clean up the structure
       switch (label) {
         case 'vDOM':
           return (this.snapshots['vDOM'] = {
             tools: comps$$1.tools(this.editor),
+            menu: comps$$1.menu(this.editor),
             message: this.editor.message.text,
             canvas: this.canvas.renderElement(),
           });
@@ -5655,6 +5570,7 @@
         label: this.label,
         input: this.input,
         update: this.update,
+        menuVisible: this.menuVisible,
       };
     },
   });
@@ -5728,6 +5644,13 @@
       target: 'newDocButton',
       do: 'createDoc',
       to: 'selectMode',
+    },
+
+    // toggle menu view
+    {
+      type: 'click',
+      target: 'docListButton',
+      do: 'toggleMenu',
     },
 
     // request editor document
@@ -6055,13 +5978,16 @@
         return;
       }
 
-      if (input.target === 'dot') { // rotate
+      if (input.target === 'dot') {
+        // rotate
         // document.querySelector('#canvas').style.cursor = 'cell';
         state.canvas.setCursor('rotationCursor');
-      } else if (input.target === 'corner') { // scale
+      } else if (input.target === 'corner') {
+        // scale
         // document.querySelector('#canvas').style.cursor = 'move';
         state.canvas.setCursor('scaleCursor');
-      } else { // "other"
+      } else {
+        // "other"
         // document.querySelector('#canvas').style.cursor = 'auto';
         state.canvas.setCursor('selectCursor');
       }
@@ -6440,6 +6366,14 @@
       }
     },
 
+    toggleMenu(state, input) {
+      if (state.menuVisible) {
+        state.menuVisible = false;
+      } else {
+        state.menuVisible = true;
+      }
+    },
+
     getPrevious(state, input) {
       window.history.back(); // TODO: shouldn't we do this inside of hist?
     },
@@ -6478,8 +6412,6 @@
 
     compute(input) {
       this.state.input = input;
-
-      console.log(input);
 
       const transition = transitions$$1.get(this.state, input);
 
@@ -6658,7 +6590,6 @@
           });
         }
       });
-
     },
   };
 
@@ -6678,7 +6609,7 @@
         func({
           source: this.name,
           type: 'resize',
-          width: document.querySelector('#canvas-wrapper').clientWidth
+          width: document.querySelector('#canvas-wrapper').clientWidth,
         });
       };
     },
@@ -6779,6 +6710,8 @@
       if (!this.mountPoint) {
         this.mountPoint = document.querySelector(`#${this.name}`);
       }
+
+      console.log(this.name, this.mountPoint); 
 
       const vDOM = this.requestSnapshot('vDOM')[this.name];
       this.dom = this.createElement(vDOM);
@@ -6885,9 +6818,32 @@
 
     bindEvents(func) {
       this.mountPoint.addEventListener('click', event => {
-        console.log('click event in tools'); // TODO: clicks on embedded svgs do not register
-        console.log(event.target);
+        event.preventDefault();
 
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+          textarea.blur();
+        }
+
+        func({
+          source: this.name,
+          type: event.type,
+          target: event.target.dataset.type,
+          key: event.target.dataset.key,
+        });
+      });
+    },
+  });
+
+  const menu = Object.assign(Object.create(UIDevice), {
+    init() {
+      this.name = 'menu';
+      UIDevice.init.bind(this)();
+      return this;
+    },
+
+    bindEvents(func) {
+      this.mountPoint.addEventListener('click', event => {
         event.preventDefault();
 
         const textarea = document.querySelector('textarea');
@@ -6905,10 +6861,13 @@
     },
 
     react(description) {
-      if (description.input.type === 'updateDocList') {
+      if (description.menuVisible) {
+        document.querySelector('main').classList.add('menu-expanded');
         const vDOM = this.requestSnapshot('vDOM')[this.name];
         this.reconcile(this.previousVDOM, vDOM, this.dom);
         this.previousVDOM = vDOM;
+      } else {
+        document.querySelector('main').classList.remove('menu-expanded');
       }
     },
   });
@@ -19261,7 +19220,7 @@
         lineWrapping: false,
         mode: 'xml',
         value: markupTree.toMarkupString(),
-        theme: 'pen'
+        theme: 'pen',
       });
       this.markupDoc = this.markupEditor.getDoc();
       this.previousMarkupTree = markupTree;
@@ -19512,6 +19471,7 @@
     keyboard: keyboard,
     mouse: mouse,
     tools: tools,
+    menu: menu,
     canvas: canvas,
     markup: markup,
     message: message

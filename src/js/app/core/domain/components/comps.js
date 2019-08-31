@@ -8,7 +8,7 @@ const LENGTHS_IN_PX = {
 
 const scale = (node, length) => {
   const canvasScaleFactor = node.doc.canvasWidth / node.canvas.viewBox.size.x;
-  const scaledLength = (length / node.globalScaleFactor()) / canvasScaleFactor;
+  const scaledLength = length / node.globalScaleFactor() / canvasScaleFactor;
   return scaledLength;
 };
 
@@ -321,26 +321,16 @@ const comps = {
           {
             href: '#',
           },
-          h(
-            'object',
-            {
-              type: 'image/svg+xml',
-              data: '/assets/buttons/pen.svg',
-            }
-          ),
-          h(
-            'p',
-            {},
-            'Pen'
-          ),
-          h(
-            'div',
-            {
-              id: 'penButton',
-              'data-type': 'penButton',
-              class: 'buttonTarget'
-            }
-          )
+          h('object', {
+            type: 'image/svg+xml',
+            data: '/assets/buttons/pen.svg',
+          }),
+          h('p', {}, 'Pen'),
+          h('div', {
+            id: 'penButton',
+            'data-type': 'penButton',
+            class: 'buttonTarget',
+          })
         )
       ),
       h(
@@ -351,26 +341,16 @@ const comps = {
           {
             href: '#',
           },
-          h(
-            'object',
-            {
-              type: 'image/svg+xml',
-              data: '/assets/buttons/select.svg',
-            }
-          ),
-          h(
-            'p',
-            {},
-            'Select'
-          ),
-          h(
-            'div',
-            {
-              id: 'selectButton',
-              'data-type': 'selectButton',
-              class: 'buttonTarget'
-            }
-          )
+          h('object', {
+            type: 'image/svg+xml',
+            data: '/assets/buttons/select.svg',
+          }),
+          h('p', {}, 'Select'),
+          h('div', {
+            id: 'selectButton',
+            'data-type': 'selectButton',
+            class: 'buttonTarget',
+          })
         )
       ),
       h(
@@ -381,26 +361,16 @@ const comps = {
           {
             href: '#',
           },
-          h(
-            'object',
-            {
-              type: 'image/svg+xml',
-              data: '/assets/buttons/undo.svg',
-            }
-          ),
-          h(
-            'p',
-            {},
-            'Undo'
-          ),
-          h(
-            'div',
-            {
-              id: 'getPrevious',
-              'data-type': 'getPrevious',
-              class: 'buttonTarget'
-            }
-          )
+          h('object', {
+            type: 'image/svg+xml',
+            data: '/assets/buttons/undo.svg',
+          }),
+          h('p', {}, 'Undo'),
+          h('div', {
+            id: 'getPrevious',
+            'data-type': 'getPrevious',
+            class: 'buttonTarget',
+          })
         )
       ),
       h(
@@ -411,26 +381,16 @@ const comps = {
           {
             href: '#',
           },
-          h(
-            'object',
-            {
-              type: 'image/svg+xml',
-              data: '/assets/buttons/redo.svg',
-            }
-          ),
-          h(
-            'p',
-            {},
-            'Redo'
-          ),
-          h(
-            'div',
-            {
-              id: 'getNext',
-              'data-type': 'getNext',
-              class: 'buttonTarget'
-            }
-          )
+          h('object', {
+            type: 'image/svg+xml',
+            data: '/assets/buttons/redo.svg',
+          }),
+          h('p', {}, 'Redo'),
+          h('div', {
+            id: 'getNext',
+            'data-type': 'getNext',
+            class: 'buttonTarget',
+          })
         )
       ),
       h(
@@ -441,26 +401,16 @@ const comps = {
           {
             href: '#',
           },
-          h(
-            'object',
-            {
-              type: 'image/svg+xml',
-              data: '/assets/buttons/new.svg',
-            }
-          ),
-          h(
-            'p',
-            {},
-            'New'
-          ),
-          h(
-            'div',
-            {
-              id: 'newDocButton',
-              'data-type': 'newDocButton',
-              class: 'buttonTarget'
-            }
-          )
+          h('object', {
+            type: 'image/svg+xml',
+            data: '/assets/buttons/new.svg',
+          }),
+          h('p', {}, 'New'),
+          h('div', {
+            id: 'newDocButton',
+            'data-type': 'newDocButton',
+            class: 'buttonTarget',
+          })
         )
       ),
       h(
@@ -471,82 +421,43 @@ const comps = {
           {
             href: '#',
           },
-          h(
-            'object',
-            {
-              type: 'image/svg+xml',
-              data: '/assets/buttons/open.svg',
-            }
-          ),
-          h(
-            'p',
-            {},
-            'Open'
-          ),
-          h(
-            'div',
-            {
-              id: 'docListButton',
-              'data-type': 'docListButton',
-              class: 'buttonTarget'
-            }
-          )
+          h('object', {
+            type: 'image/svg+xml',
+            data: '/assets/buttons/open.svg',
+          }),
+          h('p', {}, 'Open'),
+          h('div', {
+            id: 'docListButton',
+            'data-type': 'docListButton',
+            class: 'buttonTarget',
+          })
         )
       )
     );
   },
 
-  docs(editor) {
-    const vDocs = h('ul', {
-      id: 'docs',
-      class: 'pure-menu-children doc-list',
-    });
+  menu(editor) {
+    const items = h(
+      'ul',
+      {
+        class: editor.docs.class.toString(),
+      }
+    );
 
-    const docs = editor.docs;
-
-    for (let identifier of docs.children) {
-      vDocs.children.push(
+    for (let identifier of editor.docs.children) {
+      items.children.push(
         h(
           'li',
           {
-            class: 'pure-menu-item',
+            'data-key': identifier._id,
+            'data-type': 'doc-identifier',
           },
-          h(
-            'a',
-            {
-              class: 'pure-menu-link',
-              'data-key': identifier._id,
-              'data-type': 'doc-identifier',
-            },
-            identifier._id
-          )
+          identifier._id
         )
       );
     }
 
-    const container = h(
-      'div',
-      { class: 'pure-menu pure-menu-horizontal' },
-      h(
-        'ul',
-        { class: 'pure-menu-list' },
-        h(
-          'li',
-          {
-            class:
-              'pure-menu-item pure-menu-has-children pure-menu-allow-hover',
-          },
-          h(
-            'a',
-            { href: '#', id: 'menuLink1', class: 'pure-menu-link' },
-            'Open'
-          ),
-          vDocs
-        )
-      )
-    );
-
-    return container;
+    return items;
   },
 };
 
