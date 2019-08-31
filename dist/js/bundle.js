@@ -534,7 +534,18 @@
         );
       }
 
-      return items;
+      const header = h(
+        'h1',
+        {},
+        'Documents'
+      );
+
+      return h(
+        'div',
+        {},
+        header,
+        items
+      );
     },
   };
 

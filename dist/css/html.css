@@ -116,6 +116,7 @@ textarea:focus {
   grid-area: tools;
   height: 99vh;
   background-color: #fcfcfc;
+  overflow: scroll;
 }
 
 #buttons {
@@ -191,6 +192,12 @@ object {
   color: gray;
   border-right: 1px solid #e6e6e6;
   border-left: 1px solid #e6e6e6;
+}
+
+#menu h1 {
+  padding-left: 20px;
+  margin-top: 3px;
+  font-size: 13px;
 }
 
 #menu ul {
