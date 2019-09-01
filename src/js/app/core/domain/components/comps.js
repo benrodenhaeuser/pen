@@ -309,139 +309,175 @@ const comps = {
 
   // tools
 
-  tools(editor) {
+  tools(toolsNode) {
+    const buttons = h('ul', { id: 'buttons' });
+
+    for (let toolNode of toolsNode.children) {
+      buttons.children.push(this.button(toolNode));
+    }
+
+    return buttons;
+  },
+
+  button(toolNode) {
     return h(
-      'ul',
-      { id: 'buttons' },
+      'li',
+      {
+        class: toolNode.class.toString()
+      },
       h(
-        'li',
-        {},
-        h(
-          'a',
-          {
-            href: '#',
-          },
-          h('object', {
-            type: 'image/svg+xml',
-            data: '/assets/buttons/pen.svg',
-          }),
-          h('p', {}, 'Pen'),
-          h('div', {
-            id: 'penButton',
-            'data-type': 'penButton',
-            class: 'buttonTarget',
-          })
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'a',
-          {
-            href: '#',
-          },
-          h('object', {
-            type: 'image/svg+xml',
-            data: '/assets/buttons/select.svg',
-          }),
-          h('p', {}, 'Select'),
-          h('div', {
-            id: 'selectButton',
-            'data-type': 'selectButton',
-            class: 'buttonTarget',
-          })
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'a',
-          {
-            href: '#',
-          },
-          h('object', {
-            type: 'image/svg+xml',
-            data: '/assets/buttons/undo.svg',
-          }),
-          h('p', {}, 'Undo'),
-          h('div', {
-            id: 'getPrevious',
-            'data-type': 'getPrevious',
-            class: 'buttonTarget',
-          })
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'a',
-          {
-            href: '#',
-          },
-          h('object', {
-            type: 'image/svg+xml',
-            data: '/assets/buttons/redo.svg',
-          }),
-          h('p', {}, 'Redo'),
-          h('div', {
-            id: 'getNext',
-            'data-type': 'getNext',
-            class: 'buttonTarget',
-          })
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'a',
-          {
-            href: '#',
-          },
-          h('object', {
-            type: 'image/svg+xml',
-            data: '/assets/buttons/new.svg',
-          }),
-          h('p', {}, 'New'),
-          h('div', {
-            id: 'newDocButton',
-            'data-type': 'newDocButton',
-            class: 'buttonTarget',
-          })
-        )
-      ),
-      h(
-        'li',
-        {},
-        h(
-          'a',
-          {
-            href: '#',
-          },
-          h('object', {
-            type: 'image/svg+xml',
-            data: '/assets/buttons/open.svg',
-          }),
-          h('p', {}, 'Open'),
-          h('div', {
-            id: 'docListButton',
-            'data-type': 'docListButton',
-            class: 'buttonTarget',
-          })
-        )
+        'a',
+        {
+          href: '#',
+        },
+        h('object', {
+          type: 'image/svg+xml',
+          data: toolNode.iconPath, // TODO: prop of tool
+        }),
+        h('p', {}, toolNode.name), // TODO: prop of tool
+        h('div', {
+          id: toolNode.toolType, 
+          'data-type': toolNode.toolType, // TODO: prop of tool
+          class: 'buttonTarget',
+        })
       )
     );
   },
 
-  menu(editor) {
+  // need to provide info below when setting up Tools node
+
+  //   return h(
+  //     'ul',
+  //     { id: 'buttons' },
+  //     h(
+  //       'li',
+  //       {},
+  //       h(
+  //         'a',
+  //         {
+  //           href: '#',
+  //         },
+  //         h('object', {
+  //           type: 'image/svg+xml',
+  //           data: '/assets/buttons/pen.svg',
+  //         }),
+  //         h('p', {}, 'Pen'),
+  //         h('div', {
+  //           id: 'penButton',
+  //           'data-type': 'penButton',
+  //           class: 'buttonTarget',
+  //         })
+  //       )
+  //     ),
+  //     h(
+  //       'li',
+  //       {},
+  //       h(
+  //         'a',
+  //         {
+  //           href: '#',
+  //         },
+  //         h('object', {
+  //           type: 'image/svg+xml',
+  //           data: '/assets/buttons/select.svg',
+  //         }),
+  //         h('p', {}, 'Select'),
+  //         h('div', {
+  //           id: 'selectButton',
+  //           'data-type': 'selectButton',
+  //           class: 'buttonTarget',
+  //         })
+  //       )
+  //     ),
+  //     h(
+  //       'li',
+  //       {},
+  //       h(
+  //         'a',
+  //         {
+  //           href: '#',
+  //         },
+  //         h('object', {
+  //           type: 'image/svg+xml',
+  //           data: '/assets/buttons/undo.svg',
+  //         }),
+  //         h('p', {}, 'Undo'),
+  //         h('div', {
+  //           id: 'getPrevious',
+  //           'data-type': 'getPrevious',
+  //           class: 'buttonTarget',
+  //         })
+  //       )
+  //     ),
+  //     h(
+  //       'li',
+  //       {},
+  //       h(
+  //         'a',
+  //         {
+  //           href: '#',
+  //         },
+  //         h('object', {
+  //           type: 'image/svg+xml',
+  //           data: '/assets/buttons/redo.svg',
+  //         }),
+  //         h('p', {}, 'Redo'),
+  //         h('div', {
+  //           id: 'getNext',
+  //           'data-type': 'getNext',
+  //           class: 'buttonTarget',
+  //         })
+  //       )
+  //     ),
+  //     h(
+  //       'li',
+  //       {},
+  //       h(
+  //         'a',
+  //         {
+  //           href: '#',
+  //         },
+  //         h('object', {
+  //           type: 'image/svg+xml',
+  //           data: '/assets/buttons/new.svg',
+  //         }),
+  //         h('p', {}, 'New'),
+  //         h('div', {
+  //           id: 'newDocButton',
+  //           'data-type': 'newDocButton',
+  //           class: 'buttonTarget',
+  //         })
+  //       )
+  //     ),
+  //     h(
+  //       'li',
+  //       {},
+  //       h(
+  //         'a',
+  //         {
+  //           href: '#',
+  //         },
+  //         h('object', {
+  //           type: 'image/svg+xml',
+  //           data: '/assets/buttons/open.svg',
+  //         }),
+  //         h('p', {}, 'Open'),
+  //         h('div', {
+  //           id: 'docListButton',
+  //           'data-type': 'docListButton',
+  //           class: 'buttonTarget',
+  //         })
+  //       )
+  //     )
+  //   );
+  // },
+
+  menu(docs) {
     const items = h('ul', {
-      class: editor.docs.class.toString(),
+      class: docs.class.toString(),
     });
 
-    for (let identifier of editor.docs.children) {
+    for (let identifier of docs.children) {
       items.children.push(
         h(
           'li',

@@ -15,6 +15,8 @@ const types = {
   HANDLEIN: 'handleIn',
   HANDLEOUT: 'handleOut',
   CURVE: 'curve',
+  TOOLS: 'tools',
+  TOOL: 'tool',
 
   // markup
   MARKUPNODE: 'markupNode',

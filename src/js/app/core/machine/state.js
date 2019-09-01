@@ -4,6 +4,8 @@ import { Doc } from '../domain/_.js';
 import { Message } from '../domain/_.js';
 import { Canvas } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
+import { Tools } from '../domain/_.js';
+import { Tool } from '../domain/_.js';
 
 import { comps } from '../domain/_.js';
 import { docToObject } from '../ports/_.js';
@@ -16,11 +18,13 @@ const State = {
   },
 
   init(canvasWidth) {
+    this.editor = this.buildEditorTree(canvasWidth);
+
     this.description = {
       mode: 'start',
       label: undefined,
       input: {},
-      update: '',
+      update: undefined,
       layout: {
         menuVisible: false,
       }
@@ -29,18 +33,18 @@ const State = {
     this.temp = {};
     this.snapshots = {};
 
-    this.editor = this.buildEditorTree(canvasWidth);
-
     return this;
   },
 
   buildEditorTree(canvasWidth) {
     const editor = Editor.create();
     const doc = this.buildDoc(canvasWidth);
+    const tools = this.buildTools();
     const docs = Docs.create();
     const message = this.buildMessage();
 
     editor.mount(doc);
+    editor.mount(tools);
     editor.mount(docs);
     editor.mount(message);
 
@@ -53,11 +57,52 @@ const State = {
     return message;
   },
 
+  buildTools() {
+    const pen = Tool.create({
+      name: 'Pen',
+      iconPath: '/assets/buttons/pen.svg',
+      toolType: 'penButton',
+    });
+
+    const select = Tool.create({
+      name: 'Select',
+      iconPath: '/assets/buttons/select.svg',
+      toolType: 'selectButton',
+    });
+
+    const undo = Tool.create({
+      name: 'Undo',
+      iconPath: '/assets/buttons/undo.svg',
+      toolType: 'getPrevious',
+    });
+
+    const redo = Tool.create({
+      name: 'Redo',
+      iconPath: '/assets/buttons/redo.svg',
+      toolType: 'getNext',
+    });
+
+    const newDoc = Tool.create({
+      name: 'New',
+      iconPath: '/assets/buttons/new.svg',
+      toolType: 'newDocButton',
+    });
+
+    const open = Tool.create({
+      name: 'Open',
+      iconPath: '/assets/buttons/open.svg',
+      toolType: 'docListButton',
+    });
+
+    return Tools.create().mount(pen, select, undo, redo, newDoc, open);
+  },
+
   buildDoc(canvasWidth) {
     const doc = Doc.create({ canvasWidth: canvasWidth });
 
     const canvas = Canvas.create();
     canvas.viewBox = Rectangle.createFromDimensions(0, 0, 800, 1600);
+    // ^ TODO: extract to constant
     doc.mount(canvas);
 
     return doc;
@@ -84,8 +129,8 @@ const State = {
     switch (label) {
       case 'vDOM':
         return (this.snapshots['vDOM'] = {
-          tools: comps.tools(this.editor),
-          menu: comps.menu(this.editor),
+          tools: comps.tools(this.tools),
+          menu: comps.menu(this.docs),
           message: this.editor.message.text,
           canvas: this.canvas.renderElement(),
         });
@@ -156,6 +201,12 @@ Object.defineProperty(State, 'canvas', {
 Object.defineProperty(State, 'doc', {
   get() {
     return this.editor.doc;
+  },
+});
+
+Object.defineProperty(State, 'tools', {
+  get() {
+    return this.editor.tools;
   },
 });
 

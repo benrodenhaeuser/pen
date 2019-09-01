@@ -24,6 +24,12 @@ Object.defineProperty(Editor, 'canvas', {
   },
 });
 
+Object.defineProperty(Editor, 'tools', {
+  get() {
+    return this.root.findDescendant(node => node.type === types.TOOLS);
+  },
+});
+
 Object.defineProperty(Editor, 'docs', {
   get() {
     return this.root.findDescendant(node => node.type === types.DOCS);

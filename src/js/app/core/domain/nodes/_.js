@@ -22,3 +22,5 @@ export { MarkupNode } from './markupNode.js';
 export { MarkupRoot } from './markupRoot.js';
 export { Line } from './line.js';
 export { Token } from './token.js';
+export { Tools } from './tools.js';
+export { Tool } from './tool.js';
