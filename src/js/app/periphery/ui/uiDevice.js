@@ -4,8 +4,6 @@ const UIDevice = {
       this.mountPoint = document.querySelector(`#${this.name}`);
     }
 
-    console.log(this.name, this.mountPoint);
-
     const vDOM = this.requestSnapshot('vDOM')[this.name];
     this.dom = this.createElement(vDOM);
     this.previousVDOM = vDOM;

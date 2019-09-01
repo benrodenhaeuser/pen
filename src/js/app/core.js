@@ -17,11 +17,14 @@ const core = {
   compute(input) {
     this.state.input = input;
 
+    console.log(input);
+
     const transition = transitions.get(this.state, input);
 
     if (transition) {
       this.state.update = transition.do; // a string
-      this.state.label = transition.to;
+      this.state.mode = transition.to.mode;
+      this.state.label = transition.to.label;
 
       const update = updates[transition.do]; // a function, or undefined
       update && update(this.state, input);

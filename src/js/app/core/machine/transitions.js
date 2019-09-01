@@ -1,14 +1,16 @@
 import { types } from '../_.js';
 
-// NOTE: 'type' (the event type) and `do` are mandatory. 'from', 'target' (the target type), 'to' and `do` are optional
+// NOTE:
+// mandatory: 'type', `do`
+// optional: 'from', 'to', 'target', 'do'
 
 const transitions = [
   // KICKOFF
   {
-    from: 'start',
+    from: { mode: 'start' },
     type: 'go',
     do: 'go',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // RESIZE
@@ -24,7 +26,7 @@ const transitions = [
     type: 'click',
     target: 'newDocButton',
     do: 'createDoc',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // toggle menu view
@@ -46,7 +48,7 @@ const transitions = [
     type: 'click',
     target: 'selectButton',
     do: 'cleanup',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // switch to pen mode
@@ -54,7 +56,7 @@ const transitions = [
     type: 'click',
     target: 'penButton',
     do: 'cleanup',
-    to: 'penMode',
+    to: { mode: 'pen', label: 'idle' },
   },
 
   // trigger undo
@@ -62,7 +64,7 @@ const transitions = [
     type: 'click',
     target: 'getPrevious',
     do: 'getPrevious',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // trigger redo
@@ -70,7 +72,7 @@ const transitions = [
     type: 'click',
     target: 'getNext',
     do: 'getNext',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // escape
@@ -90,7 +92,7 @@ const transitions = [
   },
 
   {
-    from: 'penMode',
+    from: { mode: 'pen', label: 'idle' },
     type: 'keydown',
     target: 'letterC',
     do: 'toggleClosedStatus',
@@ -100,14 +102,14 @@ const transitions = [
 
   // focus shape on hover
   {
-    from: 'selectMode',
+    from: { mode: 'select', label: 'idle' },
     type: 'mousemove',
     do: 'focus',
   },
 
   // open a group or shape
   {
-    from: 'selectMode',
+    from: { mode: 'select', label: 'idle' },
     type: 'dblclick',
     // target: [types.SEGMENT, types.GROUP, types.CANVAS],  // unnecessary?
     do: 'deepSelect',
@@ -115,162 +117,158 @@ const transitions = [
 
   // initiate shift transformation
   {
-    from: 'selectMode',
+    from: { mode: 'select', label: 'idle' },
     type: 'mousedown',
     target: [types.CURVE, types.SHAPE, types.GROUP, types.CANVAS],
     do: 'select',
-    to: 'shifting',
+    to: { mode: 'select', label: 'shifting' },
   },
 
   // initate rotate transformation
   {
-    from: 'selectMode',
+    from: { mode: 'select', label: 'idle' },
     type: 'mousedown',
     target: 'dot',
     do: 'initTransform',
-    to: 'rotating',
+    to: { mode: 'select', label: 'rotating' },
   },
 
   // initiate scale transformation
   {
-    from: 'selectMode',
+    from: { mode: 'select', label: 'idle' },
     type: 'mousedown',
     target: 'corner',
     do: 'initTransform',
-    to: 'scaling',
+    to: { mode: 'select', label: 'scaling' },
   },
 
   // shift the shape
   {
-    from: 'shifting',
+    from: { mode: 'select', label: 'shifting' },
     type: 'mousemove',
     do: 'shift',
   },
 
   // finalize shift translation
   {
-    from: 'shifting',
+    from: { mode: 'select', label: 'shifting' },
     type: 'mouseup',
     do: 'release',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // rotate the shape
   {
-    from: 'rotating',
+    from: { mode: 'select', label: 'rotating' },
     type: 'mousemove',
     do: 'rotate',
   },
 
   // finalize rotate transformation
   {
-    from: 'rotating',
+    from: { mode: 'select', label: 'rotating' },
     type: 'mouseup',
     do: 'release',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // scale the shape
   {
-    from: 'scaling',
+    from: { mode: 'select', label: 'scaling' },
     type: 'mousemove',
     do: 'scale',
   },
 
   // finalize scale transformation
   {
-    from: 'scaling',
+    from: { mode: 'select', label: 'scaling' },
     type: 'mouseup',
     do: 'release',
-    to: 'selectMode',
+    to: { mode: 'select', label: 'idle' },
   },
 
   // PEN MODE
 
   // switch to pen cursor
   {
-    from: 'penMode',
+    from: { mode: 'pen', label: 'idle' },
     type: 'mousemove',
     do: 'switchToPenCursor',
   },
 
   // add segment to (current or new) shape
   {
-    from: 'penMode',
+    from: { mode: 'pen', label: 'idle' },
     type: 'mousedown',
     target: [types.SHAPE, types.GROUP, types.CANVAS],
     do: 'addSegment',
-    to: 'settingHandles',
+    to: { mode: 'pen', label: 'settingHandles' },
   },
 
   // set handles for current segment
   {
-    from: 'settingHandles',
+    from: { mode: 'pen', label: 'settingHandles' },
     type: 'mousemove',
     do: 'setHandles',
-    to: 'settingHandles',
   },
 
   // finish up setting handles
   {
-    from: 'settingHandles',
+    from: { mode: 'pen', label: 'settingHandles' },
     type: 'mouseup',
     do: 'releasePen', // TODO: does nothing (?)
-    to: 'penMode',
+    to: { mode: 'pen', label: 'idle' },
   },
 
   // initiate adjustment of segment (OR close path)
   {
-    from: 'penMode',
+    from: { mode: 'pen', label: 'idle' },
     type: 'mousedown',
     target: [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT],
     do: 'initAdjustSegment',
-    to: 'adjustingSegment',
+    to: { mode: 'pen', label: 'adjustingSegment' },
   },
 
   // adjust segment
   {
-    from: 'adjustingSegment',
+    from: { mode: 'pen', label: 'adjustingSegment' },
     type: 'mousemove',
     do: 'adjustSegment',
-    to: 'adjustingSegment',
   },
 
   // finish up adjusting segment
   {
-    from: 'adjustingSegment',
+    from: { mode: 'pen', label: 'adjustingSegment' },
     type: 'mouseup',
     do: 'releasePen', // TODO: does nothing (?)
-    to: 'penMode',
+    to: { mode: 'pen', label: 'idle' },
   },
 
   // place split point
   {
-    from: 'penMode',
+    from: { mode: 'pen', label: 'idle' },
     type: 'mousemove',
     target: 'curve',
     do: 'projectInput',
-    to: 'penMode',
   },
 
   // hide split point
 
   {
-    from: 'penMode',
+    from: { mode: 'pen', label: 'idle' },
     type: 'mouseout',
     target: 'curve',
     do: 'hideSplitter',
-    to: 'penMode',
   },
 
   // split curve
 
   {
-    from: 'penMode',
+    from: { mode: 'pen', label: 'idle' },
     type: 'mousedown',
     target: 'curve',
     do: 'splitCurve',
-    to: 'adjustingSegment',
+    to: { mode: 'pen', label: 'adjustingSegment' },
   },
 
   // MARKUP
@@ -312,15 +310,16 @@ const transitions = [
   },
 ];
 
+// NEW
 transitions.get = function(state, input) {
   const isMatch = row => {
     const from = row.from;
     const type = row.type;
     const target = row.target;
 
-    const stateMatch = from === state.label || from === undefined;
+    const stateMatch = from === undefined ||
+      (from.mode === state.mode && from.label === state.label);
     const typeMatch = type === input.type;
-    // const targetMatch = target === input.target || target === undefined;
 
     const targetMatch =
       (Array.isArray(target) && target.includes(input.target)) ||
@@ -335,9 +334,38 @@ transitions.get = function(state, input) {
   if (match) {
     return {
       do: match.do,
-      to: match.to || state.label,
+      to: match.to || { mode: state.mode, label: state.label },
     };
   }
 };
+
+// OLD
+// transitions.get = function(state, input) {
+//   const isMatch = row => {
+//     const from = row.from;
+//     const type = row.type;
+//     const target = row.target;
+//
+//     const stateMatch = from === state.label || from === undefined;
+//     const typeMatch = type === input.type;
+//     // const targetMatch = target === input.target || target === undefined;
+//
+//     const targetMatch =
+//       (Array.isArray(target) && target.includes(input.target)) ||
+//       (typeof target === 'string' && target === input.target) ||
+//       target === undefined;
+//
+//     return stateMatch && typeMatch && targetMatch;
+//   };
+//
+//   const match = transitions.find(isMatch);
+//
+//   if (match) {
+//     return {
+//       do: match.do,
+//       to: match.to || state.label,
+//     };
+//   }
+// };
 
 export { transitions };

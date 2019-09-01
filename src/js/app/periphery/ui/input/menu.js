@@ -26,8 +26,8 @@ const menu = Object.assign(Object.create(UIDevice), {
   },
 
   react(description) {
-    if (description.menuVisible) {
-      document.querySelector('main').classList.add('menu-expanded'); // TODO: ugly!
+    if (description.layout.menuVisible) {
+      document.querySelector('main').classList.add('menu-expanded');
       const vDOM = this.requestSnapshot('vDOM')[this.name];
       this.reconcile(this.previousVDOM, vDOM, this.dom);
       this.previousVDOM = vDOM;

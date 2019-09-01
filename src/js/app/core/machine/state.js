@@ -16,10 +16,16 @@ const State = {
   },
 
   init(canvasWidth) {
-    this.label = 'start';
-    this.input = {};
-    this.update = '';
-    this.menuVisible = false;
+    this.description = {
+      mode: 'start',
+      label: '',
+      input: {},
+      update: '',
+      layout: {
+        menuVisible: false,
+      }
+    };
+
     this.temp = {};
     this.snapshots = {};
 
@@ -91,14 +97,53 @@ const State = {
   },
 };
 
-Object.defineProperty(State, 'description', {
+Object.defineProperty(State, 'mode', {
   get() {
-    return {
-      label: this.label,
-      input: this.input,
-      update: this.update,
-      menuVisible: this.menuVisible,
-    };
+    return this.description.mode;
+  },
+
+  set(value) {
+    this.description.mode = value;
+  },
+});
+
+Object.defineProperty(State, 'label', {
+  get() {
+    return this.description.label;
+  },
+
+  set(value) {
+    this.description.label = value;
+  },
+});
+
+Object.defineProperty(State, 'input', {
+  get() {
+    return this.description.input;
+  },
+
+  set(value) {
+    this.description.input = value;
+  },
+});
+
+Object.defineProperty(State, 'update', {
+  get() {
+    return this.description.update;
+  },
+
+  set(value) {
+    this.description.update = value;
+  },
+});
+
+Object.defineProperty(State, 'layout', {
+  get() {
+    return this.description.layout;
+  },
+
+  set(value) {
+    this.description.layout = value;
   },
 });
 

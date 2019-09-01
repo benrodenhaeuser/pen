@@ -77,7 +77,8 @@ const updates = {
 
     if (target.type === types.SHAPE) {
       target.placePen();
-      state.label = 'penMode';
+      state.mode = 'pen';
+      state.label = 'idle';
       state.canvas.removeFocus();
     } else if (target.type === types.GROUP) {
       if (target === node) {
@@ -121,12 +122,13 @@ const updates = {
   // TODO: weird name
   // triggered by escape key
   exitEdit(state, input) {
-    if (state.label === 'penMode') {
+    if (state.mode === 'pen' && state.label === 'idle') {
       state.target = state.canvas.findPen();
       updates.cleanup(state, input);
       state.target.select();
-      state.label = 'selectMode';
-    } else if (state.label === 'selectMode') {
+      state.mode = 'select';
+      state.label = 'idle';
+    } else if (state.mode === 'select' && state.label === 'idle') {
       updates.cleanup(state, input);
     }
   },
@@ -222,7 +224,8 @@ const updates = {
     const spline = state.target.lastChild || state.target.mountSpline();
 
     if (spline.isClosed()) {
-      state.label = 'penMode'; // TODO: hack(ish)
+      state.mode = 'pen'; // TODO: hack(ish)
+      state.label = 'idle';
       return;
     }
 
@@ -377,19 +380,22 @@ const updates = {
     if (node.type === types.SHAPE || node.type === types.GROUP) {
       state.target = node;
       node.select();
-      state.label = 'selectMode';
+      state.mode = 'select';
+      state.label = 'idle';
     } else if (node.type === types.SPLINE) {
       state.target = node.parent;
       state.target.placePen();
       state.canvas.removeFocus();
-      state.label = 'penMode';
+      state.mode = 'pen';
+      state.label = 'idle';
     } else if (
       [types.ANCHOR, types.HANDLEIN, types.HANDLEOUT].includes(node.type)
     ) {
       state.target = node.parent.parent.parent; // TODO: great
       state.target.placePen();
       node.placePenTip();
-      state.label = 'penMode';
+      state.mode = 'pen';
+      state.label = 'idle';
     }
   },
 
@@ -418,10 +424,10 @@ const updates = {
   },
 
   toggleMenu(state, input) {
-    if (state.menuVisible) {
-      state.menuVisible = false;
+    if (state.layout.menuVisible) {
+      state.layout.menuVisible = false;
     } else {
-      state.menuVisible = true;
+      state.layout.menuVisible = true;
     }
   },
 
