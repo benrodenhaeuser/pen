@@ -17,9 +17,6 @@ const core = {
   compute(input) {
     this.state.input = input;
 
-    console.log(input);
-    console.log(transitions.get(this.state, input)); // undefined
-
     const transition = transitions.get(this.state, input);
 
     if (transition) {
@@ -28,9 +25,12 @@ const core = {
       this.state.label = transition.to.label;
 
       const update = updates[transition.do]; // a function, or undefined
-      update && update(this.state, input);
 
-      console.log(this.state.description);
+      if (update) {
+        update(this.state, input);
+        updates.after(this.state, input);
+      }
+
       this.publish();
     }
   },

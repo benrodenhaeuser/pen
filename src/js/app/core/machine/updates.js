@@ -10,6 +10,39 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
+  after(state, input) {
+    // Manage tools state
+    if (state.mode === 'pen') {
+      state.tools.children[0].class = state.tools.children[0].class.add(
+        'active'
+      );
+    } else {
+      state.tools.children[0].class = state.tools.children[0].class.remove(
+        'active'
+      );
+    }
+
+    if (state.mode === 'select') {
+      state.tools.children[1].class = state.tools.children[1].class.add(
+        'active'
+      );
+    } else {
+      state.tools.children[1].class = state.tools.children[1].class.remove(
+        'active'
+      );
+    }
+
+    if (state.layout.menuVisible) {
+      state.tools.children[5].class = state.tools.children[5].class.add(
+        'active'
+      );
+    } else {
+      state.tools.children[5].class = state.tools.children[5].class.remove(
+        'active'
+      );
+    }
+  },
+
   refresh(state, input) {
     if (input.width > 0) {
       state.doc.canvasWidth = input.width;
@@ -29,16 +62,10 @@ const updates = {
     }
 
     if (input.target === 'dot') {
-      // rotate
-      // document.querySelector('#canvas').style.cursor = 'cell';
       state.canvas.setCursor('rotationCursor');
     } else if (input.target === 'corner') {
-      // scale
-      // document.querySelector('#canvas').style.cursor = 'move';
       state.canvas.setCursor('scaleCursor');
     } else {
-      // "other"
-      // document.querySelector('#canvas').style.cursor = 'auto';
       state.canvas.setCursor('selectCursor');
     }
 
@@ -168,7 +195,6 @@ const updates = {
       return;
     }
 
-    // document.querySelector('#canvas').style.cursor = 'grabbing';
     state.canvas.setCursor('shiftCursor');
 
     const to = Vector.create(input.x, input.y);
@@ -213,7 +239,6 @@ const updates = {
 
   // PEN
   switchToPenCursor(state, input) {
-    // document.querySelector('#canvas').style.cursor = 'crosshair';
     state.canvas.setCursor('penCursor');
   },
 
@@ -442,6 +467,15 @@ const updates = {
   switchDocument(state, input) {
     state.doc.replaceWith(state.objectToDoc(input.data.doc));
     updates.cleanup(state, input);
+
+    // TODO: menu bar active state
+    const toActivate = state.docs.children.find(
+      node => node._id === state.doc._id
+    );
+    for (let child of state.docs.children) {
+      child.class = child.class.remove('active');
+    }
+    toActivate.class = toActivate.class.add('active');
   },
 
   // MESSAGES

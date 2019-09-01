@@ -317,7 +317,8 @@ transitions.get = function(state, input) {
     const type = row.type;
     const target = row.target;
 
-    const stateMatch = from === undefined ||
+    const stateMatch =
+      from === undefined ||
       (from.mode === state.mode && from.label === state.label);
     const typeMatch = type === input.type;
 

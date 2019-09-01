@@ -27,7 +27,7 @@ const State = {
       update: undefined,
       layout: {
         menuVisible: false,
-      }
+      },
     };
 
     this.temp = {};

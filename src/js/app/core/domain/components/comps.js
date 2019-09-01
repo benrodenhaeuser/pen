@@ -323,7 +323,7 @@ const comps = {
     return h(
       'li',
       {
-        class: toolNode.class.toString()
+        class: toolNode.class.toString(),
       },
       h(
         'a',
@@ -332,145 +332,17 @@ const comps = {
         },
         h('object', {
           type: 'image/svg+xml',
-          data: toolNode.iconPath, // TODO: prop of tool
+          data: toolNode.iconPath,
         }),
-        h('p', {}, toolNode.name), // TODO: prop of tool
+        h('p', {}, toolNode.name),
         h('div', {
-          id: toolNode.toolType, 
-          'data-type': toolNode.toolType, // TODO: prop of tool
+          id: toolNode.toolType,
+          'data-type': toolNode.toolType,
           class: 'buttonTarget',
         })
       )
     );
   },
-
-  // need to provide info below when setting up Tools node
-
-  //   return h(
-  //     'ul',
-  //     { id: 'buttons' },
-  //     h(
-  //       'li',
-  //       {},
-  //       h(
-  //         'a',
-  //         {
-  //           href: '#',
-  //         },
-  //         h('object', {
-  //           type: 'image/svg+xml',
-  //           data: '/assets/buttons/pen.svg',
-  //         }),
-  //         h('p', {}, 'Pen'),
-  //         h('div', {
-  //           id: 'penButton',
-  //           'data-type': 'penButton',
-  //           class: 'buttonTarget',
-  //         })
-  //       )
-  //     ),
-  //     h(
-  //       'li',
-  //       {},
-  //       h(
-  //         'a',
-  //         {
-  //           href: '#',
-  //         },
-  //         h('object', {
-  //           type: 'image/svg+xml',
-  //           data: '/assets/buttons/select.svg',
-  //         }),
-  //         h('p', {}, 'Select'),
-  //         h('div', {
-  //           id: 'selectButton',
-  //           'data-type': 'selectButton',
-  //           class: 'buttonTarget',
-  //         })
-  //       )
-  //     ),
-  //     h(
-  //       'li',
-  //       {},
-  //       h(
-  //         'a',
-  //         {
-  //           href: '#',
-  //         },
-  //         h('object', {
-  //           type: 'image/svg+xml',
-  //           data: '/assets/buttons/undo.svg',
-  //         }),
-  //         h('p', {}, 'Undo'),
-  //         h('div', {
-  //           id: 'getPrevious',
-  //           'data-type': 'getPrevious',
-  //           class: 'buttonTarget',
-  //         })
-  //       )
-  //     ),
-  //     h(
-  //       'li',
-  //       {},
-  //       h(
-  //         'a',
-  //         {
-  //           href: '#',
-  //         },
-  //         h('object', {
-  //           type: 'image/svg+xml',
-  //           data: '/assets/buttons/redo.svg',
-  //         }),
-  //         h('p', {}, 'Redo'),
-  //         h('div', {
-  //           id: 'getNext',
-  //           'data-type': 'getNext',
-  //           class: 'buttonTarget',
-  //         })
-  //       )
-  //     ),
-  //     h(
-  //       'li',
-  //       {},
-  //       h(
-  //         'a',
-  //         {
-  //           href: '#',
-  //         },
-  //         h('object', {
-  //           type: 'image/svg+xml',
-  //           data: '/assets/buttons/new.svg',
-  //         }),
-  //         h('p', {}, 'New'),
-  //         h('div', {
-  //           id: 'newDocButton',
-  //           'data-type': 'newDocButton',
-  //           class: 'buttonTarget',
-  //         })
-  //       )
-  //     ),
-  //     h(
-  //       'li',
-  //       {},
-  //       h(
-  //         'a',
-  //         {
-  //           href: '#',
-  //         },
-  //         h('object', {
-  //           type: 'image/svg+xml',
-  //           data: '/assets/buttons/open.svg',
-  //         }),
-  //         h('p', {}, 'Open'),
-  //         h('div', {
-  //           id: 'docListButton',
-  //           'data-type': 'docListButton',
-  //           class: 'buttonTarget',
-  //         })
-  //       )
-  //     )
-  //   );
-  // },
 
   menu(docs) {
     const items = h('ul', {
@@ -484,6 +356,7 @@ const comps = {
           {
             'data-key': identifier._id,
             'data-type': 'doc-identifier',
+            class: identifier.class.toString(),
           },
           identifier._id
         )

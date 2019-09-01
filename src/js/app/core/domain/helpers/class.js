@@ -29,9 +29,13 @@ const Class = {
 
   // return value: new Class instance
   // does not mutate this/this.list
-  // does not check for uniqueness
+  // will add className only if not already present
   add(className) {
-    return Class.create([...this.list, className]);
+    if (this.includes(className)) {
+      return Class.create(this.list);
+    } else {
+      return Class.create([...this.list, className]);
+    }
   },
 
   // return value: new Class instance
