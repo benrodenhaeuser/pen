@@ -18,7 +18,7 @@ const State = {
   init(canvasWidth) {
     this.description = {
       mode: 'start',
-      label: '',
+      label: undefined,
       input: {},
       update: '',
       layout: {
