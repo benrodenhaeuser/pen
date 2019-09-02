@@ -12,6 +12,20 @@ Object.assign(Docs, {
       })
       .set(opts);
   },
+
+  setActiveStatus({ _id }) {
+    for (let child of this.children) {
+      child.deactivate();
+    }
+
+    const toActivate = this.children.find(
+      child => child._id === _id
+    );
+
+    if (toActivate) {
+      toActivate.activate();
+    }
+  },
 });
 
 export { Docs };

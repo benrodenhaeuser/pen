@@ -115,8 +115,41 @@ Object.assign(Canvas, {
     }
   },
 
-  // TODO: remove others!
-  setCursor(cursorName) {
+  setCursor({ mode, label, input, update }) {
+    if (mode === 'pen') {
+      this.activateCursor('penCursor');
+    }
+
+   if (mode === 'select' && label === 'idle' && input.type === 'mousemove') {
+     switch (input.target) {
+       case 'dot':
+         this.activateCursor('rotationCursor');
+         break;
+       case 'corner':
+         this.activateCursor('scaleCursor');
+         break;
+       case 'shape':
+         this.activateCursor('shiftableCursor');
+         break;
+       case 'curve':
+         this.activateCursor('shiftableCursor');
+         break;
+       case 'canvas':
+         this.activateCursor('selectCursor');
+         break;
+     }
+   }
+
+   if (update === 'select') {
+     this.activateCursor('shiftCursor');
+   }
+
+   if (update === 'release') {
+     this.activateCursor('selectCursor');
+   }
+  },
+
+  activateCursor(cursorName) {
     this.class = this.class.remove(this.cursor).add(cursorName);
     this.cursor = cursorName;
   },

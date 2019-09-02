@@ -189,13 +189,6 @@ const transitions = [
 
   // PEN MODE
 
-  // switch to pen cursor
-  {
-    from: { mode: 'pen', label: 'idle' },
-    type: 'mousemove',
-    do: 'switchToPenCursor',
-  },
-
   // add segment to (current or new) shape
   {
     from: { mode: 'pen', label: 'idle' },

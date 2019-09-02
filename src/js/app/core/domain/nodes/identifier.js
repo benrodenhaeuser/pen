@@ -11,6 +11,14 @@ Object.assign(Identifier, {
       .set({ type: types.IDENTIFIER })
       .set(opts);
   },
+
+  activate() {
+    this.class = this.class.add('active');
+  },
+
+  deactivate() {
+    this.class = this.class.remove('active');
+  },
 });
 
 export { Identifier };

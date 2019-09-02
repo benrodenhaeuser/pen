@@ -26,8 +26,6 @@ const core = {
 
       const update = updates[transition.do]; // a function, or undefined
 
-      console.log(input.target);
-
       if (update) {
         update(this.state, input);
         updates.after(this.state, input);

@@ -11,7 +11,23 @@ import { types } from '../domain/_.js';
 
 const updates = {
   after(state, input) {
-    state.tools.setActiveStatus({ mode: state.mode, layout: state.layout });
+    if (input.type !== 'mousemove') {
+      state.tools.setActiveStatus({
+        mode: state.mode,
+        layout: state.layout
+      });
+
+      state.docs.setActiveStatus({
+        _id: state.doc._id
+      });
+    }
+
+    state.canvas.setCursor({
+      mode: state.mode,
+      label: state.label,
+      input: input,
+      update: state.update,
+    });
   },
 
   refresh(state, input) {
@@ -30,16 +46,6 @@ const updates = {
 
     if (!node) {
       return;
-    }
-
-    if (input.target === 'dot') {
-      state.canvas.setCursor('rotationCursor');
-    } else if (input.target === 'corner') {
-      state.canvas.setCursor('scaleCursor');
-    } else if (input.target === 'curve' || input.target === 'shape') {
-      state.canvas.setCursor('shiftableCursor');
-    } else {
-      state.canvas.setCursor('selectCursor');
     }
 
     const hit = Vector.create(input.x, input.y);
@@ -168,8 +174,6 @@ const updates = {
       return;
     }
 
-    state.canvas.setCursor('shiftCursor');
-
     const to = Vector.create(input.x, input.y);
     const from = state.from;
     const offset = to.minus(from);
@@ -208,11 +212,6 @@ const updates = {
     state.target.scale(factor, center);
 
     state.from = to;
-  },
-
-  // PEN
-  switchToPenCursor(state, input) {
-    state.canvas.setCursor('penCursor');
   },
 
   addSegment(state, input) {
@@ -410,28 +409,12 @@ const updates = {
   // => 'New' button
   createDoc(state, input) {
     state.doc.replaceWith(state.buildDoc(state.doc.canvasWidth));
-    updates.setMenuItemState(state, input);
   },
 
   // => choice from menu (or history)
   switchDocument(state, input) {
     state.doc.replaceWith(state.objectToDoc(input.data.doc));
     updates.cleanup(state, input);
-    updates.setMenuItemState(state, input);
-  },
-
-  setMenuItemState(state, input) {
-    for (let child of state.docs.children) {
-      child.class = child.class.remove('active');
-    }
-
-    const toActivate = state.docs.children.find(
-      child => child._id === state.doc._id
-    );
-
-    if (toActivate) {
-      toActivate.class = toActivate.class.add('active');
-    }
   },
 
   updateDocList(state, input) {
