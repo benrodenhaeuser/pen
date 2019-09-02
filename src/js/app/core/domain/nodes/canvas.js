@@ -155,11 +155,18 @@ Object.assign(Canvas, {
       }
     }
 
-    // special treatment for shift/shiftable cursors:
+    // two special cases:
+
+    // shift/shiftable cursors:
     if (update === 'select') {
       this.activateCursor('shiftCursor');
     } else if (this.cursor === 'shiftCursor' && update === 'release') {
       this.activateCursor('shiftableCursor');
+    }
+
+    // escape from penMode (need selectCursor *immediately*):
+    if (input.target === 'esc') {
+      this.activateCursor('selectCursor');
     }
   },
 

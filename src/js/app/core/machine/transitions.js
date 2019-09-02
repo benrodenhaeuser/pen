@@ -43,7 +43,7 @@ const transitions = [
     do: 'requestDoc',
   },
 
-  // switch to select mode
+  // select button
   {
     type: 'click',
     target: 'selectButton',
@@ -51,7 +51,7 @@ const transitions = [
     to: { mode: 'select', label: 'idle' },
   },
 
-  // switch to pen mode
+  // pen button
   {
     type: 'click',
     target: 'penButton',
