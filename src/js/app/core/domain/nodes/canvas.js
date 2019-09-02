@@ -115,13 +115,19 @@ Object.assign(Canvas, {
     }
   },
 
-  setCursor({ mode, label, input, update }) {
+  setCursor(input, stateDescription) {
+    const mode = stateDescription.mode;
+    const label = stateDescription.label;
+    const update = stateDescription.update;
+    const inputType = input.type;
+    const inputTarget = input.target;
+
     if (mode === 'pen') {
       this.activateCursor('penCursor');
     }
 
-   if (mode === 'select' && label === 'idle' && input.type === 'mousemove') {
-     switch (input.target) {
+   if (mode === 'select' && label === 'idle' && inputType === 'mousemove') {
+     switch (inputTarget) {
        case 'dot':
          this.activateCursor('rotationCursor');
          break;

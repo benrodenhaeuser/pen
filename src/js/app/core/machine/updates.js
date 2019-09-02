@@ -12,22 +12,11 @@ import { types } from '../domain/_.js';
 const updates = {
   after(state, input) {
     if (input.type !== 'mousemove') {
-      state.tools.setActiveStatus({
-        mode: state.mode,
-        layout: state.layout
-      });
-
-      state.docs.setActiveStatus({
-        _id: state.doc._id
-      });
+      state.tools.setActiveStatus(state.description);
+      state.docs.setActiveStatus(state.doc._id);
     }
 
-    state.canvas.setCursor({
-      mode: state.mode,
-      label: state.label,
-      input: input,
-      update: state.update,
-    });
+    state.canvas.setCursor(state.input, state.description);
   },
 
   refresh(state, input) {

@@ -13,12 +13,12 @@ Object.assign(Tools, {
       .set(opts);
   },
 
-  setActiveStatus({ mode, layout }) {
+  setActiveStatus(stateDescription) {
     for (let child of this.children) {
       child.deactivate();
     }
 
-    switch (mode) {
+    switch (stateDescription.mode) {
       case 'pen':
         this.pen.activate();
         break;
@@ -27,7 +27,7 @@ Object.assign(Tools, {
         break;
     }
 
-    if (layout.menuVisible) {
+    if (stateDescription.layout.menuVisible) {
       this.open.activate();
     }
   }

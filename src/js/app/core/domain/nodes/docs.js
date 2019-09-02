@@ -13,13 +13,13 @@ Object.assign(Docs, {
       .set(opts);
   },
 
-  setActiveStatus({ _id }) {
+  setActiveStatus(id) {
     for (let child of this.children) {
       child.deactivate();
     }
 
     const toActivate = this.children.find(
-      child => child._id === _id
+      child => child._id === id
     );
 
     if (toActivate) {
