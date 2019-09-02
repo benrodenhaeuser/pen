@@ -30,7 +30,7 @@ Object.assign(Tools, {
     if (stateDescription.layout.menuVisible) {
       this.open.activate();
     }
-  }
+  },
 });
 
 Object.defineProperty(Tools, 'pen', {
@@ -49,6 +49,6 @@ Object.defineProperty(Tools, 'open', {
   get() {
     return this.children[5];
   },
-})
+});
 
 export { Tools };

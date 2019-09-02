@@ -137,7 +137,7 @@ const transitions = [
   {
     from: { mode: 'select', label: 'idle' },
     type: 'mousedown',
-    target: 'corner',
+    target: ['nw-corner', 'ne-corner', 'sw-corner', 'se-corner'],
     do: 'initTransform',
     to: { mode: 'select', label: 'scaling' },
   },

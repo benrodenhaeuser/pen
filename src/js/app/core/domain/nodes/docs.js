@@ -18,9 +18,7 @@ Object.assign(Docs, {
       child.deactivate();
     }
 
-    const toActivate = this.children.find(
-      child => child._id === id
-    );
+    const toActivate = this.children.find(child => child._id === id);
 
     if (toActivate) {
       toActivate.activate();

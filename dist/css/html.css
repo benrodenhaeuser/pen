@@ -89,12 +89,18 @@ textarea:focus {
   background-color: #fff;
 }
 
+/* Cursors */
+
 .rotationCursor {
-  cursor: cell;
+  cursor: url('../assets/cursors/rotate.svg') 6 6, auto;
 }
 
-.scaleCursor {
-  cursor: row-resize;
+.scaleCursorSE {
+  cursor: url('../assets/cursors/scale-se.svg') 6 6, auto;
+}
+
+.scaleCursorNE {
+  cursor: url('../assets/cursors/scale-ne.svg') 6 6, auto;
 }
 
 .shiftCursor {
@@ -106,7 +112,7 @@ textarea:focus {
 }
 
 .penCursor {
-  cursor: crosshair;
+  cursor: url('../assets/cursors/pen-tool.svg') 6 0, auto;
 }
 
 .selectCursor {

@@ -18,7 +18,7 @@ const State = {
   },
 
   init(canvasWidth) {
-    this.editor = this.buildEditorTree(canvasWidth);
+    this.editor = this.buildEditor(canvasWidth);
 
     this.description = {
       mode: 'start',
@@ -36,76 +36,60 @@ const State = {
     return this;
   },
 
-  buildEditorTree(canvasWidth) {
-    const editor = Editor.create();
-    const doc = this.buildDoc(canvasWidth);
-    const tools = this.buildTools();
-    const docs = Docs.create();
-    const message = this.buildMessage();
-
-    editor.mount(doc);
-    editor.mount(tools);
-    editor.mount(docs);
-    editor.mount(message);
-
-    return editor;
+  buildEditor(canvasWidth) {
+    return Editor.create().mount(
+      this.buildDoc(canvasWidth),
+      this.buildTools(),
+      Docs.create(),
+      this.buildMessage()
+    );
   },
 
   buildMessage() {
-    const message = Message.create();
-    message.text = 'Welcome!';
-    return message;
+    return Message.create({ text: 'Welcome!' });
   },
 
   buildTools() {
-    const pen = Tool.create({
-      name: 'Pen',
-      iconPath: '/assets/buttons/pen.svg',
-      toolType: 'penButton',
-    });
-
-    const select = Tool.create({
-      name: 'Select',
-      iconPath: '/assets/buttons/select.svg',
-      toolType: 'selectButton',
-    });
-
-    const undo = Tool.create({
-      name: 'Undo',
-      iconPath: '/assets/buttons/undo.svg',
-      toolType: 'getPrevious',
-    });
-
-    const redo = Tool.create({
-      name: 'Redo',
-      iconPath: '/assets/buttons/redo.svg',
-      toolType: 'getNext',
-    });
-
-    const newDoc = Tool.create({
-      name: 'New',
-      iconPath: '/assets/buttons/new.svg',
-      toolType: 'newDocButton',
-    });
-
-    const open = Tool.create({
-      name: 'Open',
-      iconPath: '/assets/buttons/open.svg',
-      toolType: 'docListButton',
-    });
-
-    return Tools.create().mount(pen, select, undo, redo, newDoc, open);
+    return Tools.create().mount(
+      Tool.create({
+        name: 'Pen',
+        iconPath: '/assets/buttons/pen.svg',
+        toolType: 'penButton',
+      }),
+      Tool.create({
+        name: 'Select',
+        iconPath: '/assets/buttons/select.svg',
+        toolType: 'selectButton',
+      }),
+      Tool.create({
+        name: 'Undo',
+        iconPath: '/assets/buttons/undo.svg',
+        toolType: 'getPrevious',
+      }),
+      Tool.create({
+        name: 'Redo',
+        iconPath: '/assets/buttons/redo.svg',
+        toolType: 'getNext',
+      }),
+      Tool.create({
+        name: 'New',
+        iconPath: '/assets/buttons/new.svg',
+        toolType: 'newDocButton',
+      }),
+      Tool.create({
+        name: 'Open',
+        iconPath: '/assets/buttons/open.svg',
+        toolType: 'docListButton',
+      })
+    );
   },
 
   buildDoc(canvasWidth) {
-    const doc = Doc.create({ canvasWidth: canvasWidth });
-
-    const canvas = Canvas.create();
-    canvas.viewBox = Rectangle.createFromDimensions(0, 0, 800, 1600);
-    // ^ TODO: extract to constant
-    doc.mount(canvas);
-
-    return doc;
+    return Doc.create({ canvasWidth: canvasWidth }).mount(
+      Canvas.create({
+        viewBox: Rectangle.createFromDimensions(0, 0, 800, 1600),
+      })
+    );
   },
 
   docToObject() {

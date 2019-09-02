@@ -126,32 +126,41 @@ Object.assign(Canvas, {
       this.activateCursor('penCursor');
     }
 
-   if (mode === 'select' && label === 'idle' && inputType === 'mousemove') {
-     switch (inputTarget) {
-       case 'dot':
-         this.activateCursor('rotationCursor');
-         break;
-       case 'corner':
-         this.activateCursor('scaleCursor');
-         break;
-       case 'shape':
-         this.activateCursor('shiftableCursor');
-         break;
-       case 'curve':
-         this.activateCursor('shiftableCursor');
-         break;
-       case 'canvas':
-         this.activateCursor('selectCursor');
-         break;
-     }
-   }
+    if (mode === 'select' && label === 'idle' && inputType === 'mousemove') {
+      switch (inputTarget) {
+        case 'dot':
+          this.activateCursor('rotationCursor');
+          break;
+        case 'nw-corner':
+          this.activateCursor('scaleCursorSE');
+          break;
+        case 'se-corner':
+          this.activateCursor('scaleCursorSE');
+          break;
+        case 'ne-corner':
+          this.activateCursor('scaleCursorNE');
+          break;
+        case 'sw-corner':
+          this.activateCursor('scaleCursorNE');
+          break;
+        case 'shape':
+          this.activateCursor('shiftableCursor');
+          break;
+        case 'curve':
+          this.activateCursor('shiftableCursor');
+          break;
+        case 'canvas':
+          this.activateCursor('selectCursor');
+          break;
+      }
+    }
 
-   // special treatment for shift/shiftable cursors:
-   if (update === 'select') {
-     this.activateCursor('shiftCursor');
-   } else if (this.cursor === 'shiftCursor' && update === 'release') {
-     this.activateCursor('shiftableCursor');
-   }
+    // special treatment for shift/shiftable cursors:
+    if (update === 'select') {
+      this.activateCursor('shiftCursor');
+    } else if (this.cursor === 'shiftCursor' && update === 'release') {
+      this.activateCursor('shiftableCursor');
+    }
   },
 
   activateCursor(cursorName) {

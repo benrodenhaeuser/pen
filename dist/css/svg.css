@@ -22,7 +22,7 @@ line {
 }
 
 /* corners of selection */
-[data-type="corner"] {
+[data-type="nw-corner"], [data-type="ne-corner"], [data-type="sw-corner"], [data-type="se-corner"] {
   stroke: #d3d3d3;
   stroke-width: 1px;
   fill: #FFFFFF;

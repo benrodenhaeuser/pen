@@ -71,16 +71,15 @@ const comps = {
   },
 
   corners(node) {
-    const vTopLCorner = h('rect');
-    const vBotLCorner = h('rect');
-    const vTopRCorner = h('rect');
-    const vBotRCorner = h('rect');
+    const vTopLCorner = h('rect', { 'data-type': 'nw-corner' });
+    const vBotLCorner = h('rect', { 'data-type': 'sw-corner' });
+    const vTopRCorner = h('rect', { 'data-type': 'ne-corner' });
+    const vBotRCorner = h('rect', { 'data-type': 'se-corner' });
     const vCorners = [vTopLCorner, vBotLCorner, vTopRCorner, vBotRCorner];
     const length = scale(node, LENGTHS_IN_PX.cornerSideLength);
 
     for (let vCorner of vCorners) {
       Object.assign(vCorner.props, {
-        'data-type': 'corner',
         'data-key': node.key,
         transform: node.transform && node.transform.toString(),
         width: length,
