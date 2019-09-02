@@ -200,6 +200,7 @@ object {
   color: gray;
   border-right: 1px solid #e6e6e6;
   border-left: 1px solid #e6e6e6;
+  overflow: scroll;
 }
 
 #menu h1 {

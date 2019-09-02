@@ -434,8 +434,31 @@ const updates = {
 
   // DOCUMENT MANAGEMENT
 
+  // => 'New' button
   createDoc(state, input) {
     state.doc.replaceWith(state.buildDoc(state.doc.canvasWidth));
+    updates.setMenuItemState(state, input);
+  },
+
+  // => choice from menu (or history)
+  switchDocument(state, input) {
+    state.doc.replaceWith(state.objectToDoc(input.data.doc));
+    updates.cleanup(state, input);
+    updates.setMenuItemState(state, input);
+  },
+
+  setMenuItemState(state, input) {
+    for (let child of state.docs.children) {
+      child.class = child.class.remove('active');
+    }
+
+    const toActivate = state.docs.children.find(
+      child => child._id === state.doc._id
+    );
+
+    if (toActivate) {
+      toActivate.class = toActivate.class.add('active');
+    }
   },
 
   updateDocList(state, input) {
@@ -462,20 +485,6 @@ const updates = {
 
   getNext(state, input) {
     window.history.forward(); // TODO: shouldn't we do this inside of hist?
-  },
-
-  switchDocument(state, input) {
-    state.doc.replaceWith(state.objectToDoc(input.data.doc));
-    updates.cleanup(state, input);
-
-    // TODO: menu bar active state
-    const toActivate = state.docs.children.find(
-      node => node._id === state.doc._id
-    );
-    for (let child of state.docs.children) {
-      child.class = child.class.remove('active');
-    }
-    toActivate.class = toActivate.class.add('active');
   },
 
   // MESSAGES
