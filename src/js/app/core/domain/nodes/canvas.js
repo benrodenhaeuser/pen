@@ -140,12 +140,11 @@ Object.assign(Canvas, {
      }
    }
 
+   // special treatment for shift/shiftable cursors:
    if (update === 'select') {
      this.activateCursor('shiftCursor');
-   }
-
-   if (update === 'release') {
-     this.activateCursor('selectCursor');
+   } else if (this.cursor === 'shiftCursor' && update === 'release') {
+     this.activateCursor('shiftableCursor');
    }
   },
 
