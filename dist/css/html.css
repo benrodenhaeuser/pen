@@ -112,7 +112,7 @@ textarea:focus {
 }
 
 .penCursor {
-  cursor: url('../assets/cursors/pen-tool.svg') 6 0, auto;
+  cursor: url('../assets/cursors/pen-tool.svg') 4 0, auto;
 }
 
 .selectCursor {
