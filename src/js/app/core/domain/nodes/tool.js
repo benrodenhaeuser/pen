@@ -13,6 +13,14 @@ Object.assign(Tool, {
       })
       .set(opts);
   },
+
+  activate() {
+    this.class = this.class.add('active');
+  },
+
+  deactivate() {
+    this.class = this.class.remove('active');
+  },
 });
 
 export { Tool };

@@ -11,36 +11,7 @@ import { types } from '../domain/_.js';
 
 const updates = {
   after(state, input) {
-    // Manage tools state
-    if (state.mode === 'pen') {
-      state.tools.children[0].class = state.tools.children[0].class.add(
-        'active'
-      );
-    } else {
-      state.tools.children[0].class = state.tools.children[0].class.remove(
-        'active'
-      );
-    }
-
-    if (state.mode === 'select') {
-      state.tools.children[1].class = state.tools.children[1].class.add(
-        'active'
-      );
-    } else {
-      state.tools.children[1].class = state.tools.children[1].class.remove(
-        'active'
-      );
-    }
-
-    if (state.layout.menuVisible) {
-      state.tools.children[5].class = state.tools.children[5].class.add(
-        'active'
-      );
-    } else {
-      state.tools.children[5].class = state.tools.children[5].class.remove(
-        'active'
-      );
-    }
+    state.tools.setActiveStatus({ mode: state.mode, layout: state.layout });
   },
 
   refresh(state, input) {
@@ -65,6 +36,8 @@ const updates = {
       state.canvas.setCursor('rotationCursor');
     } else if (input.target === 'corner') {
       state.canvas.setCursor('scaleCursor');
+    } else if (input.target === 'curve' || input.target === 'shape') {
+      state.canvas.setCursor('shiftableCursor');
     } else {
       state.canvas.setCursor('selectCursor');
     }

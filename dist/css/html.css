@@ -101,6 +101,10 @@ textarea:focus {
   cursor: grabbing;
 }
 
+.shiftableCursor {
+  cursor: grab;
+}
+
 .penCursor {
   cursor: crosshair;
 }

@@ -12,6 +12,43 @@ Object.assign(Tools, {
       })
       .set(opts);
   },
+
+  setActiveStatus(obj) {
+    for (let child of this.children) {
+      child.deactivate();
+    }
+
+    switch (obj.mode) {
+      case 'pen':
+        this.pen.activate();
+        break;
+      case 'select':
+        this.select.activate();
+        break;
+    }
+
+    if (obj.layout.menuVisible) {
+      this.open.activate();
+    }
+  }
 });
+
+Object.defineProperty(Tools, 'pen', {
+  get() {
+    return this.children[0];
+  },
+});
+
+Object.defineProperty(Tools, 'select', {
+  get() {
+    return this.children[1];
+  },
+});
+
+Object.defineProperty(Tools, 'open', {
+  get() {
+    return this.children[5];
+  },
+})
 
 export { Tools };
