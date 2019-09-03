@@ -143,6 +143,15 @@ Object.assign(Canvas, {
         case 'sw-corner':
           this.activateCursor('scaleCursorNE');
           break;
+        case 'group':
+          // only visualize group as shiftable if "closed":
+          const node = this.findDescendantByKey(input.key);
+          if (node && node.class.includes('focus')) {
+            this.activateCursor('shiftableCursor');
+          } else {
+            this.activateCursor('selectCursor');
+          }
+          break;
         case 'shape':
           this.activateCursor('shiftableCursor');
           break;

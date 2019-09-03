@@ -93,6 +93,10 @@
     return scaledLength;
   };
 
+  const transform = node => {
+    return node.transform && node.transform.toString() || 'matrix(1, 0, 0, 1, 0, 0)';
+  };
+
   const comps$$1 = {
     canvas(node) {
       return {
@@ -115,7 +119,7 @@
         props: {
           'data-key': node.key,
           'data-type': node.type,
-          transform: node.transform && node.transform.toString(),
+          transform: transform(node),
           class: node.class.toString(),
         },
       };
@@ -162,7 +166,7 @@
       for (let vCorner of vCorners) {
         Object.assign(vCorner.props, {
           'data-key': node.key,
-          transform: node.transform && node.transform.toString(),
+          transform: transform(node),
           width: length,
           height: length,
         });
@@ -204,7 +208,7 @@
         Object.assign(vDot.props, {
           'data-type': 'dot',
           'data-key': node.key,
-          transform: node.transform && node.transform.toString(),
+          transform: transform(node),
           r: radius,
         });
       }
@@ -239,7 +243,7 @@
         y: node.bounds.y,
         width: node.bounds.width,
         height: node.bounds.height,
-        transform: node.transform && node.transform.toString(),
+        transform: transform(node),
         'data-key': node.key,
       });
     },
@@ -254,7 +258,7 @@
         r: radius,
         cx: node.splitter.x,
         cy: node.splitter.y,
-        transform: node.transform && node.transform.toString(),
+        transform: transform(node),
       });
 
       return h(
@@ -279,7 +283,7 @@
           'data-type': node.type,
           'data-key': node.key,
           d: node.toPathString(),
-          transform: node.transform && node.transform.toString(),
+          transform: transform(node),
           fill: node.fill,
         },
       };
@@ -304,7 +308,7 @@
               'data-type': 'curve',
               'data-key': segments[i].key,
               d: curves[i].toPathString(),
-              transform: node.transform && node.transform.toString(),
+              transform: transform(node),
             },
           });
 
@@ -315,7 +319,7 @@
             props: {
               'data-type': 'curve-stroke',
               d: curves[i].toPathString(),
-              transform: node.transform && node.transform.toString(),
+              transform: transform(node),
               stroke: node.stroke,
             },
           });
@@ -371,7 +375,7 @@
         y1: anchor.vector.y,
         x2: handle.vector.x,
         y2: handle.vector.y,
-        transform: node.transform && node.transform.toString(),
+        transform: transform(node),
       });
     },
 
@@ -379,7 +383,7 @@
       return h('circle', {
         'data-type': controlNode.type,
         'data-key': controlNode.key,
-        transform: pathNode.transform && pathNode.transform.toString(),
+        transform: transform(pathNode),
         r: diameter / 2,
         cx: controlNode.vector.x,
         cy: controlNode.vector.y,
@@ -4392,6 +4396,15 @@
             break;
           case 'sw-corner':
             this.activateCursor('scaleCursorNE');
+            break;
+          case 'group':
+            // only visualize group as shiftable if "closed":
+            const node = this.findDescendantByKey(input.key);
+            if (node && node.class.includes('focus')) {
+              this.activateCursor('shiftableCursor');
+            } else {
+              this.activateCursor('selectCursor');
+            }
             break;
           case 'shape':
             this.activateCursor('shiftableCursor');

@@ -12,6 +12,10 @@ const scale = (node, length) => {
   return scaledLength;
 };
 
+const transform = node => {
+  return node.transform && node.transform.toString() || 'matrix(1, 0, 0, 1, 0, 0)';
+};
+
 const comps = {
   canvas(node) {
     return {
@@ -34,7 +38,7 @@ const comps = {
       props: {
         'data-key': node.key,
         'data-type': node.type,
-        transform: node.transform && node.transform.toString(),
+        transform: transform(node),
         class: node.class.toString(),
       },
     };
@@ -81,7 +85,7 @@ const comps = {
     for (let vCorner of vCorners) {
       Object.assign(vCorner.props, {
         'data-key': node.key,
-        transform: node.transform && node.transform.toString(),
+        transform: transform(node),
         width: length,
         height: length,
       });
@@ -123,7 +127,7 @@ const comps = {
       Object.assign(vDot.props, {
         'data-type': 'dot',
         'data-key': node.key,
-        transform: node.transform && node.transform.toString(),
+        transform: transform(node),
         r: radius,
       });
     }
@@ -158,7 +162,7 @@ const comps = {
       y: node.bounds.y,
       width: node.bounds.width,
       height: node.bounds.height,
-      transform: node.transform && node.transform.toString(),
+      transform: transform(node),
       'data-key': node.key,
     });
   },
@@ -173,7 +177,7 @@ const comps = {
       r: radius,
       cx: node.splitter.x,
       cy: node.splitter.y,
-      transform: node.transform && node.transform.toString(),
+      transform: transform(node),
     });
 
     return h(
@@ -198,7 +202,7 @@ const comps = {
         'data-type': node.type,
         'data-key': node.key,
         d: node.toPathString(),
-        transform: node.transform && node.transform.toString(),
+        transform: transform(node),
         fill: node.fill,
       },
     };
@@ -223,7 +227,7 @@ const comps = {
             'data-type': 'curve',
             'data-key': segments[i].key,
             d: curves[i].toPathString(),
-            transform: node.transform && node.transform.toString(),
+            transform: transform(node),
           },
         });
 
@@ -234,7 +238,7 @@ const comps = {
           props: {
             'data-type': 'curve-stroke',
             d: curves[i].toPathString(),
-            transform: node.transform && node.transform.toString(),
+            transform: transform(node),
             stroke: node.stroke,
           },
         });
@@ -290,7 +294,7 @@ const comps = {
       y1: anchor.vector.y,
       x2: handle.vector.x,
       y2: handle.vector.y,
-      transform: node.transform && node.transform.toString(),
+      transform: transform(node),
     });
   },
 
@@ -298,7 +302,7 @@ const comps = {
     return h('circle', {
       'data-type': controlNode.type,
       'data-key': controlNode.key,
-      transform: pathNode.transform && pathNode.transform.toString(),
+      transform: transform(pathNode),
       r: diameter / 2,
       cx: controlNode.vector.x,
       cy: controlNode.vector.y,
