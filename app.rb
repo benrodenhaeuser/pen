@@ -12,7 +12,7 @@ configure do
   if development?
     client = Mongo::Client.new(['127.0.0.1:27017'], :database => 'test')
   else
-    client = Mongo::Client.new(ENV['MONGODB_URI'], :database => 'production')
+    client = Mongo::Client.new(ENV['MONGODB_URI'], :database => 'heroku_bhsnmdts')
   end
 
   set :db, client.database
