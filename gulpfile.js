@@ -53,9 +53,9 @@ gulp.task('styles', () => {
   return gulp
     .src([
       './src/css/reset.css',
+      './src/css/codemirror.css',
       './src/css/html.css',
       './src/css/svg.css',
-      './src/css/codemirror.css',
     ])
     .pipe(concatCSS("bundle.css"))
     .pipe(cleanCSS({ compatibility: 'ie8' }))
