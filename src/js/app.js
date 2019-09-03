@@ -13,7 +13,7 @@ const app = {
 
     for (let device of Object.values(devices)) {
       if (excluded.includes(device)) {
-        continue;
+        continue; 
       }
 
       device.requestSnapshot = label => core.state.snapshot(label);

@@ -1,11 +1,14 @@
 var gulp       = require('gulp');
+var concatCSS  = require('gulp-concat-css');
+var cleanCSS   = require('gulp-clean-css');
 var rollup     = require('rollup');
 var resolve    = require('rollup-plugin-node-resolve');
 var commonjs   = require('rollup-plugin-commonjs');
 var rootImport = require('rollup-plugin-root-import');
 var terser     = require('rollup-plugin-terser');
 
-gulp.task('rollup', () => {
+
+gulp.task('scripts', () => {
   return rollup.rollup({
     input: './src/js/app.js',
     onwarn: function(warning, rollupWarn) {
@@ -46,8 +49,25 @@ gulp.task('rollup', () => {
   });
 });
 
+gulp.task('styles', () => {
+  return gulp
+    .src([
+      './src/css/reset.css',
+      './src/css/html.css',
+      './src/css/svg.css',
+      './src/css/codemirror.css',
+    ])
+    .pipe(concatCSS("bundle.css"))
+    .pipe(cleanCSS({ compatibility: 'ie8' }))
+    .pipe(gulp.dest('./dist/css/'))
+});
+
 gulp.task('watch', () => {
-  gulp.watch(['./src/js/app.js', './src/js/**/*.js'], gulp.series('rollup'));
+  gulp.watch([
+    './src/css/*.css',
+    './src/js/app.js',
+    './src/js/**/*.js'
+  ], gulp.parallel('scripts', 'styles'));
 });
 
 gulp.task('default', gulp.series('watch'));
