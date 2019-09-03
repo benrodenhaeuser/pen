@@ -8,7 +8,13 @@ Mongo::Logger.logger.level = ::Logger::ERROR
 
 configure do
   set :public_folder, './dist'
-  client = Mongo::Client.new(['127.0.0.1:27017'], :database => 'test')
+
+  if development?
+    client = Mongo::Client.new(['127.0.0.1:27017'], :database => 'test')
+  else
+    client = Mongo::Client.new(ENV['MONGODB_URI'], :database => 'production')
+  end
+
   set :db, client.database
 end
 
