@@ -7,13 +7,11 @@ const excluded = [];
 
 const app = {
   init() {
-    console.log('initial DOM is ready');
-
     core.init(document.querySelector('#canvas-wrapper').clientWidth);
 
     for (let device of Object.values(devices)) {
       if (excluded.includes(device)) {
-        continue; 
+        continue;
       }
 
       device.requestSnapshot = label => core.state.snapshot(label);
@@ -29,8 +27,6 @@ const app = {
     }
 
     core.kickoff();
-
-    console.log('app is ready');
   },
 
   isInputDevice(device) {
