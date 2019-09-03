@@ -27,6 +27,8 @@ const app = {
     }
 
     core.kickoff();
+
+    console.log('app is ready');
   },
 
   isInputDevice(device) {
