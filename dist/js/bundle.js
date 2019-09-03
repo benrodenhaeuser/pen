@@ -19597,9 +19597,9 @@
         clearTimeout(this.timer);
       }
 
-      // if the message is non-empty, delete it after one second
+      // if the message is non-empty, delete it after 400ms
       if (newVNode !== '') {
-        this.timer = window.setTimeout(this.wipeMessage, 250);
+        this.timer = window.setTimeout(this.wipeMessage, 400);
       }
     },
 
