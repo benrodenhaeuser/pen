@@ -8,6 +8,7 @@
     "rollup-plugin-root-import": "^0.2.4"
   },
   "dependencies": {
+    "rollup-plugin-terser": "^5.1.1",
     "svg-pathdata": "^5.0.2"
   }
 }

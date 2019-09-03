@@ -9,7 +9,7 @@ import { MarkupRoot } from './_.js';
 const Canvas = Object.create(GraphicsNode);
 Canvas.defineProps(['viewBox', 'xmlns', 'cursor']);
 
-Object.assign(Canvas, {
+Object.assign(Canvas, { 
   create(opts = {}) {
     return GraphicsNode.create
       .bind(this)()

@@ -3,6 +3,7 @@ var rollup     = require('rollup');
 var resolve    = require('rollup-plugin-node-resolve');
 var commonjs   = require('rollup-plugin-commonjs');
 var rootImport = require('rollup-plugin-root-import');
+var terser     = require('rollup-plugin-terser');
 
 gulp.task('rollup', () => {
   return rollup.rollup({
@@ -16,7 +17,8 @@ gulp.task('rollup', () => {
       // allow absolute paths (starting with `/`), will resolve to `src/js`:
       rootImport({ root: `${__dirname}/src/js`, useEntry: 'prepend' }),
       resolve(),
-      commonjs()
+      commonjs(),
+      terser.terser(),
     ]
   }).then(bundle => {
     return bundle.write({

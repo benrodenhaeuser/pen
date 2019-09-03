@@ -10,7 +10,7 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
-  after(state, input) {
+  after(state, input) { 
     if (input.type !== 'mousemove') {
       state.tools.setActiveStatus(state.description);
       state.docs.setActiveStatus(state.doc._id);
