@@ -7,6 +7,8 @@ const excluded = [];
 
 const app = {
   init() {
+    console.log('initial DOM is ready');
+
     core.init(document.querySelector('#canvas-wrapper').clientWidth);
 
     for (let device of Object.values(devices)) {
