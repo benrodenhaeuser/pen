@@ -7,7 +7,7 @@ import { Matrix } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 import { Curve } from '../domain/_.js';
 import { Bezier } from '/vendor/bezier/bezier.js';
-import { types } from '../domain/_.js';
+import { types } from '../domain/_.js'; 
 
 const updates = {
   after(state, input) {
