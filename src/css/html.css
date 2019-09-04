@@ -18,6 +18,10 @@ main {
   padding-top: 1vh;
 }
 
+.hidden {
+  visibility: hidden;
+}
+
 main.menu-expanded {
   grid-template-columns: 60px 200px auto 580px;
 }
