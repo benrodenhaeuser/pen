@@ -18,7 +18,7 @@ main {
 }
 
 main.menu-expanded {
-  grid-template-columns: 60px 300px auto 580px;
+  grid-template-columns: 60px 200px auto 580px;
 }
 
 .CodeMirror {
@@ -201,7 +201,16 @@ object {
   margin-top: 10px;
 }
 
-/* menu overlay  */
+/* document menu  */
+#menu > div {
+  margin-left: -500px;
+  transition: margin-left 0.3s;
+}
+
+.menu-expanded #menu > div {
+  margin-left: 0;
+}
+
 #menu {
   grid-area: menu;
   height: 99vh;
