@@ -5,7 +5,7 @@
   font-family: monospace;
   height: 300px;
   color: black;
-  direction: ltr;   
+  direction: ltr;
 }
 
 /* PADDING */
@@ -110,11 +110,11 @@
 .cm-s-pen .cm-quote {color: #090;}
 .cm-negative {color: #d44;}
 .cm-positive {color: #292;}
-.cm-header, .cm-strong {font-weight: bold;}
+.cm-header, .cm-strong {font-weight: 700;}
 .cm-em {font-style: italic;}
 .cm-link {text-decoration: underline;}
 .cm-strikethrough {text-decoration: line-through;}
-.cm-s-pen .cm-tag {color: gray; font-weight: 600; }
+.cm-s-pen .cm-tag {color: gray; font-weight: 700; }
 .cm-s-pen .cm-attribute {color: #919191;}
 .cm-s-pen .CodeMirror-gutters { background-color: #fdfdfd; border-right: 1px solid #e6e6e6; }
 .cm-s-pen .CodeMirror-linenumber { color: #e3e3e3; }

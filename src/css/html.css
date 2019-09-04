@@ -5,7 +5,7 @@ html {
 body {
   background-color: white;
   font-family: monospace;
-  /* font-family: 'Roboto Mono', monospace; */
+  font-family: 'Roboto Mono', Courier, monospace;
   font-weight: 400;
   font-size: 10px;
 }
@@ -23,7 +23,7 @@ main.menu-expanded {
 }
 
 .CodeMirror {
-  /* font-family: 'Roboto Mono'; */
+  font-family: 'Roboto Mono', Courier, monospace;
   font-size: 13px;
   font-weight: 300;
   height: 99vh;
