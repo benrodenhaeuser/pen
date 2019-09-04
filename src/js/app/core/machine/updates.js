@@ -339,10 +339,14 @@ const updates = {
     spline.insertChild(segment, insertionIndex);
 
     anchor.vector = splitter;
-    handleIn.vector = Vector.createFromObject(left.points[2]); // ?
-    handleOut.vector = Vector.createFromObject(right.points[1]); // ?
-    startSegment.handleOut.vector = Vector.createFromObject(left.points[1]); // ?
-    endSegment.handleIn.vector = Vector.createFromObject(right.points[2]); // ?
+    handleIn.vector = Vector.createFromObject(left.points[2]);
+    // ^ maybe there is no left.points[2]?
+    handleOut.vector = Vector.createFromObject(right.points[1]);
+    // ^ maybe there is no right.points[1]?
+    startSegment.handleOut.vector = Vector.createFromObject(left.points[1]);
+    // ^ maybe there is no handleOut
+    endSegment.handleIn.vector = Vector.createFromObject(right.points[2]);
+    // ^ maybe there is no handleIn
 
     anchor.placePenTip();
     updates.hideSplitter(state, input);
