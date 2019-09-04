@@ -1,4 +1,4 @@
-import { UIDevice } from '../uiDevice.js';
+import { UIDevice } from '../helpers/uiDevice.js';
 
 const svgns = 'http://www.w3.org/2000/svg';
 const xmlns = 'http://www.w3.org/2000/xmlns/';

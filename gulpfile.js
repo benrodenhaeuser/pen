@@ -21,7 +21,7 @@ gulp.task('scripts', () => {
       rootImport({ root: `${__dirname}/src/js`, useEntry: 'prepend' }),
       resolve(),
       commonjs(),
-      terser.terser(),
+      // terser.terser(),  // only for production builds
     ]
   }).then(bundle => {
     return bundle.write({

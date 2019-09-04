@@ -1,3 +1,5 @@
+import { resize } from '../helpers/resize.js';
+
 const mouse = {
   init() {
     this.name = 'mouse';
@@ -8,15 +10,11 @@ const mouse = {
   bindEvents(func) {
     this.bindMouseButtonEvents(func);
     this.bindMouseMoveEvents(func);
+    this.bindViewportEvents(func);
+  },
 
-    // TODO: move to a new input device (screen? viewport?)
-    window.onresize = () => {
-      func({
-        source: this.name,
-        type: 'resize',
-        width: document.querySelector('#canvas-wrapper').clientWidth,
-      });
-    };
+  bindViewportEvents(func) {
+    window.onresize = () => resize(func, this.name);
   },
 
   bindMouseButtonEvents(func) {

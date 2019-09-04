@@ -10,7 +10,7 @@ import { Bezier } from '/vendor/bezier/bezier.js';
 import { types } from '../domain/_.js';
 
 const updates = {
-  after(state, input) { 
+  after(state, input) {
     if (input.type !== 'mousemove') {
       state.tools.setActiveStatus(state.description);
       state.docs.setActiveStatus(state.doc._id);
@@ -226,13 +226,16 @@ const updates = {
   setHandles(state, input) {
     state.target = state.canvas.findPen();
     const segment = state.target.lastChild.lastChild;
-    const handleIn = segment.handleIn || segment.mountHandleIn();
-    handleIn.vector = Vector.create(input.x, input.y).transformToLocal(
+
+    const handleOut = segment.handleOut || segment.mountHandleOut();
+    handleOut.vector = Vector.create(input.x, input.y).transformToLocal(
       state.target
     );
-    const handleOut = segment.handleOut || segment.mountHandleOut();
-    handleOut.vector = handleIn.vector.rotate(Math.PI, segment.anchor.vector);
-    handleIn.placePenTip();
+
+    const handleIn = segment.handleIn || segment.mountHandleIn();
+    handleIn.vector = handleOut.vector.rotate(Math.PI, segment.anchor.vector);
+
+    handleOut.placePenTip();
   },
 
   initAdjustSegment(state, input) {

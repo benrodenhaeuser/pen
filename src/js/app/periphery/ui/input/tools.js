@@ -1,4 +1,5 @@
-import { UIDevice } from '../uiDevice.js';
+import { UIDevice } from '../helpers/uiDevice.js';
+import { resize } from '../helpers/resize.js';
 
 const tools = Object.assign(Object.create(UIDevice), {
   init() {
@@ -22,6 +23,10 @@ const tools = Object.assign(Object.create(UIDevice), {
         target: event.target.dataset.type,
         key: event.target.dataset.key,
       });
+
+      if (event.target.dataset.type === 'docListButton') {
+        resize(func, this.name);
+      }
     });
   },
 });

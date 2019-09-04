@@ -51,10 +51,26 @@ const transitions = [
     to: { mode: 'select', label: 'idle' },
   },
 
+  // s key => switch to select
+  {
+    type: 'keydown',
+    target: 'letterS',
+    do: 'cleanup',
+    to: { mode: 'select', label: 'idle' },
+  },
+
   // pen button
   {
     type: 'click',
     target: 'penButton',
+    do: 'cleanup',
+    to: { mode: 'pen', label: 'idle' },
+  },
+
+  // v key => switch to pen
+  {
+    type: 'keydown',
+    target: 'letterV',
     do: 'cleanup',
     to: { mode: 'pen', label: 'idle' },
   },

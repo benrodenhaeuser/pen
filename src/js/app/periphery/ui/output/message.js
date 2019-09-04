@@ -1,4 +1,4 @@
-import { UIDevice } from '../uiDevice.js';
+import { UIDevice } from '../helpers/uiDevice.js';
 
 const message = Object.assign(Object.create(UIDevice), {
   init() {
