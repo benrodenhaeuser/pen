@@ -141,10 +141,8 @@ textarea:focus {
 }
 
 #tools ul {
-  display: flex;
-  flex-direction: column;
   height: 360px;
-  justify-content: space-between;
+  max-height: 360px;
 }
 
 #tools a {
@@ -164,8 +162,9 @@ object {
   display: flex;
   justify-content: center;
   align-content: center;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  height: 40px;
+  padding: 10px 0;
+  overflow: hidden;
 }
 
 .buttonTarget {
