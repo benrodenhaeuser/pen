@@ -28,8 +28,9 @@ const app = {
 
     core.kickoff();
 
-    requestAnimationFrame(
-      () => document.querySelector('main').classList.remove('hidden')
+    setTimeout(
+      () => document.querySelector('main').classList.remove('hidden'),
+      200
     );
   },
 
