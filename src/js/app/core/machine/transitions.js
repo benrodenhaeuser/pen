@@ -134,8 +134,8 @@ const transitions = [
   // initiate shift transformation
   {
     from: { mode: 'select', label: 'idle' },
-    type: 'mousedown',
-    target: [types.CURVE, types.SHAPE, types.GROUP, types.CANVAS],
+    type: 'mousedown',   // inp
+    target: [types.CURVE, types.SHAPE, types.GROUP, types.CANVAS], // inp
     do: 'select',
     to: { mode: 'select', label: 'shifting' },
   },

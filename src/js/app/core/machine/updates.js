@@ -7,7 +7,7 @@ import { Matrix } from '../domain/_.js';
 import { Rectangle } from '../domain/_.js';
 import { Curve } from '../domain/_.js';
 import { Bezier } from '/vendor/bezier/bezier.js';
-import { types } from '../domain/_.js'; 
+import { types } from '../domain/_.js';
 
 const updates = {
   after(state, input) {
@@ -29,9 +29,13 @@ const updates = {
     }
   },
 
+  // BUG in this update
   focus(state, input) {
+    console.log('focus update called');
     state.canvas.removeFocus(); // remove focus from other nodes
     const node = state.canvas.findDescendantByKey(input.key);
+
+    console.log('node', node);
 
     if (!node) {
       return;
@@ -40,7 +44,10 @@ const updates = {
     const hit = Vector.create(input.x, input.y);
     state.target = node.findAncestorByClass('frontier');
 
+    console.log('target', state.target);
+
     if (state.target && state.target.contains(hit)) {
+      console.log('taking last step');
       state.target.focus();
     }
   },
@@ -282,7 +289,6 @@ const updates = {
           Math.PI,
           segment.anchor.vector
         );
-        mic;
         break;
     }
 

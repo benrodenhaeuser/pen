@@ -1,12 +1,12 @@
-var gulp       = require('gulp');
-var concatCSS  = require('gulp-concat-css');
-var cleanCSS   = require('gulp-clean-css');
-var rollup     = require('rollup');
-var resolve    = require('rollup-plugin-node-resolve');
-var commonjs   = require('rollup-plugin-commonjs');
-var rootImport = require('rollup-plugin-root-import');
-var terser     = require('rollup-plugin-terser');
-
+const gulp       = require('gulp');
+const rollup     = require('rollup');
+const resolve    = require('rollup-plugin-node-resolve');
+const commonjs   = require('rollup-plugin-commonjs');
+const rootImport = require('rollup-plugin-root-import');
+const terser     = require('rollup-plugin-terser');
+const concatCSS  = require('gulp-concat-css');
+const cleanCSS   = require('gulp-clean-css');
+const eslint     = require('gulp-eslint');
 
 gulp.task('scripts', () => {
   return rollup.rollup({
@@ -21,7 +21,7 @@ gulp.task('scripts', () => {
       rootImport({ root: `${__dirname}/src/js`, useEntry: 'prepend' }),
       resolve(),
       commonjs(),
-      terser.terser(),  // only for production builds
+      terser.terser(),  // => use only for production builds
     ]
   }).then(bundle => {
     return bundle.write({
@@ -60,6 +60,14 @@ gulp.task('styles', () => {
     .pipe(concatCSS("bundle.css"))
     .pipe(cleanCSS({ compatibility: 'ie8' }))
     .pipe(gulp.dest('./dist/css/'))
+});
+
+gulp.task('lint', () => {
+  return gulp
+    .src(['./src/js/app/**/*.js', './src/js/app.js'])
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError());
 });
 
 gulp.task('watch', () => {

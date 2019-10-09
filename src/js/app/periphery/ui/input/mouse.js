@@ -2,7 +2,7 @@ import { resize } from '../helpers/resize.js';
 
 const mouse = {
   init() {
-    this.name = 'mouse';
+    this.name = 'mouse'; // more like draw?
     this.mountPoint = document.querySelector('#canvas');
     return this;
   },
@@ -37,7 +37,7 @@ const mouse = {
           ['click', 'mousedown', 'mouseup'].includes(eventType) &&
           event.detail > 1
         ) {
-          event.stopPropagation();
+          event.stopPropagation(); // this seems redundant, as we have only one listener per event type
           return;
         }
 

@@ -18,8 +18,8 @@ const app = {
       device.init();
 
       if (this.isInputDevice(device)) {
-        device.bindEvents(core.compute.bind(core))
-      };
+        device.bindEvents(core.execute.bind(core))
+      }
 
       if (this.isOutputDevice(device)) {
         core.attach(device.name, device.react.bind(device));

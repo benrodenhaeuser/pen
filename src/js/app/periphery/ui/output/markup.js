@@ -70,10 +70,10 @@ const markup = {
   },
 
   react(description) {
-    if (
-      description.input.type !== 'mousemove' &&
-      description.input.type !== 'mousedown'
-    ) {
+    // if (
+    //   description.input.type !== 'mousemove' &&
+    //   description.input.type !== 'mousedown'
+    // ) {
       this.clearTextMarker();
 
       const markupTree = this.requestSnapshot('markupTree');
@@ -86,7 +86,7 @@ const markup = {
 
       this.placeTextMarker(markupTree);
       this.previousMarkupTree = markupTree;
-    }
+    // }
   },
 
   reconcile(markupTree) {

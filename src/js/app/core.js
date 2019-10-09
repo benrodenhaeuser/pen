@@ -14,7 +14,7 @@ const core = {
     this.modules[name] = func;
   },
 
-  compute(input) {
+  execute(input) {
     this.state.input = input;
 
     const transition = transitions.get(this.state, input);
@@ -24,15 +24,19 @@ const core = {
       this.state.mode = transition.to.mode;
       this.state.label = transition.to.label;
 
-      const update = updates[transition.do]; // a function, or undefined
+      const update = updates[transition.do];
 
       if (update) {
-        update(this.state, input);
-        updates.after(this.state, input);
+        this.invoke(update, this.state, input);
       }
 
       this.publish();
     }
+  },
+
+  invoke(update, state, input) {
+    update(this.state, input);
+    updates.after(this.state, input);
   },
 
   publish() {
@@ -41,10 +45,13 @@ const core = {
     }
 
     this.state.snapshots = {};
+
+    // console.log(JSON.stringify(this.state));
+    // console.log(document.querySelector('#canvas'));
   },
 
   kickoff() {
-    this.compute({ type: 'go' });
+    this.execute({ type: 'go' });
   },
 };
 

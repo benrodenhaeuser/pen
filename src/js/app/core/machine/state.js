@@ -10,7 +10,7 @@ import { Tool } from '../domain/_.js';
 import { comps } from '../domain/_.js';
 import { docToObject } from '../ports/_.js';
 import { objectToDoc } from '../ports/_.js';
-import { markupToCanvas } from '../ports/_.js';
+import { markupToCanvas } from '../ports/_.js'; 
 
 const State = {
   create(canvasWidth) {
