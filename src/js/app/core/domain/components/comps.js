@@ -12,7 +12,7 @@ const scale = (node, length) => {
   return scaledLength;
 };
 
-const transform = node => { 
+const transform = node => {
   return node.transform && node.transform.toString() || 'matrix(1, 0, 0, 1, 0, 0)';
 };
 
@@ -330,9 +330,7 @@ const comps = {
       },
       h(
         'a',
-        {
-          href: '#',
-        },
+        {},
         h('object', {
           type: 'image/svg+xml',
           data: toolNode.iconPath,
