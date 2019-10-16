@@ -31,7 +31,7 @@ main.menu-expanded {
   font-size: 13px;
   font-weight: 300;
   height: 99vh;
-  overflow: scroll;
+  overflow: auto;
 }
 
 .CodeMirror-lines {
@@ -52,7 +52,7 @@ main.menu-expanded {
 #canvas-wrapper {
   background-color: #f6f6f6;
   height: 99vh;
-  overflow: scroll;
+  overflow: auto;
   border-left: 1px solid #e6e6e6;
   border-right: 1px solid #e6e6e6;
 }
@@ -131,7 +131,7 @@ textarea:focus {
   grid-area: tools;
   height: 99vh;
   background-color: #fcfcfc;
-  overflow: scroll;
+  overflow: auto;
 }
 
 #buttons {
@@ -227,7 +227,7 @@ main:not(.menu-expanded) #menu {
   color: gray;
   border-right: 1px solid #e6e6e6;
   border-left: 1px solid #e6e6e6;
-  overflow: scroll;
+  overflow: auto;
 }
 
 #menu h1 {
