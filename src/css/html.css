@@ -31,7 +31,6 @@ main.menu-expanded {
   font-size: 13px;
   font-weight: 300;
   height: 99vh;
-  overflow: auto;
 }
 
 .CodeMirror-lines {
