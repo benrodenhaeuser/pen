@@ -211,6 +211,10 @@ object {
   transition: margin-left 0.3s;
 }
 
+main:not(.menu-expanded) #menu {
+  visibility: hidden;
+}
+
 .menu-expanded #menu > div {
   margin-left: 0;
 }
