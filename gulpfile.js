@@ -7,6 +7,7 @@ const terser     = require('rollup-plugin-terser');
 const concatCSS  = require('gulp-concat-css');
 const cleanCSS   = require('gulp-clean-css');
 const eslint     = require('gulp-eslint');
+const jest       = require('gulp-jest').default;
 
 gulp.task('scripts', () => {
   return rollup.rollup({
@@ -79,3 +80,32 @@ gulp.task('watch', () => {
 });
 
 gulp.task('default', gulp.series('watch'));
+
+gulp.task('jest', () => {
+  return gulp.src('./test/app.test.js').pipe(jest());
+});
+
+gulp.task('make-test-bundle', () => {
+  return rollup.rollup({
+    input: './test/src/app.js',
+    onwarn: function(warning, rollupWarn) {
+      if (warning.code !== 'CIRCULAR_DEPENDENCY') {
+        rollupWarn(warning);
+      }
+    },
+    plugins: [
+      rootImport({ root: `${__dirname}/src/js`, useEntry: 'prepend' }),
+      resolve(),
+      commonjs(),
+    ]
+  }).then(bundle => {
+    return bundle.write({
+      file: './test/dist/bundle.js',
+      format: 'cjs',
+      name: 'app',
+      sourcemap: false
+    });
+  });
+});
+
+gulp.task('test', gulp.series('make-test-bundle', 'jest'));
